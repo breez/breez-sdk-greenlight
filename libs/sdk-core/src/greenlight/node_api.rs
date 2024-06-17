@@ -1,4 +1,5 @@
 use std::cmp::{min, Reverse};
+use std::collections::HashMap;
 use std::iter::Iterator;
 use std::pin::Pin;
 use std::str::FromStr;
@@ -1651,14 +1652,17 @@ impl NodeAPI for Greenlight {
             .into_inner();
 
         let mut has_public_channel = false;
-        let mut open_peer_channels: Vec<cln::ListpeerchannelsChannels> = peer_channels
+        let open_peer_channels: HashMap<Vec<u8>, cln::ListpeerchannelsChannels> = peer_channels
             .channels
             .into_iter()
             .filter(|c| {
                 let is_private = c.private.unwrap_or_default();
                 has_public_channel |= !is_private;
-                is_private && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
+                is_private
+                    && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
+                    && c.peer_id.is_some()
             })
+            .map(|c| (c.peer_id.clone().unwrap(), c))
             .collect();
         // Get channels where our node is the destination
         let pubkey = self
@@ -1666,60 +1670,46 @@ impl NodeAPI for Greenlight {
             .get_node_state()?
             .map(|n| n.id)
             .ok_or(NodeError::generic("Node info not found"))?;
-        let mut channels = node_client
+        let channels: HashMap<Vec<u8>, cln::ListchannelsChannels> = node_client
             .list_channels(cln::ListchannelsRequest {
                 destination: Some(hex::decode(pubkey)?),
                 ..Default::default()
             })
             .await?
             .into_inner()
-            .channels;
-
-        // Ensure one private channel from each peer.
-        open_peer_channels.dedup_by_key(|c| c.peer_id.clone());
-        channels.dedup_by_key(|c| c.source.clone());
+            .channels
+            .into_iter()
+            .map(|c| (c.source.clone(), c))
+            .collect();
 
         // Create a routing hint from each channel.
-        for peer_channel in open_peer_channels {
-            let peer_id = peer_channel.clone().peer_id.ok_or(anyhow!("No peer id"))?;
-            let peer_id_str = hex::encode(peer_id.clone());
-            let (alias_remote, _) = match peer_channel.alias {
-                Some(a) => (a.remote.clone(), a.local.clone()),
-                None => (None, None),
-            };
-
-            let optional_channel_id = alias_remote
-                .clone()
-                .or(peer_channel.short_channel_id.clone());
+        for (peer_id, peer_channel) in open_peer_channels {
+            let peer_id_str = hex::encode(&peer_id);
+            let optional_channel_id = peer_channel
+                .alias
+                .and_then(|a| a.remote)
+                .or(peer_channel.short_channel_id);
 
             if let Some(channel_id) = optional_channel_id {
-                // The local fee policy
-                let peer_fee_base_msat = peer_channel.fee_base_msat.unwrap_or_default().msat as u32;
-                let peer_fees_proportional_millionths =
-                    peer_channel.fee_proportional_millionths.unwrap_or_default();
                 // The remote fee policy
-                let maybe_channel = channels.clone().into_iter().find(|c| c.source == peer_id);
-                let (maybe_fees_base_msat, maybe_fees_proportional_millionths) = match maybe_channel
-                {
-                    Some(channel) => (
-                        Some(channel.base_fee_millisatoshi),
-                        Some(channel.fee_per_millionth),
-                    ),
-                    None if peer_id_str == lsp_info.pubkey => (
-                        Some(lsp_info.base_fee_msat as u32),
-                        Some((lsp_info.fee_rate * 1000000.0) as u32),
-                    ),
-                    _ => (None, None),
+                let maybe_policy = match channels.get(&peer_id) {
+                    Some(channel) => Some((
+                        channel.base_fee_millisatoshi,
+                        channel.fee_per_millionth,
+                        channel.delay,
+                    )),
+                    None if peer_id_str == lsp_info.pubkey => Some((
+                        lsp_info.base_fee_msat as u32,
+                        (lsp_info.fee_rate * 1000000.0) as u32,
+                        lsp_info.time_lock_delta,
+                    )),
+                    _ => None,
                 };
-                match (maybe_fees_base_msat, maybe_fees_proportional_millionths) {
-                    (Some(fees_base_msat), Some(fees_proportional_millionths)) => {
+                match maybe_policy {
+                    Some((fees_base_msat, fees_proportional_millionths, cltv_delta)) => {
                         debug!(
-                            "For peer {:?}: local base {:?} proportional {:?}, remote base {:?} proportional {:?}",
-                            peer_id_str,
-                            peer_fee_base_msat,
-                            peer_fees_proportional_millionths,
-                            fees_base_msat,
-                            fees_proportional_millionths
+                            "For peer {}: remote base {} proportional {} cltv_delta {}",
+                            peer_id_str, fees_base_msat, fees_proportional_millionths, cltv_delta,
                         );
                         let scid = parse_short_channel_id(&channel_id)?;
                         let hint = RouteHint {
@@ -1728,7 +1718,7 @@ impl NodeAPI for Greenlight {
                                 short_channel_id: scid,
                                 fees_base_msat,
                                 fees_proportional_millionths,
-                                cltv_expiry_delta: 144,
+                                cltv_expiry_delta: cltv_delta as u64,
                                 htlc_minimum_msat: Some(
                                     peer_channel
                                         .minimum_htlc_in_msat
