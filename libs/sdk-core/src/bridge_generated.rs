@@ -104,27 +104,6 @@ use crate::models::SwapInfo;
 use crate::models::SwapStatus;
 use crate::models::TlvEntry;
 use crate::models::UnspentTransactionOutput;
-use crate::AesSuccessActionDataDecrypted;
-use crate::AesSuccessActionDataResult;
-use crate::BitcoinAddressData;
-use crate::InputType;
-use crate::LNInvoice;
-use crate::LnUrlAuthRequestData;
-use crate::LnUrlCallbackStatus;
-use crate::LnUrlErrorData;
-use crate::LnUrlPayErrorData;
-use crate::LnUrlPayRequest;
-use crate::LnUrlPayRequestData;
-use crate::LnUrlWithdrawRequest;
-use crate::LnUrlWithdrawRequestData;
-use crate::LnUrlWithdrawResult;
-use crate::LnUrlWithdrawSuccessData;
-use crate::MessageSuccessActionData;
-use crate::Network;
-use crate::RouteHint;
-use crate::RouteHintHop;
-use crate::SuccessActionProcessed;
-use crate::UrlSuccessActionData;
 
 // Section: wire functions
 
