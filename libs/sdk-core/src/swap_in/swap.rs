@@ -512,8 +512,8 @@ impl BTCReceiveSwap {
                                         None => None,
                                     },
                                     None,
-                                ).await.map_err(|_|anyhow!(
-                                    "Preimage already known, invoice found, failed to ensure route hint"
+                                ).await.map_err(|e|anyhow!(
+                                    "Preimage already known, invoice found, failed to ensure route hint: {:?}", e
                                 ))?
                             }
                         }
