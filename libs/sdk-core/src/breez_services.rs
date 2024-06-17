@@ -12,8 +12,10 @@ use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::TryFutureExt;
+use gl_client::bitcoin::secp256k1::Secp256k1;
 use log::{LevelFilter, Metadata, Record};
-use reqwest::{header::CONTENT_TYPE, Body};
+use reqwest::{header::CONTENT_TYPE, Body, Url};
+use sdk_common::prelude::*;
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
@@ -30,8 +32,8 @@ use crate::chain::{
     DEFAULT_MEMPOOL_SPACE_URL,
 };
 use crate::error::{
-    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
-    ReceivePaymentError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
+    ConnectError, LnUrlAuthError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError,
+    SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
@@ -42,23 +44,12 @@ use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::{ChainApiServersRequest, PaymentInformation};
-use crate::input_parser::get_reqwest_client;
-use crate::invoice::{
-    add_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
-};
-use crate::lnurl::auth::perform_lnurl_auth;
-use crate::lnurl::pay::model::SuccessAction::Aes;
-use crate::lnurl::pay::model::{
-    LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,
-};
-use crate::lnurl::pay::validate_lnurl_pay;
-use crate::lnurl::withdraw::validate_lnurl_withdraw;
+use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, LnUrlCallbackStatus, LspAPI, NodeState, Payment, PaymentDetails, PaymentType,
-    ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
-    INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
+    FiatAPI, LspAPI, NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo,
+    ReverseSwapServiceAPI, SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
@@ -69,7 +60,6 @@ use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
-use self::error::ConnectError;
 use self::grpc::PingRequest;
 
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
@@ -416,7 +406,7 @@ impl BreezServices {
                     Some(sa) => {
                         let processed_sa = match sa {
                             // For AES, we decrypt the contents on the fly
-                            Aes(data) => {
+                            SuccessAction::Aes(data) => {
                                 let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
                                 let preimage_arr: [u8; 32] = preimage.into_inner();
                                 let result = match (data, &preimage_arr).try_into() {
@@ -457,7 +447,7 @@ impl BreezServices {
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
-                    data: LnUrlPaySuccessData {
+                    data: lnurl::pay::LnUrlPaySuccessData {
                         payment,
                         success_action: maybe_sa_processed,
                     },
@@ -518,7 +508,20 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
-        Ok(perform_lnurl_auth(self.node_api.clone(), req_data).await?)
+        // m/138'/0
+        let hashing_key = self.node_api.derive_bip32_key(vec![
+            ChildNumber::from_hardened_idx(138).map_err(Into::<LnUrlError>::into)?,
+            ChildNumber::from(0),
+        ])?;
+
+        let url =
+            Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
+
+        let derivation_path = get_derivation_path(hashing_key, url)?;
+        let linking_key = self.node_api.derive_bip32_key(derivation_path)?;
+        let linking_keys = linking_key.to_keypair(&Secp256k1::new());
+
+        Ok(perform_lnurl_auth(linking_keys, req_data).await?)
     }
 
     /// Creates an bolt11 payment request.
@@ -2742,17 +2745,10 @@ pub(crate) mod tests {
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::fiat::Rate;
-    use crate::lnurl::pay::model::MessageSuccessActionData;
-    use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
-    use crate::{
-        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        FullReverseSwapInfo, InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus,
-        ReceivePaymentRequest, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus, SwapInfo,
-        SwapStatus,
-    };
-    use crate::{PaymentExternalInfo, PaymentType};
+    use crate::test_utils::*;
+    use crate::*;
 
     use super::{PaymentReceiver, Receiver};
 
@@ -3196,7 +3192,7 @@ pub(crate) mod tests {
         assert_eq!(parsed.host_str(), Some("mock.moonpay"));
         assert_eq!(parsed.path(), "/");
 
-        let wallet_address = input_parser::parse(query_pairs.get("wa").unwrap()).await?;
+        let wallet_address = parse(query_pairs.get("wa").unwrap()).await?;
         assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
 
         let max_amount = query_pairs.get("ma").unwrap();

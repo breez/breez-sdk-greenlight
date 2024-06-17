@@ -11,6 +11,10 @@ typedef struct _Dart_Handle* Dart_Handle;
 
 #define ESTIMATED_LOCKUP_TX_VSIZE 153
 
+#define MOCK_REVERSE_SWAP_MIN 50000
+
+#define MOCK_REVERSE_SWAP_MAX 1000000
+
 typedef struct DartCObject DartCObject;
 
 typedef int64_t DartPort;

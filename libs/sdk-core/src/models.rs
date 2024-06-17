@@ -8,6 +8,8 @@ use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
+use sdk_common::prelude::Network::*;
+use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
@@ -18,22 +20,18 @@ use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
 use crate::breez_services::BreezServer;
+use crate::ensure_sdk;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
 use crate::grpc::{
     self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentNotificationResponse,
     RegisterPaymentReply, RemovePaymentNotificationResponse,
 };
-use crate::lnurl::pay::model::SuccessActionProcessed;
 use crate::lsp::LspInformation;
-use crate::models::Network::*;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
-use crate::{
-    ensure_sdk, LNInvoice, LnUrlErrorData, LnUrlPayRequestData, LnUrlWithdrawRequestData, RouteHint,
-};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
@@ -572,38 +570,6 @@ pub struct GreenlightCredentials {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GreenlightDeviceCredentials {
     pub device: Vec<u8>,
-}
-
-/// The different supported bitcoin networks
-#[derive(Clone, Copy, Debug, Display, Eq, PartialEq, Serialize, Deserialize)]
-pub enum Network {
-    /// Mainnet
-    Bitcoin,
-    Testnet,
-    Signet,
-    Regtest,
-}
-
-impl From<crate::bitcoin::network::constants::Network> for Network {
-    fn from(network: crate::bitcoin::network::constants::Network) -> Self {
-        match network {
-            crate::bitcoin::network::constants::Network::Bitcoin => Bitcoin,
-            crate::bitcoin::network::constants::Network::Testnet => Testnet,
-            crate::bitcoin::network::constants::Network::Signet => Signet,
-            crate::bitcoin::network::constants::Network::Regtest => Regtest,
-        }
-    }
-}
-
-impl From<Network> for crate::bitcoin::network::constants::Network {
-    fn from(network: Network) -> Self {
-        match network {
-            Bitcoin => crate::bitcoin::network::constants::Network::Bitcoin,
-            Testnet => crate::bitcoin::network::constants::Network::Testnet,
-            Signet => crate::bitcoin::network::constants::Network::Signet,
-            Regtest => crate::bitcoin::network::constants::Network::Regtest,
-        }
-    }
 }
 
 /// Represents a configure node request.
@@ -1545,69 +1511,6 @@ pub struct UnspentTransactionOutput {
     pub address: String,
     #[serde(default)]
     pub reserved: bool,
-}
-
-/// Contains the result of the entire LNURL interaction, as reported by the LNURL endpoint.
-///
-/// * `Ok` indicates the interaction with the endpoint was valid, and the endpoint
-///  - started to pay the invoice asynchronously in the case of LNURL-withdraw,
-///  - verified the client signature in the case of LNURL-auth,////// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
-/// description of the reason.
-///
-/// Both cases are described in LUD-03 <https://github.com/lnurl/luds/blob/luds/03.md> & LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
-#[derive(Deserialize, Debug, Serialize)]
-#[serde(rename_all = "UPPERCASE")]
-#[serde(tag = "status")]
-pub enum LnUrlCallbackStatus {
-    /// On-wire format is: `{"status": "OK"}`
-    Ok,
-    /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-    #[serde(rename = "ERROR")]
-    ErrorStatus {
-        #[serde(flatten)]
-        data: LnUrlErrorData,
-    },
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LnUrlWithdrawRequest {
-    /// Request data containing information on how to call the lnurl withdraw
-    /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
-    /// input.
-    pub data: LnUrlWithdrawRequestData,
-
-    /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
-    /// `min_withdrawable` and `max_withdrawable`.
-    pub amount_msat: u64,
-
-    /// Optional description that will be put in the payment request for the
-    /// lnurl withdraw endpoint.
-    pub description: Option<String>,
-}
-
-/// Represents a LNURL-pay request.
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct LnUrlPayRequest {
-    /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
-    pub data: LnUrlPayRequestData,
-    /// The amount in millisatoshis for this payment
-    pub amount_msat: u64,
-    /// An optional comment for this payment
-    pub comment: Option<String>,
-    /// The external label or identifier of the [Payment]
-    pub payment_label: Option<String>,
-}
-
-/// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
-#[derive(Serialize)]
-pub enum LnUrlWithdrawResult {
-    Ok { data: LnUrlWithdrawSuccessData },
-    ErrorStatus { data: LnUrlErrorData },
-}
-
-#[derive(Deserialize, Debug, Serialize)]
-pub struct LnUrlWithdrawSuccessData {
-    pub invoice: LNInvoice,
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.

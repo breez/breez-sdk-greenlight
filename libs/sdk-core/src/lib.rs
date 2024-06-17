@@ -155,13 +155,12 @@
 //!
 //! Join this [telegram group](https://t.me/breezsdk).
 
+#[allow(clippy::all)]
 mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
+
 #[macro_use]
 extern crate log;
 
-#[rustfmt::skip]
-#[cfg(test)]
-mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
 mod backup;
 pub mod binding;
 mod breez_services;
@@ -177,9 +176,7 @@ mod greenlight;
 mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
-pub mod input_parser;
-mod invoice;
-mod lnurl;
+pub mod lnurl;
 mod lsp;
 mod lsps0;
 mod lsps2;
@@ -189,6 +186,10 @@ mod persist;
 mod support;
 mod swap_in;
 mod swap_out;
+#[allow(clippy::all)]
+#[allow(unused_mut)]
+#[allow(dead_code)]
+mod test_utils;
 mod tonic_wrap;
 
 // Re-use crates from gl_client for consistency
@@ -203,13 +204,7 @@ pub use breez_services::{
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
-pub use input_parser::{
-    parse, BitcoinAddressData, InputType, LnUrlAuthRequestData, LnUrlErrorData,
-    LnUrlPayRequestData, LnUrlRequestData, LnUrlWithdrawRequestData, MetadataItem,
-};
-pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
-
-pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
+pub use sdk_common::prelude::*;
 pub use swap_out::reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};

@@ -17,24 +17,29 @@ use anyhow::{anyhow, Result};
 use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
+use sdk_common::invoice;
+pub use sdk_common::prelude::{
+    parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, BitcoinAddressData,
+    InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlError, LnUrlErrorData,
+    LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawRequest,
+    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
+    MessageSuccessActionData, Network, RouteHint, RouteHintHop, SuccessActionProcessed,
+    UrlSuccessActionData,
+};
 use tokio::sync::Mutex;
 
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    ConnectError, LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError,
-    ReceivePaymentError, SdkError, SendOnchainError, SendPaymentError,
+    ConnectError, LnUrlAuthError, ReceiveOnchainError, ReceivePaymentError, SdkError,
+    SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
-use crate::input_parser::{self, InputType, LnUrlAuthRequestData};
-use crate::invoice::{self, LNInvoice};
-use crate::lnurl::pay::model::LnUrlPayResult;
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest,
-    LnUrlCallbackStatus, LnUrlPayRequest, LnUrlWithdrawRequest, LnUrlWithdrawResult,
     MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
     OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
     PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
@@ -46,6 +51,195 @@ use crate::{
     SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
     SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
+
+// === FRB mirroring
+//
+// This section contains frb "mirroring" structs and enums.
+// These are needed by the flutter bridge in order to use structs defined in an external crate.
+// See <https://cjycode.com/flutter_rust_bridge/v1/feature/lang_external.html#types-in-other-crates>
+// Note: in addition to the docs above, the mirrored structs must derive the Clone trait
+
+use flutter_rust_bridge::frb;
+
+#[frb(mirror(LnUrlAuthRequestData))]
+pub struct _LnUrlAuthRequestData {
+    pub k1: String,
+    pub action: Option<String>,
+    pub domain: String,
+    pub url: String,
+}
+
+#[frb(mirror(LnUrlErrorData))]
+pub struct _LnUrlErrorData {
+    pub reason: String,
+}
+
+#[frb(mirror(LnUrlCallbackStatus))]
+pub enum _LnUrlCallbackStatus {
+    Ok,
+    ErrorStatus { data: LnUrlErrorData },
+}
+
+#[frb(mirror(Network))]
+pub enum _Network {
+    Bitcoin,
+    Testnet,
+    Signet,
+    Regtest,
+}
+
+#[frb(mirror(LNInvoice))]
+pub struct _LNInvoice {
+    pub bolt11: String,
+    pub network: Network,
+    pub payee_pubkey: String,
+    pub payment_hash: String,
+    pub description: Option<String>,
+    pub description_hash: Option<String>,
+    pub amount_msat: Option<u64>,
+    pub timestamp: u64,
+    pub expiry: u64,
+    pub routing_hints: Vec<RouteHint>,
+    pub payment_secret: Vec<u8>,
+    pub min_final_cltv_expiry_delta: u64,
+}
+
+#[frb(mirror(RouteHint))]
+pub struct _RouteHint {
+    pub hops: Vec<RouteHintHop>,
+}
+
+#[frb(mirror(RouteHintHop))]
+pub struct _RouteHintHop {
+    pub src_node_id: String,
+    pub short_channel_id: u64,
+    pub fees_base_msat: u32,
+    pub fees_proportional_millionths: u32,
+    pub cltv_expiry_delta: u64,
+    pub htlc_minimum_msat: Option<u64>,
+    pub htlc_maximum_msat: Option<u64>,
+}
+
+#[frb(mirror(LnUrlPayRequest))]
+pub struct _LnUrlPayRequest {
+    pub data: LnUrlPayRequestData,
+    pub amount_msat: u64,
+    pub comment: Option<String>,
+    pub payment_label: Option<String>,
+}
+
+#[frb(mirror(LnUrlPayRequestData))]
+pub struct _LnUrlPayRequestData {
+    pub callback: String,
+    pub min_sendable: u64,
+    pub max_sendable: u64,
+    pub metadata_str: String,
+    pub comment_allowed: u16,
+    pub domain: String,
+    pub allows_nostr: bool,
+    pub nostr_pubkey: Option<String>,
+    pub ln_address: Option<String>,
+}
+
+#[frb(mirror(LnUrlWithdrawRequest))]
+pub struct _LnUrlWithdrawRequest {
+    pub data: LnUrlWithdrawRequestData,
+    pub amount_msat: u64,
+    pub description: Option<String>,
+}
+
+#[frb(mirror(LnUrlWithdrawRequestData))]
+pub struct _LnUrlWithdrawRequestData {
+    pub callback: String,
+    pub k1: String,
+    pub default_description: String,
+    pub min_withdrawable: u64,
+    pub max_withdrawable: u64,
+}
+
+#[frb(mirror(InputType))]
+pub enum _InputType {
+    BitcoinAddress { address: BitcoinAddressData },
+    Bolt11 { invoice: LNInvoice },
+    NodeId { node_id: String },
+    Url { url: String },
+    LnUrlPay { data: LnUrlPayRequestData },
+    LnUrlWithdraw { data: LnUrlWithdrawRequestData },
+    LnUrlAuth { data: LnUrlAuthRequestData },
+    LnUrlError { data: LnUrlErrorData },
+}
+
+#[frb(mirror(BitcoinAddressData))]
+pub struct _BitcoinAddressData {
+    pub address: String,
+    pub network: crate::prelude::Network,
+    pub amount_sat: Option<u64>,
+    pub label: Option<String>,
+    pub message: Option<String>,
+}
+
+#[frb(mirror(SuccessActionProcessed))]
+pub enum _SuccessActionProcessed {
+    Aes { result: AesSuccessActionDataResult },
+    Message { data: MessageSuccessActionData },
+    Url { data: UrlSuccessActionData },
+}
+
+#[frb(mirror(AesSuccessActionDataResult))]
+pub enum _AesSuccessActionDataResult {
+    Decrypted { data: AesSuccessActionDataDecrypted },
+    ErrorStatus { reason: String },
+}
+
+#[frb(mirror(AesSuccessActionDataDecrypted))]
+pub struct _AesSuccessActionDataDecrypted {
+    pub description: String,
+    pub plaintext: String,
+}
+
+#[frb(mirror(MessageSuccessActionData))]
+pub struct _MessageSuccessActionData {
+    pub message: String,
+}
+
+#[frb(mirror(UrlSuccessActionData))]
+pub struct _UrlSuccessActionData {
+    pub description: String,
+    pub url: String,
+}
+
+#[frb(mirror(LnUrlPayErrorData))]
+pub struct _LnUrlPayErrorData {
+    pub payment_hash: String,
+    pub reason: String,
+}
+
+#[frb(mirror(LnUrlPayError))]
+pub enum _LnUrlPayError {
+    AlreadyPaid,
+    Generic { err: String },
+    InvalidAmount { err: String },
+    InvalidInvoice { err: String },
+    InvalidNetwork { err: String },
+    InvalidUri { err: String },
+    InvoiceExpired { err: String },
+    PaymentFailed { err: String },
+    PaymentTimeout { err: String },
+    RouteNotFound { err: String },
+    RouteTooExpensive { err: String },
+    ServiceConnectivity { err: String },
+}
+
+#[frb(mirror(LnUrlWithdrawResult))]
+pub enum _LnUrlWithdrawResult {
+    Ok { data: LnUrlWithdrawSuccessData },
+    ErrorStatus { data: LnUrlErrorData },
+}
+
+#[frb(mirror(LnUrlWithdrawSuccessData))]
+pub struct _LnUrlWithdrawSuccessData {
+    pub invoice: LNInvoice,
+}
 
 /*
 The format Lazy<Mutex<Option<...>>> for the following variables allows them to be instance-global,
@@ -268,7 +462,7 @@ pub fn parse_invoice(invoice: String) -> Result<LNInvoice> {
 }
 
 pub fn parse_input(input: String) -> Result<InputType> {
-    block_on(async { input_parser::parse(&input).await })
+    block_on(async { parse(&input).await })
 }
 
 /*  Payment API's */
@@ -324,19 +518,19 @@ pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentRespo
 /*  LNURL API's */
 
 /// See [BreezServices::lnurl_pay]
-pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
+pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<crate::lnurl::pay::LnUrlPayResult> {
     block_on(async { get_breez_services().await?.lnurl_pay(req).await })
-        .map_err(anyhow::Error::new::<LnUrlPayError>)
+        .map_err(anyhow::Error::new::<crate::LnUrlPayError>)
 }
 
 /// See [BreezServices::lnurl_withdraw]
 pub fn lnurl_withdraw(req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
     block_on(async { get_breez_services().await?.lnurl_withdraw(req).await })
-        .map_err(anyhow::Error::new::<LnUrlWithdrawError>)
+        .map_err(anyhow::Error::new::<crate::LnUrlWithdrawError>)
 }
 
 /// See [BreezServices::lnurl_auth]
-pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
+pub fn lnurl_auth(req_data: crate::LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
     block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
         .map_err(anyhow::Error::new::<LnUrlAuthError>)
 }

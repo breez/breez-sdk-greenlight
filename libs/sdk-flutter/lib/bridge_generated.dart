@@ -324,12 +324,8 @@ abstract class BreezSdkCore {
   FlutterRustBridgeTaskConstMeta get kGenerateDiagnosticDataConstMeta;
 }
 
-/// Wrapper for the decrypted [AesSuccessActionData] payload
 class AesSuccessActionDataDecrypted {
-  /// Contents description, up to 144 characters
   final String description;
-
-  /// Decrypted content
   final String plaintext;
 
   const AesSuccessActionDataDecrypted({
@@ -368,7 +364,6 @@ class BackupStatus {
   });
 }
 
-/// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 class BitcoinAddressData {
   final String address;
   final Network network;
@@ -651,16 +646,9 @@ enum HealthCheckStatus {
 
 @freezed
 sealed class InputType with _$InputType {
-  /// # Supported standards
-  ///
-  /// - plain on-chain BTC address
-  /// - BIP21
   const factory InputType.bitcoinAddress({
     required BitcoinAddressData address,
   }) = InputType_BitcoinAddress;
-
-  /// Also covers URIs like `bitcoin:...&lightning=bolt11`. In this case, it returns the BOLT11
-  /// and discards all other data.
   const factory InputType.bolt11({
     required LNInvoice invoice,
   }) = InputType_Bolt11;
@@ -670,36 +658,12 @@ sealed class InputType with _$InputType {
   const factory InputType.url({
     required String url,
   }) = InputType_Url;
-
-  /// # Supported standards
-  ///
-  /// - LUD-01 LNURL bech32 encoding
-  /// - LUD-06 `payRequest` spec
-  /// - LUD-16 LN Address
-  /// - LUD-17 Support for lnurlp prefix with non-bech32-encoded LNURL URLs
   const factory InputType.lnUrlPay({
     required LnUrlPayRequestData data,
   }) = InputType_LnUrlPay;
-
-  /// # Supported standards
-  ///
-  /// - LUD-01 LNURL bech32 encoding
-  /// - LUD-03 `withdrawRequest` spec
-  /// - LUD-17 Support for lnurlw prefix with non-bech32-encoded LNURL URLs
-  ///
-  /// # Not supported (yet)
-  ///
-  /// - LUD-14 `balanceCheck`: reusable `withdrawRequest`s
-  /// - LUD-19 Pay link discoverable from withdraw link
   const factory InputType.lnUrlWithdraw({
     required LnUrlWithdrawRequestData data,
   }) = InputType_LnUrlWithdraw;
-
-  /// # Supported standards
-  ///
-  /// - LUD-01 LNURL bech32 encoding
-  /// - LUD-04 `auth` base spec
-  /// - LUD-17 Support for keyauth prefix with non-bech32-encoded LNURL URLs
   const factory InputType.lnUrlAuth({
     required LnUrlAuthRequestData data,
   }) = InputType_LnUrlAuth;
@@ -746,7 +710,6 @@ class ListPaymentsRequest {
   });
 }
 
-/// Wrapper for a BOLT11 LN invoice
 class LNInvoice {
   final String bolt11;
   final Network network;
@@ -838,24 +801,10 @@ class LnPaymentDetails {
   });
 }
 
-/// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/04.md>
 class LnUrlAuthRequestData {
-  /// Hex encoded 32 bytes of challenge
   final String k1;
-
-  /// When available, one of: register, login, link, auth
   final String? action;
-
-  /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
-  /// auth confirmation, as per LUD-04 spec.
   final String domain;
-
-  /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
-  /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
   final String url;
 
   const LnUrlAuthRequestData({
@@ -868,16 +817,12 @@ class LnUrlAuthRequestData {
 
 @freezed
 sealed class LnUrlCallbackStatus with _$LnUrlCallbackStatus {
-  /// On-wire format is: `{"status": "OK"}`
   const factory LnUrlCallbackStatus.ok() = LnUrlCallbackStatus_Ok;
-
-  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
   const factory LnUrlCallbackStatus.errorStatus({
     required LnUrlErrorData data,
   }) = LnUrlCallbackStatus_ErrorStatus;
 }
 
-/// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
 class LnUrlErrorData {
   final String reason;
 
@@ -896,18 +841,10 @@ class LnUrlPayErrorData {
   });
 }
 
-/// Represents a LNURL-pay request.
 class LnUrlPayRequest {
-  /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
   final LnUrlPayRequestData data;
-
-  /// The amount in millisatoshis for this payment
   final int amountMsat;
-
-  /// An optional comment for this payment
   final String? comment;
-
-  /// The external label or identifier of the [Payment]
   final String? paymentLabel;
 
   const LnUrlPayRequest({
@@ -918,48 +855,15 @@ class LnUrlPayRequest {
   });
 }
 
-/// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/06.md>
 class LnUrlPayRequestData {
   final String callback;
-
-  /// The minimum amount, in millisats, that this LNURL-pay endpoint accepts
   final int minSendable;
-
-  /// The maximum amount, in millisats, that this LNURL-pay endpoint accepts
   final int maxSendable;
-
-  /// As per LUD-06, `metadata` is a raw string (e.g. a json representation of the inner map).
-  /// Use `metadata_vec()` to get the parsed items.
   final String metadataStr;
-
-  /// The comment length accepted by this endpoint
-  ///
-  /// See <https://github.com/lnurl/luds/blob/luds/12.md>
   final int commentAllowed;
-
-  /// Indicates the domain of the LNURL-pay service, to be shown to the user when asking for
-  /// payment input, as per LUD-06 spec.
-  ///
-  /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
   final String domain;
-
-  /// Value indicating whether the recipient supports Nostr Zaps through NIP-57.
-  ///
-  /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
   final bool allowsNostr;
-
-  /// Optional recipient's lnurl provider's Nostr pubkey for NIP-57. If it exists it should be a
-  /// valid BIP 340 public key in hex.
-  ///
-  /// See <https://github.com/nostr-protocol/nips/blob/master/57.md>
-  /// See <https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki>
   final String? nostrPubkey;
-
-  /// If sending to a LN Address, this will be filled.
   final String? lnAddress;
 
   const LnUrlPayRequestData({
@@ -999,17 +903,8 @@ class LnUrlPaySuccessData {
 }
 
 class LnUrlWithdrawRequest {
-  /// Request data containing information on how to call the lnurl withdraw
-  /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
-  /// input.
   final LnUrlWithdrawRequestData data;
-
-  /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
-  /// `min_withdrawable` and `max_withdrawable`.
   final int amountMsat;
-
-  /// Optional description that will be put in the payment request for the
-  /// lnurl withdraw endpoint.
   final String? description;
 
   const LnUrlWithdrawRequest({
@@ -1019,20 +914,11 @@ class LnUrlWithdrawRequest {
   });
 }
 
-/// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/03.md>
 class LnUrlWithdrawRequestData {
   final String callback;
   final String k1;
   final String defaultDescription;
-
-  /// The minimum amount, in millisats, that this LNURL-withdraw endpoint accepts
   final int minWithdrawable;
-
-  /// The maximum amount, in millisats, that this LNURL-withdraw endpoint accepts
   final int maxWithdrawable;
 
   const LnUrlWithdrawRequestData({
@@ -1174,9 +1060,7 @@ class MetadataFilter {
   });
 }
 
-/// The different supported bitcoin networks
 enum Network {
-  /// Mainnet
   Bitcoin,
   Testnet,
   Signet,
@@ -1739,7 +1623,6 @@ enum ReverseSwapStatus {
   CompletedConfirmed,
 }
 
-/// A route hint for a LN payment
 class RouteHint {
   final List<RouteHintHop> hops;
 
@@ -1748,25 +1631,13 @@ class RouteHint {
   });
 }
 
-/// Details of a specific hop in a larger route hint
 class RouteHintHop {
-  /// The node_id of the non-target end of the route
   final String srcNodeId;
-
-  /// The short_channel_id of this channel
   final int shortChannelId;
-
-  /// The fees which must be paid to use this channel
   final int feesBaseMsat;
   final int feesProportionalMillionths;
-
-  /// The difference in CLTV values between this node and the next node.
   final int cltvExpiryDelta;
-
-  /// The minimum value, in msat, which must be relayed to the next hop.
   final int? htlcMinimumMsat;
-
-  /// The maximum value in msat available for routing with a single HTLC.
   final int? htlcMaximumMsat;
 
   const RouteHintHop({
@@ -1897,19 +1768,12 @@ class StaticBackupResponse {
 
 @freezed
 sealed class SuccessActionProcessed with _$SuccessActionProcessed {
-  /// See [SuccessAction::Aes] for received payload
-  ///
-  /// See [AesSuccessActionDataDecrypted] for decrypted payload
   const factory SuccessActionProcessed.aes({
     required AesSuccessActionDataResult result,
   }) = SuccessActionProcessed_Aes;
-
-  /// See [SuccessAction::Message]
   const factory SuccessActionProcessed.message({
     required MessageSuccessActionData data,
   }) = SuccessActionProcessed_Message;
-
-  /// See [SuccessAction::Url]
   const factory SuccessActionProcessed.url({
     required UrlSuccessActionData data,
   }) = SuccessActionProcessed_Url;
@@ -6921,3 +6785,7 @@ const int INVOICE_PAYMENT_FEE_EXPIRY_SECONDS = 3600;
 const int ESTIMATED_CLAIM_TX_VSIZE = 138;
 
 const int ESTIMATED_LOCKUP_TX_VSIZE = 153;
+
+const int MOCK_REVERSE_SWAP_MIN = 50000;
+
+const int MOCK_REVERSE_SWAP_MAX = 1000000;

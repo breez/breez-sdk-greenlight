@@ -5,15 +5,17 @@ use tokio::sync::{mpsc, watch};
 use tokio_stream::Stream;
 use tonic::Streaming;
 
+use sdk_common::prelude::*;
+
 use crate::{
     bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
-    invoice::InvoiceError,
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
     CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
     SyncResponse, TlvEntry,
 };
+use crate::error::LnUrlAuthError;
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
 
@@ -66,6 +68,27 @@ impl NodeError {
 
     pub(crate) fn generic(err: &str) -> Self {
         Self::Generic(err.to_string())
+    }
+}
+
+impl From<NodeError> for sdk_common::prelude::LnUrlError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::InvalidInvoice(err) => Self::InvalidInvoice(format!("{err}")),
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity(err),
+            _ => Self::Generic(value.to_string()),
+        }
+    }
+}
+
+impl From<NodeError> for LnUrlAuthError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            _ => Self::Generic {
+                err: value.to_string()
+            },
+        }
     }
 }
 

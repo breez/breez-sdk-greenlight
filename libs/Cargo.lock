@@ -539,8 +539,6 @@ dependencies = [
  "aes",
  "anyhow",
  "base64 0.13.1",
- "bip21",
- "cbc",
  "chrono",
  "const_format",
  "ecies",
@@ -556,13 +554,13 @@ dependencies = [
  "once_cell",
  "openssl",
  "prost",
- "querystring",
  "rand",
  "regex",
  "reqwest",
  "ripemd",
  "rusqlite",
  "rusqlite_migration",
+ "sdk-common",
  "serde",
  "serde_json",
  "serde_with",
@@ -589,6 +587,7 @@ dependencies = [
  "glob",
  "log",
  "once_cell",
+ "sdk-common",
  "thiserror",
  "tiny-bip39",
  "tokio",
@@ -1949,13 +1948,13 @@ dependencies = [
 
 [[package]]
 name = "mockito"
-version = "1.2.0"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8d3038e23466858569c2d30a537f691fa0d53b51626630ae08262943e3bbb8b"
+checksum = "d2f6e023aa5bdf392aa06c78e4a4e6d498baab5138d0c993503350ebbc37bf1e"
 dependencies = [
  "assert-json-diff",
  "colored",
- "futures",
+ "futures-core",
  "hyper",
  "log",
  "rand",
@@ -1974,11 +1973,10 @@ checksum = "e5ce46fe64a9d73be07dcbe690a38ce1b293be448fd8ce1e6c1b8062c9f72c6a"
 
 [[package]]
 name = "native-tls"
-version = "0.2.11"
+version = "0.2.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07226173c32f2926027b63cce4bcd8076c3552846cbe7925f3aaffeac0a3b92e"
+checksum = "a8614eb2c83d59d1c8cc974dd3f920198647674a0a035e1af1fa58707e317466"
 dependencies = [
- "lazy_static",
  "libc",
  "log",
  "openssl",
@@ -2782,6 +2780,33 @@ checksum = "da046153aa2352493d6cb7da4b6e5c0c057d8a1d0a9aa8560baffdd945acd414"
 dependencies = [
  "ring 0.17.7",
  "untrusted 0.9.0",
+]
+
+[[package]]
+name = "sdk-common"
+version = "0.4.1"
+dependencies = [
+ "aes",
+ "anyhow",
+ "base64 0.13.1",
+ "bip21",
+ "bitcoin 0.29.2",
+ "cbc",
+ "hex",
+ "lightning",
+ "lightning-invoice",
+ "log",
+ "mockito",
+ "once_cell",
+ "querystring",
+ "regex",
+ "reqwest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "strum_macros",
+ "thiserror",
+ "tokio",
 ]
 
 [[package]]
