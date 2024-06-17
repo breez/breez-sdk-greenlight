@@ -4202,20 +4202,20 @@ abstract class NodeConfig_Greenlight implements NodeConfig {
 
 /// @nodoc
 mixin _$NodeCredentials {
-  GreenlightCredentials get credentials => throw _privateConstructorUsedError;
+  GreenlightDeviceCredentials get credentials => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(GreenlightCredentials credentials) greenlight,
+    required TResult Function(GreenlightDeviceCredentials credentials) greenlight,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(GreenlightCredentials credentials)? greenlight,
+    TResult? Function(GreenlightDeviceCredentials credentials)? greenlight,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(GreenlightCredentials credentials)? greenlight,
+    TResult Function(GreenlightDeviceCredentials credentials)? greenlight,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -4245,7 +4245,7 @@ abstract class $NodeCredentialsCopyWith<$Res> {
   factory $NodeCredentialsCopyWith(NodeCredentials value, $Res Function(NodeCredentials) then) =
       _$NodeCredentialsCopyWithImpl<$Res, NodeCredentials>;
   @useResult
-  $Res call({GreenlightCredentials credentials});
+  $Res call({GreenlightDeviceCredentials credentials});
 }
 
 /// @nodoc
@@ -4267,7 +4267,7 @@ class _$NodeCredentialsCopyWithImpl<$Res, $Val extends NodeCredentials>
       credentials: null == credentials
           ? _value.credentials
           : credentials // ignore: cast_nullable_to_non_nullable
-              as GreenlightCredentials,
+              as GreenlightDeviceCredentials,
     ) as $Val);
   }
 }
@@ -4279,7 +4279,7 @@ abstract class _$$NodeCredentials_GreenlightImplCopyWith<$Res> implements $NodeC
       __$$NodeCredentials_GreenlightImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({GreenlightCredentials credentials});
+  $Res call({GreenlightDeviceCredentials credentials});
 }
 
 /// @nodoc
@@ -4299,7 +4299,7 @@ class __$$NodeCredentials_GreenlightImplCopyWithImpl<$Res>
       credentials: null == credentials
           ? _value.credentials
           : credentials // ignore: cast_nullable_to_non_nullable
-              as GreenlightCredentials,
+              as GreenlightDeviceCredentials,
     ));
   }
 }
@@ -4310,7 +4310,7 @@ class _$NodeCredentials_GreenlightImpl implements NodeCredentials_Greenlight {
   const _$NodeCredentials_GreenlightImpl({required this.credentials});
 
   @override
-  final GreenlightCredentials credentials;
+  final GreenlightDeviceCredentials credentials;
 
   @override
   String toString() {
@@ -4337,7 +4337,7 @@ class _$NodeCredentials_GreenlightImpl implements NodeCredentials_Greenlight {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(GreenlightCredentials credentials) greenlight,
+    required TResult Function(GreenlightDeviceCredentials credentials) greenlight,
   }) {
     return greenlight(credentials);
   }
@@ -4345,7 +4345,7 @@ class _$NodeCredentials_GreenlightImpl implements NodeCredentials_Greenlight {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(GreenlightCredentials credentials)? greenlight,
+    TResult? Function(GreenlightDeviceCredentials credentials)? greenlight,
   }) {
     return greenlight?.call(credentials);
   }
@@ -4353,7 +4353,7 @@ class _$NodeCredentials_GreenlightImpl implements NodeCredentials_Greenlight {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(GreenlightCredentials credentials)? greenlight,
+    TResult Function(GreenlightDeviceCredentials credentials)? greenlight,
     required TResult orElse(),
   }) {
     if (greenlight != null) {
@@ -4392,11 +4392,11 @@ class _$NodeCredentials_GreenlightImpl implements NodeCredentials_Greenlight {
 }
 
 abstract class NodeCredentials_Greenlight implements NodeCredentials {
-  const factory NodeCredentials_Greenlight({required final GreenlightCredentials credentials}) =
+  const factory NodeCredentials_Greenlight({required final GreenlightDeviceCredentials credentials}) =
       _$NodeCredentials_GreenlightImpl;
 
   @override
-  GreenlightCredentials get credentials;
+  GreenlightDeviceCredentials get credentials;
   @override
   @JsonKey(ignore: true)
   _$$NodeCredentials_GreenlightImplCopyWith<_$NodeCredentials_GreenlightImpl> get copyWith =>

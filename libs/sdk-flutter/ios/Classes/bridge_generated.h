@@ -23,8 +23,8 @@ typedef struct wire_uint_8_list {
 } wire_uint_8_list;
 
 typedef struct wire_GreenlightCredentials {
-  struct wire_uint_8_list *device_key;
-  struct wire_uint_8_list *device_cert;
+  struct wire_uint_8_list *developer_key;
+  struct wire_uint_8_list *developer_cert;
 } wire_GreenlightCredentials;
 
 typedef struct wire_GreenlightNodeConfig {

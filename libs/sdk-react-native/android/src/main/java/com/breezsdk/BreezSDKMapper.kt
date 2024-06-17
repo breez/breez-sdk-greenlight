@@ -619,25 +619,25 @@ fun asGreenlightCredentials(greenlightCredentials: ReadableMap): GreenlightCrede
     if (!validateMandatoryFields(
             greenlightCredentials,
             arrayOf(
-                "deviceKey",
-                "deviceCert",
+                "developerKey",
+                "developerCert",
             ),
         )
     ) {
         return null
     }
-    val deviceKey = greenlightCredentials.getArray("deviceKey")?.let { asUByteList(it) }!!
-    val deviceCert = greenlightCredentials.getArray("deviceCert")?.let { asUByteList(it) }!!
+    val developerKey = greenlightCredentials.getArray("developerKey")?.let { asUByteList(it) }!!
+    val developerCert = greenlightCredentials.getArray("developerCert")?.let { asUByteList(it) }!!
     return GreenlightCredentials(
-        deviceKey,
-        deviceCert,
+        developerKey,
+        developerCert,
     )
 }
 
 fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap =
     readableMapOf(
-        "deviceKey" to readableArrayOf(greenlightCredentials.deviceKey),
-        "deviceCert" to readableArrayOf(greenlightCredentials.deviceCert),
+        "developerKey" to readableArrayOf(greenlightCredentials.developerKey),
+        "developerCert" to readableArrayOf(greenlightCredentials.developerCert),
     )
 
 fun asGreenlightCredentialsList(arr: ReadableArray): List<GreenlightCredentials> {
@@ -645,6 +645,38 @@ fun asGreenlightCredentialsList(arr: ReadableArray): List<GreenlightCredentials>
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asGreenlightCredentials(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asGreenlightDeviceCredentials(greenlightDeviceCredentials: ReadableMap): GreenlightDeviceCredentials? {
+    if (!validateMandatoryFields(
+            greenlightDeviceCredentials,
+            arrayOf(
+                "device",
+            ),
+        )
+    ) {
+        return null
+    }
+    val device = greenlightDeviceCredentials.getArray("device")?.let { asUByteList(it) }!!
+    return GreenlightDeviceCredentials(
+        device,
+    )
+}
+
+fun readableMapOf(greenlightDeviceCredentials: GreenlightDeviceCredentials): ReadableMap =
+    readableMapOf(
+        "device" to readableArrayOf(greenlightDeviceCredentials.device),
+    )
+
+fun asGreenlightDeviceCredentialsList(arr: ReadableArray): List<GreenlightDeviceCredentials> {
+    val list = ArrayList<GreenlightDeviceCredentials>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asGreenlightDeviceCredentials(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -4123,7 +4155,7 @@ fun asNodeCredentials(nodeCredentials: ReadableMap): NodeCredentials? {
     val type = nodeCredentials.getString("type")
 
     if (type == "greenlight") {
-        return NodeCredentials.Greenlight(nodeCredentials.getMap("credentials")?.let { asGreenlightCredentials(it) }!!)
+        return NodeCredentials.Greenlight(nodeCredentials.getMap("credentials")?.let { asGreenlightDeviceCredentials(it) }!!)
     }
     return null
 }

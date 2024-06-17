@@ -22,6 +22,9 @@ pub type NodeResult<T, E = NodeError> = Result<T, E>;
 #[derive(Debug, thiserror::Error)]
 pub enum NodeError {
     #[error("{0}")]
+    Credentials(String),
+
+    #[error("{0}")]
     Generic(String),
 
     #[error(transparent)]
@@ -59,6 +62,10 @@ pub enum NodeError {
 }
 
 impl NodeError {
+    pub(crate) fn credentials(err: &str) -> Self {
+        Self::Credentials(err.to_string())
+    }
+
     pub(crate) fn generic(err: &str) -> Self {
         Self::Generic(err.to_string())
     }

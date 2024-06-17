@@ -16,13 +16,13 @@ hex = { workspace = true }
 # The switch to 0.2 will happen with https://github.com/breez/breez-sdk/pull/724
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "97e2f418c331653330f9fa928ed10ed1538c27d0" }
+], rev = "e38a37613da7558c853f24be700c193f194a6bc9" }
 zbase32 = "0.1.2"
 base64 = { workspace = true }
 chrono = "0.4"
 ecies = { version = "0.2.6", default-features = false, features = ["pure"] }
 env_logger = "0.10"
-futures = "0.3.28"
+futures = "0.3.30"
 ripemd = "0.1"
 rand = "0.8"
 tiny-bip39 = "1"

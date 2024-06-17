@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use anyhow::Result;
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
@@ -6,30 +8,30 @@ use breez_sdk_core::{
     BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
     CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
     ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
-    GreenlightCredentials, GreenlightNodeConfig, HealthCheckStatus, InputType, InvoicePaidDetails,
-    LNInvoice, ListPaymentsRequest, LnPaymentDetails, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlErrorData, LnUrlPayError, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
-    LnUrlWithdrawError, LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult,
-    LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
-    MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
-    NodeConfig, NodeCredentials, NodeState, OnchainPaymentLimitsResponse, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, PayOnchainRequest,
-    PayOnchainResponse, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
-    PaymentTypeFilter, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
-    PrepareRefundResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RecommendedFees, RedeemOnchainFundsRequest, RedeemOnchainFundsResponse,
-    RefundRequest, RefundResponse, ReportIssueRequest, ReportPaymentFailureDetails,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
-    SwapAmountType, SwapInfo, SwapStatus, Symbol, TlvEntry, UnspentTransactionOutput,
-    UrlSuccessActionData, WrappedLnUrlPayResult, WrappedLnUrlPaySuccessData,
+    GreenlightCredentials, GreenlightDeviceCredentials, GreenlightNodeConfig, HealthCheckStatus,
+    InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails,
+    LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayError, LnUrlPayErrorData,
+    LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError, LnUrlWithdrawRequest,
+    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides,
+    LocalizedName, LogEntry, LogStream, LspInformation, MaxReverseSwapAmountResponse,
+    MessageSuccessActionData, MetadataFilter, MetadataItem, Network, NodeConfig, NodeCredentials,
+    NodeState, OnchainPaymentLimitsResponse, OpenChannelFeeRequest, OpenChannelFeeResponse,
+    OpeningFeeParams, OpeningFeeParamsMenu, PayOnchainRequest, PayOnchainResponse, Payment,
+    PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter,
+    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse, Rate,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
+    RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
+    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SuccessActionProcessed, SwapAmountType, SwapInfo, SwapStatus, Symbol,
+    TlvEntry, UnspentTransactionOutput, UrlSuccessActionData, WrappedLnUrlPayResult,
+    WrappedLnUrlPaySuccessData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
-use std::sync::Arc;
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 static LOG_INIT: OnceCell<bool> = OnceCell::new();

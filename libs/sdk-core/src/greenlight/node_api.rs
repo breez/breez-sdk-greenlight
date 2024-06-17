@@ -9,6 +9,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, Result};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::{Future, Stream};
+use gl_client::credentials::{Device, Nobody, TlsConfigProvider};
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -24,7 +25,6 @@ use gl_client::pb::{OffChainPayment, PayStatus};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::{Error, Signer};
-use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -60,7 +60,7 @@ const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
 pub(crate) struct Greenlight {
     sdk_config: Config,
     signer: Signer,
-    tls_config: TlsConfig,
+    device: Device,
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
     persister: Arc<SqliteStorage>,
@@ -87,10 +87,10 @@ impl Greenlight {
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Self> {
         // Derive the encryption key from the seed
-        let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
+        let temp_signer = Signer::new(seed.clone(), config.network.into(), Nobody::new())?;
         let encryption_key = Self::derive_bip32_key(
             config.network,
-            &signer,
+            &temp_signer,
             vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
         )?
         .to_priv()
@@ -103,8 +103,8 @@ impl Greenlight {
 
         // Query for the existing credentials
         let mut parsed_credentials =
-            Self::get_node_credentials(config.network, &signer, persister.clone())?
-                .ok_or(NodeError::generic("No credentials found"));
+            Self::get_node_credentials(config.network, &temp_signer, persister.clone())?
+                .ok_or(NodeError::credentials("No credentials found"));
         if parsed_credentials.is_err() {
             info!("No credentials found, trying to recover existing node");
             parsed_credentials = match Self::recover(config.network, seed.clone()).await {
@@ -132,42 +132,38 @@ impl Greenlight {
         }
 
         // Persist the connection credentials for future use and return the node instance
-        let res = match parsed_credentials {
+        match parsed_credentials {
             Ok(creds) => {
-                let json_creds = serde_json::to_string(&creds)?.as_bytes().to_vec();
-                let encrypted_creds = sym_encrypt(encryption_key_slice, json_creds.as_slice());
+                let temp_scheduler = Scheduler::new(config.network.into(), creds.clone()).await?;
+                debug!("upgrading credentials");
+                let creds = creds.upgrade(&temp_scheduler, &temp_signer).await?;
+                debug!("upgrading credentials succeeded");
+                let encrypted_creds = sym_encrypt(encryption_key_slice, &creds.to_bytes());
                 match encrypted_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(config, seed, creds, persister)
+                        Greenlight::new(config, seed, creds.clone(), persister)
                     }
-                    None => {
-                        return Err(NodeError::generic("Failed to encrypt credentials"));
-                    }
+                    None => Err(NodeError::generic("Failed to encrypt credentials")),
                 }
             }
-            Err(_) => Err(NodeError::generic("Failed to get gl credentials")),
-        };
-        res
+            Err(_) => Err(NodeError::credentials("Failed to get gl credentials")),
+        }
     }
 
     fn new(
         sdk_config: Config,
         seed: Vec<u8>,
-        connection_credentials: GreenlightCredentials,
+        device: Device,
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Greenlight> {
         let greenlight_network = sdk_config.network.into();
-        let tls_config = TlsConfig::new()?.identity(
-            connection_credentials.device_cert,
-            connection_credentials.device_key,
-        );
-        let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
+        let signer = Signer::new(seed, greenlight_network, device.clone())?;
 
         Ok(Greenlight {
             sdk_config,
             signer,
-            tls_config,
+            device,
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
             persister,
@@ -178,7 +174,7 @@ impl Greenlight {
     /// Create and, if necessary, upgrade the scheduler
     async fn init_scheduler(&self) -> Result<SchedulerClient<tonic::transport::channel::Channel>> {
         let channel = Endpoint::from_shared(utils::scheduler_uri())?
-            .tls_config(self.tls_config.client_tls_config())?
+            .tls_config(self.device.tls_config().client_tls_config())?
             .tcp_keepalive(Some(Duration::from_secs(5)))
             .http2_keep_alive_interval(Duration::from_secs(5))
             .keep_alive_timeout(Duration::from_secs(90))
@@ -308,61 +304,49 @@ impl Greenlight {
         seed: Vec<u8>,
         register_credentials: Option<GreenlightCredentials>,
         invite_code: Option<String>,
-    ) -> Result<GreenlightCredentials> {
+    ) -> Result<Device> {
         if invite_code.is_some() && register_credentials.is_some() {
             return Err(anyhow!("Cannot specify both invite code and credentials"));
         }
         let greenlight_network = network.into();
-        let tls_config = match register_credentials {
+        let creds = match register_credentials {
             Some(creds) => {
                 debug!("registering with credentials");
-                TlsConfig::new()?.identity(creds.device_cert, creds.device_key)
+                Nobody {
+                    cert: creds.developer_cert,
+                    key: creds.developer_key,
+                    ..Default::default()
+                }
             }
-            None => TlsConfig::new()?,
+            None => Nobody::new(),
         };
 
-        let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
-        let scheduler = Scheduler::with(
-            signer.node_id(),
-            greenlight_network,
-            utils::scheduler_uri(),
-            &tls_config,
-        )
-        .await?;
-        let recover_res: scheduler::RegistrationResponse =
+        let signer = Signer::new(seed, greenlight_network, creds.clone())?;
+        let scheduler = Scheduler::new(greenlight_network, creds).await?;
+
+        let register_res: scheduler::RegistrationResponse =
             scheduler.register(&signer, invite_code).await?;
 
-        Ok(GreenlightCredentials {
-            device_key: recover_res.device_key.into(),
-            device_cert: recover_res.device_cert.into(),
-        })
+        Ok(Device::from_bytes(register_res.creds))
     }
 
-    async fn recover(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
+    async fn recover(network: Network, seed: Vec<u8>) -> Result<Device> {
         let greenlight_network = network.into();
-        let tls_config = TlsConfig::new()?;
-        let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
-        let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
+        let credentials = Nobody::new();
+        let signer = Signer::new(seed, greenlight_network, credentials.clone())?;
+        let scheduler = Scheduler::new(greenlight_network, credentials).await?;
         let recover_res: scheduler::RecoveryResponse = scheduler.recover(&signer).await?;
 
-        Ok(GreenlightCredentials {
-            device_key: recover_res.device_key.as_bytes().to_vec(),
-            device_cert: recover_res.device_cert.as_bytes().to_vec(),
-        })
+        Ok(Device::from_bytes(recover_res.creds))
     }
 
     async fn get_client(&self) -> NodeResult<node::Client> {
         let mut gl_client = self.gl_client.lock().await;
         if gl_client.is_none() {
-            let scheduler = Scheduler::new(self.signer.node_id(), self.sdk_config.network.into())
+            let scheduler = Scheduler::new(self.sdk_config.network.into(), self.device.clone())
                 .await
                 .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
-            *gl_client = Some(
-                scheduler
-                    .schedule(self.tls_config.clone())
-                    .await
-                    .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?,
-            );
+            *gl_client = Some(scheduler.node().await?);
         }
         Ok(gl_client.clone().unwrap())
     }
@@ -370,15 +354,10 @@ impl Greenlight {
     pub(crate) async fn get_node_client(&self) -> NodeResult<node::ClnClient> {
         let mut node_client = self.node_client.lock().await;
         if node_client.is_none() {
-            let scheduler = Scheduler::new(self.signer.node_id(), self.sdk_config.network.into())
+            let scheduler = Scheduler::new(self.sdk_config.network.into(), self.device.clone())
                 .await
                 .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
-            *node_client = Some(
-                scheduler
-                    .schedule(self.tls_config.clone())
-                    .await
-                    .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?,
-            );
+            *node_client = Some(scheduler.node().await?);
         }
         Ok(node_client.clone().unwrap())
     }
@@ -387,7 +366,7 @@ impl Greenlight {
         network: Network,
         signer: &Signer,
         persister: Arc<SqliteStorage>,
-    ) -> NodeResult<Option<GreenlightCredentials>> {
+    ) -> NodeResult<Option<Device>> {
         // Derive the encryption key from the seed
         let encryption_key = Self::derive_bip32_key(
             network,
@@ -418,12 +397,14 @@ impl Greenlight {
                 }
                 match decrypted_credentials {
                     Some(decrypted_creds) => {
-                        let credentials: GreenlightCredentials =
-                            serde_json::from_slice(decrypted_creds.as_slice())
-                                .map_err(|_| NodeError::generic("Unable to parse credentials"))?;
-                        Ok(Some(credentials))
+                        let credentials = Device::from_bytes(decrypted_creds.as_slice());
+                        if credentials.cert.is_empty() {
+                            Err(NodeError::credentials("Unable to parse credentials"))
+                        } else {
+                            Ok(Some(credentials))
+                        }
                     }
-                    None => Err(NodeError::generic(
+                    None => Err(NodeError::credentials(
                         "Failed to decrypt credentials, seed doesn't match existing node",
                     )),
                 }
@@ -786,7 +767,11 @@ impl NodeAPI for Greenlight {
             &self.signer,
             self.persister.clone(),
         )?
-        .map(|credentials| NodeCredentials::Greenlight { credentials }))
+        .map(|credentials| NodeCredentials::Greenlight {
+            credentials: GreenlightDeviceCredentials {
+                device: credentials.to_bytes(),
+            },
+        }))
     }
 
     async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()> {
