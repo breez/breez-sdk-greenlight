@@ -1,5 +1,4 @@
 pub mod pay;
-mod withdraw;
 
 #[cfg(test)]
 mod tests {
