@@ -3668,6 +3668,496 @@ abstract class LnUrlCallbackStatus_ErrorStatus implements LnUrlCallbackStatus {
 }
 
 /// @nodoc
+mixin _$LnUrlPayResult {
+  Object get data => throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
+    required TResult Function(LnUrlErrorData data) endpointError,
+    required TResult Function(LnUrlPayErrorData data) payError,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlErrorData data)? endpointError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult Function(LnUrlErrorData data)? endpointError,
+    TResult Function(LnUrlPayErrorData data)? payError,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LnUrlPayResult_EndpointSuccess value) endpointSuccess,
+    required TResult Function(LnUrlPayResult_EndpointError value) endpointError,
+    required TResult Function(LnUrlPayResult_PayError value) payError,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult? Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult? Function(LnUrlPayResult_PayError value)? payError,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult Function(LnUrlPayResult_PayError value)? payError,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $LnUrlPayResultCopyWith<$Res> {
+  factory $LnUrlPayResultCopyWith(LnUrlPayResult value, $Res Function(LnUrlPayResult) then) =
+      _$LnUrlPayResultCopyWithImpl<$Res, LnUrlPayResult>;
+}
+
+/// @nodoc
+class _$LnUrlPayResultCopyWithImpl<$Res, $Val extends LnUrlPayResult>
+    implements $LnUrlPayResultCopyWith<$Res> {
+  _$LnUrlPayResultCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+}
+
+/// @nodoc
+abstract class _$$LnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
+  factory _$$LnUrlPayResult_EndpointSuccessImplCopyWith(_$LnUrlPayResult_EndpointSuccessImpl value,
+          $Res Function(_$LnUrlPayResult_EndpointSuccessImpl) then) =
+      __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({LnUrlPaySuccessData data});
+}
+
+/// @nodoc
+class __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>
+    extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointSuccessImpl>
+    implements _$$LnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
+  __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl(
+      _$LnUrlPayResult_EndpointSuccessImpl _value, $Res Function(_$LnUrlPayResult_EndpointSuccessImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_$LnUrlPayResult_EndpointSuccessImpl(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as LnUrlPaySuccessData,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$LnUrlPayResult_EndpointSuccessImpl implements LnUrlPayResult_EndpointSuccess {
+  const _$LnUrlPayResult_EndpointSuccessImpl({required this.data});
+
+  @override
+  final LnUrlPaySuccessData data;
+
+  @override
+  String toString() {
+    return 'LnUrlPayResult.endpointSuccess(data: $data)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$LnUrlPayResult_EndpointSuccessImpl &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$LnUrlPayResult_EndpointSuccessImplCopyWith<_$LnUrlPayResult_EndpointSuccessImpl> get copyWith =>
+      __$$LnUrlPayResult_EndpointSuccessImplCopyWithImpl<_$LnUrlPayResult_EndpointSuccessImpl>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
+    required TResult Function(LnUrlErrorData data) endpointError,
+    required TResult Function(LnUrlPayErrorData data) payError,
+  }) {
+    return endpointSuccess(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlErrorData data)? endpointError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
+  }) {
+    return endpointSuccess?.call(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult Function(LnUrlErrorData data)? endpointError,
+    TResult Function(LnUrlPayErrorData data)? payError,
+    required TResult orElse(),
+  }) {
+    if (endpointSuccess != null) {
+      return endpointSuccess(data);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LnUrlPayResult_EndpointSuccess value) endpointSuccess,
+    required TResult Function(LnUrlPayResult_EndpointError value) endpointError,
+    required TResult Function(LnUrlPayResult_PayError value) payError,
+  }) {
+    return endpointSuccess(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult? Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult? Function(LnUrlPayResult_PayError value)? payError,
+  }) {
+    return endpointSuccess?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult Function(LnUrlPayResult_PayError value)? payError,
+    required TResult orElse(),
+  }) {
+    if (endpointSuccess != null) {
+      return endpointSuccess(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class LnUrlPayResult_EndpointSuccess implements LnUrlPayResult {
+  const factory LnUrlPayResult_EndpointSuccess({required final LnUrlPaySuccessData data}) =
+      _$LnUrlPayResult_EndpointSuccessImpl;
+
+  @override
+  LnUrlPaySuccessData get data;
+  @JsonKey(ignore: true)
+  _$$LnUrlPayResult_EndpointSuccessImplCopyWith<_$LnUrlPayResult_EndpointSuccessImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$LnUrlPayResult_EndpointErrorImplCopyWith<$Res> {
+  factory _$$LnUrlPayResult_EndpointErrorImplCopyWith(
+          _$LnUrlPayResult_EndpointErrorImpl value, $Res Function(_$LnUrlPayResult_EndpointErrorImpl) then) =
+      __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({LnUrlErrorData data});
+}
+
+/// @nodoc
+class __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>
+    extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_EndpointErrorImpl>
+    implements _$$LnUrlPayResult_EndpointErrorImplCopyWith<$Res> {
+  __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl(
+      _$LnUrlPayResult_EndpointErrorImpl _value, $Res Function(_$LnUrlPayResult_EndpointErrorImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_$LnUrlPayResult_EndpointErrorImpl(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as LnUrlErrorData,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$LnUrlPayResult_EndpointErrorImpl implements LnUrlPayResult_EndpointError {
+  const _$LnUrlPayResult_EndpointErrorImpl({required this.data});
+
+  @override
+  final LnUrlErrorData data;
+
+  @override
+  String toString() {
+    return 'LnUrlPayResult.endpointError(data: $data)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$LnUrlPayResult_EndpointErrorImpl &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$LnUrlPayResult_EndpointErrorImplCopyWith<_$LnUrlPayResult_EndpointErrorImpl> get copyWith =>
+      __$$LnUrlPayResult_EndpointErrorImplCopyWithImpl<_$LnUrlPayResult_EndpointErrorImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
+    required TResult Function(LnUrlErrorData data) endpointError,
+    required TResult Function(LnUrlPayErrorData data) payError,
+  }) {
+    return endpointError(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlErrorData data)? endpointError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
+  }) {
+    return endpointError?.call(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult Function(LnUrlErrorData data)? endpointError,
+    TResult Function(LnUrlPayErrorData data)? payError,
+    required TResult orElse(),
+  }) {
+    if (endpointError != null) {
+      return endpointError(data);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LnUrlPayResult_EndpointSuccess value) endpointSuccess,
+    required TResult Function(LnUrlPayResult_EndpointError value) endpointError,
+    required TResult Function(LnUrlPayResult_PayError value) payError,
+  }) {
+    return endpointError(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult? Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult? Function(LnUrlPayResult_PayError value)? payError,
+  }) {
+    return endpointError?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult Function(LnUrlPayResult_PayError value)? payError,
+    required TResult orElse(),
+  }) {
+    if (endpointError != null) {
+      return endpointError(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class LnUrlPayResult_EndpointError implements LnUrlPayResult {
+  const factory LnUrlPayResult_EndpointError({required final LnUrlErrorData data}) =
+      _$LnUrlPayResult_EndpointErrorImpl;
+
+  @override
+  LnUrlErrorData get data;
+  @JsonKey(ignore: true)
+  _$$LnUrlPayResult_EndpointErrorImplCopyWith<_$LnUrlPayResult_EndpointErrorImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$LnUrlPayResult_PayErrorImplCopyWith<$Res> {
+  factory _$$LnUrlPayResult_PayErrorImplCopyWith(
+          _$LnUrlPayResult_PayErrorImpl value, $Res Function(_$LnUrlPayResult_PayErrorImpl) then) =
+      __$$LnUrlPayResult_PayErrorImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({LnUrlPayErrorData data});
+}
+
+/// @nodoc
+class __$$LnUrlPayResult_PayErrorImplCopyWithImpl<$Res>
+    extends _$LnUrlPayResultCopyWithImpl<$Res, _$LnUrlPayResult_PayErrorImpl>
+    implements _$$LnUrlPayResult_PayErrorImplCopyWith<$Res> {
+  __$$LnUrlPayResult_PayErrorImplCopyWithImpl(
+      _$LnUrlPayResult_PayErrorImpl _value, $Res Function(_$LnUrlPayResult_PayErrorImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? data = null,
+  }) {
+    return _then(_$LnUrlPayResult_PayErrorImpl(
+      data: null == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as LnUrlPayErrorData,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$LnUrlPayResult_PayErrorImpl implements LnUrlPayResult_PayError {
+  const _$LnUrlPayResult_PayErrorImpl({required this.data});
+
+  @override
+  final LnUrlPayErrorData data;
+
+  @override
+  String toString() {
+    return 'LnUrlPayResult.payError(data: $data)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$LnUrlPayResult_PayErrorImpl &&
+            (identical(other.data, data) || other.data == data));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, data);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$LnUrlPayResult_PayErrorImplCopyWith<_$LnUrlPayResult_PayErrorImpl> get copyWith =>
+      __$$LnUrlPayResult_PayErrorImplCopyWithImpl<_$LnUrlPayResult_PayErrorImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(LnUrlPaySuccessData data) endpointSuccess,
+    required TResult Function(LnUrlErrorData data) endpointError,
+    required TResult Function(LnUrlPayErrorData data) payError,
+  }) {
+    return payError(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult? Function(LnUrlErrorData data)? endpointError,
+    TResult? Function(LnUrlPayErrorData data)? payError,
+  }) {
+    return payError?.call(data);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(LnUrlPaySuccessData data)? endpointSuccess,
+    TResult Function(LnUrlErrorData data)? endpointError,
+    TResult Function(LnUrlPayErrorData data)? payError,
+    required TResult orElse(),
+  }) {
+    if (payError != null) {
+      return payError(data);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(LnUrlPayResult_EndpointSuccess value) endpointSuccess,
+    required TResult Function(LnUrlPayResult_EndpointError value) endpointError,
+    required TResult Function(LnUrlPayResult_PayError value) payError,
+  }) {
+    return payError(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult? Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult? Function(LnUrlPayResult_PayError value)? payError,
+  }) {
+    return payError?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(LnUrlPayResult_EndpointSuccess value)? endpointSuccess,
+    TResult Function(LnUrlPayResult_EndpointError value)? endpointError,
+    TResult Function(LnUrlPayResult_PayError value)? payError,
+    required TResult orElse(),
+  }) {
+    if (payError != null) {
+      return payError(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class LnUrlPayResult_PayError implements LnUrlPayResult {
+  const factory LnUrlPayResult_PayError({required final LnUrlPayErrorData data}) =
+      _$LnUrlPayResult_PayErrorImpl;
+
+  @override
+  LnUrlPayErrorData get data;
+  @JsonKey(ignore: true)
+  _$$LnUrlPayResult_PayErrorImplCopyWith<_$LnUrlPayResult_PayErrorImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$LnUrlWithdrawResult {
   Object get data => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -5431,501 +5921,5 @@ abstract class SuccessActionProcessed_Url implements SuccessActionProcessed {
   UrlSuccessActionData get data;
   @JsonKey(ignore: true)
   _$$SuccessActionProcessed_UrlImplCopyWith<_$SuccessActionProcessed_UrlImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$WrappedLnUrlPayResult {
-  Object get data => throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPaySuccessData data) endpointSuccess,
-    required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(LnUrlPayErrorData data) payError,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(LnUrlPayErrorData data)? payError,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(LnUrlPayErrorData data)? payError,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPayResult_EndpointSuccess value) endpointSuccess,
-    required TResult Function(WrappedLnUrlPayResult_EndpointError value) endpointError,
-    required TResult Function(WrappedLnUrlPayResult_PayError value) payError,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult? Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult? Function(WrappedLnUrlPayResult_PayError value)? payError,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult Function(WrappedLnUrlPayResult_PayError value)? payError,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $WrappedLnUrlPayResultCopyWith<$Res> {
-  factory $WrappedLnUrlPayResultCopyWith(
-          WrappedLnUrlPayResult value, $Res Function(WrappedLnUrlPayResult) then) =
-      _$WrappedLnUrlPayResultCopyWithImpl<$Res, WrappedLnUrlPayResult>;
-}
-
-/// @nodoc
-class _$WrappedLnUrlPayResultCopyWithImpl<$Res, $Val extends WrappedLnUrlPayResult>
-    implements $WrappedLnUrlPayResultCopyWith<$Res> {
-  _$WrappedLnUrlPayResultCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-}
-
-/// @nodoc
-abstract class _$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
-  factory _$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWith(
-          _$WrappedLnUrlPayResult_EndpointSuccessImpl value,
-          $Res Function(_$WrappedLnUrlPayResult_EndpointSuccessImpl) then) =
-      __$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({WrappedLnUrlPaySuccessData data});
-}
-
-/// @nodoc
-class __$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWithImpl<$Res>
-    extends _$WrappedLnUrlPayResultCopyWithImpl<$Res, _$WrappedLnUrlPayResult_EndpointSuccessImpl>
-    implements _$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWith<$Res> {
-  __$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWithImpl(
-      _$WrappedLnUrlPayResult_EndpointSuccessImpl _value,
-      $Res Function(_$WrappedLnUrlPayResult_EndpointSuccessImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? data = null,
-  }) {
-    return _then(_$WrappedLnUrlPayResult_EndpointSuccessImpl(
-      data: null == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as WrappedLnUrlPaySuccessData,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$WrappedLnUrlPayResult_EndpointSuccessImpl implements WrappedLnUrlPayResult_EndpointSuccess {
-  const _$WrappedLnUrlPayResult_EndpointSuccessImpl({required this.data});
-
-  @override
-  final WrappedLnUrlPaySuccessData data;
-
-  @override
-  String toString() {
-    return 'WrappedLnUrlPayResult.endpointSuccess(data: $data)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$WrappedLnUrlPayResult_EndpointSuccessImpl &&
-            (identical(other.data, data) || other.data == data));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, data);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWith<_$WrappedLnUrlPayResult_EndpointSuccessImpl>
-      get copyWith => __$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWithImpl<
-          _$WrappedLnUrlPayResult_EndpointSuccessImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPaySuccessData data) endpointSuccess,
-    required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(LnUrlPayErrorData data) payError,
-  }) {
-    return endpointSuccess(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(LnUrlPayErrorData data)? payError,
-  }) {
-    return endpointSuccess?.call(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(LnUrlPayErrorData data)? payError,
-    required TResult orElse(),
-  }) {
-    if (endpointSuccess != null) {
-      return endpointSuccess(data);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPayResult_EndpointSuccess value) endpointSuccess,
-    required TResult Function(WrappedLnUrlPayResult_EndpointError value) endpointError,
-    required TResult Function(WrappedLnUrlPayResult_PayError value) payError,
-  }) {
-    return endpointSuccess(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult? Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult? Function(WrappedLnUrlPayResult_PayError value)? payError,
-  }) {
-    return endpointSuccess?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult Function(WrappedLnUrlPayResult_PayError value)? payError,
-    required TResult orElse(),
-  }) {
-    if (endpointSuccess != null) {
-      return endpointSuccess(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class WrappedLnUrlPayResult_EndpointSuccess implements WrappedLnUrlPayResult {
-  const factory WrappedLnUrlPayResult_EndpointSuccess({required final WrappedLnUrlPaySuccessData data}) =
-      _$WrappedLnUrlPayResult_EndpointSuccessImpl;
-
-  @override
-  WrappedLnUrlPaySuccessData get data;
-  @JsonKey(ignore: true)
-  _$$WrappedLnUrlPayResult_EndpointSuccessImplCopyWith<_$WrappedLnUrlPayResult_EndpointSuccessImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class _$$WrappedLnUrlPayResult_EndpointErrorImplCopyWith<$Res> {
-  factory _$$WrappedLnUrlPayResult_EndpointErrorImplCopyWith(_$WrappedLnUrlPayResult_EndpointErrorImpl value,
-          $Res Function(_$WrappedLnUrlPayResult_EndpointErrorImpl) then) =
-      __$$WrappedLnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({LnUrlErrorData data});
-}
-
-/// @nodoc
-class __$$WrappedLnUrlPayResult_EndpointErrorImplCopyWithImpl<$Res>
-    extends _$WrappedLnUrlPayResultCopyWithImpl<$Res, _$WrappedLnUrlPayResult_EndpointErrorImpl>
-    implements _$$WrappedLnUrlPayResult_EndpointErrorImplCopyWith<$Res> {
-  __$$WrappedLnUrlPayResult_EndpointErrorImplCopyWithImpl(_$WrappedLnUrlPayResult_EndpointErrorImpl _value,
-      $Res Function(_$WrappedLnUrlPayResult_EndpointErrorImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? data = null,
-  }) {
-    return _then(_$WrappedLnUrlPayResult_EndpointErrorImpl(
-      data: null == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as LnUrlErrorData,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$WrappedLnUrlPayResult_EndpointErrorImpl implements WrappedLnUrlPayResult_EndpointError {
-  const _$WrappedLnUrlPayResult_EndpointErrorImpl({required this.data});
-
-  @override
-  final LnUrlErrorData data;
-
-  @override
-  String toString() {
-    return 'WrappedLnUrlPayResult.endpointError(data: $data)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$WrappedLnUrlPayResult_EndpointErrorImpl &&
-            (identical(other.data, data) || other.data == data));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, data);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$WrappedLnUrlPayResult_EndpointErrorImplCopyWith<_$WrappedLnUrlPayResult_EndpointErrorImpl>
-      get copyWith =>
-          __$$WrappedLnUrlPayResult_EndpointErrorImplCopyWithImpl<_$WrappedLnUrlPayResult_EndpointErrorImpl>(
-              this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPaySuccessData data) endpointSuccess,
-    required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(LnUrlPayErrorData data) payError,
-  }) {
-    return endpointError(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(LnUrlPayErrorData data)? payError,
-  }) {
-    return endpointError?.call(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(LnUrlPayErrorData data)? payError,
-    required TResult orElse(),
-  }) {
-    if (endpointError != null) {
-      return endpointError(data);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPayResult_EndpointSuccess value) endpointSuccess,
-    required TResult Function(WrappedLnUrlPayResult_EndpointError value) endpointError,
-    required TResult Function(WrappedLnUrlPayResult_PayError value) payError,
-  }) {
-    return endpointError(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult? Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult? Function(WrappedLnUrlPayResult_PayError value)? payError,
-  }) {
-    return endpointError?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult Function(WrappedLnUrlPayResult_PayError value)? payError,
-    required TResult orElse(),
-  }) {
-    if (endpointError != null) {
-      return endpointError(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class WrappedLnUrlPayResult_EndpointError implements WrappedLnUrlPayResult {
-  const factory WrappedLnUrlPayResult_EndpointError({required final LnUrlErrorData data}) =
-      _$WrappedLnUrlPayResult_EndpointErrorImpl;
-
-  @override
-  LnUrlErrorData get data;
-  @JsonKey(ignore: true)
-  _$$WrappedLnUrlPayResult_EndpointErrorImplCopyWith<_$WrappedLnUrlPayResult_EndpointErrorImpl>
-      get copyWith => throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class _$$WrappedLnUrlPayResult_PayErrorImplCopyWith<$Res> {
-  factory _$$WrappedLnUrlPayResult_PayErrorImplCopyWith(_$WrappedLnUrlPayResult_PayErrorImpl value,
-          $Res Function(_$WrappedLnUrlPayResult_PayErrorImpl) then) =
-      __$$WrappedLnUrlPayResult_PayErrorImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({LnUrlPayErrorData data});
-}
-
-/// @nodoc
-class __$$WrappedLnUrlPayResult_PayErrorImplCopyWithImpl<$Res>
-    extends _$WrappedLnUrlPayResultCopyWithImpl<$Res, _$WrappedLnUrlPayResult_PayErrorImpl>
-    implements _$$WrappedLnUrlPayResult_PayErrorImplCopyWith<$Res> {
-  __$$WrappedLnUrlPayResult_PayErrorImplCopyWithImpl(
-      _$WrappedLnUrlPayResult_PayErrorImpl _value, $Res Function(_$WrappedLnUrlPayResult_PayErrorImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? data = null,
-  }) {
-    return _then(_$WrappedLnUrlPayResult_PayErrorImpl(
-      data: null == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as LnUrlPayErrorData,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$WrappedLnUrlPayResult_PayErrorImpl implements WrappedLnUrlPayResult_PayError {
-  const _$WrappedLnUrlPayResult_PayErrorImpl({required this.data});
-
-  @override
-  final LnUrlPayErrorData data;
-
-  @override
-  String toString() {
-    return 'WrappedLnUrlPayResult.payError(data: $data)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$WrappedLnUrlPayResult_PayErrorImpl &&
-            (identical(other.data, data) || other.data == data));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, data);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$WrappedLnUrlPayResult_PayErrorImplCopyWith<_$WrappedLnUrlPayResult_PayErrorImpl> get copyWith =>
-      __$$WrappedLnUrlPayResult_PayErrorImplCopyWithImpl<_$WrappedLnUrlPayResult_PayErrorImpl>(
-          this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPaySuccessData data) endpointSuccess,
-    required TResult Function(LnUrlErrorData data) endpointError,
-    required TResult Function(LnUrlPayErrorData data) payError,
-  }) {
-    return payError(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult? Function(LnUrlErrorData data)? endpointError,
-    TResult? Function(LnUrlPayErrorData data)? payError,
-  }) {
-    return payError?.call(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPaySuccessData data)? endpointSuccess,
-    TResult Function(LnUrlErrorData data)? endpointError,
-    TResult Function(LnUrlPayErrorData data)? payError,
-    required TResult orElse(),
-  }) {
-    if (payError != null) {
-      return payError(data);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(WrappedLnUrlPayResult_EndpointSuccess value) endpointSuccess,
-    required TResult Function(WrappedLnUrlPayResult_EndpointError value) endpointError,
-    required TResult Function(WrappedLnUrlPayResult_PayError value) payError,
-  }) {
-    return payError(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult? Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult? Function(WrappedLnUrlPayResult_PayError value)? payError,
-  }) {
-    return payError?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(WrappedLnUrlPayResult_EndpointSuccess value)? endpointSuccess,
-    TResult Function(WrappedLnUrlPayResult_EndpointError value)? endpointError,
-    TResult Function(WrappedLnUrlPayResult_PayError value)? payError,
-    required TResult orElse(),
-  }) {
-    if (payError != null) {
-      return payError(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class WrappedLnUrlPayResult_PayError implements WrappedLnUrlPayResult {
-  const factory WrappedLnUrlPayResult_PayError({required final LnUrlPayErrorData data}) =
-      _$WrappedLnUrlPayResult_PayErrorImpl;
-
-  @override
-  LnUrlPayErrorData get data;
-  @JsonKey(ignore: true)
-  _$$WrappedLnUrlPayResult_PayErrorImplCopyWith<_$WrappedLnUrlPayResult_PayErrorImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

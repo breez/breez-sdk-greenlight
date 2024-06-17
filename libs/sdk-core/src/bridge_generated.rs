@@ -35,8 +35,8 @@ use crate::fiat::LocaleOverrides;
 use crate::fiat::LocalizedName;
 use crate::fiat::Rate;
 use crate::fiat::Symbol;
-use crate::lnurl::pay::WrappedLnUrlPayResult;
-use crate::lnurl::pay::WrappedLnUrlPaySuccessData;
+use crate::lnurl::pay::LnUrlPayResult;
+use crate::lnurl::pay::LnUrlPaySuccessData;
 use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
 use crate::models::BuyBitcoinProvider;
@@ -556,7 +556,7 @@ fn wire_receive_payment_impl(
     )
 }
 fn wire_lnurl_pay_impl(port_: MessagePort, req: impl Wire2Api<LnUrlPayRequest> + UnwindSafe) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, WrappedLnUrlPayResult, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, LnUrlPayResult, _>(
         WrapInfo {
             debug_name: "lnurl_pay",
             port: Some(port_),
@@ -1750,6 +1750,43 @@ impl rust2dart::IntoIntoDart<mirror_LnUrlPayRequestData> for LnUrlPayRequestData
     }
 }
 
+impl support::IntoDart for LnUrlPayResult {
+    fn into_dart(self) -> support::DartAbi {
+        match self {
+            Self::EndpointSuccess { data } => {
+                vec![0.into_dart(), data.into_into_dart().into_dart()]
+            }
+            Self::EndpointError { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
+            Self::PayError { data } => vec![2.into_dart(), data.into_into_dart().into_dart()],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlPayResult {}
+impl rust2dart::IntoIntoDart<LnUrlPayResult> for LnUrlPayResult {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for LnUrlPaySuccessData {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.payment.into_into_dart().into_dart(),
+            self.success_action
+                .map(|v| mirror_SuccessActionProcessed(v))
+                .into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for LnUrlPaySuccessData {}
+impl rust2dart::IntoIntoDart<LnUrlPaySuccessData> for LnUrlPaySuccessData {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
 impl support::IntoDart for mirror_LnUrlWithdrawRequestData {
     fn into_dart(self) -> support::DartAbi {
         vec![
@@ -2565,43 +2602,6 @@ impl support::IntoDartExceptPrimitive for mirror_UrlSuccessActionData {}
 impl rust2dart::IntoIntoDart<mirror_UrlSuccessActionData> for UrlSuccessActionData {
     fn into_into_dart(self) -> mirror_UrlSuccessActionData {
         mirror_UrlSuccessActionData(self)
-    }
-}
-
-impl support::IntoDart for WrappedLnUrlPayResult {
-    fn into_dart(self) -> support::DartAbi {
-        match self {
-            Self::EndpointSuccess { data } => {
-                vec![0.into_dart(), data.into_into_dart().into_dart()]
-            }
-            Self::EndpointError { data } => vec![1.into_dart(), data.into_into_dart().into_dart()],
-            Self::PayError { data } => vec![2.into_dart(), data.into_into_dart().into_dart()],
-        }
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for WrappedLnUrlPayResult {}
-impl rust2dart::IntoIntoDart<WrappedLnUrlPayResult> for WrappedLnUrlPayResult {
-    fn into_into_dart(self) -> Self {
-        self
-    }
-}
-
-impl support::IntoDart for WrappedLnUrlPaySuccessData {
-    fn into_dart(self) -> support::DartAbi {
-        vec![
-            self.payment.into_into_dart().into_dart(),
-            self.success_action
-                .map(|v| mirror_SuccessActionProcessed(v))
-                .into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for WrappedLnUrlPaySuccessData {}
-impl rust2dart::IntoIntoDart<WrappedLnUrlPaySuccessData> for WrappedLnUrlPaySuccessData {
-    fn into_into_dart(self) -> Self {
-        self
     }
 }
 

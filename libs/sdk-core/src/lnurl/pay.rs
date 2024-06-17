@@ -16,14 +16,14 @@ use crate::Payment;
 /// This includes the payment hash of the failed invoice and the failure reason.
 #[derive(Serialize)]
 #[allow(clippy::large_enum_variant)]
-pub enum WrappedLnUrlPayResult {
-    EndpointSuccess { data: WrappedLnUrlPaySuccessData },
+pub enum LnUrlPayResult {
+    EndpointSuccess { data: LnUrlPaySuccessData },
     EndpointError { data: LnUrlErrorData },
     PayError { data: LnUrlPayErrorData },
 }
 
 #[derive(Serialize)]
-pub struct WrappedLnUrlPaySuccessData {
+pub struct LnUrlPaySuccessData {
     pub payment: Payment,
     pub success_action: Option<SuccessActionProcessed>,
 }
@@ -574,16 +574,16 @@ pub(crate) mod tests {
             })
             .await?
         {
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },
             } => Ok(()),
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(_),
                         ..
                     },
@@ -648,7 +648,7 @@ pub(crate) mod tests {
             })
             .await?
         {
-            WrappedLnUrlPayResult::EndpointSuccess { data } => match data.payment.id {
+            LnUrlPayResult::EndpointSuccess { data } => match data.payment.id {
                 s if s == inv.payment_hash().to_hex() => Ok(()),
                 _ => Err(anyhow!("Unexpected payment hash")),
             },
@@ -681,18 +681,18 @@ pub(crate) mod tests {
             })
             .await?
         {
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },
             } => Err(anyhow!(
                 "Expected success action in callback, but none provided"
             )),
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(SuccessActionProcessed::Message { data: msg }),
                         ..
                     },
@@ -758,12 +758,9 @@ pub(crate) mod tests {
                 payment_label: None,
             })
             .await;
-        assert!(matches!(
-            res,
-            Ok(WrappedLnUrlPayResult::EndpointError { data: _ })
-        ));
+        assert!(matches!(res, Ok(LnUrlPayResult::EndpointError { data: _ })));
 
-        if let Ok(WrappedLnUrlPayResult::EndpointError { data: err_msg }) = res {
+        if let Ok(LnUrlPayResult::EndpointError { data: err_msg }) = res {
             assert_eq!(expected_error_msg, err_msg.reason);
         } else {
             return Err(anyhow!(
@@ -799,9 +796,9 @@ pub(crate) mod tests {
             })
             .await?
         {
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(SuccessActionProcessed::Url { data: url }),
                         ..
                     },
@@ -814,9 +811,9 @@ pub(crate) mod tests {
                     Err(anyhow!("Unexpected success action content"))
                 }
             }
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },
@@ -885,9 +882,9 @@ pub(crate) mod tests {
             })
             .await?
         {
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: Some(received_sa),
                         ..
                     },
@@ -897,9 +894,9 @@ pub(crate) mod tests {
                     "Decrypted payload and description doesn't match expected success action"
                 )),
             },
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                    WrappedLnUrlPaySuccessData {
+                    LnUrlPaySuccessData {
                         success_action: None,
                         ..
                     },
@@ -969,9 +966,9 @@ pub(crate) mod tests {
             })
             .await?
         {
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                WrappedLnUrlPaySuccessData {
+                LnUrlPaySuccessData {
                     success_action: Some(received_sa),
                     ..
                 },
@@ -981,9 +978,9 @@ pub(crate) mod tests {
                     "Decrypted payload and description doesn't match expected success action: {received_sa:?}"
                 )),
             },
-            WrappedLnUrlPayResult::EndpointSuccess {
+            LnUrlPayResult::EndpointSuccess {
                 data:
-                WrappedLnUrlPaySuccessData {
+                LnUrlPaySuccessData {
                     success_action: None,
                     ..
                 },

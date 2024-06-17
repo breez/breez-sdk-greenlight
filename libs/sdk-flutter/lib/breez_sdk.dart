@@ -272,7 +272,7 @@ class BreezSDK {
 
   /// Second step of LNURL-pay. The first step is `parse()`, which also validates the LNURL destination
   /// and generates the `LnUrlPayRequestData` payload needed here.
-  Future<WrappedLnUrlPayResult> lnurlPay({
+  Future<LnUrlPayResult> lnurlPay({
     required LnUrlPayRequest req,
   }) async {
     return await _lnToolkit.lnurlPay(req: req);

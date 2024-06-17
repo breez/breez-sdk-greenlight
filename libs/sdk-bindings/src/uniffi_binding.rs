@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use breez_sdk_core::lnurl::pay::{LnUrlPayResult, LnUrlPaySuccessData};
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, AesSuccessActionDataResult,
@@ -27,8 +28,7 @@ use breez_sdk_core::{
     SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
     ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
     StaticBackupResponse, SuccessActionProcessed, SwapAmountType, SwapInfo, SwapStatus, Symbol,
-    TlvEntry, UnspentTransactionOutput, UrlSuccessActionData, WrappedLnUrlPayResult,
-    WrappedLnUrlPaySuccessData,
+    TlvEntry, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -186,7 +186,7 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.set_payment_metadata(hash, metadata))
     }
 
-    pub fn pay_lnurl(&self, req: LnUrlPayRequest) -> Result<WrappedLnUrlPayResult, LnUrlPayError> {
+    pub fn pay_lnurl(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
         rt().block_on(self.breez_services.lnurl_pay(req))
     }
 

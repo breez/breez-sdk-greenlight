@@ -357,10 +357,7 @@ impl BreezServices {
     /// is made.
     ///
     /// This method will return an [anyhow::Error] when any validation check fails.
-    pub async fn lnurl_pay(
-        &self,
-        req: LnUrlPayRequest,
-    ) -> Result<WrappedLnUrlPayResult, LnUrlPayError> {
+    pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
         match validate_lnurl_pay(
             req.amount_msat,
             &req.comment,
@@ -370,7 +367,7 @@ impl BreezServices {
         .await?
         {
             ValidatedCallbackResponse::EndpointError { data: e } => {
-                Ok(WrappedLnUrlPayResult::EndpointError { data: e })
+                Ok(LnUrlPayResult::EndpointError { data: e })
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
                 let pay_req = SendPaymentRequest {
@@ -387,7 +384,7 @@ impl BreezServices {
                         | SendPaymentError::ServiceConnectivity { .. },
                     ) => e,
                     Err(e) => {
-                        return Ok(WrappedLnUrlPayResult::PayError {
+                        return Ok(LnUrlPayResult::PayError {
                             data: LnUrlPayErrorData {
                                 payment_hash: invoice.payment_hash,
                                 reason: e.to_string(),
@@ -449,8 +446,8 @@ impl BreezServices {
                     },
                 )?;
 
-                Ok(WrappedLnUrlPayResult::EndpointSuccess {
-                    data: WrappedLnUrlPaySuccessData {
+                Ok(LnUrlPayResult::EndpointSuccess {
+                    data: lnurl::pay::LnUrlPaySuccessData {
                         payment,
                         success_action: maybe_sa_processed,
                     },

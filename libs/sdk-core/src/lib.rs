@@ -176,7 +176,7 @@ mod greenlight;
 mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
-mod lnurl;
+pub mod lnurl;
 mod lsp;
 mod lsps0;
 mod lsps2;
@@ -200,7 +200,6 @@ pub use breez_services::{
 };
 pub use chain::RecommendedFees;
 pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
-pub use lnurl::pay::*;
 pub use lsp::LspInformation;
 pub use models::*;
 pub use sdk_common::prelude::*;

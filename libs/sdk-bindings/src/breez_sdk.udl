@@ -605,7 +605,7 @@ dictionary BitcoinAddressData {
     string? message;
 };
 
-dictionary WrappedLnUrlPaySuccessData {
+dictionary LnUrlPaySuccessData {
     SuccessActionProcessed? success_action;
     Payment payment;
 };
@@ -647,8 +647,8 @@ dictionary LnUrlWithdrawRequestData {
 };
 
 [Enum]
-interface WrappedLnUrlPayResult {
-    EndpointSuccess(WrappedLnUrlPaySuccessData data);
+interface LnUrlPayResult {
+    EndpointSuccess(LnUrlPaySuccessData data);
     EndpointError(LnUrlErrorData data);
     PayError(LnUrlPayErrorData data);
 };
@@ -830,7 +830,7 @@ interface BlockingBreezServices {
    ReceivePaymentResponse receive_payment(ReceivePaymentRequest req);
 
    [Throws=LnUrlPayError]
-   WrappedLnUrlPayResult pay_lnurl(LnUrlPayRequest req);
+   LnUrlPayResult pay_lnurl(LnUrlPayRequest req);
 
    [Throws=LnUrlWithdrawError]
    LnUrlWithdrawResult withdraw_lnurl(LnUrlWithdrawRequest request);

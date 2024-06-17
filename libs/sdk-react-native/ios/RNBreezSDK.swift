@@ -218,7 +218,7 @@ class RNBreezSDK: RCTEventEmitter {
         do {
             let lnUrlPayRequest = try BreezSDKMapper.asLnUrlPayRequest(lnUrlPayRequest: req)
             var res = try getBreezServices().payLnurl(req: lnUrlPayRequest)
-            resolve(BreezSDKMapper.dictionaryOf(wrappedLnUrlPayResult: res))
+            resolve(BreezSDKMapper.dictionaryOf(lnUrlPayResult: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }

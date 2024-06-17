@@ -1,4 +1,4 @@
-pub(crate) mod pay;
+pub mod pay;
 mod withdraw;
 
 #[cfg(test)]
