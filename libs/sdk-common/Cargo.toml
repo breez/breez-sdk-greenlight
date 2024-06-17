@@ -24,6 +24,7 @@ strum_macros = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
+bitcoin = { workspace = true, features = ["rand"] }
 mockito = { workspace = true }
 tokio = { workspace = true }
 once_cell = { workspace = true }
