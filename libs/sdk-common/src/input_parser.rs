@@ -675,7 +675,7 @@ pub(crate) mod tests {
         // Address with amount
         let addr_1 = format!("bitcoin:{addr}?amount=0.00002000");
         match parse(&addr_1).await? {
-            BitcoinAddress {
+            InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -691,7 +691,7 @@ pub(crate) mod tests {
         let label = "test-label";
         let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&label={label}");
         match parse(&addr_2).await? {
-            BitcoinAddress {
+            InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -707,7 +707,7 @@ pub(crate) mod tests {
         let message = "test-message";
         let addr_3 = format!("bitcoin:{addr}?amount=0.00002000&label={label}&message={message}");
         match parse(&addr_3).await? {
-            BitcoinAddress {
+            InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -820,7 +820,7 @@ pub(crate) mod tests {
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
         match parse(&public_key.to_string()).await? {
-            NodeId { node_id } => {
+            InputType::NodeId { node_id } => {
                 assert_eq!(node_id, public_key.to_string());
             }
             _ => return Err(anyhow!("Unexpected type")),
@@ -982,7 +982,7 @@ pub(crate) mod tests {
             ("localhost".into(), format!("https://localhost{path}"), None,)
         );
 
-        if let LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
+        if let InputType::LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
                 wd.k1,
@@ -1008,7 +1008,7 @@ pub(crate) mod tests {
         );
         let url = format!("https://bitcoin.org?lightning={lnurl_withdraw_encoded}");
 
-        if let LnUrlWithdraw { data: wd } = parse(&url).await? {
+        if let InputType::LnUrlWithdraw { data: wd } = parse(&url).await? {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
                 wd.k1,
@@ -1035,7 +1035,7 @@ pub(crate) mod tests {
             ("localhost".into(), decoded_url.into(), None)
         );
 
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1047,7 +1047,7 @@ pub(crate) mod tests {
         // Action = register
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=register";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3awfjkw6tnw3jhys2umys";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1059,7 +1059,7 @@ pub(crate) mod tests {
         // Action = login
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=login";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad3hkw6tw2acjtx";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1071,7 +1071,7 @@ pub(crate) mod tests {
         // Action = link
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=link";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad35ku6cc8mvs6";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1083,7 +1083,7 @@ pub(crate) mod tests {
         // Action = auth
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=auth";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3av96hg6qmg6zgu";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1190,7 +1190,7 @@ pub(crate) mod tests {
             ("localhost".into(), format!("https://localhost{path}"), None)
         );
 
-        if let LnUrlPay { data: pd } = parse(lnurl_pay_encoded).await? {
+        if let InputType::LnUrlPay { data: pd } = parse(lnurl_pay_encoded).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1244,7 +1244,7 @@ pub(crate) mod tests {
         let ln_address = "user@domain.net";
         let _m = mock_lnurl_ln_address_endpoint(ln_address, None)?;
 
-        if let LnUrlPay { data: pd } = parse(ln_address).await? {
+        if let InputType::LnUrlPay { data: pd } = parse(ln_address).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1470,7 +1470,7 @@ pub(crate) mod tests {
         let _m = mock_lnurl_pay_endpoint(pay_path, None);
 
         let lnurl_pay_url = format!("lnurlp://localhost{pay_path}");
-        if let LnUrlPay { data: pd } = parse(&lnurl_pay_url).await? {
+        if let InputType::LnUrlPay { data: pd } = parse(&lnurl_pay_url).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1508,7 +1508,7 @@ pub(crate) mod tests {
         let withdraw_path = "/lnurl-withdraw?session=e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538";
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, None);
 
-        if let LnUrlWithdraw { data: wd } =
+        if let InputType::LnUrlWithdraw { data: wd } =
             parse(&format!("lnurlw://localhost{withdraw_path}")).await?
         {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
@@ -1528,7 +1528,9 @@ pub(crate) mod tests {
     async fn test_lnurl_auth_lud_17() -> Result<()> {
         let auth_path = "/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
 
-        if let LnUrlAuth { data: ad } = parse(&format!("keyauth://localhost{auth_path}")).await? {
+        if let InputType::LnUrlAuth { data: ad } =
+            parse(&format!("keyauth://localhost{auth_path}")).await?
+        {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
