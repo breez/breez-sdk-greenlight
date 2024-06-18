@@ -193,7 +193,6 @@ mod test_utils;
 mod tonic_wrap;
 
 // Re-use crates from gl_client for consistency
-use gl_client::bitcoin;
 use gl_client::lightning;
 use gl_client::lightning_invoice;
 
