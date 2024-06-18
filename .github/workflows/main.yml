@@ -143,6 +143,26 @@ jobs:
         working-directory: tools/sdk-cli    
         run: cargo test
 
+  build-common:
+    name: Test sdk-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: libs/sdk-common -> ../target
+
+      - name: Run sdk-common tests
+        working-directory: libs/sdk-common
+        run: cargo test
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
