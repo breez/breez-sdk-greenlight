@@ -4,6 +4,12 @@ mod lnurl;
 mod model;
 mod utils;
 
+// Re-export, to make it easy for callers to refer to the specific bitcoin crate version we're using
+// This is important because certain error conversions defined in this crate map to or from structs
+// from this specific bitcoin crate version. If the caller would use a different version, the Into
+// traits defined here would not be usable by them (e.g. impl From<bip32::Error> for LnUrlError)
+pub use bitcoin;
+
 #[rustfmt::skip]
 pub mod prelude {
     pub use crate::*;
