@@ -13,9 +13,8 @@ use crate::{
     persist::error::PersistError,
     CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
-    SyncResponse, TlvEntry,
+    SyncResponse, TlvEntry, LnUrlAuthError
 };
-use crate::error::LnUrlAuthError;
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
 
