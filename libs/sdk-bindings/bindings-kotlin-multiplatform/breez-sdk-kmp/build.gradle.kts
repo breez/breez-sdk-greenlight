@@ -67,17 +67,21 @@ kotlin {
         }
 
         val jvmMain by getting {
-            dependsOn(commonMain)
             dependencies {
                 implementation(libs.jna)
             }
         }
 
         val androidMain by getting {
-            dependsOn(commonMain)
             dependencies {
                 implementation("${libs.jna.get()}@aar")
-                implementation(libs.atomicfu)
+            }
+        }
+
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation(libs.test.junit.ktx)
+                implementation(libs.test.runner)
             }
         }
     }
@@ -90,6 +94,9 @@ android {
     defaultConfig {
         minSdk = 21
         consumerProguardFiles("consumer-rules.pro")
+
+        testApplicationId = "technology.breez.test"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
