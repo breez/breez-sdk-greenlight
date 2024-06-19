@@ -19,12 +19,6 @@ use sdk_common::prelude::*;
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
-use tonic::codegen::InterceptedService;
-use tonic::metadata::errors::InvalidMetadataValue;
-use tonic::metadata::{Ascii, MetadataValue};
-use tonic::service::Interceptor;
-use tonic::transport::{Channel, Endpoint};
-use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::chain::{
@@ -37,13 +31,6 @@ use crate::error::{
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
-use crate::grpc::channel_opener_client::ChannelOpenerClient;
-use crate::grpc::information_client::InformationClient;
-use crate::grpc::payment_notifier_client::PaymentNotifierClient;
-use crate::grpc::signer_client::SignerClient;
-use crate::grpc::support_client::SupportClient;
-use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::{ChainApiServersRequest, PaymentInformation};
 use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
@@ -59,8 +46,6 @@ use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
-
-use self::grpc::PingRequest;
 
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
 
@@ -2308,116 +2293,6 @@ impl BreezServicesBuilder {
     }
 }
 
-pub struct BreezServer {
-    grpc_channel: Channel,
-    api_key: Option<String>,
-}
-
-impl BreezServer {
-    pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
-        Ok(Self {
-            grpc_channel: Endpoint::from_shared(server_url)?.connect_lazy(),
-            api_key,
-        })
-    }
-
-    fn api_key_metadata(&self) -> SdkResult<Option<MetadataValue<Ascii>>> {
-        match &self.api_key {
-            Some(key) => Ok(Some(format!("Bearer {key}").parse().map_err(
-                |e: InvalidMetadataValue| SdkError::ServiceConnectivity {
-                    err: format!("(Breez: {:?}) Failed parse API key: {e}", self.api_key),
-                },
-            )?)),
-            _ => Ok(None),
-        }
-    }
-
-    pub(crate) async fn get_channel_opener_client(
-        &self,
-    ) -> SdkResult<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let api_key_metadata = self.api_key_metadata()?;
-        let with_interceptor = ChannelOpenerClient::with_interceptor(
-            self.grpc_channel.clone(),
-            ApiKeyInterceptor { api_key_metadata },
-        );
-        Ok(with_interceptor)
-    }
-
-    pub(crate) async fn get_payment_notifier_client(
-        &self,
-    ) -> SdkResult<PaymentNotifierClient<Channel>> {
-        Ok(PaymentNotifierClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn get_information_client(&self) -> SdkResult<InformationClient<Channel>> {
-        Ok(InformationClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn get_signer_client(&self) -> SdkResult<SignerClient<Channel>> {
-        Ok(SignerClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn get_support_client(
-        &self,
-    ) -> SdkResult<SupportClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let api_key_metadata = self.api_key_metadata()?;
-        Ok(SupportClient::with_interceptor(
-            self.grpc_channel.clone(),
-            ApiKeyInterceptor { api_key_metadata },
-        ))
-    }
-
-    pub(crate) async fn get_swapper_client(&self) -> SdkResult<SwapperClient<Channel>> {
-        Ok(SwapperClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn ping(&self) -> SdkResult<String> {
-        let request = Request::new(PingRequest {});
-        let response = self
-            .get_information_client()
-            .await?
-            .ping(request)
-            .await?
-            .into_inner()
-            .version;
-        Ok(response)
-    }
-
-    pub(crate) async fn fetch_mempoolspace_urls(&self) -> SdkResult<Vec<String>> {
-        let mut client = self.get_information_client().await?;
-
-        let chain_api_servers = client
-            .chain_api_servers(ChainApiServersRequest {})
-            .await?
-            .into_inner()
-            .servers;
-        trace!("Received chain_api_servers: {chain_api_servers:?}");
-
-        let mempoolspace_urls = chain_api_servers
-            .iter()
-            .filter(|s| s.server_type == "MEMPOOL_SPACE")
-            .map(|s| s.server_base_url.clone())
-            .collect();
-        trace!("Received mempoolspace_urls: {mempoolspace_urls:?}");
-
-        Ok(mempoolspace_urls)
-    }
-}
-
-pub(crate) struct ApiKeyInterceptor {
-    api_key_metadata: Option<MetadataValue<Ascii>>,
-}
-
-impl Interceptor for ApiKeyInterceptor {
-    fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
-        if self.api_key_metadata.clone().is_some() {
-            req.metadata_mut()
-                .insert("authorization", self.api_key_metadata.clone().unwrap());
-        }
-        Ok(req)
-    }
-}
-
 /// Attempts to convert the phrase to a mnemonic, then to a seed.
 ///
 /// If the phrase is not a valid mnemonic, an error is returned.
@@ -2429,7 +2304,7 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 
 pub struct OpenChannelParams {
     pub payer_amount_msat: u64,
-    pub opening_fee_params: OpeningFeeParams,
+    pub opening_fee_params: models::OpeningFeeParams,
 }
 
 #[tonic::async_trait]

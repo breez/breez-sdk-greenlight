@@ -1,13 +1,13 @@
 use std::time::SystemTime;
 
-use crate::error::SdkResult;
-use crate::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
-use crate::{breez_services::BreezServer, error::SdkError};
+use crate::error::{SdkError, SdkResult};
 use crate::{HealthCheckStatus, NodeState, Payment, ServiceHealthCheckResponse, SupportAPI};
+
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use tonic::Request;
+use sdk_common::prelude::{BreezServer, BreezStatusRequest, ReportPaymentFailureRequest};
 
 #[derive(Serialize, Deserialize)]
 struct PaymentFailureReport {

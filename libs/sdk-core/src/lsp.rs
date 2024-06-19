@@ -1,16 +1,10 @@
-use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
 use crate::error::{SdkError, SdkResult};
-use crate::grpc::{
-    self, LspListRequest, PaymentInformation, RegisterPaymentNotificationRequest,
-    RegisterPaymentNotificationResponse, RegisterPaymentReply, RegisterPaymentRequest,
-    RemovePaymentNotificationRequest, RemovePaymentNotificationResponse,
-    SubscribeNotificationsRequest, UnsubscribeNotificationsRequest,
-};
 use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 
 use anyhow::{anyhow, Result};
 use prost::Message;
+use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
@@ -48,7 +42,7 @@ pub struct LspInformation {
 
 impl LspInformation {
     /// Validation may fail if [LspInformation.opening_fee_params_list] has invalid entries
-    fn try_from(lsp_id: &str, lsp_info: grpc::LspInformation) -> Result<Self> {
+    fn try_from(lsp_id: &str, lsp_info: sdk_common::prelude::LspInformation) -> Result<Self> {
         let info = LspInformation {
             id: lsp_id.to_string(),
             name: lsp_info.name,

@@ -1,3 +1,6 @@
+mod breez_server;
+mod error;
+mod grpc;
 pub mod input_parser;
 pub mod invoice;
 mod lnurl;
@@ -7,6 +10,9 @@ mod utils;
 #[rustfmt::skip]
 pub mod prelude {
     pub use crate::*;
+    pub use crate::breez_server::*;
+    pub use crate::error::*;
+    pub use crate::grpc::*;
     pub use crate::input_parser::*;
     pub use crate::invoice::*;
     pub use crate::lnurl::error::*;

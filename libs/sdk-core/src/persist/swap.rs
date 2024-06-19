@@ -1,12 +1,11 @@
-use crate::models::{SwapInfo, SwapStatus};
+use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
+
+use crate::models::{OpeningFeeParams, SwapInfo, SwapStatus};
 
 use super::{
     db::{SqliteStorage, StringArray},
-    error::PersistError,
-    error::PersistResult,
+    error::{PersistError, PersistResult},
 };
-use crate::OpeningFeeParams;
-use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
 
 #[derive(Debug, Clone)]
 pub(crate) struct SwapChainInfo {
@@ -418,11 +417,12 @@ impl SqliteStorage {
 
 #[cfg(test)]
 mod tests {
+    use crate::models::OpeningFeeParams;
     use crate::persist::db::SqliteStorage;
     use crate::persist::error::PersistResult;
     use crate::persist::swap::SwapChainInfo;
     use crate::test_utils::get_test_ofp_48h;
-    use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
+    use crate::{SwapInfo, SwapStatus};
     use rusqlite::{named_params, Connection};
 
     #[test]

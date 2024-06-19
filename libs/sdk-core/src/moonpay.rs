@@ -1,8 +1,7 @@
 use anyhow::Result;
 use reqwest::Url;
+use sdk_common::prelude::{BreezServer, SignUrlRequest};
 
-use crate::breez_services::BreezServer;
-use crate::grpc::SignUrlRequest;
 use crate::SwapInfo;
 
 #[derive(Clone)]

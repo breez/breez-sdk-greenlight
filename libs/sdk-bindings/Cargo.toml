@@ -28,7 +28,7 @@ log = { workspace = true }
 once_cell = { workspace = true }
 flutter_rust_bridge = "=1.82.6"
 tiny-bip39 = "*"
-tonic = { version = "^0.8", features = [
+tonic = { workspace = true, features = [
     "tls",
     "tls-roots",
     "tls-webpki-roots",

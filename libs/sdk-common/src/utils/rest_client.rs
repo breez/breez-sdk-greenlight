@@ -2,20 +2,8 @@ use std::time::Duration;
 
 use log::*;
 use reqwest::StatusCode;
-use thiserror::Error;
 
-#[derive(Debug, Error)]
-#[error("{err}")]
-pub struct ServiceConnectivityError {
-    pub err: String,
-}
-impl ServiceConnectivityError {
-    pub fn new(err: &str) -> Self {
-        ServiceConnectivityError {
-            err: err.to_string(),
-        }
-    }
-}
+use crate::error::ServiceConnectivityError;
 
 /// Creates an HTTP client with a built-in connection timeout
 pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError> {

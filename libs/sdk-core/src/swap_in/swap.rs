@@ -5,6 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
+use sdk_common::prelude::{AddFundInitRequest, BreezServer, GetSwapPaymentRequest};
 use tokio::sync::broadcast;
 
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -18,18 +19,17 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::breez_services::{BreezEvent, BreezServer, OpenChannelParams, Receiver};
+use crate::breez_services::{BreezEvent, OpenChannelParams, Receiver};
 use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
-use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapError;
 use crate::{
-    OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
-    RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+    PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest, RefundRequest,
+    RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 
 use super::error::SwapResult;
@@ -74,7 +74,7 @@ impl SwapperAPI for BreezServer {
             .into_inner();
 
         match resp.swap_error() {
-            crate::grpc::get_swap_payment_reply::SwapError::NoError => Ok(()),
+            sdk_common::prelude::get_swap_payment_reply::SwapError::NoError => Ok(()),
             err => Err(anyhow!("Failed to complete swap: {}", err.as_str_name())),
         }
     }
@@ -174,7 +174,7 @@ impl BTCReceiveSwap {
     /// Create a [SwapInfo] that represents the details of an on-going swap.
     pub(crate) async fn create_swap_address(
         &self,
-        channel_opening_fees: OpeningFeeParams,
+        channel_opening_fees: crate::models::OpeningFeeParams,
     ) -> SwapResult<SwapInfo> {
         let node_state = self
             .persister

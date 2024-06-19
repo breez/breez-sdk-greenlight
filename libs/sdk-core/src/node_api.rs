@@ -12,7 +12,7 @@ use crate::{
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
     CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
     SyncResponse, TlvEntry,
 };
 use crate::error::LnUrlAuthError;

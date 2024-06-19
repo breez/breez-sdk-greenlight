@@ -19,14 +19,8 @@ use crate::bitcoin::hashes::hex::{FromHex, ToHex};
 use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
-use crate::breez_services::BreezServer;
-use crate::ensure_sdk;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{
-    self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentNotificationResponse,
-    RegisterPaymentReply, RemovePaymentNotificationResponse,
-};
 use crate::lsp::LspInformation;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
@@ -1113,7 +1107,7 @@ impl OpeningFeeParams {
     }
 }
 
-impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
+impl From<OpeningFeeParams> for sdk_common::prelude::OpeningFeeParams {
     fn from(ofp: OpeningFeeParams) -> Self {
         Self {
             min_msat: ofp.min_msat,
@@ -1126,8 +1120,8 @@ impl From<OpeningFeeParams> for grpc::OpeningFeeParams {
     }
 }
 
-impl From<grpc::OpeningFeeParams> for OpeningFeeParams {
-    fn from(gofp: grpc::OpeningFeeParams) -> Self {
+impl From<sdk_common::prelude::OpeningFeeParams> for OpeningFeeParams {
+    fn from(gofp: sdk_common::prelude::OpeningFeeParams) -> Self {
         Self {
             min_msat: gofp.min_msat,
             proportional: gofp.proportional,
@@ -1170,7 +1164,7 @@ impl OpeningFeeParamsMenu {
     /// This struct should not be persisted as such, because validation happens dynamically based on
     /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
     /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
-    pub fn try_from(values: Vec<grpc::OpeningFeeParams>) -> Result<Self> {
+    pub fn try_from(values: Vec<sdk_common::prelude::OpeningFeeParams>) -> Result<Self> {
         let temp = Self {
             values: values
                 .into_iter()
