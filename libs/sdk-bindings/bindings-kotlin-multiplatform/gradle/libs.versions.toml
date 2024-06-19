@@ -1,18 +1,24 @@
 [versions]
 atomicfu = "0.24.0"
-android-gradle-plugin = "8.4.1"
+android-gradle-plugin = "8.4.2"
 jna = "5.14.0"
+junit = "1.1.5"
 kotlin = "1.9.24"
 kotlinx-datetime = "0.6.0"
 okio = "3.9.0"
+test-junit-ktx = "1.1.5"
+test-runner = "1.5.2"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu-gradle-plugin", version.ref = "atomicfu" }
 android-gradle-plugin = { module = "com.android.tools.build:gradle", version.ref = "android-gradle-plugin" }
+ext-junit = { module = "androidx.test.ext:junit", version.ref = "junit" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+test-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "test-junit-ktx" }
+test-runner = { module = "androidx.test:runner", version.ref = "test-runner" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "android-gradle-plugin" }
