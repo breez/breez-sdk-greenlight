@@ -12,3 +12,10 @@ impl ServiceConnectivityError {
         }
     }
 }
+impl From<reqwest::Error> for ServiceConnectivityError {
+    fn from(err: reqwest::Error) -> Self {
+        Self {
+            err: err.to_string(),
+        }
+    }
+}

@@ -10,7 +10,7 @@ pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError>
     reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
         .build()
-        .map_err(|e| ServiceConnectivityError { err: e.to_string() })
+        .map_err(Into::into)
 }
 
 pub async fn post_and_log_response(
@@ -23,13 +23,7 @@ pub async fn post_and_log_response(
     if let Some(body) = body {
         req = req.body(body);
     }
-    let raw_body = req
-        .send()
-        .await
-        .map_err(|e| ServiceConnectivityError::new(&e.to_string()))?
-        .text()
-        .await
-        .map_err(|e| ServiceConnectivityError::new(&e.to_string()))?;
+    let raw_body = req.send().await?.text().await?;
     debug!("Received raw response body: {raw_body}");
 
     Ok(raw_body)
@@ -44,16 +38,9 @@ pub async fn get_and_log_response(
 ) -> Result<(String, StatusCode), ServiceConnectivityError> {
     debug!("Making GET request to: {url}");
 
-    let response = get_reqwest_client()?
-        .get(url)
-        .send()
-        .await
-        .map_err(|e| ServiceConnectivityError::new(&e.to_string()))?;
+    let response = get_reqwest_client()?.get(url).send().await?;
     let status = response.status();
-    let raw_body = response
-        .text()
-        .await
-        .map_err(|e| ServiceConnectivityError::new(&e.to_string()))?;
+    let raw_body = response.text().await?;
     debug!("Received response, status: {status}, raw response body: {raw_body}");
 
     Ok((raw_body, status))

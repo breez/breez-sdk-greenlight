@@ -5,9 +5,9 @@ use crate::{HealthCheckStatus, NodeState, Payment, ServiceHealthCheckResponse, S
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use sdk_common::prelude::{BreezServer, BreezStatusRequest, ReportPaymentFailureRequest};
 use serde::{Deserialize, Serialize};
 use tonic::Request;
-use sdk_common::prelude::{BreezServer, BreezStatusRequest, ReportPaymentFailureRequest};
 
 #[derive(Serialize, Deserialize)]
 struct PaymentFailureReport {
