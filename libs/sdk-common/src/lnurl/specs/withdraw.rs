@@ -33,14 +33,15 @@ pub async fn validate_lnurl_withdraw(
 
     // Send invoice to the LNURL-w endpoint via the callback
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
-    let callback_res: LnUrlCallbackStatus = get_parse_and_log_response(&callback_url, false)
-        .await
-        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))?;
-    let withdraw_status = match callback_res {
-        LnUrlCallbackStatus::Ok => LnUrlWithdrawResult::Ok {
+    let withdraw_status = match get_parse_and_log_response(&callback_url, false).await {
+        Ok(LnUrlCallbackStatus::Ok) => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawSuccessData { invoice },
         },
-        LnUrlCallbackStatus::ErrorStatus { data } => LnUrlWithdrawResult::ErrorStatus { data },
+        Ok(LnUrlCallbackStatus::ErrorStatus { data }) => LnUrlWithdrawResult::ErrorStatus { data },
+        Err(e) if e.to_string().contains("operation timed out") => LnUrlWithdrawResult::Timeout {
+            data: LnUrlWithdrawSuccessData { invoice },
+        },
+        Err(e) => return Err(LnUrlError::ServiceConnectivity(e.to_string())),
     };
 
     Ok(withdraw_status)
@@ -102,6 +103,7 @@ pub mod model {
     #[derive(Clone, Serialize)]
     pub enum LnUrlWithdrawResult {
         Ok { data: LnUrlWithdrawSuccessData },
+        Timeout { data: LnUrlWithdrawSuccessData },
         ErrorStatus { data: LnUrlErrorData },
     }
 
