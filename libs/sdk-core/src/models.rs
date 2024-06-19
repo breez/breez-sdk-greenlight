@@ -1754,7 +1754,7 @@ mod tests {
         let mut buf = Vec::with_capacity(dummy_payment_info.encoded_len());
         dummy_payment_info.encode(&mut buf)?;
 
-        let decoded_payment_info: PaymentInformation = PaymentInformation::decode(&*buf)?;
+        let decoded_payment_info = grpc::PaymentInformation::decode(&*buf)?;
 
         assert_eq!(dummy_payment_info, decoded_payment_info);
 
