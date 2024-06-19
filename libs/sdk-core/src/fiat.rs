@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use sdk_common::prelude::{RatesRequest, BreezServer};
+use sdk_common::prelude::BreezServer;
+use sdk_common::grpc::RatesRequest;
 use tonic::Request;
 
 use crate::error::{SdkError, SdkResult};

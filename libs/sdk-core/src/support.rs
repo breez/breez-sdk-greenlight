@@ -5,7 +5,8 @@ use crate::{HealthCheckStatus, NodeState, Payment, ServiceHealthCheckResponse, S
 
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-use sdk_common::prelude::{BreezServer, BreezStatusRequest, ReportPaymentFailureRequest};
+use sdk_common::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
+use sdk_common::prelude::BreezServer;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 

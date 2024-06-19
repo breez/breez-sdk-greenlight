@@ -4,7 +4,8 @@ use crate::models::{OpeningFeeParams, SwapInfo, SwapStatus};
 
 use super::{
     db::{SqliteStorage, StringArray},
-    error::{PersistError, PersistResult},
+    error::PersistError,
+    error::PersistResult,
 };
 
 #[derive(Debug, Clone)]
@@ -417,12 +418,11 @@ impl SqliteStorage {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::OpeningFeeParams;
     use crate::persist::db::SqliteStorage;
     use crate::persist::error::PersistResult;
     use crate::persist::swap::SwapChainInfo;
     use crate::test_utils::get_test_ofp_48h;
-    use crate::{SwapInfo, SwapStatus};
+    use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
     use rusqlite::{named_params, Connection};
 
     #[test]

@@ -15,6 +15,7 @@ use futures::TryFutureExt;
 use gl_client::bitcoin::secp256k1::Secp256k1;
 use log::{LevelFilter, Metadata, Record};
 use reqwest::{header::CONTENT_TYPE, Body, Url};
+use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
@@ -2530,7 +2531,7 @@ impl PaymentReceiver {
             .register_payment(
                 lsp_info.id.clone(),
                 lsp_info.lsp_pubkey.clone(),
-                PaymentInformation {
+                grpc::PaymentInformation {
                     payment_hash: hex::decode(parsed_invoice.payment_hash.clone())
                         .map_err(|e| anyhow!("Failed to decode hex payment hash: {e}"))?,
                     payment_secret: parsed_invoice.payment_secret.clone(),

@@ -2,7 +2,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, ensure, Result};
-use sdk_common::prelude::{ensure_sdk, RouteHintHop};
 use serde::{Deserialize, Serialize};
 use tokio::time::{sleep, Duration};
 
@@ -23,10 +22,10 @@ use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
 use crate::swap_in::swap::create_swap_keys;
 use crate::{
-    BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus, ReverseSwapInfo,
-    ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
+    ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
+    ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
+    ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest,
 };
-use crate::{ReverseSwapStatus::*, SendOnchainRequest};
 
 // Estimates based on https://github.com/BoltzExchange/boltz-backend/blob/master/lib/rates/FeeProvider.ts#L31-L42
 pub const ESTIMATED_CLAIM_TX_VSIZE: u64 = 138;

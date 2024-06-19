@@ -13,7 +13,7 @@ use crate::bitcoin::Txid;
 use crate::error::SdkError;
 use crate::models::ReverseSwapPairInfo;
 use crate::swap_out::reverseswap::CreateReverseSwapResponse;
-use crate::ReverseSwapServiceAPI;
+use crate::{ReverseSwapServiceAPI, RouteHint, RouteHintHop};
 
 use super::error::{ReverseSwapError, ReverseSwapResult};
 

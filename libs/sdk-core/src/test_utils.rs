@@ -12,11 +12,7 @@ use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
-use sdk_common::prelude::{
-    parse_invoice, InvoiceError, InvoiceResult, LNInvoice, PaymentInformation,
-    RegisterPaymentNotificationResponse, RegisterPaymentReply, RemovePaymentNotificationResponse,
-    RouteHint, RouteHintHop,
-};
+use sdk_common::grpc;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
@@ -34,6 +30,7 @@ use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::fiat::{FiatCurrency, Rate};
+use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
@@ -48,9 +45,10 @@ use crate::swap_in::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
-    Config, CustomMessage, MaxChannelAmount, NodeCredentials, OpeningFeeParamsMenu,
-    PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    ReceivePaymentRequest, ReverseSwapPairInfo, SwapInfo,
+    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
+    OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint,
+    RouteHintHop, SwapInfo,
 };
 
 pub const MOCK_REVERSE_SWAP_MIN: u64 = 50_000;
@@ -666,8 +664,8 @@ impl LspAPI for MockBreezServer {
         _lsp_pubkey: Vec<u8>,
         _webhook_url: String,
         _webhook_url_signature: String,
-    ) -> SdkResult<RegisterPaymentNotificationResponse> {
-        Ok(RegisterPaymentNotificationResponse {})
+    ) -> SdkResult<grpc::RegisterPaymentNotificationResponse> {
+        Ok(grpc::RegisterPaymentNotificationResponse {})
     }
 
     async fn unregister_payment_notifications(
@@ -676,17 +674,17 @@ impl LspAPI for MockBreezServer {
         _lsp_pubkey: Vec<u8>,
         _webhook_url: String,
         _webhook_url_signature: String,
-    ) -> SdkResult<RemovePaymentNotificationResponse> {
-        Ok(RemovePaymentNotificationResponse {})
+    ) -> SdkResult<grpc::RemovePaymentNotificationResponse> {
+        Ok(grpc::RemovePaymentNotificationResponse {})
     }
 
     async fn register_payment(
         &self,
         _lsp_id: String,
         _lsp_pubkey: Vec<u8>,
-        _payment_info: PaymentInformation,
-    ) -> SdkResult<RegisterPaymentReply> {
-        Ok(RegisterPaymentReply {})
+        _payment_info: grpc::PaymentInformation,
+    ) -> SdkResult<grpc::RegisterPaymentReply> {
+        Ok(grpc::RegisterPaymentReply {})
     }
 }
 
@@ -838,10 +836,7 @@ fn sign_invoice(invoice: RawBolt11Invoice) -> String {
 }
 
 /// [OpeningFeeParams] that are valid for more than 48h
-pub(crate) fn get_test_ofp_48h(
-    min_msat: u64,
-    proportional: u32,
-) -> sdk_common::prelude::OpeningFeeParams {
+pub(crate) fn get_test_ofp_48h(min_msat: u64, proportional: u32) -> grpc::OpeningFeeParams {
     get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(10))
 }
 
@@ -850,7 +845,7 @@ pub(crate) fn get_test_ofp(
     min_msat: u64,
     proportional: u32,
     future_or_past: bool,
-) -> sdk_common::prelude::OpeningFeeParams {
+) -> grpc::OpeningFeeParams {
     get_test_ofp_generic(
         min_msat,
         proportional,
@@ -864,7 +859,7 @@ pub(crate) fn get_test_ofp_generic(
     proportional: u32,
     future_or_past: bool,
     duration: chrono::Duration,
-) -> sdk_common::prelude::OpeningFeeParams {
+) -> grpc::OpeningFeeParams {
     let now = Utc::now();
     let date_time = match future_or_past {
         true => now.checked_add_signed(duration).unwrap(),
@@ -872,7 +867,7 @@ pub(crate) fn get_test_ofp_generic(
     };
     let formatted = date_time.to_rfc3339_opts(SecondsFormat::Millis, true);
 
-    sdk_common::prelude::OpeningFeeParams {
+    grpc::OpeningFeeParams {
         min_msat,
         proportional,
         valid_until: formatted,

@@ -21,8 +21,8 @@ use sdk_common::invoice;
 pub use sdk_common::prelude::{
     parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, BitcoinAddressData,
     InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlError, LnUrlErrorData,
-    LnUrlPayError, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
-    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
+    LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawRequest,
+    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
     MessageSuccessActionData, Network, RouteHint, RouteHintHop, SuccessActionProcessed,
     UrlSuccessActionData,
 };
@@ -172,7 +172,7 @@ pub enum _InputType {
 #[frb(mirror(BitcoinAddressData))]
 pub struct _BitcoinAddressData {
     pub address: String,
-    pub network: sdk_common::prelude::Network,
+    pub network: crate::prelude::Network,
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,
@@ -520,17 +520,17 @@ pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentRespo
 /// See [BreezServices::lnurl_pay]
 pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<crate::lnurl::pay::LnUrlPayResult> {
     block_on(async { get_breez_services().await?.lnurl_pay(req).await })
-        .map_err(anyhow::Error::new::<LnUrlPayError>)
+        .map_err(anyhow::Error::new::<crate::LnUrlPayError>)
 }
 
 /// See [BreezServices::lnurl_withdraw]
 pub fn lnurl_withdraw(req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
     block_on(async { get_breez_services().await?.lnurl_withdraw(req).await })
-        .map_err(anyhow::Error::new::<LnUrlWithdrawError>)
+        .map_err(anyhow::Error::new::<crate::LnUrlWithdrawError>)
 }
 
 /// See [BreezServices::lnurl_auth]
-pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
+pub fn lnurl_auth(req_data: crate::LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
     block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
         .map_err(anyhow::Error::new::<LnUrlAuthError>)
 }
