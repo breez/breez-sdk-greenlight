@@ -415,7 +415,7 @@ impl ReverseSwapperRoutingAPI for BreezServer {
     async fn fetch_reverse_routing_node(&self) -> ReverseSwapResult<Vec<u8>> {
         Ok(self
             .get_swapper_client()
-            .await?
+            .await
             .get_reverse_routing_node(grpc::GetReverseRoutingNodeRequest::default())
             .await
             .map(|reply| reply.into_inner().node_id)?)

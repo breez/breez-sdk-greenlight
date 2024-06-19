@@ -57,21 +57,16 @@ impl BreezServer {
         Ok(with_interceptor)
     }
 
-    // TODO Needs to be Result?
-    pub async fn get_payment_notifier_client(&self) -> Result<PaymentNotifierClient<Channel>> {
-        Ok(PaymentNotifierClient::new(self.grpc_channel.clone()))
+    pub async fn get_payment_notifier_client(&self) -> PaymentNotifierClient<Channel> {
+        PaymentNotifierClient::new(self.grpc_channel.clone())
     }
 
-    // TODO Needs to be Result?
-    pub async fn get_information_client(
-        &self,
-    ) -> Result<InformationClient<Channel>, ServiceConnectivityError> {
-        Ok(InformationClient::new(self.grpc_channel.clone()))
+    pub async fn get_information_client(&self) -> InformationClient<Channel> {
+        InformationClient::new(self.grpc_channel.clone())
     }
 
-    // TODO Needs to be Result?
-    pub async fn get_signer_client(&self) -> Result<SignerClient<Channel>> {
-        Ok(SignerClient::new(self.grpc_channel.clone()))
+    pub async fn get_signer_client(&self) -> SignerClient<Channel> {
+        SignerClient::new(self.grpc_channel.clone())
     }
 
     pub async fn get_support_client(
@@ -87,16 +82,15 @@ impl BreezServer {
         ))
     }
 
-    // TODO Needs to be Result?
-    pub async fn get_swapper_client(&self) -> Result<SwapperClient<Channel>> {
-        Ok(SwapperClient::new(self.grpc_channel.clone()))
+    pub async fn get_swapper_client(&self) -> SwapperClient<Channel> {
+        SwapperClient::new(self.grpc_channel.clone())
     }
 
     pub async fn ping(&self) -> Result<String> {
         let request = Request::new(PingRequest {});
         let response = self
             .get_information_client()
-            .await?
+            .await
             .ping(request)
             .await?
             .into_inner()
@@ -105,7 +99,7 @@ impl BreezServer {
     }
 
     pub async fn fetch_mempoolspace_urls(&self) -> Result<Vec<String>, ServiceConnectivityError> {
-        let mut client = self.get_information_client().await?;
+        let mut client = self.get_information_client().await;
 
         let chain_api_servers = client
             .chain_api_servers(ChainApiServersRequest {})

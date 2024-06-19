@@ -85,7 +85,7 @@ impl FiatAPI for BreezServer {
     }
 
     async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
-        let mut client = self.get_information_client().await?;
+        let mut client = self.get_information_client().await;
 
         let request = Request::new(RatesRequest {});
         let response = client

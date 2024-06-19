@@ -120,7 +120,7 @@ impl LspAPI for BreezServer {
             signature: webhook_url_signature,
         };
 
-        let mut client = self.get_payment_notifier_client().await?;
+        let mut client = self.get_payment_notifier_client().await;
 
         let mut buf = Vec::with_capacity(subscribe_request.encoded_len());
         subscribe_request
@@ -150,7 +150,7 @@ impl LspAPI for BreezServer {
             signature: webhook_url_signature,
         };
 
-        let mut client = self.get_payment_notifier_client().await?;
+        let mut client = self.get_payment_notifier_client().await;
 
         let mut buf = Vec::with_capacity(unsubscribe_request.encoded_len());
         unsubscribe_request
