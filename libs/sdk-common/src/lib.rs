@@ -1,3 +1,6 @@
+mod breez_server;
+mod error;
+pub mod grpc;
 pub mod input_parser;
 pub mod invoice;
 mod lnurl;
@@ -10,9 +13,12 @@ mod utils;
 // traits defined here would not be usable by them (e.g. impl From<bip32::Error> for LnUrlError)
 pub use bitcoin;
 
+// We don't include grpc::* in the prelude exports, to force callers to use the grpc path prefix.
 #[rustfmt::skip]
 pub mod prelude {
     pub use crate::*;
+    pub use crate::breez_server::*;
+    pub use crate::error::*;
     pub use crate::input_parser::*;
     pub use crate::invoice::*;
     pub use crate::lnurl::error::*;

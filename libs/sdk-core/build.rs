@@ -1,5 +1,4 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tonic_build::compile_protos("src/grpc/proto/breez.proto")?;
     set_git_revision_hash();
     Ok(())
 }

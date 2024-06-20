@@ -8,6 +8,7 @@ use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
+use sdk_common::grpc;
 use sdk_common::prelude::Network::*;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -19,14 +20,8 @@ use crate::bitcoin::hashes::hex::{FromHex, ToHex};
 use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
-use crate::breez_services::BreezServer;
-use crate::ensure_sdk;
 use crate::error::SdkResult;
 use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{
-    self, GetReverseRoutingNodeRequest, PaymentInformation, RegisterPaymentNotificationResponse,
-    RegisterPaymentReply, RemovePaymentNotificationResponse,
-};
 use crate::lsp::LspInformation;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
@@ -68,7 +63,7 @@ pub trait LspAPI: Send + Sync {
         lsp_pubkey: Vec<u8>,
         webhook_url: String,
         webhook_url_signature: String,
-    ) -> SdkResult<RegisterPaymentNotificationResponse>;
+    ) -> SdkResult<grpc::RegisterPaymentNotificationResponse>;
 
     /// Unregister for webhook callbacks for the given `webhook_url`
     async fn unregister_payment_notifications(
@@ -77,15 +72,15 @@ pub trait LspAPI: Send + Sync {
         lsp_pubkey: Vec<u8>,
         webhook_url: String,
         webhook_url_signature: String,
-    ) -> SdkResult<RemovePaymentNotificationResponse>;
+    ) -> SdkResult<grpc::RemovePaymentNotificationResponse>;
 
     /// Register a payment to open a new channel with the LSP
     async fn register_payment(
         &self,
         lsp_id: String,
         lsp_pubkey: Vec<u8>,
-        payment_info: PaymentInformation,
-    ) -> SdkResult<RegisterPaymentReply>;
+        payment_info: grpc::PaymentInformation,
+    ) -> SdkResult<grpc::RegisterPaymentReply>;
 }
 
 /// Trait covering fiat-related functionality
@@ -420,8 +415,8 @@ impl ReverseSwapperRoutingAPI for BreezServer {
     async fn fetch_reverse_routing_node(&self) -> ReverseSwapResult<Vec<u8>> {
         Ok(self
             .get_swapper_client()
-            .await?
-            .get_reverse_routing_node(GetReverseRoutingNodeRequest::default())
+            .await
+            .get_reverse_routing_node(grpc::GetReverseRoutingNodeRequest::default())
             .await
             .map(|reply| reply.into_inner().node_id)?)
     }
@@ -1170,7 +1165,7 @@ impl OpeningFeeParamsMenu {
     /// This struct should not be persisted as such, because validation happens dynamically based on
     /// the current time. At a later point in time, any previously-validated [OpeningFeeParamsMenu]
     /// could be invalid. Therefore, the [OpeningFeeParamsMenu] should always be initialized on-the-fly.
-    pub fn try_from(values: Vec<grpc::OpeningFeeParams>) -> Result<Self> {
+    pub fn try_from(values: Vec<sdk_common::grpc::OpeningFeeParams>) -> Result<Self> {
         let temp = Self {
             values: values
                 .into_iter()
@@ -1609,8 +1604,8 @@ mod tests {
     use anyhow::Result;
     use prost::Message;
     use rand::random;
+    use sdk_common::grpc;
 
-    use crate::grpc::PaymentInformation;
     use crate::test_utils::{get_test_ofp, rand_vec_u8};
     use crate::{OpeningFeeParams, PaymentPath, PaymentPathEdge};
 
@@ -1746,7 +1741,7 @@ mod tests {
 
     #[test]
     fn test_payment_information_ser_de() -> Result<()> {
-        let dummy_payment_info = PaymentInformation {
+        let dummy_payment_info = grpc::PaymentInformation {
             payment_hash: rand_vec_u8(10),
             payment_secret: rand_vec_u8(10),
             destination: rand_vec_u8(10),
@@ -1759,7 +1754,7 @@ mod tests {
         let mut buf = Vec::with_capacity(dummy_payment_info.encoded_len());
         dummy_payment_info.encode(&mut buf)?;
 
-        let decoded_payment_info: PaymentInformation = PaymentInformation::decode(&*buf)?;
+        let decoded_payment_info = grpc::PaymentInformation::decode(&*buf)?;
 
         assert_eq!(dummy_payment_info, decoded_payment_info);
 

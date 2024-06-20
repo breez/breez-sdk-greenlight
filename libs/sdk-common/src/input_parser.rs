@@ -507,7 +507,7 @@ pub struct LnUrlPayRequestData {
     /// payment input, as per LUD-06 spec.
     ///
     /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
-    #[serde(skip_serializing, skip_deserializing)]
+    #[serde(skip)]
     pub domain: String,
 
     /// Value indicating whether the recipient supports Nostr Zaps through NIP-57.
@@ -524,7 +524,7 @@ pub struct LnUrlPayRequestData {
     pub nostr_pubkey: Option<String>,
 
     /// If sending to a LN Address, this will be filled.
-    #[serde(skip_serializing, skip_deserializing)]
+    #[serde(skip)]
     pub ln_address: Option<String>,
 }
 

@@ -572,7 +572,6 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic",
- "tonic-build",
  "zbase32",
 ]
 
@@ -2798,6 +2797,7 @@ dependencies = [
  "log",
  "mockito",
  "once_cell",
+ "prost",
  "querystring",
  "regex",
  "reqwest",
@@ -2807,6 +2807,8 @@ dependencies = [
  "strum_macros",
  "thiserror",
  "tokio",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]

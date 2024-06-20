@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
-use crate::error::SdkResult;
-use crate::grpc::RatesRequest;
-use crate::models::FiatAPI;
-use crate::{breez_services::BreezServer, error::SdkError};
 use serde::{Deserialize, Serialize};
+use sdk_common::prelude::BreezServer;
+use sdk_common::grpc::RatesRequest;
 use tonic::Request;
+
+use crate::error::{SdkError, SdkResult};
+use crate::models::FiatAPI;
 
 /// Settings for the symbol representation of a currency
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -84,7 +85,7 @@ impl FiatAPI for BreezServer {
     }
 
     async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
-        let mut client = self.get_information_client().await?;
+        let mut client = self.get_information_client().await;
 
         let request = Request::new(RatesRequest {});
         let response = client

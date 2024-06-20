@@ -1,12 +1,12 @@
-use crate::models::{SwapInfo, SwapStatus};
+use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
+
+use crate::models::{OpeningFeeParams, SwapInfo, SwapStatus};
 
 use super::{
     db::{SqliteStorage, StringArray},
     error::PersistError,
     error::PersistResult,
 };
-use crate::OpeningFeeParams;
-use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
 
 #[derive(Debug, Clone)]
 pub(crate) struct SwapChainInfo {

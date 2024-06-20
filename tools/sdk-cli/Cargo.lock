@@ -517,7 +517,6 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic",
- "tonic-build",
  "zbase32",
 ]
 
@@ -2680,6 +2679,7 @@ dependencies = [
  "lightning",
  "lightning-invoice",
  "log",
+ "prost",
  "querystring",
  "regex",
  "reqwest",
@@ -2688,6 +2688,8 @@ dependencies = [
  "serde_json",
  "strum_macros",
  "thiserror",
+ "tonic",
+ "tonic-build",
 ]
 
 [[package]]

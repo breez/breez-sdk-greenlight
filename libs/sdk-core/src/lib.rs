@@ -170,10 +170,6 @@ pub mod error;
 #[rustfmt::skip]
 mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenlight; greenlight::node_api
 mod greenlight;
-// GRPC structs are documented as follows:
-// - if they are mirrored in Rust model structs, documented in the model structs
-// - if there is no corresponding model struct, documented in breez.proto
-mod grpc;
 #[rustfmt::skip]
 mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
 pub mod lnurl;
