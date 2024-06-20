@@ -113,14 +113,11 @@ pub fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -
 pub mod model {
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::Result;
-    use rusqlite::types::{FromSql, FromSqlError, ToSqlOutput};
-    use rusqlite::ToSql;
     use serde::{Deserialize, Serialize};
     use thiserror::Error;
 
     use crate::prelude::specs::pay::{Aes256CbcDec, Aes256CbcEnc};
     use crate::prelude::*;
-    // use crate::Payment;
 
     /// Represents a LNURL-pay request.
     #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -216,22 +213,6 @@ pub mod model {
 
         /// See [SuccessAction::Url]
         Url { data: UrlSuccessActionData },
-    }
-
-    impl FromSql for SuccessActionProcessed {
-        fn column_result(
-            value: rusqlite::types::ValueRef<'_>,
-        ) -> rusqlite::types::FromSqlResult<Self> {
-            serde_json::from_str(value.as_str()?).map_err(|_| FromSqlError::InvalidType)
-        }
-    }
-
-    impl ToSql for SuccessActionProcessed {
-        fn to_sql(&self) -> rusqlite::Result<rusqlite::types::ToSqlOutput<'_>> {
-            Ok(ToSqlOutput::from(
-                serde_json::to_string(&self).map_err(|_| FromSqlError::InvalidType)?,
-            ))
-        }
     }
 
     /// Supported success action types

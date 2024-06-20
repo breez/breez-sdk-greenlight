@@ -2801,7 +2801,6 @@ dependencies = [
  "querystring",
  "regex",
  "reqwest",
- "rusqlite",
  "serde",
  "serde_json",
  "strum_macros",
