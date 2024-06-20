@@ -159,6 +159,12 @@ jobs:
         with:
           workspaces: libs/sdk-common -> ../target
 
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Run sdk-common tests
         working-directory: libs/sdk-common
         run: cargo test
