@@ -31,15 +31,15 @@ use tokio::sync::Mutex;
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    ConnectError, LnUrlAuthError, ReceiveOnchainError, ReceivePaymentError, SdkError,
-    SendOnchainError, SendPaymentError,
+    ConnectError, ReceiveOnchainError, ReceivePaymentError, SdkError, SendOnchainError,
+    SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest,
+    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, LnUrlAuthError,
     MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
     OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
     PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,

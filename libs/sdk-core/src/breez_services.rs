@@ -27,8 +27,8 @@ use crate::chain::{
     DEFAULT_MEMPOOL_SPACE_URL,
 };
 use crate::error::{
-    ConnectError, LnUrlAuthError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError,
-    SdkError, SdkResult, SendOnchainError, SendPaymentError,
+    ConnectError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError, SdkError,
+    SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};

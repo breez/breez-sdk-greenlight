@@ -12,10 +12,9 @@ use crate::{
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
     CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    SyncResponse, TlvEntry,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
+    SyncResponse, TlvEntry, LnUrlAuthError
 };
-use crate::error::LnUrlAuthError;
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
 

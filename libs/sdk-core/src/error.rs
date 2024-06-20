@@ -66,35 +66,6 @@ impl From<SdkError> for ConnectError {
     }
 }
 
-/// Error returned by [crate::breez_services::BreezServices::lnurl_auth]
-#[derive(Debug, Error)]
-pub enum LnUrlAuthError {
-    /// This error is raised when a general error occurs not specific to other error variants
-    /// in this enum.
-    #[error("Generic: {err}")]
-    Generic { err: String },
-
-    /// This error is raised when the decoded LNURL URI is not compliant to the specification.
-    #[error("Invalid uri: {err}")]
-    InvalidUri { err: String },
-
-    /// This error is raised when a connection to an external service fails.
-    #[error("Service connectivity: {err}")]
-    ServiceConnectivity { err: String },
-}
-
-impl From<LnUrlError> for LnUrlAuthError {
-    fn from(value: LnUrlError) -> Self {
-        match value {
-            LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
-            LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
-        }
-    }
-}
-
 impl From<SdkError> for LnUrlAuthError {
     fn from(value: SdkError) -> Self {
         match value {

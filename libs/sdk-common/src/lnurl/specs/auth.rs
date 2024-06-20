@@ -115,6 +115,9 @@ fn build_path_element_u32(hmac_bytes: [u8; 4]) -> u32 {
 
 pub mod model {
     use serde::{Deserialize, Serialize};
+    use thiserror::Error;
+
+    use crate::prelude::LnUrlError;
 
     /// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
     ///
@@ -138,5 +141,34 @@ pub mod model {
         /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
         #[serde(skip_serializing, skip_deserializing)]
         pub url: String,
+    }
+
+    /// Error returned by [crate::breez_services::BreezServices::lnurl_auth]
+    #[derive(Debug, Error)]
+    pub enum LnUrlAuthError {
+        /// This error is raised when a general error occurs not specific to other error variants
+        /// in this enum.
+        #[error("Generic: {err}")]
+        Generic { err: String },
+
+        /// This error is raised when the decoded LNURL URI is not compliant to the specification.
+        #[error("Invalid uri: {err}")]
+        InvalidUri { err: String },
+
+        /// This error is raised when a connection to an external service fails.
+        #[error("Service connectivity: {err}")]
+        ServiceConnectivity { err: String },
+    }
+
+    impl From<LnUrlError> for LnUrlAuthError {
+        fn from(value: LnUrlError) -> Self {
+            match value {
+                LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
+                LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+                _ => Self::Generic {
+                    err: value.to_string(),
+                },
+            }
+        }
     }
 }
