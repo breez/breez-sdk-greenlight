@@ -188,10 +188,6 @@ mod swap_out;
 mod test_utils;
 mod tonic_wrap;
 
-// Re-use crates from gl_client for consistency
-use gl_client::lightning;
-use gl_client::lightning_invoice;
-
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
     CheckMessageResponse, EventListener, InvoicePaidDetails, LogStream, PaymentFailedData,
