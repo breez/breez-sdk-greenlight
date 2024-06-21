@@ -994,8 +994,8 @@ const _: fn() = || {
         let _: Option<u32> = CurrencyInfo.spacing;
         let _: Option<Symbol> = CurrencyInfo.symbol;
         let _: Option<Symbol> = CurrencyInfo.uniq_symbol;
-        let _: Option<Vec<LocalizedName>> = CurrencyInfo.localized_name;
-        let _: Option<Vec<LocaleOverrides>> = CurrencyInfo.locale_overrides;
+        let _: Vec<LocalizedName> = CurrencyInfo.localized_name;
+        let _: Vec<LocaleOverrides> = CurrencyInfo.locale_overrides;
     }
     {
         let FiatCurrency = None::<FiatCurrency>.unwrap();
@@ -1492,8 +1492,8 @@ impl support::IntoDart for mirror_CurrencyInfo {
             self.0.spacing.into_dart(),
             self.0.symbol.map(|v| mirror_Symbol(v)).into_dart(),
             self.0.uniq_symbol.map(|v| mirror_Symbol(v)).into_dart(),
-            self.0.localized_name.into_dart(),
-            self.0.locale_overrides.into_dart(),
+            self.0.localized_name.into_into_dart().into_dart(),
+            self.0.locale_overrides.into_into_dart().into_dart(),
         ]
         .into_dart()
     }

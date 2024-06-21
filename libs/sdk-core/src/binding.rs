@@ -259,8 +259,8 @@ pub struct _CurrencyInfo {
     pub spacing: Option<u32>,
     pub symbol: Option<Symbol>,
     pub uniq_symbol: Option<Symbol>,
-    pub localized_name: Option<Vec<LocalizedName>>,
-    pub locale_overrides: Option<Vec<LocaleOverrides>>,
+    pub localized_name: Vec<LocalizedName>,
+    pub locale_overrides: Vec<LocaleOverrides>,
 }
 
 #[frb(mirror(LocaleOverrides))]

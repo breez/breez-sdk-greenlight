@@ -575,8 +575,8 @@ class CurrencyInfo {
   final int? spacing;
   final Symbol? symbol;
   final Symbol? uniqSymbol;
-  final List<LocalizedName>? localizedName;
-  final List<LocaleOverrides>? localeOverrides;
+  final List<LocalizedName> localizedName;
+  final List<LocaleOverrides> localeOverrides;
 
   const CurrencyInfo({
     required this.name,
@@ -584,8 +584,8 @@ class CurrencyInfo {
     this.spacing,
     this.symbol,
     this.uniqSymbol,
-    this.localizedName,
-    this.localeOverrides,
+    required this.localizedName,
+    required this.localeOverrides,
   });
 }
 
@@ -3294,8 +3294,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       spacing: _wire2api_opt_box_autoadd_u32(arr[2]),
       symbol: _wire2api_opt_box_autoadd_symbol(arr[3]),
       uniqSymbol: _wire2api_opt_box_autoadd_symbol(arr[4]),
-      localizedName: _wire2api_opt_list_localized_name(arr[5]),
-      localeOverrides: _wire2api_opt_list_locale_overrides(arr[6]),
+      localizedName: _wire2api_list_localized_name(arr[5]),
+      localeOverrides: _wire2api_list_locale_overrides(arr[6]),
     );
   }
 
@@ -3813,14 +3813,6 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   int? _wire2api_opt_box_autoadd_u64(dynamic raw) {
     return raw == null ? null : _wire2api_box_autoadd_u64(raw);
-  }
-
-  List<LocaleOverrides>? _wire2api_opt_list_locale_overrides(dynamic raw) {
-    return raw == null ? null : _wire2api_list_locale_overrides(raw);
-  }
-
-  List<LocalizedName>? _wire2api_opt_list_localized_name(dynamic raw) {
-    return raw == null ? null : _wire2api_list_localized_name(raw);
   }
 
   PayOnchainResponse _wire2api_pay_onchain_response(dynamic raw) {

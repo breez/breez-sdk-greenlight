@@ -364,8 +364,8 @@ dictionary CurrencyInfo {
     u32? spacing;
     Symbol? symbol;
     Symbol? uniq_symbol;
-    sequence<LocalizedName>? localized_name;
-    sequence<LocaleOverrides>? locale_overrides;
+    sequence<LocalizedName> localized_name;
+    sequence<LocaleOverrides> locale_overrides;
 };
 
 dictionary FiatCurrency {

@@ -50,8 +50,10 @@ pub struct CurrencyInfo {
     pub spacing: Option<u32>,
     pub symbol: Option<Symbol>,
     pub uniq_symbol: Option<Symbol>,
-    pub localized_name: Option<Vec<LocalizedName>>,
-    pub locale_overrides: Option<Vec<LocaleOverrides>>,
+    #[serde(default)]
+    pub localized_name: Vec<LocalizedName>,
+    #[serde(default)]
+    pub locale_overrides: Vec<LocaleOverrides>,
 }
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency

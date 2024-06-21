@@ -520,6 +520,8 @@ fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
             arrayOf(
                 "name",
                 "fractionSize",
+                "localizedName",
+                "localeOverrides",
             ),
         )
     ) {
@@ -530,22 +532,8 @@ fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
     val spacing = if (hasNonNullKey(currencyInfo, "spacing")) currencyInfo.getInt("spacing").toUInt() else null
     val symbol = if (hasNonNullKey(currencyInfo, "symbol")) currencyInfo.getMap("symbol")?.let { asSymbol(it) } else null
     val uniqSymbol = if (hasNonNullKey(currencyInfo, "uniqSymbol")) currencyInfo.getMap("uniqSymbol")?.let { asSymbol(it) } else null
-    val localizedName =
-        if (hasNonNullKey(currencyInfo, "localizedName")) {
-            currencyInfo.getArray("localizedName")?.let {
-                asLocalizedNameList(it)
-            }
-        } else {
-            null
-        }
-    val localeOverrides =
-        if (hasNonNullKey(currencyInfo, "localeOverrides")) {
-            currencyInfo.getArray("localeOverrides")?.let {
-                asLocaleOverridesList(it)
-            }
-        } else {
-            null
-        }
+    val localizedName = currencyInfo.getArray("localizedName")?.let { asLocalizedNameList(it) }!!
+    val localeOverrides = currencyInfo.getArray("localeOverrides")?.let { asLocaleOverridesList(it) }!!
     return CurrencyInfo(
         name,
         fractionSize,
@@ -564,8 +552,8 @@ fun readableMapOf(currencyInfo: CurrencyInfo): ReadableMap =
         "spacing" to currencyInfo.spacing,
         "symbol" to currencyInfo.symbol?.let { readableMapOf(it) },
         "uniqSymbol" to currencyInfo.uniqSymbol?.let { readableMapOf(it) },
-        "localizedName" to currencyInfo.localizedName?.let { readableArrayOf(it) },
-        "localeOverrides" to currencyInfo.localeOverrides?.let { readableArrayOf(it) },
+        "localizedName" to readableArrayOf(currencyInfo.localizedName),
+        "localeOverrides" to readableArrayOf(currencyInfo.localeOverrides),
     )
 
 fun asCurrencyInfoList(arr: ReadableArray): List<CurrencyInfo> {
