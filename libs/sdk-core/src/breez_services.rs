@@ -30,13 +30,12 @@ use crate::error::{
     ConnectError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError, SdkError,
     SdkResult, SendOnchainError, SendPaymentError,
 };
-use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, LspAPI, NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo,
+    LspAPI, NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo,
     ReverseSwapServiceAPI, SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
@@ -648,13 +647,13 @@ impl BreezServices {
 
     /// Fetch live rates of fiat currencies, sorted by name
     pub async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
-        self.fiat_api.fetch_fiat_rates().await
+        self.fiat_api.fetch_fiat_rates().await.map_err(Into::into)
     }
 
     /// List all supported fiat currencies for which there is a known exchange rate.
     /// List is sorted by the canonical name of the currency
     pub async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
-        self.fiat_api.list_fiat_currencies().await
+        self.fiat_api.list_fiat_currencies().await.map_err(Into::into)
     }
 
     /// List available LSPs that can be selected by the user
@@ -2618,9 +2617,9 @@ pub(crate) mod tests {
     use anyhow::{anyhow, Result};
     use regex::Regex;
     use reqwest::Url;
+    use sdk_common::prelude::Rate;
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
-    use crate::fiat::Rate;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
     use crate::test_utils::*;

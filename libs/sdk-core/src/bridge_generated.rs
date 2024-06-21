@@ -29,12 +29,6 @@ use crate::breez_services::PaymentFailedData;
 use crate::breez_services::SignMessageRequest;
 use crate::breez_services::SignMessageResponse;
 use crate::chain::RecommendedFees;
-use crate::fiat::CurrencyInfo;
-use crate::fiat::FiatCurrency;
-use crate::fiat::LocaleOverrides;
-use crate::fiat::LocalizedName;
-use crate::fiat::Rate;
-use crate::fiat::Symbol;
 use crate::lnurl::pay::LnUrlPayResult;
 use crate::lnurl::pay::LnUrlPaySuccessData;
 use crate::lsp::LspInformation;
@@ -593,7 +587,7 @@ fn wire_report_issue_impl(port_: MessagePort, req: impl Wire2Api<ReportIssueRequ
     )
 }
 fn wire_fetch_fiat_rates_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<Rate>, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<mirror_Rate>, _>(
         WrapInfo {
             debug_name: "fetch_fiat_rates",
             port: Some(port_),
@@ -603,7 +597,7 @@ fn wire_fetch_fiat_rates_impl(port_: MessagePort) {
     )
 }
 fn wire_list_fiat_currencies_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<FiatCurrency>, _>(
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<mirror_FiatCurrency>, _>(
         WrapInfo {
             debug_name: "list_fiat_currencies",
             port: Some(port_),
@@ -904,6 +898,12 @@ pub struct mirror_AesSuccessActionDataResult(AesSuccessActionDataResult);
 pub struct mirror_BitcoinAddressData(BitcoinAddressData);
 
 #[derive(Clone)]
+pub struct mirror_CurrencyInfo(CurrencyInfo);
+
+#[derive(Clone)]
+pub struct mirror_FiatCurrency(FiatCurrency);
+
+#[derive(Clone)]
 pub struct mirror_InputType(InputType);
 
 #[derive(Clone)]
@@ -934,10 +934,19 @@ pub struct mirror_LnUrlWithdrawResult(LnUrlWithdrawResult);
 pub struct mirror_LnUrlWithdrawSuccessData(LnUrlWithdrawSuccessData);
 
 #[derive(Clone)]
+pub struct mirror_LocaleOverrides(LocaleOverrides);
+
+#[derive(Clone)]
+pub struct mirror_LocalizedName(LocalizedName);
+
+#[derive(Clone)]
 pub struct mirror_MessageSuccessActionData(MessageSuccessActionData);
 
 #[derive(Clone)]
 pub struct mirror_Network(Network);
+
+#[derive(Clone)]
+pub struct mirror_Rate(Rate);
 
 #[derive(Clone)]
 pub struct mirror_RouteHint(RouteHint);
@@ -947,6 +956,9 @@ pub struct mirror_RouteHintHop(RouteHintHop);
 
 #[derive(Clone)]
 pub struct mirror_SuccessActionProcessed(SuccessActionProcessed);
+
+#[derive(Clone)]
+pub struct mirror_Symbol(Symbol);
 
 #[derive(Clone)]
 pub struct mirror_UrlSuccessActionData(UrlSuccessActionData);
@@ -974,6 +986,21 @@ const _: fn() = || {
         let _: Option<u64> = BitcoinAddressData.amount_sat;
         let _: Option<String> = BitcoinAddressData.label;
         let _: Option<String> = BitcoinAddressData.message;
+    }
+    {
+        let CurrencyInfo = None::<CurrencyInfo>.unwrap();
+        let _: String = CurrencyInfo.name;
+        let _: u32 = CurrencyInfo.fraction_size;
+        let _: Option<u32> = CurrencyInfo.spacing;
+        let _: Option<Symbol> = CurrencyInfo.symbol;
+        let _: Option<Symbol> = CurrencyInfo.uniq_symbol;
+        let _: Option<Vec<LocalizedName>> = CurrencyInfo.localized_name;
+        let _: Option<Vec<LocaleOverrides>> = CurrencyInfo.locale_overrides;
+    }
+    {
+        let FiatCurrency = None::<FiatCurrency>.unwrap();
+        let _: String = FiatCurrency.id;
+        let _: CurrencyInfo = FiatCurrency.info;
     }
     match None::<InputType>.unwrap() {
         InputType::BitcoinAddress { address } => {
@@ -1071,6 +1098,17 @@ const _: fn() = || {
         let _: LNInvoice = LnUrlWithdrawSuccessData.invoice;
     }
     {
+        let LocaleOverrides = None::<LocaleOverrides>.unwrap();
+        let _: String = LocaleOverrides.locale;
+        let _: Option<u32> = LocaleOverrides.spacing;
+        let _: Symbol = LocaleOverrides.symbol;
+    }
+    {
+        let LocalizedName = None::<LocalizedName>.unwrap();
+        let _: String = LocalizedName.locale;
+        let _: String = LocalizedName.name;
+    }
+    {
         let MessageSuccessActionData = None::<MessageSuccessActionData>.unwrap();
         let _: String = MessageSuccessActionData.message;
     }
@@ -1079,6 +1117,11 @@ const _: fn() = || {
         Network::Testnet => {}
         Network::Signet => {}
         Network::Regtest => {}
+    }
+    {
+        let Rate = None::<Rate>.unwrap();
+        let _: String = Rate.coin;
+        let _: f64 = Rate.value;
     }
     {
         let RouteHint = None::<RouteHint>.unwrap();
@@ -1104,6 +1147,13 @@ const _: fn() = || {
         SuccessActionProcessed::Url { data } => {
             let _: UrlSuccessActionData = data;
         }
+    }
+    {
+        let Symbol = None::<Symbol>.unwrap();
+        let _: Option<String> = Symbol.grapheme;
+        let _: Option<String> = Symbol.template;
+        let _: Option<bool> = Symbol.rtl;
+        let _: Option<u32> = Symbol.position;
     }
     {
         let UrlSuccessActionData = None::<UrlSuccessActionData>.unwrap();
@@ -1434,40 +1484,40 @@ impl rust2dart::IntoIntoDart<Config> for Config {
     }
 }
 
-impl support::IntoDart for CurrencyInfo {
+impl support::IntoDart for mirror_CurrencyInfo {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.name.into_into_dart().into_dart(),
-            self.fraction_size.into_into_dart().into_dart(),
-            self.spacing.into_dart(),
-            self.symbol.into_dart(),
-            self.uniq_symbol.into_dart(),
-            self.localized_name.into_dart(),
-            self.locale_overrides.into_dart(),
+            self.0.name.into_into_dart().into_dart(),
+            self.0.fraction_size.into_into_dart().into_dart(),
+            self.0.spacing.into_dart(),
+            self.0.symbol.map(|v| mirror_Symbol(v)).into_dart(),
+            self.0.uniq_symbol.map(|v| mirror_Symbol(v)).into_dart(),
+            self.0.localized_name.into_dart(),
+            self.0.locale_overrides.into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for CurrencyInfo {}
-impl rust2dart::IntoIntoDart<CurrencyInfo> for CurrencyInfo {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_CurrencyInfo {}
+impl rust2dart::IntoIntoDart<mirror_CurrencyInfo> for CurrencyInfo {
+    fn into_into_dart(self) -> mirror_CurrencyInfo {
+        mirror_CurrencyInfo(self)
     }
 }
 
-impl support::IntoDart for FiatCurrency {
+impl support::IntoDart for mirror_FiatCurrency {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.id.into_into_dart().into_dart(),
-            self.info.into_into_dart().into_dart(),
+            self.0.id.into_into_dart().into_dart(),
+            self.0.info.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for FiatCurrency {}
-impl rust2dart::IntoIntoDart<FiatCurrency> for FiatCurrency {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_FiatCurrency {}
+impl rust2dart::IntoIntoDart<mirror_FiatCurrency> for FiatCurrency {
+    fn into_into_dart(self) -> mirror_FiatCurrency {
+        mirror_FiatCurrency(self)
     }
 }
 
@@ -1817,36 +1867,36 @@ impl rust2dart::IntoIntoDart<mirror_LnUrlWithdrawSuccessData> for LnUrlWithdrawS
     }
 }
 
-impl support::IntoDart for LocaleOverrides {
+impl support::IntoDart for mirror_LocaleOverrides {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.locale.into_into_dart().into_dart(),
-            self.spacing.into_dart(),
-            self.symbol.into_into_dart().into_dart(),
+            self.0.locale.into_into_dart().into_dart(),
+            self.0.spacing.into_dart(),
+            self.0.symbol.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LocaleOverrides {}
-impl rust2dart::IntoIntoDart<LocaleOverrides> for LocaleOverrides {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LocaleOverrides {}
+impl rust2dart::IntoIntoDart<mirror_LocaleOverrides> for LocaleOverrides {
+    fn into_into_dart(self) -> mirror_LocaleOverrides {
+        mirror_LocaleOverrides(self)
     }
 }
 
-impl support::IntoDart for LocalizedName {
+impl support::IntoDart for mirror_LocalizedName {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.locale.into_into_dart().into_dart(),
-            self.name.into_into_dart().into_dart(),
+            self.0.locale.into_into_dart().into_dart(),
+            self.0.name.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for LocalizedName {}
-impl rust2dart::IntoIntoDart<LocalizedName> for LocalizedName {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_LocalizedName {}
+impl rust2dart::IntoIntoDart<mirror_LocalizedName> for LocalizedName {
+    fn into_into_dart(self) -> mirror_LocalizedName {
+        mirror_LocalizedName(self)
     }
 }
 
@@ -2218,19 +2268,19 @@ impl rust2dart::IntoIntoDart<PrepareRefundResponse> for PrepareRefundResponse {
     }
 }
 
-impl support::IntoDart for Rate {
+impl support::IntoDart for mirror_Rate {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.coin.into_into_dart().into_dart(),
-            self.value.into_into_dart().into_dart(),
+            self.0.coin.into_into_dart().into_dart(),
+            self.0.value.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for Rate {}
-impl rust2dart::IntoIntoDart<Rate> for Rate {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_Rate {}
+impl rust2dart::IntoIntoDart<mirror_Rate> for Rate {
+    fn into_into_dart(self) -> mirror_Rate {
+        mirror_Rate(self)
     }
 }
 
@@ -2531,21 +2581,21 @@ impl rust2dart::IntoIntoDart<SwapStatus> for SwapStatus {
     }
 }
 
-impl support::IntoDart for Symbol {
+impl support::IntoDart for mirror_Symbol {
     fn into_dart(self) -> support::DartAbi {
         vec![
-            self.grapheme.into_dart(),
-            self.template.into_dart(),
-            self.rtl.into_dart(),
-            self.position.into_dart(),
+            self.0.grapheme.into_dart(),
+            self.0.template.into_dart(),
+            self.0.rtl.into_dart(),
+            self.0.position.into_dart(),
         ]
         .into_dart()
     }
 }
-impl support::IntoDartExceptPrimitive for Symbol {}
-impl rust2dart::IntoIntoDart<Symbol> for Symbol {
-    fn into_into_dart(self) -> Self {
-        self
+impl support::IntoDartExceptPrimitive for mirror_Symbol {}
+impl rust2dart::IntoIntoDart<mirror_Symbol> for Symbol {
+    fn into_into_dart(self) -> mirror_Symbol {
+        mirror_Symbol(self)
     }
 }
 

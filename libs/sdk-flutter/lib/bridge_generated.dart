@@ -569,7 +569,6 @@ class ConnectRequest {
   });
 }
 
-/// Details about a supported currency in the fiat rate feed
 class CurrencyInfo {
   final String name;
   final int fractionSize;
@@ -596,7 +595,6 @@ enum EnvironmentType {
   Staging,
 }
 
-/// Wrapper around the [CurrencyInfo] of a fiat currency
 class FiatCurrency {
   final String id;
   final CurrencyInfo info;
@@ -948,7 +946,6 @@ class LnUrlWithdrawSuccessData {
   });
 }
 
-/// Locale-specific settings for the representation of a currency
 class LocaleOverrides {
   final String locale;
   final int? spacing;
@@ -961,7 +958,6 @@ class LocaleOverrides {
   });
 }
 
-/// Localized name of a currency
 class LocalizedName {
   final String locale;
   final String name;
@@ -1372,7 +1368,6 @@ class PrepareRefundResponse {
   });
 }
 
-/// Denominator in an exchange rate
 class Rate {
   final String coin;
   final double value;
@@ -1913,7 +1908,6 @@ enum SwapStatus {
   Completed,
 }
 
-/// Settings for the symbol representation of a currency
 class Symbol {
   final String? grapheme;
   final String? template;

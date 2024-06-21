@@ -1,12 +1,21 @@
 use std::collections::HashMap;
 
+use anyhow::{Result, anyhow};
 use serde::{Deserialize, Serialize};
-use sdk_common::prelude::BreezServer;
-use sdk_common::grpc::RatesRequest;
 use tonic::Request;
 
-use crate::error::{SdkError, SdkResult};
-use crate::models::FiatAPI;
+use crate::prelude::BreezServer;
+use crate::grpc::RatesRequest;
+
+/// Trait covering fiat-related functionality
+#[tonic::async_trait]
+pub trait FiatAPI: Send + Sync {
+    /// List all supported fiat currencies for which there is a known exchange rate.
+    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
+
+    /// Get the live rates from the server.
+    async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>>;
+}
 
 /// Settings for the symbol representation of a currency
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -65,7 +74,7 @@ fn convert_to_fiat_currency_with_id(id: String, info: CurrencyInfo) -> FiatCurre
 
 #[tonic::async_trait]
 impl FiatAPI for BreezServer {
-    async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
+    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         let known_rates = self.fetch_fiat_rates().await?;
         let known_rates_currencies = known_rates
             .iter()
@@ -84,16 +93,14 @@ impl FiatAPI for BreezServer {
         Ok(fiat_currency_list)
     }
 
-    async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
+    async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         let mut client = self.get_information_client().await;
 
         let request = Request::new(RatesRequest {});
         let response = client
             .rates(request)
             .await
-            .map_err(|e| SdkError::ServiceConnectivity {
-                err: format!("Fetch rates request failed: {e}"),
-            })?;
+            .map_err(|e| anyhow!("Fetch rates request failed: {e}"))?;
 
         let mut rates = response.into_inner().rates;
         rates.sort_by(|a, b| a.coin.cmp(&b.coin));
