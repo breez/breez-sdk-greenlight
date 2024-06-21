@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
-use crate::prelude::BreezServer;
 use crate::grpc::RatesRequest;
+use crate::prelude::BreezServer;
 
 /// Trait covering fiat-related functionality
 #[tonic::async_trait]

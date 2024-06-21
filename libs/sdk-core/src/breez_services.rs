@@ -653,7 +653,10 @@ impl BreezServices {
     /// List all supported fiat currencies for which there is a known exchange rate.
     /// List is sorted by the canonical name of the currency
     pub async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
-        self.fiat_api.list_fiat_currencies().await.map_err(Into::into)
+        self.fiat_api
+            .list_fiat_currencies()
+            .await
+            .map_err(Into::into)
     }
 
     /// List available LSPs that can be selected by the user

@@ -35,8 +35,7 @@ use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
-    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse,
-    TlvEntry,
+    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
