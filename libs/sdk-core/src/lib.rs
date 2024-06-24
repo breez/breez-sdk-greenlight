@@ -176,6 +176,7 @@ pub mod lnurl;
 mod buy;
 mod lsp;
 mod lsps0;
+/// flutter_rust_bridge:ignore
 mod lsps2;
 mod models;
 mod persist;
