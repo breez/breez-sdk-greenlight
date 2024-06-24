@@ -174,6 +174,7 @@ mod greenlight;
 pub mod lnurl;
 mod lsp;
 mod lsps0;
+/// flutter_rust_bridge:ignore
 mod lsps2;
 mod moonpay;
 mod models;
