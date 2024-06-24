@@ -4,5 +4,6 @@ export 'generated/chain.dart';
 export 'generated/frb_generated.dart';
 export 'generated/frb_generated.io.dart';
 export 'generated/lsp.dart';
+export 'generated/lnurl/pay.dart';
 export 'generated/models.dart';
 export 'exceptions.dart';

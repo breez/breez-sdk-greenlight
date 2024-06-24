@@ -171,7 +171,6 @@ pub mod error;
 mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenlight; greenlight::node_api
 mod greenlight;
 #[rustfmt::skip]
-/// flutter_rust_bridge:ignore
 pub mod lnurl;
 mod buy;
 mod lsp;
@@ -179,6 +178,7 @@ mod lsps0;
 /// flutter_rust_bridge:ignore
 mod lsps2;
 mod models;
+mod moonpay;
 mod persist;
 mod serializer;
 mod support;
