@@ -1,10 +1,10 @@
-dictionary RouteHintHop {    
+dictionary RouteHintHop {
      string src_node_id;
      u64 short_channel_id;
      u32 fees_base_msat;
-     u32 fees_proportional_millionths;   
-     u64 cltv_expiry_delta;    
-     u64? htlc_minimum_msat;    
+     u32 fees_proportional_millionths;
+     u64 cltv_expiry_delta;
+     u64? htlc_minimum_msat;
      u64? htlc_maximum_msat;
  };
 
@@ -111,13 +111,17 @@ enum Network {
 };
 
 dictionary GreenlightCredentials {
-    sequence<u8> device_key;
-    sequence<u8> device_cert;
+    sequence<u8> developer_key;
+    sequence<u8> developer_cert;
+};
+
+dictionary GreenlightDeviceCredentials {
+    sequence<u8> device;
 };
 
 [Enum]
 interface NodeCredentials {
-    Greenlight(GreenlightCredentials credentials);
+    Greenlight(GreenlightDeviceCredentials credentials);
 };
 
 dictionary GreenlightNodeConfig {
@@ -183,7 +187,7 @@ dictionary NodeState {
     u64 max_single_payment_amount_msat;
     u64 max_chan_reserve_msats;
     sequence<string> connected_peers;
-    u64 inbound_liquidity_msats;    
+    u64 inbound_liquidity_msats;
 };
 
 dictionary ConfigureNodeRequest {
@@ -239,8 +243,8 @@ enum PaymentType {
 
 dictionary Payment {
     string id;
-    PaymentType payment_type;    
-    i64 payment_time;    
+    PaymentType payment_type;
+    i64 payment_time;
     u64 amount_msat;
     u64 fee_msat;
     PaymentStatus status;
@@ -360,8 +364,8 @@ dictionary CurrencyInfo {
     u32? spacing;
     Symbol? symbol;
     Symbol? uniq_symbol;
-    sequence<LocalizedName>? localized_name;
-    sequence<LocaleOverrides>? locale_overrides;
+    sequence<LocalizedName> localized_name;
+    sequence<LocaleOverrides> locale_overrides;
 };
 
 dictionary FiatCurrency {
@@ -394,7 +398,7 @@ dictionary PaymentFailedData {
 };
 
 dictionary BackupFailedData {
-    string error;    
+    string error;
 };
 
 [Enum]
@@ -405,7 +409,7 @@ interface BreezEvent {
     PaymentSucceed(Payment details);
     PaymentFailed(PaymentFailedData details);
     BackupStarted();
-    BackupSucceeded(); 
+    BackupSucceeded();
     BackupFailed(BackupFailedData details);
     SwapUpdated(SwapInfo details);
 };
@@ -419,7 +423,7 @@ callback interface LogStream {
     void log(LogEntry l);
 };
 
-callback interface EventListener {    
+callback interface EventListener {
     void on_event(BreezEvent e);
 };
 

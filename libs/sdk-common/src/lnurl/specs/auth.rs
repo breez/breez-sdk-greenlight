@@ -1,28 +1,24 @@
 use std::str::FromStr;
-use std::sync::Arc;
 
+use bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
+use bitcoin::secp256k1::{Message, Secp256k1};
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use bitcoin::KeyPair;
 use reqwest::Url;
 
-use crate::bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
-use crate::bitcoin::secp256k1::{Message, Secp256k1};
-use crate::bitcoin::util::bip32::ChildNumber;
-use crate::bitcoin::KeyPair;
-use crate::input_parser::get_parse_and_log_response;
-use crate::{node_api::NodeAPI, LnUrlAuthRequestData, LnUrlCallbackStatus};
-
-use super::error::{LnUrlError, LnUrlResult};
+use crate::prelude::*;
 
 /// Performs the third and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>
 ///
+/// Linking key is derived as per LUD-05
+/// https://github.com/lnurl/luds/blob/luds/05.md
+///
 /// See the [parse] docs for more detail on the full workflow.
-pub(crate) async fn perform_lnurl_auth(
-    node_api: Arc<dyn NodeAPI>,
+pub async fn perform_lnurl_auth(
+    linking_keys: KeyPair,
     req_data: LnUrlAuthRequestData,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
-    let url = Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
-    let linking_keys = derive_linking_keys(node_api, url)?;
-
     let k1_to_sign = Message::from_slice(
         &hex::decode(req_data.k1)
             .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
@@ -39,12 +35,12 @@ pub(crate) async fn perform_lnurl_auth(
         .query_pairs_mut()
         .append_pair("key", &linking_keys.public_key().to_hex());
 
-    get_parse_and_log_response(callback_url.as_ref())
+    get_parse_and_log_response(callback_url.as_ref(), false)
         .await
         .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
 }
 
-pub(crate) fn validate_request(
+pub fn validate_request(
     domain: String,
     lnurl_endpoint: String,
 ) -> LnUrlResult<LnUrlAuthRequestData> {
@@ -91,35 +87,88 @@ fn hmac_sha256(key: &[u8], input: &[u8]) -> Hmac<sha256::Hash> {
     Hmac::<sha256::Hash>::from_engine(engine)
 }
 
-/// Linking key is derived as per LUD-05
-///
-/// https://github.com/lnurl/luds/blob/luds/05.md
-fn derive_linking_keys(node_api: Arc<dyn NodeAPI>, url: Url) -> LnUrlResult<KeyPair> {
+pub fn get_derivation_path(
+    hashing_key: ExtendedPrivKey,
+    url: Url,
+) -> LnUrlResult<Vec<ChildNumber>> {
     let domain = url
         .domain()
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
-    // m/138'/0
-    let hashing_key = node_api.derive_bip32_key(vec![
-        ChildNumber::from_hardened_idx(138)?,
-        ChildNumber::from(0),
-    ])?;
     let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
-    let linking_key = node_api.derive_bip32_key(vec![
+    Ok(vec![
         ChildNumber::from_hardened_idx(138)?,
         ChildNumber::from(build_path_element_u32(hmac[0..4].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac[4..8].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac[8..12].try_into()?)),
         ChildNumber::from(build_path_element_u32(hmac[12..16].try_into()?)),
-    ])?;
-
-    Ok(linking_key.to_keypair(&Secp256k1::new()))
+    ])
 }
 
 fn build_path_element_u32(hmac_bytes: [u8; 4]) -> u32 {
     let mut buf = [0u8; 4];
     buf[..4].copy_from_slice(&hmac_bytes);
     u32::from_be_bytes(buf)
+}
+
+pub mod model {
+    use serde::{Deserialize, Serialize};
+    use thiserror::Error;
+
+    use crate::prelude::LnUrlError;
+
+    /// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
+    ///
+    /// It represents the endpoint's parameters for the LNURL workflow.
+    ///
+    /// See <https://github.com/lnurl/luds/blob/luds/04.md>
+    #[derive(Clone, Deserialize, Debug, Serialize)]
+    pub struct LnUrlAuthRequestData {
+        /// Hex encoded 32 bytes of challenge
+        pub k1: String,
+
+        /// When available, one of: register, login, link, auth
+        pub action: Option<String>,
+
+        /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
+        /// auth confirmation, as per LUD-04 spec.
+        #[serde(skip_serializing, skip_deserializing)]
+        pub domain: String,
+
+        /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
+        /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
+        #[serde(skip_serializing, skip_deserializing)]
+        pub url: String,
+    }
+
+    /// Error returned by [crate::breez_services::BreezServices::lnurl_auth]
+    #[derive(Debug, Error)]
+    pub enum LnUrlAuthError {
+        /// This error is raised when a general error occurs not specific to other error variants
+        /// in this enum.
+        #[error("Generic: {err}")]
+        Generic { err: String },
+
+        /// This error is raised when the decoded LNURL URI is not compliant to the specification.
+        #[error("Invalid uri: {err}")]
+        InvalidUri { err: String },
+
+        /// This error is raised when a connection to an external service fails.
+        #[error("Service connectivity: {err}")]
+        ServiceConnectivity { err: String },
+    }
+
+    impl From<LnUrlError> for LnUrlAuthError {
+        fn from(value: LnUrlError) -> Self {
+            match value {
+                LnUrlError::InvalidUri(err) => Self::InvalidUri { err },
+                LnUrlError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+                _ => Self::Generic {
+                    err: value.to_string(),
+                },
+            }
+        }
+    }
 }

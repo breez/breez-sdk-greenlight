@@ -5,20 +5,24 @@ use tokio::sync::{mpsc, watch};
 use tokio_stream::Stream;
 use tonic::Streaming;
 
+use sdk_common::prelude::*;
+
 use crate::{
     bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
-    invoice::InvoiceError,
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
-    CustomMessage, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
+    CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
-    SyncResponse, TlvEntry,
+    SyncResponse, TlvEntry, LnUrlAuthError
 };
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
 pub enum NodeError {
+    #[error("{0}")]
+    Credentials(String),
+
     #[error("{0}")]
     Generic(String),
 
@@ -57,8 +61,33 @@ pub enum NodeError {
 }
 
 impl NodeError {
+    pub(crate) fn credentials(err: &str) -> Self {
+        Self::Credentials(err.to_string())
+    }
+
     pub(crate) fn generic(err: &str) -> Self {
         Self::Generic(err.to_string())
+    }
+}
+
+impl From<NodeError> for sdk_common::prelude::LnUrlError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::InvalidInvoice(err) => Self::InvalidInvoice(format!("{err}")),
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity(err),
+            _ => Self::Generic(value.to_string()),
+        }
+    }
+}
+
+impl From<NodeError> for LnUrlAuthError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            _ => Self::Generic {
+                err: value.to_string()
+            },
+        }
     }
 }
 
@@ -88,7 +117,7 @@ pub trait NodeAPI: Send + Sync {
     async fn pull_changed(
         &self,
         since_timestamp: u64,
-        balance_changed: bool,
+        match_local_balance: bool,
     ) -> NodeResult<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount
     async fn send_payment(
@@ -155,5 +184,8 @@ pub trait NodeAPI: Send + Sync {
 
     // Gets the routing hints related to all private channels that the node has.
     // Also returns a boolean indicating if the node has a public channel or not.
-    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)>;
+    async fn get_routing_hints(
+        &self,
+        lsp_info: &LspInformation,
+    ) -> NodeResult<(Vec<RouteHint>, bool)>;
 }

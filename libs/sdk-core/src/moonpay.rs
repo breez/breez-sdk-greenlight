@@ -1,8 +1,8 @@
 use anyhow::Result;
 use reqwest::Url;
+use sdk_common::grpc::SignUrlRequest;
+use sdk_common::prelude::BreezServer;
 
-use crate::breez_services::BreezServer;
-use crate::grpc::SignUrlRequest;
 use crate::SwapInfo;
 
 #[derive(Clone)]
@@ -59,7 +59,7 @@ impl MoonPayApi for BreezServer {
             format!("{:.8}", swap_info.max_allowed_deposit as f64 / 100000000.0).as_str(),
         )
         .await?;
-        let mut signer = self.get_signer_client().await?.clone();
+        let mut signer = self.get_signer_client().await;
         let signed_url = signer
             .sign_url(SignUrlRequest {
                 base_url: config.base_url.clone(),

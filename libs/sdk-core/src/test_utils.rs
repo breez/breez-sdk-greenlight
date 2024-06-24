@@ -12,6 +12,8 @@ use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
+use sdk_common::grpc;
+use sdk_common::prelude::{FiatAPI, FiatCurrency, Rate};
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
@@ -28,15 +30,12 @@ use crate::bitcoin::Network;
 use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
-use crate::fiat::{FiatCurrency, Rate};
-use crate::grpc::{PaymentInformation, RegisterPaymentNotificationResponse, RegisterPaymentReply, RemovePaymentNotificationResponse};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
-    FiatAPI, LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse,
-    TlvEntry,
+    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
@@ -46,7 +45,7 @@ use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReve
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
     parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    OpeningFeeParams, OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
+    OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint,
     RouteHintHop, SwapInfo,
 };
@@ -211,8 +210,8 @@ impl Default for MockChainService {
         .unwrap();
 
         let txs: Vec<OnchainTx> = serde_json::from_str(
-            r#"[{"txid":"a418e856bb22b6345868dc0b1ac1dd7a6b7fae1d231b275b74172f9584fa0bdf","version":1,"locktime":0,"vin":[{"txid":"ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe","vout":0,"prevout":{"scriptpubkey":"0014b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5","value":197497253},"scriptsig":"","scriptsig_asm":"","witness":["304502210089933e46614114e060d3d681c54af71e3d47f8be8131d9310ef8fe231c060f3302204103910a6790e3a678964df6f0f9ae2107666a91e777bd87f9172a28653e374701","0356f385879fefb8c52758126f6e7b9ac57374c2f73f2ee9047b4c61df0ba390b9"],"is_coinbase":false,"sequence":4294967293},{"txid":"fda3ce37f5fb849502e2027958d51efebd1841cb43bbfdd5f3d354c93a551ef9","vout":0,"prevout":{"scriptpubkey":"00145c7f3b6ceb79d03d5a5397df83f2334394ebdd2c","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 5c7f3b6ceb79d03d5a5397df83f2334394ebdd2c","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qt3lnkm8t08gr6kjnjl0c8u3ngw2whhfvzwsxrg","value":786885},"scriptsig":"","scriptsig_asm":"","witness":["304402200ae5465efe824609f7faf1094cce0195763df52e5409dd9ae0526568bf3bcaa20220103749041a87e082cf95bf1e12c5174881e5e4c55e75ab2db29a68538dbabbad01","03dfd8cc1f72f46d259dc0afc6d756bce551fce2fbf58a9ad36409a1b82a17e64f"],"is_coinbase":false,"sequence":4294967293}],"vout":[{"scriptpubkey":"a9141df45814863edfd6d87457e8f8bd79607a116a8f87","scriptpubkey_asm":"OP_HASH160 OP_PUSHBYTES_20 1df45814863edfd6d87457e8f8bd79607a116a8f OP_EQUAL","scriptpubkey_type":"p2sh","scriptpubkey_address":"34RQERthXaruAXtW6q1bvrGTeUbqi2Sm1i","value":26087585},{"scriptpubkey":"001479001aa5f4b981a0b654c3f834d0573595b0ed53","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 79001aa5f4b981a0b654c3f834d0573595b0ed53","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1q0yqp4f05hxq6pdj5c0urf5zhxk2mpm2ndx85za","value":171937413}],"size":372,"weight":837,"fee":259140,"status":{"confirmed":true,"block_height":767637,"block_hash":"000000000000000000077769f3b2e6a28b9ed688f0d773f9ff2d73c622a2cfac","block_time":1671174562}},{"txid":"ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe","version":1,"locktime":767636,"vin":[{"txid":"d4344fc9e7f66b3a1a50d1d76836a157629ba0c6ede093e94f1c809d334c9146","vout":0,"prevout":{"scriptpubkey":"0014cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qe2ez9y9h4hr4lpsaaqst42taxxwpzy9xlzqt8k","value":209639471},"scriptsig":"","scriptsig_asm":"","witness":["304402202e914c35b75da798f0898c7cfe6ead207aaee41219afd77124fd56971f05d9030220123ce5d124f4635171b7622995dae35e00373a5fbf8117bfdca5e5080ad6554101","02122fa6d20413bb5da5c7e3fb42228be5436b1bd84e29b294bfc200db5eac460e"],"is_coinbase":false,"sequence":4294967293}],"vout":[{"scriptpubkey":"0014b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5","value":197497253},{"scriptpubkey":"0014f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1q7r32q47suczprtpawgvw9xlefzd9nhccyatxvu","value":12140465}],"size":222,"weight":561,"fee":1753,"status":{"confirmed":true,"block_height":767637,"block_hash":"000000000000000000077769f3b2e6a28b9ed688f0d773f9ff2d73c622a2cfac","block_time":1671174562}}]"#,
-        ).unwrap();
+                r#"[{"txid":"a418e856bb22b6345868dc0b1ac1dd7a6b7fae1d231b275b74172f9584fa0bdf","version":1,"locktime":0,"vin":[{"txid":"ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe","vout":0,"prevout":{"scriptpubkey":"0014b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5","value":197497253},"scriptsig":"","scriptsig_asm":"","witness":["304502210089933e46614114e060d3d681c54af71e3d47f8be8131d9310ef8fe231c060f3302204103910a6790e3a678964df6f0f9ae2107666a91e777bd87f9172a28653e374701","0356f385879fefb8c52758126f6e7b9ac57374c2f73f2ee9047b4c61df0ba390b9"],"is_coinbase":false,"sequence":4294967293},{"txid":"fda3ce37f5fb849502e2027958d51efebd1841cb43bbfdd5f3d354c93a551ef9","vout":0,"prevout":{"scriptpubkey":"00145c7f3b6ceb79d03d5a5397df83f2334394ebdd2c","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 5c7f3b6ceb79d03d5a5397df83f2334394ebdd2c","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qt3lnkm8t08gr6kjnjl0c8u3ngw2whhfvzwsxrg","value":786885},"scriptsig":"","scriptsig_asm":"","witness":["304402200ae5465efe824609f7faf1094cce0195763df52e5409dd9ae0526568bf3bcaa20220103749041a87e082cf95bf1e12c5174881e5e4c55e75ab2db29a68538dbabbad01","03dfd8cc1f72f46d259dc0afc6d756bce551fce2fbf58a9ad36409a1b82a17e64f"],"is_coinbase":false,"sequence":4294967293}],"vout":[{"scriptpubkey":"a9141df45814863edfd6d87457e8f8bd79607a116a8f87","scriptpubkey_asm":"OP_HASH160 OP_PUSHBYTES_20 1df45814863edfd6d87457e8f8bd79607a116a8f OP_EQUAL","scriptpubkey_type":"p2sh","scriptpubkey_address":"34RQERthXaruAXtW6q1bvrGTeUbqi2Sm1i","value":26087585},{"scriptpubkey":"001479001aa5f4b981a0b654c3f834d0573595b0ed53","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 79001aa5f4b981a0b654c3f834d0573595b0ed53","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1q0yqp4f05hxq6pdj5c0urf5zhxk2mpm2ndx85za","value":171937413}],"size":372,"weight":837,"fee":259140,"status":{"confirmed":true,"block_height":767637,"block_hash":"000000000000000000077769f3b2e6a28b9ed688f0d773f9ff2d73c622a2cfac","block_time":1671174562}},{"txid":"ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe","version":1,"locktime":767636,"vin":[{"txid":"d4344fc9e7f66b3a1a50d1d76836a157629ba0c6ede093e94f1c809d334c9146","vout":0,"prevout":{"scriptpubkey":"0014cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qe2ez9y9h4hr4lpsaaqst42taxxwpzy9xlzqt8k","value":209639471},"scriptsig":"","scriptsig_asm":"","witness":["304402202e914c35b75da798f0898c7cfe6ead207aaee41219afd77124fd56971f05d9030220123ce5d124f4635171b7622995dae35e00373a5fbf8117bfdca5e5080ad6554101","02122fa6d20413bb5da5c7e3fb42228be5436b1bd84e29b294bfc200db5eac460e"],"is_coinbase":false,"sequence":4294967293}],"vout":[{"scriptpubkey":"0014b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5","value":197497253},{"scriptpubkey":"0014f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1q7r32q47suczprtpawgvw9xlefzd9nhccyatxvu","value":12140465}],"size":222,"weight":561,"fee":1753,"status":{"confirmed":true,"block_height":767637,"block_hash":"000000000000000000077769f3b2e6a28b9ed688f0d773f9ff2d73c622a2cfac","block_time":1671174562}}]"#,
+            ).unwrap();
         Self {
             tip: 767640,
             recommended_fees,
@@ -497,7 +496,10 @@ impl NodeAPI for MockNodeAPI {
         ))
     }
 
-    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
+    async fn get_routing_hints(
+        &self,
+        _lsp_info: &LspInformation,
+    ) -> NodeResult<(Vec<RouteHint>, bool)> {
         Ok((vec![], false))
     }
 
@@ -661,8 +663,8 @@ impl LspAPI for MockBreezServer {
         _lsp_pubkey: Vec<u8>,
         _webhook_url: String,
         _webhook_url_signature: String,
-    ) -> SdkResult<RegisterPaymentNotificationResponse> {
-        Ok(RegisterPaymentNotificationResponse {})
+    ) -> SdkResult<grpc::RegisterPaymentNotificationResponse> {
+        Ok(grpc::RegisterPaymentNotificationResponse {})
     }
 
     async fn unregister_payment_notifications(
@@ -671,27 +673,27 @@ impl LspAPI for MockBreezServer {
         _lsp_pubkey: Vec<u8>,
         _webhook_url: String,
         _webhook_url_signature: String,
-    ) -> SdkResult<RemovePaymentNotificationResponse> {
-        Ok(RemovePaymentNotificationResponse {})
+    ) -> SdkResult<grpc::RemovePaymentNotificationResponse> {
+        Ok(grpc::RemovePaymentNotificationResponse {})
     }
 
     async fn register_payment(
         &self,
         _lsp_id: String,
         _lsp_pubkey: Vec<u8>,
-        _payment_info: PaymentInformation,
-    ) -> SdkResult<RegisterPaymentReply> {
-        Ok(RegisterPaymentReply {})
+        _payment_info: grpc::PaymentInformation,
+    ) -> SdkResult<grpc::RegisterPaymentReply> {
+        Ok(grpc::RegisterPaymentReply {})
     }
 }
 
 #[tonic::async_trait]
 impl FiatAPI for MockBreezServer {
-    async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
+    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         Ok(vec![])
     }
 
-    async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
+    async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         Ok(vec![Rate {
             coin: "USD".to_string(),
             value: 20_000.00,
@@ -833,7 +835,7 @@ fn sign_invoice(invoice: RawBolt11Invoice) -> String {
 }
 
 /// [OpeningFeeParams] that are valid for more than 48h
-pub(crate) fn get_test_ofp_48h(min_msat: u64, proportional: u32) -> crate::grpc::OpeningFeeParams {
+pub(crate) fn get_test_ofp_48h(min_msat: u64, proportional: u32) -> grpc::OpeningFeeParams {
     get_test_ofp_generic(min_msat, proportional, true, chrono::Duration::days(10))
 }
 
@@ -842,7 +844,7 @@ pub(crate) fn get_test_ofp(
     min_msat: u64,
     proportional: u32,
     future_or_past: bool,
-) -> crate::grpc::OpeningFeeParams {
+) -> grpc::OpeningFeeParams {
     get_test_ofp_generic(
         min_msat,
         proportional,
@@ -856,7 +858,7 @@ pub(crate) fn get_test_ofp_generic(
     proportional: u32,
     future_or_past: bool,
     duration: chrono::Duration,
-) -> crate::grpc::OpeningFeeParams {
+) -> grpc::OpeningFeeParams {
     let now = Utc::now();
     let date_time = match future_or_past {
         true => now.checked_add_signed(duration).unwrap(),
@@ -864,7 +866,7 @@ pub(crate) fn get_test_ofp_generic(
     };
     let formatted = date_time.to_rfc3339_opts(SecondsFormat::Millis, true);
 
-    OpeningFeeParams {
+    grpc::OpeningFeeParams {
         min_msat,
         proportional,
         valid_until: formatted,

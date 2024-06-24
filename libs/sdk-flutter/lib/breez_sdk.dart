@@ -102,6 +102,9 @@ class BreezSDK {
     await fetchNodeData();
   }
 
+  /// Retrieve the decrypted credentials from the node.
+  Future<NodeCredentials?> nodeCredentials() async => await _lnToolkit.nodeCredentials();
+
   /// Check whether node service is initialized or not
   Future<bool> isInitialized() async => await binding.isInitialized();
 

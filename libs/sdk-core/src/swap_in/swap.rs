@@ -5,6 +5,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
+use sdk_common::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
+use sdk_common::prelude::BreezServer;
 use tokio::sync::broadcast;
 
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -18,17 +20,16 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::breez_services::{BreezEvent, BreezServer, OpenChannelParams, Receiver};
+use crate::breez_services::{BreezEvent, OpenChannelParams, Receiver};
 use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
-use crate::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapError;
 use crate::{
-    OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
+    models::OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
     RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 
@@ -42,7 +43,7 @@ impl SwapperAPI for BreezServer {
         payer_pubkey: Vec<u8>,
         node_id: String,
     ) -> SwapResult<Swap> {
-        let mut fund_client = self.get_swapper_client().await?;
+        let mut fund_client = self.get_swapper_client().await;
         let req = AddFundInitRequest {
             hash: hash.clone(),
             pubkey: payer_pubkey.clone(),
@@ -68,7 +69,7 @@ impl SwapperAPI for BreezServer {
         };
         let resp = self
             .get_swapper_client()
-            .await?
+            .await
             .get_swap_payment(req)
             .await?
             .into_inner();
@@ -512,8 +513,8 @@ impl BTCReceiveSwap {
                                         None => None,
                                     },
                                     None,
-                                ).await.map_err(|_|anyhow!(
-                                    "Preimage already known, invoice found, failed to ensure route hint"
+                                ).await.map_err(|e|anyhow!(
+                                    "Preimage already known, invoice found, failed to ensure route hint: {:?}", e
                                 ))?
                             }
                         }

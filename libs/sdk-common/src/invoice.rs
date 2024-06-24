@@ -1,15 +1,15 @@
 use std::str::FromStr;
 use std::time::{SystemTimeError, UNIX_EPOCH};
 
+use bitcoin::secp256k1::{self, PublicKey};
 use hex::ToHex;
+use lightning::routing::gossip::RoutingFees;
+use lightning::routing::*;
+use lightning_invoice::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::bitcoin::secp256k1::{self, PublicKey};
-use crate::lightning::routing::gossip::RoutingFees;
-use crate::lightning::routing::*;
-use crate::lightning_invoice::*;
-use crate::Network;
+use crate::prelude::*;
 
 pub type InvoiceResult<T, E = InvoiceError> = Result<T, E>;
 
@@ -26,33 +26,33 @@ pub enum InvoiceError {
 }
 
 impl InvoiceError {
-    pub(crate) fn generic(err: &str) -> Self {
+    pub fn generic(err: &str) -> Self {
         Self::Generic(err.to_string())
     }
 
-    pub(crate) fn invalid_network(err: &str) -> Self {
+    pub fn invalid_network(err: &str) -> Self {
         Self::InvalidNetwork(err.to_string())
     }
 
-    pub(crate) fn validation(err: &str) -> Self {
+    pub fn validation(err: &str) -> Self {
         Self::Validation(err.to_string())
     }
 }
 
-impl From<crate::lightning_invoice::CreationError> for InvoiceError {
-    fn from(err: crate::lightning_invoice::CreationError) -> Self {
+impl From<CreationError> for InvoiceError {
+    fn from(err: CreationError) -> Self {
         Self::Generic(err.to_string())
     }
 }
 
-impl From<crate::lightning_invoice::Bolt11ParseError> for InvoiceError {
-    fn from(err: crate::lightning_invoice::Bolt11ParseError) -> Self {
+impl From<Bolt11ParseError> for InvoiceError {
+    fn from(err: Bolt11ParseError) -> Self {
         Self::Validation(err.to_string())
     }
 }
 
-impl From<crate::lightning_invoice::Bolt11SemanticError> for InvoiceError {
-    fn from(err: crate::lightning_invoice::Bolt11SemanticError) -> Self {
+impl From<Bolt11SemanticError> for InvoiceError {
+    fn from(err: Bolt11SemanticError) -> Self {
         Self::Validation(err.to_string())
     }
 }
@@ -93,7 +93,7 @@ pub struct LNInvoice {
 }
 
 impl LNInvoice {
-    pub(crate) fn contains_hint_for_node(&self, pubkey: &str) -> bool {
+    pub fn contains_hint_for_node(&self, pubkey: &str) -> bool {
         self.routing_hints
             .iter()
             .any(|hint| hint.hops.iter().any(|hop| hop.src_node_id == pubkey))
@@ -307,7 +307,7 @@ mod tests {
                 .unwrap();
         let mut private_key: [u8; 32] = Default::default();
         private_key.copy_from_slice(&private_key_vec[0..32]);
-        let hint_hop = crate::RouteHintHop {
+        let hint_hop = self::RouteHintHop {
             src_node_id: res.payee_pubkey,
             short_channel_id: 1234,
             cltv_expiry_delta: 2000,
@@ -316,7 +316,7 @@ mod tests {
             fees_base_msat: 1000,
             fees_proportional_millionths: 100,
         };
-        let route_hint = crate::RouteHint {
+        let route_hint = self::RouteHint {
             hops: vec![hint_hop],
         };
         let encoded = add_routing_hints(&payreq, true, &vec![route_hint], Some(100)).unwrap();
@@ -334,7 +334,7 @@ mod tests {
                 .unwrap();
         let mut private_key: [u8; 32] = Default::default();
         private_key.copy_from_slice(&private_key_vec[0..32]);
-        let hint_hop = crate::RouteHintHop {
+        let hint_hop = self::RouteHintHop {
             src_node_id: res.payee_pubkey,
             short_channel_id: 1234,
             fees_base_msat: 1000,
@@ -343,7 +343,7 @@ mod tests {
             htlc_minimum_msat: Some(3000),
             htlc_maximum_msat: Some(4000),
         };
-        let route_hint = crate::RouteHint {
+        let route_hint = self::RouteHint {
             hops: vec![hint_hop],
         };
         let encoded = add_routing_hints(&payreq, false, &vec![route_hint], Some(100)).unwrap();

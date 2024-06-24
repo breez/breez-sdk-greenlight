@@ -1,10 +1,10 @@
 use anyhow::Result;
+use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::bitcoin::hashes::hex::FromHex;
 use crate::bitcoin::{OutPoint, Txid};
 use crate::error::{SdkError, SdkResult};
-use crate::input_parser::{get_parse_and_log_response, get_reqwest_client, post_and_log_response};
 
 pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";
 
@@ -337,27 +337,28 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
-        get_parse_and_log_response(&format!("{}/v1/fees/recommended", self.base_url)).await
+        get_parse_and_log_response(&format!("{}/v1/fees/recommended", self.base_url), true)
+            .await
+            .map_err(Into::into)
     }
 
     async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
-        get_parse_and_log_response(&format!("{}/address/{address}/txs", self.base_url)).await
+        get_parse_and_log_response(&format!("{}/address/{address}/txs", self.base_url), true)
+            .await
+            .map_err(Into::into)
     }
 
     async fn current_tip(&self) -> SdkResult<u32> {
-        get_parse_and_log_response(&format!("{}/blocks/tip/height", self.base_url)).await
+        get_parse_and_log_response(&format!("{}/blocks/tip/height", self.base_url), true)
+            .await
+            .map_err(Into::into)
     }
 
     async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
         let url = format!("{}/tx/{txid}/outspends", self.base_url);
-        Ok(get_reqwest_client()?
-            .get(url)
-            .send()
+        get_parse_and_log_response(&url, true)
             .await
-            .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
-            .json()
-            .await
-            .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?)
+            .map_err(Into::into)
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> SdkResult<String> {
@@ -373,8 +374,9 @@ impl ChainService for MempoolSpace {
 }
 #[cfg(test)]
 mod tests {
-    use crate::chain::{
-        MempoolSpace, OnchainTx, RedundantChainService, RedundantChainServiceTrait,
+    use crate::{
+        chain::{MempoolSpace, OnchainTx, RedundantChainService, RedundantChainServiceTrait},
+        error::SdkError,
     };
     use anyhow::Result;
     use tokio::test;
@@ -436,6 +438,28 @@ mod tests {
         let expected_serialized = serde_json::to_string(&expected_txs)?;
 
         assert_eq!(expected_serialized, serialized_res);
+
+        let outspends = ms
+            .transaction_outspends(
+                "5e0668bf1cd24f2f8656ee82d4886f5303a06b26838e24b7db73afc59e228985".to_string(),
+            )
+            .await?;
+        assert_eq!(outspends.len(), 2);
+
+        let outspends = ms
+            .transaction_outspends(
+                "07c9d3fbffc20f96ea7c93ef3bcdf346c8a8456c25850ea76be62b24a7cf6901".to_string(),
+            )
+            .await;
+        match outspends {
+            Ok(_) => panic!("Expected an error"),
+            Err(e) => match e {
+                SdkError::ServiceConnectivity { err } => {
+                    assert_eq!(err, "GET request https://mempool.space/api/tx/07c9d3fbffc20f96ea7c93ef3bcdf346c8a8456c25850ea76be62b24a7cf6901/outspends failed with status: 404 Not Found")
+                }
+                _ => panic!("Expected a service connectivity error"),
+            },
+        };
 
         Ok(())
     }

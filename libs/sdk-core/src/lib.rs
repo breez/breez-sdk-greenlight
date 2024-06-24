@@ -155,13 +155,12 @@
 //!
 //! Join this [telegram group](https://t.me/breezsdk).
 
+#[allow(clippy::all)]
 mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
+
 #[macro_use]
 extern crate log;
 
-#[rustfmt::skip]
-#[cfg(test)]
-mod test_utils; // flutter_rust_bridge_codegen: has to be defined before breez_services
 mod backup;
 pub mod binding;
 mod breez_services;
@@ -172,12 +171,7 @@ pub mod error;
 mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenlight; greenlight::node_api
 mod greenlight;
 #[rustfmt::skip]
-mod fiat; // flutter_rust_bridge_codegen: has to be defined after grpc; grpc::Rate
-pub mod input_parser;
-mod invoice;
-mod lnurl;
-#[rustfmt::skip]
-mod models;
+pub mod lnurl;
 mod lsp;
 mod lsps0;
 mod lsps2;
@@ -186,16 +180,15 @@ mod persist;
 mod support;
 mod swap_in;
 mod swap_out;
+#[allow(clippy::all)]
+#[allow(unused_mut)]
+#[allow(dead_code)]
+mod test_utils;
 mod tonic_wrap;
 // GRPC structs are documented as follows:
 // - if they are mirrored in Rust model structs, documented in the model structs
 // - if there is no corresponding model struct, documented in breez.proto
 mod grpc;
-
-// Re-use crates from gl_client for consistency
-use gl_client::bitcoin;
-use gl_client::lightning;
-use gl_client::lightning_invoice;
 
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
@@ -203,14 +196,7 @@ pub use breez_services::{
     SignMessageRequest, SignMessageResponse,
 };
 pub use chain::RecommendedFees;
-pub use fiat::{CurrencyInfo, FiatCurrency, LocaleOverrides, LocalizedName, Rate, Symbol};
-pub use input_parser::{
-    parse, BitcoinAddressData, InputType, LnUrlAuthRequestData, LnUrlErrorData,
-    LnUrlPayRequestData, LnUrlRequestData, LnUrlWithdrawRequestData, MetadataItem,
-};
-pub use invoice::{parse_invoice, LNInvoice, RouteHint, RouteHintHop};
-
-pub use lnurl::pay::model::*;
 pub use lsp::LspInformation;
 pub use models::*;
+pub use sdk_common::prelude::*;
 pub use swap_out::reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};

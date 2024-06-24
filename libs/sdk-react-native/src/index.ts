@@ -98,8 +98,8 @@ export interface CurrencyInfo {
     spacing?: number
     symbol?: SymbolType
     uniqSymbol?: SymbolType
-    localizedName?: LocalizedName[]
-    localeOverrides?: LocaleOverrides[]
+    localizedName: LocalizedName[]
+    localeOverrides: LocaleOverrides[]
 }
 
 export interface FiatCurrency {
@@ -108,8 +108,12 @@ export interface FiatCurrency {
 }
 
 export interface GreenlightCredentials {
-    deviceKey: number[]
-    deviceCert: number[]
+    developerKey: number[]
+    developerCert: number[]
+}
+
+export interface GreenlightDeviceCredentials {
+    device: number[]
 }
 
 export interface GreenlightNodeConfig {
@@ -757,7 +761,7 @@ export enum NodeCredentialsVariant {
 
 export interface NodeCredentials {
     type: NodeCredentialsVariant.GREENLIGHT,
-    credentials: GreenlightCredentials
+    credentials: GreenlightDeviceCredentials
 }
 
 export enum PaymentDetailsVariant {

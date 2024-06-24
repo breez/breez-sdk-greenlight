@@ -1,22 +1,13 @@
 use std::str::FromStr;
-use std::time::Duration;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
-use serde::Deserialize;
-use serde::Serialize;
+use bitcoin::bech32;
+use bitcoin::bech32::FromBase32;
+use serde::{Deserialize, Serialize};
+use LnUrlRequestData::*;
 
-use crate::bitcoin::bech32;
-use crate::bitcoin::bech32::FromBase32;
-use crate::ensure_sdk;
-use crate::error::SdkError;
-use crate::error::SdkError::ServiceConnectivity;
-use crate::error::SdkResult;
-use crate::input_parser::InputType::*;
-use crate::input_parser::LnUrlRequestData::*;
-use crate::invoice::{parse_invoice, LNInvoice};
-use crate::lnurl::error::LnUrlResult;
-use crate::lnurl::maybe_replace_host_with_mockito_test_host;
+use crate::prelude::*;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -25,7 +16,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// ## On-chain BTC addresses (incl. BIP 21 URIs)
 ///
 /// ```
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -46,7 +37,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// ## BOLT 11 invoices
 ///
 /// ```
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -63,7 +54,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// ## Web URLs
 ///
 /// ```
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -76,7 +67,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// ### Web URLs with `lightning` query param with an LNURL value.
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, parse};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -92,7 +83,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// ### LNURL pay request
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, LnUrlRequestData::*, parse};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 /// use anyhow::Result;
 ///
 /// #[tokio::main]
@@ -120,7 +111,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// ### LNURL withdraw request
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, LnUrlRequestData::*, parse};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -144,7 +135,7 @@ use crate::lnurl::maybe_replace_host_with_mockito_test_host;
 /// ### LNURL auth request
 ///
 /// ```no_run
-/// use breez_sdk_core::{InputType::*, LnUrlRequestData::*, parse};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -177,28 +168,28 @@ pub async fn parse(input: &str) -> Result<InputType> {
         }
 
         return match invoice_param {
-            None => Ok(BitcoinAddress {
+            None => Ok(InputType::BitcoinAddress {
                 address: bitcoin_addr_data,
             }),
-            Some(invoice) => Ok(Bolt11 { invoice }),
+            Some(invoice) => Ok(InputType::Bolt11 { invoice }),
         };
     }
 
     if let Ok(invoice) = parse_invoice(input) {
-        return Ok(Bolt11 { invoice });
+        return Ok(InputType::Bolt11 { invoice });
     }
 
     // Public key serialized in compressed form (66 hex chars)
-    if let Ok(_node_id) = crate::bitcoin::secp256k1::PublicKey::from_str(input) {
-        return Ok(NodeId {
+    if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(input) {
+        return Ok(InputType::NodeId {
             node_id: input.into(),
         });
     }
 
     // Possible Node URI (check for separator symbol, try to parse pubkey, ignore rest)
     if let Some('@') = input.chars().nth(66) {
-        if let Ok(_node_id) = crate::bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
-            return Ok(NodeId {
+        if let Ok(_node_id) = bitcoin::secp256k1::PublicKey::from_str(&input[..66]) {
+            return Ok(InputType::NodeId {
                 node_id: input.into(),
             });
         }
@@ -206,12 +197,15 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     if let Ok(url) = reqwest::Url::parse(input) {
         if ["http", "https"].contains(&url.scheme()) {
-            if let Some((_key, value)) = url.query_pairs().find(|p| p.0 == "lightning") {
+            if let Some((_key, value)) = url
+                .query_pairs()
+                .find(|p| p.0 == "lightning" || p.0 == "LIGHTNING")
+            {
                 if let Ok((domain, lnurl_endpoint, ln_address)) = lnurl_decode(&value) {
                     return resolve_lnurl(domain, lnurl_endpoint, ln_address).await;
                 }
             }
-            return Ok(Url { url: input.into() });
+            return Ok(InputType::Url { url: input.into() });
         }
     }
 
@@ -225,54 +219,6 @@ pub async fn parse(input: &str) -> Result<InputType> {
     }
 
     Err(anyhow!("Unrecognized input type"))
-}
-
-pub(crate) async fn post_and_log_response(url: &str, body: Option<String>) -> SdkResult<String> {
-    debug!("Making POST request to: {url}");
-
-    let mut req = get_reqwest_client()?.post(url);
-    if let Some(body) = body {
-        req = req.body(body);
-    }
-    let raw_body = req
-        .send()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
-        .text()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
-    debug!("Received raw response body: {raw_body}");
-
-    Ok(raw_body)
-}
-
-/// Makes a GET request to the specified `url` and logs on DEBUG:
-/// - the URL
-/// - the raw response body
-pub(crate) async fn get_and_log_response(url: &str) -> SdkResult<String> {
-    debug!("Making GET request to: {url}");
-
-    let raw_body = get_reqwest_client()?
-        .get(url)
-        .send()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?
-        .text()
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity { err: e.to_string() })?;
-    debug!("Received raw response body: {raw_body}");
-
-    Ok(raw_body)
-}
-
-/// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type
-pub(crate) async fn get_parse_and_log_response<T>(url: &str) -> SdkResult<T>
-where
-    for<'a> T: serde::de::Deserialize<'a>,
-{
-    let raw_body = get_and_log_response(url).await?;
-
-    Ok(serde_json::from_str(&raw_body)?)
 }
 
 /// Prepends the given prefix to the input, if the input doesn't already start with it
@@ -348,18 +294,18 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             let decoded = String::from_utf8(Vec::from_base32(&payload)?)?;
 
             let url = reqwest::Url::parse(&decoded)
-                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| super::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                super::lnurl::error::LnUrlError::invalid_uri("Could not determine domain")
+                super::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
 
             if url.scheme() == "http" && !domain.ends_with(".onion") {
-                return Err(super::lnurl::error::LnUrlError::generic(
+                return Err(super::prelude::LnUrlError::generic(
                     "HTTP scheme only allowed for onion domains",
                 ));
             }
             if url.scheme() == "https" && domain.ends_with(".onion") {
-                return Err(super::lnurl::error::LnUrlError::generic(
+                return Err(super::prelude::LnUrlError::generic(
                     "HTTPS scheme not allowed for onion domains",
                 ));
             }
@@ -382,13 +328,13 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
             }
 
             let url = reqwest::Url::parse(&encoded)
-                .map_err(|e| super::lnurl::error::LnUrlError::InvalidUri(e.to_string()))?;
+                .map_err(|e| super::prelude::LnUrlError::InvalidUri(e.to_string()))?;
             let domain = url.domain().ok_or_else(|| {
-                super::lnurl::error::LnUrlError::invalid_uri("Could not determine domain")
+                super::prelude::LnUrlError::invalid_uri("Could not determine domain")
             })?;
             ensure_sdk!(
                 supported_prefixes.contains(&url.scheme()),
-                super::lnurl::error::LnUrlError::generic("Invalid prefix scheme")
+                super::prelude::LnUrlError::generic("Invalid prefix scheme")
             );
 
             let scheme = url.scheme();
@@ -410,19 +356,19 @@ async fn resolve_lnurl(
     // For LNURL-auth links, their type is already known if the link contains the login tag
     // No need to query the endpoint for details
     if lnurl_endpoint.contains("tag=login") {
-        return Ok(LnUrlAuth {
-            data: crate::lnurl::auth::validate_request(domain, lnurl_endpoint)?,
+        return Ok(InputType::LnUrlAuth {
+            data: validate_request(domain, lnurl_endpoint)?,
         });
     }
 
     lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
-    let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint)
+    let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint, false)
         .await
         .map_err(|_| anyhow!("Failed to parse response"))?;
     let temp = lnurl_data.into();
     let temp = match temp {
         // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
-        LnUrlPay { data } => LnUrlPay {
+        InputType::LnUrlPay { data } => InputType::LnUrlPay {
             data: LnUrlPayRequestData {
                 domain,
                 ln_address,
@@ -434,16 +380,8 @@ async fn resolve_lnurl(
     Ok(temp)
 }
 
-/// Creates an HTTP client with a built-in connection timeout
-pub(crate) fn get_reqwest_client() -> SdkResult<reqwest::Client> {
-    reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()
-        .map_err(|e| ServiceConnectivity { err: e.to_string() })
-}
-
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub enum InputType {
     /// # Supported standards
     ///
@@ -498,6 +436,7 @@ pub enum InputType {
         data: LnUrlAuthRequestData,
     },
 
+    /// Error returned by the LNURL endpoint
     LnUrlError {
         data: LnUrlErrorData,
     },
@@ -533,18 +472,12 @@ pub enum LnUrlRequestData {
 impl From<LnUrlRequestData> for InputType {
     fn from(lnurl_data: LnUrlRequestData) -> Self {
         match lnurl_data {
-            PayRequest { data } => LnUrlPay { data },
-            WithdrawRequest { data } => LnUrlWithdraw { data },
-            AuthRequest { data } => LnUrlAuth { data },
-            Error { data } => LnUrlError { data },
+            PayRequest { data } => Self::LnUrlPay { data },
+            WithdrawRequest { data } => Self::LnUrlWithdraw { data },
+            AuthRequest { data } => Self::LnUrlAuth { data },
+            Error { data } => Self::LnUrlError { data },
         }
     }
-}
-
-/// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
-#[derive(Deserialize, Debug, Serialize)]
-pub struct LnUrlErrorData {
-    pub reason: String,
 }
 
 /// Wrapped in a [LnUrlPay], this is the result of [parse] when given a LNURL-pay endpoint.
@@ -574,7 +507,7 @@ pub struct LnUrlPayRequestData {
     /// payment input, as per LUD-06 spec.
     ///
     /// Note: this is not the domain of the callback, but the domain of the LNURL-pay endpoint.
-    #[serde(skip_serializing, skip_deserializing)]
+    #[serde(skip)]
     pub domain: String,
 
     /// Value indicating whether the recipient supports Nostr Zaps through NIP-57.
@@ -591,7 +524,7 @@ pub struct LnUrlPayRequestData {
     pub nostr_pubkey: Option<String>,
 
     /// If sending to a LN Address, this will be filled.
-    #[serde(skip_serializing, skip_deserializing)]
+    #[serde(skip)]
     pub ln_address: Option<String>,
 }
 
@@ -615,23 +548,6 @@ impl LnUrlPayRequestData {
     }
 }
 
-/// Wrapped in a [LnUrlWithdraw], this is the result of [parse] when given a LNURL-withdraw endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/03.md>
-#[derive(Deserialize, Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct LnUrlWithdrawRequestData {
-    pub callback: String,
-    pub k1: String,
-    pub default_description: String,
-    /// The minimum amount, in millisats, that this LNURL-withdraw endpoint accepts
-    pub min_withdrawable: u64,
-    /// The maximum amount, in millisats, that this LNURL-withdraw endpoint accepts
-    pub max_withdrawable: u64,
-}
-
 impl LnUrlWithdrawRequestData {
     /// The minimum amount, in sats, accepted by this LNURL-withdraw endpoint
     pub fn min_withdrawable_sats(&self) -> u64 {
@@ -644,30 +560,6 @@ impl LnUrlWithdrawRequestData {
     }
 }
 
-/// Wrapped in a [LnUrlAuth], this is the result of [parse] when given a LNURL-auth endpoint.
-///
-/// It represents the endpoint's parameters for the LNURL workflow.
-///
-/// See <https://github.com/lnurl/luds/blob/luds/04.md>
-#[derive(Deserialize, Debug, Serialize)]
-pub struct LnUrlAuthRequestData {
-    /// Hex encoded 32 bytes of challenge
-    pub k1: String,
-
-    /// When available, one of: register, login, link, auth
-    pub action: Option<String>,
-
-    /// Indicates the domain of the LNURL-auth service, to be shown to the user when asking for
-    /// auth confirmation, as per LUD-04 spec.
-    #[serde(skip_serializing, skip_deserializing)]
-    pub domain: String,
-
-    /// Indicates the URL of the LNURL-auth service, including the query arguments. This will be
-    /// extended with the signed challenge and the linking key, then called in the second step of the workflow.
-    #[serde(skip_serializing, skip_deserializing)]
-    pub url: String,
-}
-
 /// Key-value pair in the [LnUrlPayRequestData], as returned by the LNURL-pay endpoint
 #[derive(Deserialize, Debug)]
 pub struct MetadataItem {
@@ -676,10 +568,10 @@ pub struct MetadataItem {
 }
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct BitcoinAddressData {
     pub address: String,
-    pub network: crate::models::Network,
+    pub network: super::prelude::Network,
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,
@@ -701,23 +593,28 @@ impl From<Uri<'_>> for BitcoinAddressData {
 pub(crate) mod tests {
     use std::sync::Mutex;
 
-    use anyhow::anyhow;
-    use anyhow::Result;
-    use mockito::{Mock, Server, ServerGuard};
+    use anyhow::{anyhow, Result};
+    use bitcoin::bech32;
+    use bitcoin::bech32::{ToBase32, Variant};
+    use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
+    use mockito::{Mock, Server};
     use once_cell::sync::Lazy;
 
-    use crate::bitcoin::bech32;
-    use crate::bitcoin::bech32::{ToBase32, Variant};
-    use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
     use crate::input_parser::*;
-    use crate::models::Network;
 
     /// Mock server used in tests. As the server is shared between tests,
     /// we should not mock the same url twice with two different outputs,
     /// one way to do so is to add a random string that will be a differentiator
     /// in the URL.
-    pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<ServerGuard>> =
-        Lazy::new(|| Mutex::new(Server::new()));
+    pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<Server>> = Lazy::new(|| {
+        let opts = mockito::ServerOpts {
+            host: "127.0.0.1",
+            port: 8080,
+            ..Default::default()
+        };
+        let server = Server::new_with_opts(opts);
+        Mutex::new(server)
+    });
 
     #[tokio::test]
     async fn test_generic_invalid_input() -> Result<(), Box<dyn std::error::Error>> {
@@ -778,7 +675,7 @@ pub(crate) mod tests {
         // Address with amount
         let addr_1 = format!("bitcoin:{addr}?amount=0.00002000");
         match parse(&addr_1).await? {
-            BitcoinAddress {
+            InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -794,7 +691,7 @@ pub(crate) mod tests {
         let label = "test-label";
         let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&label={label}");
         match parse(&addr_2).await? {
-            BitcoinAddress {
+            InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -810,7 +707,7 @@ pub(crate) mod tests {
         let message = "test-message";
         let addr_3 = format!("bitcoin:{addr}?amount=0.00002000&label={label}&message={message}");
         match parse(&addr_3).await? {
-            BitcoinAddress {
+            InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
                 assert_eq!(addr_with_amount_parsed.address, addr);
@@ -923,7 +820,7 @@ pub(crate) mod tests {
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
         match parse(&public_key.to_string()).await? {
-            NodeId { node_id } => {
+            InputType::NodeId { node_id } => {
                 assert_eq!(node_id, public_key.to_string());
             }
             _ => return Err(anyhow!("Unexpected type")),
@@ -1055,15 +952,20 @@ pub(crate) mod tests {
 }
         "#.replace('\n', "");
 
-        let response_body = match return_lnurl_error {
-            None => expected_lnurl_withdraw_data,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+        let (response_body, status) = match &return_lnurl_error {
+            None => (expected_lnurl_withdraw_data, 200),
+            Some(err_reason) => (
+                ["{\"status\": \"ERROR\", \"reason\": \"", err_reason, "\"}"].join(""),
+                400,
+            ),
         };
 
         let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        server.mock("GET", path).with_body(response_body).create()
+        server
+            .mock("GET", path)
+            .with_body(response_body)
+            .with_status(status)
+            .create()
     }
 
     #[tokio::test]
@@ -1080,7 +982,7 @@ pub(crate) mod tests {
             ("localhost".into(), format!("https://localhost{path}"), None,)
         );
 
-        if let LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
+        if let InputType::LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded).await? {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
                 wd.k1,
@@ -1106,7 +1008,7 @@ pub(crate) mod tests {
         );
         let url = format!("https://bitcoin.org?lightning={lnurl_withdraw_encoded}");
 
-        if let LnUrlWithdraw { data: wd } = parse(&url).await? {
+        if let InputType::LnUrlWithdraw { data: wd } = parse(&url).await? {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
                 wd.k1,
@@ -1133,7 +1035,7 @@ pub(crate) mod tests {
             ("localhost".into(), decoded_url.into(), None)
         );
 
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1145,7 +1047,7 @@ pub(crate) mod tests {
         // Action = register
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=register";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3awfjkw6tnw3jhys2umys";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1157,7 +1059,7 @@ pub(crate) mod tests {
         // Action = login
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=login";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad3hkw6tw2acjtx";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1169,7 +1071,7 @@ pub(crate) mod tests {
         // Action = link
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=link";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad35ku6cc8mvs6";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1181,7 +1083,7 @@ pub(crate) mod tests {
         // Action = auth
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=auth";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3av96hg6qmg6zgu";
-        if let LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
+        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded).await? {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1288,7 +1190,7 @@ pub(crate) mod tests {
             ("localhost".into(), format!("https://localhost{path}"), None)
         );
 
-        if let LnUrlPay { data: pd } = parse(lnurl_pay_encoded).await? {
+        if let InputType::LnUrlPay { data: pd } = parse(lnurl_pay_encoded).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1342,7 +1244,7 @@ pub(crate) mod tests {
         let ln_address = "user@domain.net";
         let _m = mock_lnurl_ln_address_endpoint(ln_address, None)?;
 
-        if let LnUrlPay { data: pd } = parse(ln_address).await? {
+        if let InputType::LnUrlPay { data: pd } = parse(ln_address).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1385,7 +1287,7 @@ pub(crate) mod tests {
         let expected_err = "Error msg from LNURL endpoint found via LN Address";
         let _m = mock_lnurl_ln_address_endpoint(ln_address, Some(expected_err.to_string()))?;
 
-        if let LnUrlError { data: msg } = parse(ln_address).await? {
+        if let InputType::LnUrlError { data: msg } = parse(ln_address).await? {
             assert_eq!(msg.reason, expected_err);
             return Ok(());
         }
@@ -1568,7 +1470,7 @@ pub(crate) mod tests {
         let _m = mock_lnurl_pay_endpoint(pay_path, None);
 
         let lnurl_pay_url = format!("lnurlp://localhost{pay_path}");
-        if let LnUrlPay { data: pd } = parse(&lnurl_pay_url).await? {
+        if let InputType::LnUrlPay { data: pd } = parse(&lnurl_pay_url).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1606,7 +1508,7 @@ pub(crate) mod tests {
         let withdraw_path = "/lnurl-withdraw?session=e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538";
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, None);
 
-        if let LnUrlWithdraw { data: wd } =
+        if let InputType::LnUrlWithdraw { data: wd } =
             parse(&format!("lnurlw://localhost{withdraw_path}")).await?
         {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
@@ -1626,7 +1528,9 @@ pub(crate) mod tests {
     async fn test_lnurl_auth_lud_17() -> Result<()> {
         let auth_path = "/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
 
-        if let LnUrlAuth { data: ad } = parse(&format!("keyauth://localhost{auth_path}")).await? {
+        if let InputType::LnUrlAuth { data: ad } =
+            parse(&format!("keyauth://localhost{auth_path}")).await?
+        {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1642,7 +1546,9 @@ pub(crate) mod tests {
         let expected_error_msg = "test pay error";
         let _m = mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string()));
 
-        if let LnUrlError { data: msg } = parse(&format!("lnurlp://localhost{pay_path}")).await? {
+        if let InputType::LnUrlError { data: msg } =
+            parse(&format!("lnurlp://localhost{pay_path}")).await?
+        {
             assert_eq!(msg.reason, expected_error_msg);
             return Ok(());
         }
@@ -1656,7 +1562,7 @@ pub(crate) mod tests {
         let expected_error_msg = "test withdraw error";
         let _m = mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string()));
 
-        if let LnUrlError { data: msg } =
+        if let InputType::LnUrlError { data: msg } =
             parse(&format!("lnurlw://localhost{withdraw_path}")).await?
         {
             assert_eq!(msg.reason, expected_error_msg);

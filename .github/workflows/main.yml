@@ -143,6 +143,32 @@ jobs:
         working-directory: tools/sdk-cli    
         run: cargo test
 
+  build-common:
+    name: Test sdk-common
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: libs/sdk-common -> ../target
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run sdk-common tests
+        working-directory: libs/sdk-common
+        run: cargo test
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
@@ -273,3 +299,56 @@ jobs:
 
       - name: dart-format
         run: dart format -o none --set-exit-if-changed -l 110 .
+
+  # Create a new plain Rust project, add the SDK as single dependency and try to compile it.
+  # This tests whether the SDK compiles with the latest version of the dependencies that can be updated.
+  #
+  # Our checked-in Cargo.lock contains the specific combination of all direct and transitive dependency versions.
+  # This dependency tree snapshot was tested against during development and is what we release.
+  #
+  # However, when integrating the SDK in a new Rust project, Cargo not use our Cargo.lock. Instead, it will try to generate
+  # a new Cargo.lock based on our (and our dependencies') Cargo.toml files. This means that, where a dependency version range
+  # is used in a Cargo.toml, Cargo will try to upgrade it to the latest matching version. If this happens, this new dependency
+  # version may even result in the whole project failing to compile. In that case, the only solution is to manually pin
+  # the problematic dependencies to the last known good versions, in the application's Cargo.toml.
+  #
+  # Since this is the situation new projects are faced with when adding the SDK as a Rust dependency, we simulate it here
+  # to get an early warning signal, should any newer dependency cause it to fail to compile.
+  #
+  # See discussion at https://github.com/breez/breez-sdk/issues/969#issuecomment-2104700522
+  check-sdk-as-dependency:
+    name: Check SDK as Rust dependency in fresh project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            libs -> target
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v2
+        with:
+          version: "23.4"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: test-new-project-with-sdk-dependency
+        run: |
+          mkdir new-project
+          cd new-project
+          cargo init --name test_project --vcs none
+          
+          # A project might reference our SDK as a git repository
+          # cargo add --git https://github.com/breez/breez-sdk breez-sdk-core
+          
+          # In this test, we reference the checked out repo (e.g. this PR branch)
+          cargo add --path ../libs/sdk-core breez-sdk-core
+          
+          cargo clippy -- -D warnings

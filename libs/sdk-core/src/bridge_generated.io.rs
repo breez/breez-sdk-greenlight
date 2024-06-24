@@ -793,8 +793,8 @@ impl Wire2Api<ConnectRequest> for wire_ConnectRequest {
 impl Wire2Api<GreenlightCredentials> for wire_GreenlightCredentials {
     fn wire2api(self) -> GreenlightCredentials {
         GreenlightCredentials {
-            device_key: self.device_key.wire2api(),
-            device_cert: self.device_cert.wire2api(),
+            developer_key: self.developer_key.wire2api(),
+            developer_cert: self.developer_cert.wire2api(),
         }
     }
 }
@@ -1172,8 +1172,8 @@ pub struct wire_ConnectRequest {
 #[repr(C)]
 #[derive(Clone)]
 pub struct wire_GreenlightCredentials {
-    device_key: *mut wire_uint_8_list,
-    device_cert: *mut wire_uint_8_list,
+    developer_key: *mut wire_uint_8_list,
+    developer_cert: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1568,8 +1568,8 @@ impl Default for wire_ConnectRequest {
 impl NewWithNullPtr for wire_GreenlightCredentials {
     fn new_with_null_ptr() -> Self {
         Self {
-            device_key: core::ptr::null_mut(),
-            device_cert: core::ptr::null_mut(),
+            developer_key: core::ptr::null_mut(),
+            developer_cert: core::ptr::null_mut(),
         }
     }
 }

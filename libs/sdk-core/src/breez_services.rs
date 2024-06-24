@@ -12,17 +12,14 @@ use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::TryFutureExt;
+use gl_client::bitcoin::secp256k1::Secp256k1;
 use log::{LevelFilter, Metadata, Record};
-use reqwest::{header::CONTENT_TYPE, Body};
+use reqwest::{header::CONTENT_TYPE, Body, Url};
+use sdk_common::grpc;
+use sdk_common::prelude::*;
 use serde_json::json;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
-use tonic::codegen::InterceptedService;
-use tonic::metadata::errors::InvalidMetadataValue;
-use tonic::metadata::{Ascii, MetadataValue};
-use tonic::service::Interceptor;
-use tonic::transport::{Channel, Endpoint};
-use tonic::{Request, Status};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
 use crate::chain::{
@@ -30,35 +27,16 @@ use crate::chain::{
     DEFAULT_MEMPOOL_SPACE_URL,
 };
 use crate::error::{
-    LnUrlAuthError, LnUrlPayError, LnUrlWithdrawError, ReceiveOnchainError, ReceiveOnchainResult,
-    ReceivePaymentError, SdkError, SdkResult, SendOnchainError, SendPaymentError,
+    ConnectError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError, SdkError,
+    SdkResult, SendOnchainError, SendPaymentError,
 };
-use crate::fiat::{FiatCurrency, Rate};
 use crate::greenlight::{GLBackupTransport, Greenlight};
-use crate::grpc::channel_opener_client::ChannelOpenerClient;
-use crate::grpc::information_client::InformationClient;
-use crate::grpc::payment_notifier_client::PaymentNotifierClient;
-use crate::grpc::signer_client::SignerClient;
-use crate::grpc::support_client::SupportClient;
-use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::{ChainApiServersRequest, PaymentInformation};
-use crate::input_parser::get_reqwest_client;
-use crate::invoice::{
-    add_routing_hints, parse_invoice, validate_network, LNInvoice, RouteHint, RouteHintHop,
-};
-use crate::lnurl::auth::perform_lnurl_auth;
-use crate::lnurl::pay::model::SuccessAction::Aes;
-use crate::lnurl::pay::model::{
-    LnUrlPayResult, SuccessAction, SuccessActionProcessed, ValidatedCallbackResponse,
-};
-use crate::lnurl::pay::validate_lnurl_pay;
-use crate::lnurl::withdraw::validate_lnurl_withdraw;
+use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
     parse_short_channel_id, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType,
-    FiatAPI, LnUrlCallbackStatus, LspAPI, NodeState, Payment, PaymentDetails, PaymentType,
-    ReverseSwapPairInfo, ReverseSwapServiceAPI, SwapInfo, SwapperAPI,
-    INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
+    LspAPI, NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo,
+    ReverseSwapServiceAPI, SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
@@ -68,9 +46,6 @@ use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
 use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
-
-use self::error::ConnectError;
-use self::grpc::PingRequest;
 
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
 
@@ -416,7 +391,7 @@ impl BreezServices {
                     Some(sa) => {
                         let processed_sa = match sa {
                             // For AES, we decrypt the contents on the fly
-                            Aes(data) => {
+                            SuccessAction::Aes(data) => {
                                 let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
                                 let preimage_arr: [u8; 32] = preimage.into_inner();
                                 let result = match (data, &preimage_arr).try_into() {
@@ -457,7 +432,7 @@ impl BreezServices {
                 )?;
 
                 Ok(LnUrlPayResult::EndpointSuccess {
-                    data: LnUrlPaySuccessData {
+                    data: lnurl::pay::LnUrlPaySuccessData {
                         payment,
                         success_action: maybe_sa_processed,
                     },
@@ -518,7 +493,20 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
-        Ok(perform_lnurl_auth(self.node_api.clone(), req_data).await?)
+        // m/138'/0
+        let hashing_key = self.node_api.derive_bip32_key(vec![
+            ChildNumber::from_hardened_idx(138).map_err(Into::<LnUrlError>::into)?,
+            ChildNumber::from(0),
+        ])?;
+
+        let url =
+            Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
+
+        let derivation_path = get_derivation_path(hashing_key, url)?;
+        let linking_key = self.node_api.derive_bip32_key(derivation_path)?;
+        let linking_keys = linking_key.to_keypair(&Secp256k1::new());
+
+        Ok(perform_lnurl_auth(linking_keys, req_data).await?)
     }
 
     /// Creates an bolt11 payment request.
@@ -659,13 +647,16 @@ impl BreezServices {
 
     /// Fetch live rates of fiat currencies, sorted by name
     pub async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
-        self.fiat_api.fetch_fiat_rates().await
+        self.fiat_api.fetch_fiat_rates().await.map_err(Into::into)
     }
 
     /// List all supported fiat currencies for which there is a known exchange rate.
     /// List is sorted by the canonical name of the currency
     pub async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
-        self.fiat_api.list_fiat_currencies().await
+        self.fiat_api
+            .list_fiat_currencies()
+            .await
+            .map_err(Into::into)
     }
 
     /// List available LSPs that can be selected by the user
@@ -1038,8 +1029,7 @@ impl BreezServices {
             .btc_send_swapper
             .convert_reverse_swap_info(full_rsi)
             .await?;
-
-        self.do_sync(true).await?;
+        self.do_sync(false).await?;
 
         Ok(reverse_swap_info)
     }
@@ -1075,7 +1065,7 @@ impl BreezServices {
         Ok(self.do_sync(false).await?)
     }
 
-    async fn do_sync(&self, balance_changed: bool) -> Result<()> {
+    async fn do_sync(&self, match_local_balance: bool) -> Result<()> {
         let start = Instant::now();
         let node_pubkey = self.node_api.start().await?;
         self.connect_lsp_peer(node_pubkey).await?;
@@ -1084,7 +1074,7 @@ impl BreezServices {
         let since_timestamp = self.persister.get_last_sync_time()?.unwrap_or(0);
         let new_data = &self
             .node_api
-            .pull_changed(since_timestamp, balance_changed)
+            .pull_changed(since_timestamp, match_local_balance)
             .await?;
 
         debug!(
@@ -1231,7 +1221,7 @@ impl BreezServices {
         label: Option<String>,
         payment_res: Result<Payment, SendPaymentError>,
     ) -> Result<Payment, SendPaymentError> {
-        self.do_sync(payment_res.is_ok()).await?;
+        self.do_sync(false).await?;
         match payment_res {
             Ok(payment) => {
                 self.notify_event_listeners(BreezEvent::PaymentSucceed {
@@ -1513,17 +1503,18 @@ impl BreezServices {
                                           Ok(Some(i)) => {
                                               debug!("invoice stream got new invoice");
                                               if let Some(gl_client::signer::model::greenlight::incoming_payment::Details::Offchain(p)) = i.details {
-                                                  let payment: Option<crate::models::Payment> = p.clone().try_into().ok();
-                                                  if let Some(ref payment) = payment {
+                                                  let mut payment: Option<crate::models::Payment> = p.clone().try_into().ok();
+                                                  if let Some(ref p) = payment {
                                                       let res = cloned
                                                           .persister
-                                                          .insert_or_update_payments(&vec![payment.clone()], false);
+                                                          .insert_or_update_payments(&vec![p.clone()], false);
                                                       debug!("paid invoice was added to payments list {res:?}");
                                                       if let Ok(Some(mut node_info)) = cloned.persister.get_node_state() {
-                                                          node_info.channels_balance_msat += payment.amount_msat;
+                                                          node_info.channels_balance_msat += p.amount_msat;
                                                           let res = cloned.persister.set_node_state(&node_info);
                                                           debug!("channel balance was updated {res:?}");
                                                       }
+                                                      payment = cloned.persister.get_payment_by_hash(&p.id).unwrap_or(payment);
                                                   }
                                                   _ = cloned.on_event(BreezEvent::InvoicePaid {
                                                       details: InvoicePaidDetails {
@@ -1763,9 +1754,16 @@ impl BreezServices {
         &self,
         channel: &crate::models::Channel,
     ) -> Result<(Option<u64>, Option<String>)> {
-        let maybe_outspend = self
+        let maybe_outspend_res = self
             .lookup_chain_service_closing_outspend(channel.clone())
-            .await?;
+            .await;
+        let maybe_outspend: Option<Outspend> = match maybe_outspend_res {
+            Ok(s) => s,
+            Err(e) => {
+                error!("Failed to lookup channel closing data: {:?}", e);
+                None
+            }
+        };
 
         let maybe_closed_at = maybe_outspend
             .clone()
@@ -2298,116 +2296,6 @@ impl BreezServicesBuilder {
     }
 }
 
-pub struct BreezServer {
-    grpc_channel: Channel,
-    api_key: Option<String>,
-}
-
-impl BreezServer {
-    pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
-        Ok(Self {
-            grpc_channel: Endpoint::from_shared(server_url)?.connect_lazy(),
-            api_key,
-        })
-    }
-
-    fn api_key_metadata(&self) -> SdkResult<Option<MetadataValue<Ascii>>> {
-        match &self.api_key {
-            Some(key) => Ok(Some(format!("Bearer {key}").parse().map_err(
-                |e: InvalidMetadataValue| SdkError::ServiceConnectivity {
-                    err: format!("(Breez: {:?}) Failed parse API key: {e}", self.api_key),
-                },
-            )?)),
-            _ => Ok(None),
-        }
-    }
-
-    pub(crate) async fn get_channel_opener_client(
-        &self,
-    ) -> SdkResult<ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let api_key_metadata = self.api_key_metadata()?;
-        let with_interceptor = ChannelOpenerClient::with_interceptor(
-            self.grpc_channel.clone(),
-            ApiKeyInterceptor { api_key_metadata },
-        );
-        Ok(with_interceptor)
-    }
-
-    pub(crate) async fn get_payment_notifier_client(
-        &self,
-    ) -> SdkResult<PaymentNotifierClient<Channel>> {
-        Ok(PaymentNotifierClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn get_information_client(&self) -> SdkResult<InformationClient<Channel>> {
-        Ok(InformationClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn get_signer_client(&self) -> SdkResult<SignerClient<Channel>> {
-        Ok(SignerClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn get_support_client(
-        &self,
-    ) -> SdkResult<SupportClient<InterceptedService<Channel, ApiKeyInterceptor>>> {
-        let api_key_metadata = self.api_key_metadata()?;
-        Ok(SupportClient::with_interceptor(
-            self.grpc_channel.clone(),
-            ApiKeyInterceptor { api_key_metadata },
-        ))
-    }
-
-    pub(crate) async fn get_swapper_client(&self) -> SdkResult<SwapperClient<Channel>> {
-        Ok(SwapperClient::new(self.grpc_channel.clone()))
-    }
-
-    pub(crate) async fn ping(&self) -> SdkResult<String> {
-        let request = Request::new(PingRequest {});
-        let response = self
-            .get_information_client()
-            .await?
-            .ping(request)
-            .await?
-            .into_inner()
-            .version;
-        Ok(response)
-    }
-
-    pub(crate) async fn fetch_mempoolspace_urls(&self) -> SdkResult<Vec<String>> {
-        let mut client = self.get_information_client().await?;
-
-        let chain_api_servers = client
-            .chain_api_servers(ChainApiServersRequest {})
-            .await?
-            .into_inner()
-            .servers;
-        trace!("Received chain_api_servers: {chain_api_servers:?}");
-
-        let mempoolspace_urls = chain_api_servers
-            .iter()
-            .filter(|s| s.server_type == "MEMPOOL_SPACE")
-            .map(|s| s.server_base_url.clone())
-            .collect();
-        trace!("Received mempoolspace_urls: {mempoolspace_urls:?}");
-
-        Ok(mempoolspace_urls)
-    }
-}
-
-pub(crate) struct ApiKeyInterceptor {
-    api_key_metadata: Option<MetadataValue<Ascii>>,
-}
-
-impl Interceptor for ApiKeyInterceptor {
-    fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
-        if self.api_key_metadata.clone().is_some() {
-            req.metadata_mut()
-                .insert("authorization", self.api_key_metadata.clone().unwrap());
-        }
-        Ok(req)
-    }
-}
-
 /// Attempts to convert the phrase to a mnemonic, then to a seed.
 ///
 /// If the phrase is not a valid mnemonic, an error is returned.
@@ -2419,7 +2307,7 @@ pub fn mnemonic_to_seed(phrase: String) -> Result<Vec<u8>> {
 
 pub struct OpenChannelParams {
     pub payer_amount_msat: u64,
-    pub opening_fee_params: OpeningFeeParams,
+    pub opening_fee_params: models::OpeningFeeParams,
 }
 
 #[tonic::async_trait]
@@ -2572,7 +2460,7 @@ impl PaymentReceiver {
         lsp_info: &LspInformation,
     ) -> Result<String, ReceivePaymentError> {
         info!("Getting routing hints from node");
-        let (mut hints, has_public_channel) = self.node_api.get_routing_hints().await?;
+        let (mut hints, has_public_channel) = self.node_api.get_routing_hints(lsp_info).await?;
         if !has_public_channel && hints.is_empty() {
             return Err(ReceivePaymentError::InvoiceNoRoutingHints {
                 err: "Must have at least one active channel".into(),
@@ -2645,7 +2533,7 @@ impl PaymentReceiver {
             .register_payment(
                 lsp_info.id.clone(),
                 lsp_info.lsp_pubkey.clone(),
-                PaymentInformation {
+                grpc::PaymentInformation {
                     payment_hash: hex::decode(parsed_invoice.payment_hash.clone())
                         .map_err(|e| anyhow!("Failed to decode hex payment hash: {e}"))?,
                     payment_secret: parsed_invoice.payment_secret.clone(),
@@ -2732,20 +2620,13 @@ pub(crate) mod tests {
     use anyhow::{anyhow, Result};
     use regex::Regex;
     use reqwest::Url;
+    use sdk_common::prelude::Rate;
 
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
-    use crate::fiat::Rate;
-    use crate::lnurl::pay::model::MessageSuccessActionData;
-    use crate::lnurl::pay::model::SuccessActionProcessed;
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
-    use crate::{
-        input_parser, parse_short_channel_id, test_utils::*, BuyBitcoinProvider, BuyBitcoinRequest,
-        FullReverseSwapInfo, InputType, ListPaymentsRequest, OpeningFeeParams, PaymentStatus,
-        ReceivePaymentRequest, ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapStatus, SwapInfo,
-        SwapStatus,
-    };
-    use crate::{PaymentExternalInfo, PaymentType};
+    use crate::test_utils::*;
+    use crate::*;
 
     use super::{PaymentReceiver, Receiver};
 
@@ -3189,7 +3070,7 @@ pub(crate) mod tests {
         assert_eq!(parsed.host_str(), Some("mock.moonpay"));
         assert_eq!(parsed.path(), "/");
 
-        let wallet_address = input_parser::parse(query_pairs.get("wa").unwrap()).await?;
+        let wallet_address = parse(query_pairs.get("wa").unwrap()).await?;
         assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
 
         let max_amount = query_pairs.get("ma").unwrap();

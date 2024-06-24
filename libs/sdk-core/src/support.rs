@@ -1,11 +1,12 @@
 use std::time::SystemTime;
 
-use crate::error::SdkResult;
-use crate::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
-use crate::{breez_services::BreezServer, error::SdkError};
+use crate::error::{SdkError, SdkResult};
 use crate::{HealthCheckStatus, NodeState, Payment, ServiceHealthCheckResponse, SupportAPI};
+
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
+use sdk_common::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
+use sdk_common::prelude::BreezServer;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 

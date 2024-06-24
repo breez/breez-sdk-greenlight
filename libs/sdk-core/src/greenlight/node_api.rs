@@ -1,4 +1,5 @@
 use std::cmp::{min, Reverse};
+use std::collections::HashMap;
 use std::iter::Iterator;
 use std::pin::Pin;
 use std::str::FromStr;
@@ -9,6 +10,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, Result};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::{Future, Stream};
+use gl_client::credentials::{Device, Nobody, TlsConfigProvider};
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -24,8 +26,8 @@ use gl_client::pb::{OffChainPayment, PayStatus};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::{Error, Signer};
-use gl_client::tls::TlsConfig;
 use gl_client::{node, utils};
+use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, watch, Mutex};
@@ -44,15 +46,12 @@ use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::{
     Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
-use crate::invoice::{parse_invoice, validate_network, InvoiceError, RouteHintHop};
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
-use crate::models::*;
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
-use crate::{
-    NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint,
-};
+use crate::{models::*, LspInformation};
+use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
@@ -60,7 +59,7 @@ const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
 pub(crate) struct Greenlight {
     sdk_config: Config,
     signer: Signer,
-    tls_config: TlsConfig,
+    device: Device,
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
     persister: Arc<SqliteStorage>,
@@ -87,10 +86,10 @@ impl Greenlight {
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Self> {
         // Derive the encryption key from the seed
-        let signer = Signer::new(seed.clone(), config.network.into(), TlsConfig::new()?)?;
+        let temp_signer = Signer::new(seed.clone(), config.network.into(), Nobody::new())?;
         let encryption_key = Self::derive_bip32_key(
             config.network,
-            &signer,
+            &temp_signer,
             vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
         )?
         .to_priv()
@@ -103,8 +102,8 @@ impl Greenlight {
 
         // Query for the existing credentials
         let mut parsed_credentials =
-            Self::get_node_credentials(config.network, &signer, persister.clone())?
-                .ok_or(NodeError::generic("No credentials found"));
+            Self::get_node_credentials(config.network, &temp_signer, persister.clone())?
+                .ok_or(NodeError::credentials("No credentials found"));
         if parsed_credentials.is_err() {
             info!("No credentials found, trying to recover existing node");
             parsed_credentials = match Self::recover(config.network, seed.clone()).await {
@@ -132,42 +131,38 @@ impl Greenlight {
         }
 
         // Persist the connection credentials for future use and return the node instance
-        let res = match parsed_credentials {
+        match parsed_credentials {
             Ok(creds) => {
-                let json_creds = serde_json::to_string(&creds)?.as_bytes().to_vec();
-                let encrypted_creds = sym_encrypt(encryption_key_slice, json_creds.as_slice());
+                let temp_scheduler = Scheduler::new(config.network.into(), creds.clone()).await?;
+                debug!("upgrading credentials");
+                let creds = creds.upgrade(&temp_scheduler, &temp_signer).await?;
+                debug!("upgrading credentials succeeded");
+                let encrypted_creds = sym_encrypt(encryption_key_slice, &creds.to_bytes());
                 match encrypted_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(config, seed, creds, persister)
+                        Greenlight::new(config, seed, creds.clone(), persister)
                     }
-                    None => {
-                        return Err(NodeError::generic("Failed to encrypt credentials"));
-                    }
+                    None => Err(NodeError::generic("Failed to encrypt credentials")),
                 }
             }
-            Err(_) => Err(NodeError::generic("Failed to get gl credentials")),
-        };
-        res
+            Err(_) => Err(NodeError::credentials("Failed to get gl credentials")),
+        }
     }
 
     fn new(
         sdk_config: Config,
         seed: Vec<u8>,
-        connection_credentials: GreenlightCredentials,
+        device: Device,
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Greenlight> {
         let greenlight_network = sdk_config.network.into();
-        let tls_config = TlsConfig::new()?.identity(
-            connection_credentials.device_cert,
-            connection_credentials.device_key,
-        );
-        let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
+        let signer = Signer::new(seed, greenlight_network, device.clone())?;
 
         Ok(Greenlight {
             sdk_config,
             signer,
-            tls_config,
+            device,
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
             persister,
@@ -178,7 +173,7 @@ impl Greenlight {
     /// Create and, if necessary, upgrade the scheduler
     async fn init_scheduler(&self) -> Result<SchedulerClient<tonic::transport::channel::Channel>> {
         let channel = Endpoint::from_shared(utils::scheduler_uri())?
-            .tls_config(self.tls_config.client_tls_config())?
+            .tls_config(self.device.tls_config().client_tls_config())?
             .tcp_keepalive(Some(Duration::from_secs(5)))
             .http2_keep_alive_interval(Duration::from_secs(5))
             .keep_alive_timeout(Duration::from_secs(90))
@@ -308,61 +303,49 @@ impl Greenlight {
         seed: Vec<u8>,
         register_credentials: Option<GreenlightCredentials>,
         invite_code: Option<String>,
-    ) -> Result<GreenlightCredentials> {
+    ) -> Result<Device> {
         if invite_code.is_some() && register_credentials.is_some() {
             return Err(anyhow!("Cannot specify both invite code and credentials"));
         }
         let greenlight_network = network.into();
-        let tls_config = match register_credentials {
+        let creds = match register_credentials {
             Some(creds) => {
                 debug!("registering with credentials");
-                TlsConfig::new()?.identity(creds.device_cert, creds.device_key)
+                Nobody {
+                    cert: creds.developer_cert,
+                    key: creds.developer_key,
+                    ..Default::default()
+                }
             }
-            None => TlsConfig::new()?,
+            None => Nobody::new(),
         };
 
-        let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
-        let scheduler = Scheduler::with(
-            signer.node_id(),
-            greenlight_network,
-            utils::scheduler_uri(),
-            &tls_config,
-        )
-        .await?;
-        let recover_res: scheduler::RegistrationResponse =
+        let signer = Signer::new(seed, greenlight_network, creds.clone())?;
+        let scheduler = Scheduler::new(greenlight_network, creds).await?;
+
+        let register_res: scheduler::RegistrationResponse =
             scheduler.register(&signer, invite_code).await?;
 
-        Ok(GreenlightCredentials {
-            device_key: recover_res.device_key.into(),
-            device_cert: recover_res.device_cert.into(),
-        })
+        Ok(Device::from_bytes(register_res.creds))
     }
 
-    async fn recover(network: Network, seed: Vec<u8>) -> Result<GreenlightCredentials> {
+    async fn recover(network: Network, seed: Vec<u8>) -> Result<Device> {
         let greenlight_network = network.into();
-        let tls_config = TlsConfig::new()?;
-        let signer = Signer::new(seed, greenlight_network, tls_config.clone())?;
-        let scheduler = Scheduler::new(signer.node_id(), greenlight_network).await?;
+        let credentials = Nobody::new();
+        let signer = Signer::new(seed, greenlight_network, credentials.clone())?;
+        let scheduler = Scheduler::new(greenlight_network, credentials).await?;
         let recover_res: scheduler::RecoveryResponse = scheduler.recover(&signer).await?;
 
-        Ok(GreenlightCredentials {
-            device_key: recover_res.device_key.as_bytes().to_vec(),
-            device_cert: recover_res.device_cert.as_bytes().to_vec(),
-        })
+        Ok(Device::from_bytes(recover_res.creds))
     }
 
     async fn get_client(&self) -> NodeResult<node::Client> {
         let mut gl_client = self.gl_client.lock().await;
         if gl_client.is_none() {
-            let scheduler = Scheduler::new(self.signer.node_id(), self.sdk_config.network.into())
+            let scheduler = Scheduler::new(self.sdk_config.network.into(), self.device.clone())
                 .await
                 .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
-            *gl_client = Some(
-                scheduler
-                    .schedule(self.tls_config.clone())
-                    .await
-                    .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?,
-            );
+            *gl_client = Some(scheduler.node().await?);
         }
         Ok(gl_client.clone().unwrap())
     }
@@ -370,15 +353,10 @@ impl Greenlight {
     pub(crate) async fn get_node_client(&self) -> NodeResult<node::ClnClient> {
         let mut node_client = self.node_client.lock().await;
         if node_client.is_none() {
-            let scheduler = Scheduler::new(self.signer.node_id(), self.sdk_config.network.into())
+            let scheduler = Scheduler::new(self.sdk_config.network.into(), self.device.clone())
                 .await
                 .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
-            *node_client = Some(
-                scheduler
-                    .schedule(self.tls_config.clone())
-                    .await
-                    .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?,
-            );
+            *node_client = Some(scheduler.node().await?);
         }
         Ok(node_client.clone().unwrap())
     }
@@ -387,7 +365,7 @@ impl Greenlight {
         network: Network,
         signer: &Signer,
         persister: Arc<SqliteStorage>,
-    ) -> NodeResult<Option<GreenlightCredentials>> {
+    ) -> NodeResult<Option<Device>> {
         // Derive the encryption key from the seed
         let encryption_key = Self::derive_bip32_key(
             network,
@@ -418,12 +396,14 @@ impl Greenlight {
                 }
                 match decrypted_credentials {
                     Some(decrypted_creds) => {
-                        let credentials: GreenlightCredentials =
-                            serde_json::from_slice(decrypted_creds.as_slice())
-                                .map_err(|_| NodeError::generic("Unable to parse credentials"))?;
-                        Ok(Some(credentials))
+                        let credentials = Device::from_bytes(decrypted_creds.as_slice());
+                        if credentials.cert.is_empty() {
+                            Err(NodeError::credentials("Unable to parse credentials"))
+                        } else {
+                            Ok(Some(credentials))
+                        }
                     }
-                    None => Err(NodeError::generic(
+                    None => Err(NodeError::credentials(
                         "Failed to decrypt credentials, seed doesn't match existing node",
                     )),
                 }
@@ -464,7 +444,7 @@ impl Greenlight {
     async fn fetch_channels_and_balance_with_retry(
         cln_client: node::ClnClient,
         persister: Arc<SqliteStorage>,
-        balance_changed: bool,
+        match_local_balance: bool,
     ) -> NodeResult<(
         Vec<cln::ListpeersPeersChannels>,
         Vec<cln::ListpeersPeersChannels>,
@@ -473,12 +453,12 @@ impl Greenlight {
     )> {
         let (mut all_channels, mut opened_channels, mut connected_peers, mut channels_balance) =
             Greenlight::fetch_channels_and_balance(cln_client.clone()).await?;
-        if balance_changed {
+        if match_local_balance {
             let node_state = persister.get_node_state()?;
             if let Some(state) = node_state {
                 let mut retry_count = 0;
-                while state.channels_balance_msat == channels_balance && retry_count < 10 {
-                    warn!("balance update was required but was not updated, retrying in 100ms...");
+                while state.channels_balance_msat != channels_balance && retry_count < 10 {
+                    warn!("balance matching local state is required and not yet satisfied, retrying in 100ms...");
                     sleep(Duration::from_millis(100)).await;
                     (
                         all_channels,
@@ -786,7 +766,11 @@ impl NodeAPI for Greenlight {
             &self.signer,
             self.persister.clone(),
         )?
-        .map(|credentials| NodeCredentials::Greenlight { credentials }))
+        .map(|credentials| NodeCredentials::Greenlight {
+            credentials: GreenlightDeviceCredentials {
+                device: credentials.to_bytes(),
+            },
+        }))
     }
 
     async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()> {
@@ -871,7 +855,7 @@ impl NodeAPI for Greenlight {
     async fn pull_changed(
         &self,
         since_timestamp: u64,
-        balance_changed: bool,
+        match_local_balance: bool,
     ) -> NodeResult<SyncResponse> {
         info!("pull changed since {}", since_timestamp);
         let node_client = self.get_node_client().await?;
@@ -893,7 +877,7 @@ impl NodeAPI for Greenlight {
         let balance_future = Greenlight::fetch_channels_and_balance_with_retry(
             node_client.clone(),
             self.persister.clone(),
-            balance_changed,
+            match_local_balance,
         );
 
         let (node_info_res, funds_res, closed_channels_res, balance_res) = tokio::join!(
@@ -1653,56 +1637,101 @@ impl NodeAPI for Greenlight {
     }
 
     // Gets the routing hints related to all private channels that the node has
-    async fn get_routing_hints(&self) -> NodeResult<(Vec<RouteHint>, bool)> {
+    async fn get_routing_hints(
+        &self,
+        lsp_info: &LspInformation,
+    ) -> NodeResult<(Vec<RouteHint>, bool)> {
         let mut hints: Vec<RouteHint> = vec![];
         let mut node_client = self.get_node_client().await?;
-        let channels = node_client
+        // Get the peer channels
+        let peer_channels = node_client
             .list_peer_channels(cln::ListpeerchannelsRequest::default())
             .await?
             .into_inner();
 
         let mut has_public_channel = false;
-        let mut open_channels: Vec<cln::ListpeerchannelsChannels> = channels
+        let open_peer_channels: HashMap<Vec<u8>, cln::ListpeerchannelsChannels> = peer_channels
             .channels
             .into_iter()
             .filter(|c| {
                 let is_private = c.private.unwrap_or_default();
                 has_public_channel |= !is_private;
-                is_private && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
+                is_private
+                    && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
+                    && c.peer_id.is_some()
             })
+            .map(|c| (c.peer_id.clone().unwrap(), c))
+            .collect();
+        // Get channels where our node is the destination
+        let pubkey = self
+            .persister
+            .get_node_state()?
+            .map(|n| n.id)
+            .ok_or(NodeError::generic("Node info not found"))?;
+        let channels: HashMap<Vec<u8>, cln::ListchannelsChannels> = node_client
+            .list_channels(cln::ListchannelsRequest {
+                destination: Some(hex::decode(pubkey)?),
+                ..Default::default()
+            })
+            .await?
+            .into_inner()
+            .channels
+            .into_iter()
+            .map(|c| (c.source.clone(), c))
             .collect();
 
-        // Ensure one private channel from each peer.
-        open_channels.dedup_by_key(|c| c.peer_id.clone());
-
-        // Ceate a routing hint from each channel.
-        for c in open_channels {
-            let (alias_remote, _) = match c.alias {
-                Some(a) => (a.remote.clone(), a.local.clone()),
-                None => (None, None),
-            };
-
-            let optional_channel_id = alias_remote.clone().or(c.short_channel_id.clone());
+        // Create a routing hint from each channel.
+        for (peer_id, peer_channel) in open_peer_channels {
+            let peer_id_str = hex::encode(&peer_id);
+            let optional_channel_id = peer_channel
+                .alias
+                .and_then(|a| a.remote)
+                .or(peer_channel.short_channel_id);
 
             if let Some(channel_id) = optional_channel_id {
-                let scid = parse_short_channel_id(&channel_id)?;
-                let hint = RouteHint {
-                    hops: vec![RouteHintHop {
-                        src_node_id: hex::encode(c.peer_id.ok_or(anyhow!("no peer id"))?),
-                        short_channel_id: scid,
-                        fees_base_msat: c.fee_base_msat.clone().unwrap_or_default().msat as u32,
-                        fees_proportional_millionths: c
-                            .fee_proportional_millionths
-                            .unwrap_or_default(),
-                        cltv_expiry_delta: 144,
-                        htlc_minimum_msat: Some(
-                            c.minimum_htlc_in_msat.clone().unwrap_or_default().msat,
-                        ),
-                        htlc_maximum_msat: None,
-                    }],
+                // The remote fee policy
+                let maybe_policy = match channels.get(&peer_id) {
+                    Some(channel) => Some((
+                        channel.base_fee_millisatoshi,
+                        channel.fee_per_millionth,
+                        channel.delay,
+                    )),
+                    None if peer_id_str == lsp_info.pubkey => Some((
+                        lsp_info.base_fee_msat as u32,
+                        (lsp_info.fee_rate * 1000000.0) as u32,
+                        lsp_info.time_lock_delta,
+                    )),
+                    _ => None,
                 };
-                info!("Generating hint hop as routing hint: {:?}", hint);
-                hints.push(hint);
+                match maybe_policy {
+                    Some((fees_base_msat, fees_proportional_millionths, cltv_delta)) => {
+                        debug!(
+                            "For peer {}: remote base {} proportional {} cltv_delta {}",
+                            peer_id_str, fees_base_msat, fees_proportional_millionths, cltv_delta,
+                        );
+                        let scid = parse_short_channel_id(&channel_id)?;
+                        let hint = RouteHint {
+                            hops: vec![RouteHintHop {
+                                src_node_id: peer_id_str,
+                                short_channel_id: scid,
+                                fees_base_msat,
+                                fees_proportional_millionths,
+                                cltv_expiry_delta: cltv_delta as u64,
+                                htlc_minimum_msat: Some(
+                                    peer_channel
+                                        .minimum_htlc_in_msat
+                                        .clone()
+                                        .unwrap_or_default()
+                                        .msat,
+                                ),
+                                htlc_maximum_msat: None,
+                            }],
+                        };
+                        info!("Generating hint hop as routing hint: {:?}", hint);
+                        hints.push(hint);
+                    }
+                    _ => debug!("No source channel found for peer: {:?}", peer_id_str),
+                };
             }
         }
         Ok((hints, has_public_channel))

@@ -55,8 +55,8 @@ kotlin {
 
         val commonMain by getting {
             dependencies {
-                implementation("com.squareup.okio:okio:3.6.0")
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+                implementation(libs.okio)
+                implementation(libs.kotlinx.datetime)
             }
         }
 
@@ -67,17 +67,21 @@ kotlin {
         }
 
         val jvmMain by getting {
-            dependsOn(commonMain)
             dependencies {
-                implementation("net.java.dev.jna:jna:5.13.0")
+                implementation(libs.jna)
             }
         }
 
         val androidMain by getting {
-            dependsOn(commonMain)
             dependencies {
-                implementation("net.java.dev.jna:jna:5.13.0@aar")
-                implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")
+                implementation("${libs.jna.get()}@aar")
+            }
+        }
+
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation(libs.test.junit.ktx)
+                implementation(libs.test.runner)
             }
         }
     }
@@ -90,6 +94,9 @@ android {
     defaultConfig {
         minSdk = 21
         consumerProguardFiles("consumer-rules.pro")
+
+        testApplicationId = "technology.breez.test"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {

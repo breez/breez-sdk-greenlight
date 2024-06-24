@@ -1,16 +1,16 @@
-use crate::breez_services::BreezServer;
 use crate::crypt::encrypt;
 use crate::error::{SdkError, SdkResult};
-use crate::grpc::{
+use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
+
+use anyhow::{anyhow, Result};
+use prost::Message;
+use sdk_common::grpc::{
     self, LspListRequest, PaymentInformation, RegisterPaymentNotificationRequest,
     RegisterPaymentNotificationResponse, RegisterPaymentReply, RegisterPaymentRequest,
     RemovePaymentNotificationRequest, RemovePaymentNotificationResponse,
     SubscribeNotificationsRequest, UnsubscribeNotificationsRequest,
 };
-use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
-
-use anyhow::{anyhow, Result};
-use prost::Message;
+use sdk_common::prelude::BreezServer;
 use serde::{Deserialize, Serialize};
 use tonic::Request;
 
@@ -120,7 +120,7 @@ impl LspAPI for BreezServer {
             signature: webhook_url_signature,
         };
 
-        let mut client = self.get_payment_notifier_client().await?;
+        let mut client = self.get_payment_notifier_client().await;
 
         let mut buf = Vec::with_capacity(subscribe_request.encoded_len());
         subscribe_request
@@ -150,7 +150,7 @@ impl LspAPI for BreezServer {
             signature: webhook_url_signature,
         };
 
-        let mut client = self.get_payment_notifier_client().await?;
+        let mut client = self.get_payment_notifier_client().await;
 
         let mut buf = Vec::with_capacity(unsubscribe_request.encoded_len());
         unsubscribe_request
