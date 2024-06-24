@@ -8,12 +8,8 @@ import 'breez_services.dart';
 import 'chain.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'fiat.dart';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart' if (dart.library.js_interop) 'frb_generated.web.dart';
-import 'input_parser.dart';
-import 'invoice.dart';
-import 'lnurl/pay/model.dart';
 import 'lsp.dart';
 import 'models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
@@ -200,6 +196,12 @@ abstract class BreezSdkBindingsApi extends BaseApi {
   Future<void> crateBindingSync();
 
   Future<void> crateBindingUnregisterWebhook({required String webhookUrl});
+
+  RustArcIncrementStrongCountFnType get rust_arc_increment_strong_count_LnUrlPayResult;
+
+  RustArcDecrementStrongCountFnType get rust_arc_decrement_strong_count_LnUrlPayResult;
+
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_LnUrlPayResultPtr;
 }
 
 class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements BreezSdkBindingsApi {
@@ -808,7 +810,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
         return wire.wire__crate__binding__lnurl_pay(port_, arg0);
       },
       codec: DcoCodec(
-        decodeSuccessData: dco_decode_ln_url_pay_result,
+        decodeSuccessData:
+            dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult,
         decodeErrorData: dco_decode_AnyhowException,
       ),
       constMeta: kCrateBindingLnurlPayConstMeta,
@@ -1566,10 +1569,31 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
         argNames: ["webhookUrl"],
       );
 
+  RustArcIncrementStrongCountFnType get rust_arc_increment_strong_count_LnUrlPayResult => wire
+      .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult;
+
+  RustArcDecrementStrongCountFnType get rust_arc_decrement_strong_count_LnUrlPayResult => wire
+      .rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult;
+
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return AnyhowException(raw as String);
+  }
+
+  @protected
+  LnUrlPayResult
+      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+          dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return LnUrlPayResultImpl.frbInternalDcoDecode(raw as List<dynamic>);
+  }
+
+  @protected
+  LnUrlPayResult dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return LnUrlPayResultImpl.frbInternalDcoDecode(raw as List<dynamic>);
   }
 
   @protected
@@ -1746,6 +1770,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  GreenlightDeviceCredentials dco_decode_box_autoadd_greenlight_device_credentials(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_greenlight_device_credentials(raw);
+  }
+
+  @protected
   GreenlightNodeConfig dco_decode_box_autoadd_greenlight_node_config(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_greenlight_node_config(raw);
@@ -1794,12 +1824,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
-  LnUrlPayErrorData dco_decode_box_autoadd_ln_url_pay_error_data(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_ln_url_pay_error_data(raw);
-  }
-
-  @protected
   LnUrlPayRequest dco_decode_box_autoadd_ln_url_pay_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_ln_url_pay_request(raw);
@@ -1809,12 +1833,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   LnUrlPayRequestData dco_decode_box_autoadd_ln_url_pay_request_data(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_ln_url_pay_request_data(raw);
-  }
-
-  @protected
-  LnUrlPaySuccessData dco_decode_box_autoadd_ln_url_pay_success_data(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_ln_url_pay_success_data(raw);
   }
 
   @protected
@@ -2182,8 +2200,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       spacing: dco_decode_opt_box_autoadd_u_32(arr[2]),
       symbol: dco_decode_opt_box_autoadd_symbol(arr[3]),
       uniqSymbol: dco_decode_opt_box_autoadd_symbol(arr[4]),
-      localizedName: dco_decode_opt_list_localized_name(arr[5]),
-      localeOverrides: dco_decode_opt_list_locale_overrides(arr[6]),
+      localizedName: dco_decode_list_localized_name(arr[5]),
+      localeOverrides: dco_decode_list_locale_overrides(arr[6]),
     );
   }
 
@@ -2216,8 +2234,18 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     final arr = raw as List<dynamic>;
     if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return GreenlightCredentials(
-      deviceKey: dco_decode_list_prim_u_8_strict(arr[0]),
-      deviceCert: dco_decode_list_prim_u_8_strict(arr[1]),
+      developerKey: dco_decode_list_prim_u_8_strict(arr[0]),
+      developerCert: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
+  GreenlightDeviceCredentials dco_decode_greenlight_device_credentials(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return GreenlightDeviceCredentials(
+      device: dco_decode_list_prim_u_8_strict(arr[0]),
     );
   }
 
@@ -2506,17 +2534,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
-  LnUrlPayErrorData dco_decode_ln_url_pay_error_data(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return LnUrlPayErrorData(
-      paymentHash: dco_decode_String(arr[0]),
-      reason: dco_decode_String(arr[1]),
-    );
-  }
-
-  @protected
   LnUrlPayRequest dco_decode_ln_url_pay_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -2544,38 +2561,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       allowsNostr: dco_decode_bool(arr[6]),
       nostrPubkey: dco_decode_opt_String(arr[7]),
       lnAddress: dco_decode_opt_String(arr[8]),
-    );
-  }
-
-  @protected
-  LnUrlPayResult dco_decode_ln_url_pay_result(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    switch (raw[0]) {
-      case 0:
-        return LnUrlPayResult_EndpointSuccess(
-          data: dco_decode_box_autoadd_ln_url_pay_success_data(raw[1]),
-        );
-      case 1:
-        return LnUrlPayResult_EndpointError(
-          data: dco_decode_box_autoadd_ln_url_error_data(raw[1]),
-        );
-      case 2:
-        return LnUrlPayResult_PayError(
-          data: dco_decode_box_autoadd_ln_url_pay_error_data(raw[1]),
-        );
-      default:
-        throw Exception("unreachable");
-    }
-  }
-
-  @protected
-  LnUrlPaySuccessData dco_decode_ln_url_pay_success_data(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
-    return LnUrlPaySuccessData(
-      payment: dco_decode_payment(arr[0]),
-      successAction: dco_decode_opt_box_autoadd_success_action_processed(arr[1]),
     );
   }
 
@@ -2742,7 +2727,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     switch (raw[0]) {
       case 0:
         return NodeCredentials_Greenlight(
-          credentials: dco_decode_box_autoadd_greenlight_credentials(raw[1]),
+          credentials: dco_decode_box_autoadd_greenlight_device_credentials(raw[1]),
         );
       default:
         throw Exception("unreachable");
@@ -2922,18 +2907,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   List<String>? dco_decode_opt_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_list_String(raw);
-  }
-
-  @protected
-  List<LocaleOverrides>? dco_decode_opt_list_locale_overrides(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_list_locale_overrides(raw);
-  }
-
-  @protected
-  List<LocalizedName>? dco_decode_opt_list_localized_name(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_list_localized_name(raw);
   }
 
   @protected
@@ -3579,10 +3552,33 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  BigInt dco_decode_usize(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dcoDecodeU64(raw);
+  }
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_String(deserializer);
     return AnyhowException(inner);
+  }
+
+  @protected
+  LnUrlPayResult
+      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+          SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return LnUrlPayResultImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
+  }
+
+  @protected
+  LnUrlPayResult sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return LnUrlPayResultImpl.frbInternalSseDecode(
+        sse_decode_usize(deserializer), sse_decode_i_32(deserializer));
   }
 
   @protected
@@ -3754,6 +3750,13 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  GreenlightDeviceCredentials sse_decode_box_autoadd_greenlight_device_credentials(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_greenlight_device_credentials(deserializer));
+  }
+
+  @protected
   GreenlightNodeConfig sse_decode_box_autoadd_greenlight_node_config(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_greenlight_node_config(deserializer));
@@ -3802,12 +3805,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
-  LnUrlPayErrorData sse_decode_box_autoadd_ln_url_pay_error_data(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_ln_url_pay_error_data(deserializer));
-  }
-
-  @protected
   LnUrlPayRequest sse_decode_box_autoadd_ln_url_pay_request(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_ln_url_pay_request(deserializer));
@@ -3817,12 +3814,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   LnUrlPayRequestData sse_decode_box_autoadd_ln_url_pay_request_data(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_ln_url_pay_request_data(deserializer));
-  }
-
-  @protected
-  LnUrlPaySuccessData sse_decode_box_autoadd_ln_url_pay_success_data(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_ln_url_pay_success_data(deserializer));
   }
 
   @protected
@@ -4181,8 +4172,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     var var_spacing = sse_decode_opt_box_autoadd_u_32(deserializer);
     var var_symbol = sse_decode_opt_box_autoadd_symbol(deserializer);
     var var_uniqSymbol = sse_decode_opt_box_autoadd_symbol(deserializer);
-    var var_localizedName = sse_decode_opt_list_localized_name(deserializer);
-    var var_localeOverrides = sse_decode_opt_list_locale_overrides(deserializer);
+    var var_localizedName = sse_decode_list_localized_name(deserializer);
+    var var_localeOverrides = sse_decode_list_locale_overrides(deserializer);
     return CurrencyInfo(
         name: var_name,
         fractionSize: var_fractionSize,
@@ -4217,9 +4208,16 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   GreenlightCredentials sse_decode_greenlight_credentials(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_deviceKey = sse_decode_list_prim_u_8_strict(deserializer);
-    var var_deviceCert = sse_decode_list_prim_u_8_strict(deserializer);
-    return GreenlightCredentials(deviceKey: var_deviceKey, deviceCert: var_deviceCert);
+    var var_developerKey = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_developerCert = sse_decode_list_prim_u_8_strict(deserializer);
+    return GreenlightCredentials(developerKey: var_developerKey, developerCert: var_developerCert);
+  }
+
+  @protected
+  GreenlightDeviceCredentials sse_decode_greenlight_device_credentials(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_device = sse_decode_list_prim_u_8_strict(deserializer);
+    return GreenlightDeviceCredentials(device: var_device);
   }
 
   @protected
@@ -4614,14 +4612,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
-  LnUrlPayErrorData sse_decode_ln_url_pay_error_data(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_paymentHash = sse_decode_String(deserializer);
-    var var_reason = sse_decode_String(deserializer);
-    return LnUrlPayErrorData(paymentHash: var_paymentHash, reason: var_reason);
-  }
-
-  @protected
   LnUrlPayRequest sse_decode_ln_url_pay_request(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_data = sse_decode_ln_url_pay_request_data(deserializer);
@@ -4654,34 +4644,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
         allowsNostr: var_allowsNostr,
         nostrPubkey: var_nostrPubkey,
         lnAddress: var_lnAddress);
-  }
-
-  @protected
-  LnUrlPayResult sse_decode_ln_url_pay_result(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    var tag_ = sse_decode_i_32(deserializer);
-    switch (tag_) {
-      case 0:
-        var var_data = sse_decode_box_autoadd_ln_url_pay_success_data(deserializer);
-        return LnUrlPayResult_EndpointSuccess(data: var_data);
-      case 1:
-        var var_data = sse_decode_box_autoadd_ln_url_error_data(deserializer);
-        return LnUrlPayResult_EndpointError(data: var_data);
-      case 2:
-        var var_data = sse_decode_box_autoadd_ln_url_pay_error_data(deserializer);
-        return LnUrlPayResult_PayError(data: var_data);
-      default:
-        throw UnimplementedError('');
-    }
-  }
-
-  @protected
-  LnUrlPaySuccessData sse_decode_ln_url_pay_success_data(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_payment = sse_decode_payment(deserializer);
-    var var_successAction = sse_decode_opt_box_autoadd_success_action_processed(deserializer);
-    return LnUrlPaySuccessData(payment: var_payment, successAction: var_successAction);
   }
 
   @protected
@@ -4836,7 +4798,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     var tag_ = sse_decode_i_32(deserializer);
     switch (tag_) {
       case 0:
-        var var_credentials = sse_decode_box_autoadd_greenlight_credentials(deserializer);
+        var var_credentials = sse_decode_box_autoadd_greenlight_device_credentials(deserializer);
         return NodeCredentials_Greenlight(credentials: var_credentials);
       default:
         throw UnimplementedError('');
@@ -5093,28 +5055,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_list_String(deserializer));
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  List<LocaleOverrides>? sse_decode_opt_list_locale_overrides(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return (sse_decode_list_locale_overrides(deserializer));
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  List<LocalizedName>? sse_decode_opt_list_localized_name(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return (sse_decode_list_localized_name(deserializer));
     } else {
       return null;
     }
@@ -5757,6 +5697,28 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  BigInt sse_decode_usize(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getBigUint64();
+  }
+
+  @protected
+  int cst_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+// ignore: invalid_use_of_internal_member
+    return (raw as LnUrlPayResultImpl).frbInternalCstEncode(move: true);
+  }
+
+  @protected
+  int cst_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+// ignore: invalid_use_of_internal_member
+    return (raw as LnUrlPayResultImpl).frbInternalCstEncode();
+  }
+
+  @protected
   bool cst_encode_bool(bool raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     return raw;
@@ -5868,6 +5830,20 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   void sse_encode_AnyhowException(AnyhowException self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.message, serializer);
+  }
+
+  @protected
+  void sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize((self as LnUrlPayResultImpl).frbInternalSseEncode(move: true), serializer);
+  }
+
+  @protected
+  void sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_usize((self as LnUrlPayResultImpl).frbInternalSseEncode(move: null), serializer);
   }
 
   @protected
@@ -6039,6 +6015,13 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  void sse_encode_box_autoadd_greenlight_device_credentials(
+      GreenlightDeviceCredentials self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_greenlight_device_credentials(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_greenlight_node_config(GreenlightNodeConfig self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_greenlight_node_config(self, serializer);
@@ -6087,12 +6070,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
-  void sse_encode_box_autoadd_ln_url_pay_error_data(LnUrlPayErrorData self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_ln_url_pay_error_data(self, serializer);
-  }
-
-  @protected
   void sse_encode_box_autoadd_ln_url_pay_request(LnUrlPayRequest self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_ln_url_pay_request(self, serializer);
@@ -6102,12 +6079,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   void sse_encode_box_autoadd_ln_url_pay_request_data(LnUrlPayRequestData self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_ln_url_pay_request_data(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_ln_url_pay_success_data(LnUrlPaySuccessData self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_ln_url_pay_success_data(self, serializer);
   }
 
   @protected
@@ -6444,8 +6415,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_opt_box_autoadd_u_32(self.spacing, serializer);
     sse_encode_opt_box_autoadd_symbol(self.symbol, serializer);
     sse_encode_opt_box_autoadd_symbol(self.uniqSymbol, serializer);
-    sse_encode_opt_list_localized_name(self.localizedName, serializer);
-    sse_encode_opt_list_locale_overrides(self.localeOverrides, serializer);
+    sse_encode_list_localized_name(self.localizedName, serializer);
+    sse_encode_list_locale_overrides(self.localeOverrides, serializer);
   }
 
   @protected
@@ -6470,8 +6441,14 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   void sse_encode_greenlight_credentials(GreenlightCredentials self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_prim_u_8_strict(self.deviceKey, serializer);
-    sse_encode_list_prim_u_8_strict(self.deviceCert, serializer);
+    sse_encode_list_prim_u_8_strict(self.developerKey, serializer);
+    sse_encode_list_prim_u_8_strict(self.developerCert, serializer);
+  }
+
+  @protected
+  void sse_encode_greenlight_device_credentials(GreenlightDeviceCredentials self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.device, serializer);
   }
 
   @protected
@@ -6772,13 +6749,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
-  void sse_encode_ln_url_pay_error_data(LnUrlPayErrorData self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_String(self.paymentHash, serializer);
-    sse_encode_String(self.reason, serializer);
-  }
-
-  @protected
   void sse_encode_ln_url_pay_request(LnUrlPayRequest self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_ln_url_pay_request_data(self.data, serializer);
@@ -6799,31 +6769,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_bool(self.allowsNostr, serializer);
     sse_encode_opt_String(self.nostrPubkey, serializer);
     sse_encode_opt_String(self.lnAddress, serializer);
-  }
-
-  @protected
-  void sse_encode_ln_url_pay_result(LnUrlPayResult self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    switch (self) {
-      case LnUrlPayResult_EndpointSuccess(data: final data):
-        sse_encode_i_32(0, serializer);
-        sse_encode_box_autoadd_ln_url_pay_success_data(data, serializer);
-      case LnUrlPayResult_EndpointError(data: final data):
-        sse_encode_i_32(1, serializer);
-        sse_encode_box_autoadd_ln_url_error_data(data, serializer);
-      case LnUrlPayResult_PayError(data: final data):
-        sse_encode_i_32(2, serializer);
-        sse_encode_box_autoadd_ln_url_pay_error_data(data, serializer);
-      default:
-        throw UnimplementedError('');
-    }
-  }
-
-  @protected
-  void sse_encode_ln_url_pay_success_data(LnUrlPaySuccessData self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_payment(self.payment, serializer);
-    sse_encode_opt_box_autoadd_success_action_processed(self.successAction, serializer);
   }
 
   @protected
@@ -6947,7 +6892,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     switch (self) {
       case NodeCredentials_Greenlight(credentials: final credentials):
         sse_encode_i_32(0, serializer);
-        sse_encode_box_autoadd_greenlight_credentials(credentials, serializer);
+        sse_encode_box_autoadd_greenlight_device_credentials(credentials, serializer);
       default:
         throw UnimplementedError('');
     }
@@ -7168,26 +7113,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_list_String(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_list_locale_overrides(List<LocaleOverrides>? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_list_locale_overrides(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_list_localized_name(List<LocalizedName>? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_list_localized_name(self, serializer);
     }
   }
 
@@ -7686,4 +7611,28 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_String(self.description, serializer);
     sse_encode_String(self.url, serializer);
   }
+
+  @protected
+  void sse_encode_usize(BigInt self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putBigUint64(self);
+  }
+}
+
+@sealed
+class LnUrlPayResultImpl extends RustOpaque implements LnUrlPayResult {
+  // Not to be used by end users
+  LnUrlPayResultImpl.frbInternalDcoDecode(List<dynamic> wire)
+      : super.frbInternalDcoDecode(wire, _kStaticData);
+
+  // Not to be used by end users
+  LnUrlPayResultImpl.frbInternalSseDecode(BigInt ptr, int externalSizeOnNative)
+      : super.frbInternalSseDecode(ptr, externalSizeOnNative, _kStaticData);
+
+  static final _kStaticData = RustArcStaticData(
+    rustArcIncrementStrongCount: BreezSdkBindings.instance.api.rust_arc_increment_strong_count_LnUrlPayResult,
+    rustArcDecrementStrongCount: BreezSdkBindings.instance.api.rust_arc_decrement_strong_count_LnUrlPayResult,
+    rustArcDecrementStrongCountPtr:
+        BreezSdkBindings.instance.api.rust_arc_decrement_strong_count_LnUrlPayResultPtr,
+  );
 }

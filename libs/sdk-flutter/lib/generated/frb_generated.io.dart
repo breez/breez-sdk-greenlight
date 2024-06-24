@@ -9,11 +9,7 @@ import 'chain.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:ffi' as ffi;
-import 'fiat.dart';
 import 'frb_generated.dart';
-import 'input_parser.dart';
-import 'invoice.dart';
-import 'lnurl/pay/model.dart';
 import 'lsp.dart';
 import 'models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_io.dart';
@@ -26,8 +22,20 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     required super.portManager,
   });
 
+  CrossPlatformFinalizerArg get rust_arc_decrement_strong_count_LnUrlPayResultPtr => wire
+      ._rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResultPtr;
+
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw);
+
+  @protected
+  LnUrlPayResult
+      dco_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+          dynamic raw);
+
+  @protected
+  LnUrlPayResult dco_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      dynamic raw);
 
   @protected
   RustStreamSink<BreezEvent> dco_decode_StreamSink_breez_event_Dco(dynamic raw);
@@ -99,6 +107,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   GreenlightCredentials dco_decode_box_autoadd_greenlight_credentials(dynamic raw);
 
   @protected
+  GreenlightDeviceCredentials dco_decode_box_autoadd_greenlight_device_credentials(dynamic raw);
+
+  @protected
   GreenlightNodeConfig dco_decode_box_autoadd_greenlight_node_config(dynamic raw);
 
   @protected
@@ -123,16 +134,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   LnUrlErrorData dco_decode_box_autoadd_ln_url_error_data(dynamic raw);
 
   @protected
-  LnUrlPayErrorData dco_decode_box_autoadd_ln_url_pay_error_data(dynamic raw);
-
-  @protected
   LnUrlPayRequest dco_decode_box_autoadd_ln_url_pay_request(dynamic raw);
 
   @protected
   LnUrlPayRequestData dco_decode_box_autoadd_ln_url_pay_request_data(dynamic raw);
-
-  @protected
-  LnUrlPaySuccessData dco_decode_box_autoadd_ln_url_pay_success_data(dynamic raw);
 
   @protected
   LnUrlWithdrawRequest dco_decode_box_autoadd_ln_url_withdraw_request(dynamic raw);
@@ -285,6 +290,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   GreenlightCredentials dco_decode_greenlight_credentials(dynamic raw);
 
   @protected
+  GreenlightDeviceCredentials dco_decode_greenlight_device_credentials(dynamic raw);
+
+  @protected
   GreenlightNodeConfig dco_decode_greenlight_node_config(dynamic raw);
 
   @protected
@@ -372,19 +380,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   LnUrlErrorData dco_decode_ln_url_error_data(dynamic raw);
 
   @protected
-  LnUrlPayErrorData dco_decode_ln_url_pay_error_data(dynamic raw);
-
-  @protected
   LnUrlPayRequest dco_decode_ln_url_pay_request(dynamic raw);
 
   @protected
   LnUrlPayRequestData dco_decode_ln_url_pay_request_data(dynamic raw);
-
-  @protected
-  LnUrlPayResult dco_decode_ln_url_pay_result(dynamic raw);
-
-  @protected
-  LnUrlPaySuccessData dco_decode_ln_url_pay_success_data(dynamic raw);
 
   @protected
   LnUrlWithdrawRequest dco_decode_ln_url_withdraw_request(dynamic raw);
@@ -493,12 +492,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   List<String>? dco_decode_opt_list_String(dynamic raw);
-
-  @protected
-  List<LocaleOverrides>? dco_decode_opt_list_locale_overrides(dynamic raw);
-
-  @protected
-  List<LocalizedName>? dco_decode_opt_list_localized_name(dynamic raw);
 
   @protected
   List<MetadataFilter>? dco_decode_opt_list_metadata_filter(dynamic raw);
@@ -675,7 +668,19 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   UrlSuccessActionData dco_decode_url_success_action_data(dynamic raw);
 
   @protected
+  BigInt dco_decode_usize(dynamic raw);
+
+  @protected
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
+
+  @protected
+  LnUrlPayResult
+      sse_decode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+          SseDeserializer deserializer);
+
+  @protected
+  LnUrlPayResult sse_decode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      SseDeserializer deserializer);
 
   @protected
   RustStreamSink<BreezEvent> sse_decode_StreamSink_breez_event_Dco(SseDeserializer deserializer);
@@ -750,6 +755,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   GreenlightCredentials sse_decode_box_autoadd_greenlight_credentials(SseDeserializer deserializer);
 
   @protected
+  GreenlightDeviceCredentials sse_decode_box_autoadd_greenlight_device_credentials(
+      SseDeserializer deserializer);
+
+  @protected
   GreenlightNodeConfig sse_decode_box_autoadd_greenlight_node_config(SseDeserializer deserializer);
 
   @protected
@@ -774,16 +783,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   LnUrlErrorData sse_decode_box_autoadd_ln_url_error_data(SseDeserializer deserializer);
 
   @protected
-  LnUrlPayErrorData sse_decode_box_autoadd_ln_url_pay_error_data(SseDeserializer deserializer);
-
-  @protected
   LnUrlPayRequest sse_decode_box_autoadd_ln_url_pay_request(SseDeserializer deserializer);
 
   @protected
   LnUrlPayRequestData sse_decode_box_autoadd_ln_url_pay_request_data(SseDeserializer deserializer);
-
-  @protected
-  LnUrlPaySuccessData sse_decode_box_autoadd_ln_url_pay_success_data(SseDeserializer deserializer);
 
   @protected
   LnUrlWithdrawRequest sse_decode_box_autoadd_ln_url_withdraw_request(SseDeserializer deserializer);
@@ -940,6 +943,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   GreenlightCredentials sse_decode_greenlight_credentials(SseDeserializer deserializer);
 
   @protected
+  GreenlightDeviceCredentials sse_decode_greenlight_device_credentials(SseDeserializer deserializer);
+
+  @protected
   GreenlightNodeConfig sse_decode_greenlight_node_config(SseDeserializer deserializer);
 
   @protected
@@ -1027,19 +1033,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   LnUrlErrorData sse_decode_ln_url_error_data(SseDeserializer deserializer);
 
   @protected
-  LnUrlPayErrorData sse_decode_ln_url_pay_error_data(SseDeserializer deserializer);
-
-  @protected
   LnUrlPayRequest sse_decode_ln_url_pay_request(SseDeserializer deserializer);
 
   @protected
   LnUrlPayRequestData sse_decode_ln_url_pay_request_data(SseDeserializer deserializer);
-
-  @protected
-  LnUrlPayResult sse_decode_ln_url_pay_result(SseDeserializer deserializer);
-
-  @protected
-  LnUrlPaySuccessData sse_decode_ln_url_pay_success_data(SseDeserializer deserializer);
 
   @protected
   LnUrlWithdrawRequest sse_decode_ln_url_withdraw_request(SseDeserializer deserializer);
@@ -1148,12 +1145,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   List<String>? sse_decode_opt_list_String(SseDeserializer deserializer);
-
-  @protected
-  List<LocaleOverrides>? sse_decode_opt_list_locale_overrides(SseDeserializer deserializer);
-
-  @protected
-  List<LocalizedName>? sse_decode_opt_list_localized_name(SseDeserializer deserializer);
 
   @protected
   List<MetadataFilter>? sse_decode_opt_list_metadata_filter(SseDeserializer deserializer);
@@ -1332,6 +1323,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   UrlSuccessActionData sse_decode_url_success_action_data(SseDeserializer deserializer);
 
   @protected
+  BigInt sse_decode_usize(SseDeserializer deserializer);
+
+  @protected
   ffi.Pointer<wire_cst_list_prim_u_8_strict> cst_encode_AnyhowException(AnyhowException raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     throw UnimplementedError();
@@ -1477,6 +1471,15 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
+  ffi.Pointer<wire_cst_greenlight_device_credentials> cst_encode_box_autoadd_greenlight_device_credentials(
+      GreenlightDeviceCredentials raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    final ptr = wire.cst_new_box_autoadd_greenlight_device_credentials();
+    cst_api_fill_to_wire_greenlight_device_credentials(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_cst_greenlight_node_config> cst_encode_box_autoadd_greenlight_node_config(
       GreenlightNodeConfig raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
@@ -1543,15 +1546,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
-  ffi.Pointer<wire_cst_ln_url_pay_error_data> cst_encode_box_autoadd_ln_url_pay_error_data(
-      LnUrlPayErrorData raw) {
-    // Codec=Cst (C-struct based), see doc to use other codecs
-    final ptr = wire.cst_new_box_autoadd_ln_url_pay_error_data();
-    cst_api_fill_to_wire_ln_url_pay_error_data(raw, ptr.ref);
-    return ptr;
-  }
-
-  @protected
   ffi.Pointer<wire_cst_ln_url_pay_request> cst_encode_box_autoadd_ln_url_pay_request(LnUrlPayRequest raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     final ptr = wire.cst_new_box_autoadd_ln_url_pay_request();
@@ -1565,15 +1559,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     // Codec=Cst (C-struct based), see doc to use other codecs
     final ptr = wire.cst_new_box_autoadd_ln_url_pay_request_data();
     cst_api_fill_to_wire_ln_url_pay_request_data(raw, ptr.ref);
-    return ptr;
-  }
-
-  @protected
-  ffi.Pointer<wire_cst_ln_url_pay_success_data> cst_encode_box_autoadd_ln_url_pay_success_data(
-      LnUrlPaySuccessData raw) {
-    // Codec=Cst (C-struct based), see doc to use other codecs
-    final ptr = wire.cst_new_box_autoadd_ln_url_pay_success_data();
-    cst_api_fill_to_wire_ln_url_pay_success_data(raw, ptr.ref);
     return ptr;
   }
 
@@ -2145,19 +2130,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
-  ffi.Pointer<wire_cst_list_locale_overrides> cst_encode_opt_list_locale_overrides(
-      List<LocaleOverrides>? raw) {
-    // Codec=Cst (C-struct based), see doc to use other codecs
-    return raw == null ? ffi.nullptr : cst_encode_list_locale_overrides(raw);
-  }
-
-  @protected
-  ffi.Pointer<wire_cst_list_localized_name> cst_encode_opt_list_localized_name(List<LocalizedName>? raw) {
-    // Codec=Cst (C-struct based), see doc to use other codecs
-    return raw == null ? ffi.nullptr : cst_encode_list_localized_name(raw);
-  }
-
-  @protected
   ffi.Pointer<wire_cst_list_metadata_filter> cst_encode_opt_list_metadata_filter(List<MetadataFilter>? raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     return raw == null ? ffi.nullptr : cst_encode_list_metadata_filter(raw);
@@ -2184,6 +2156,12 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   int cst_encode_u_64(BigInt raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    return raw.toSigned(64).toInt();
+  }
+
+  @protected
+  int cst_encode_usize(BigInt raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     return raw.toSigned(64).toInt();
   }
@@ -2304,6 +2282,12 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
+  void cst_api_fill_to_wire_box_autoadd_greenlight_device_credentials(
+      GreenlightDeviceCredentials apiObj, ffi.Pointer<wire_cst_greenlight_device_credentials> wireObj) {
+    cst_api_fill_to_wire_greenlight_device_credentials(apiObj, wireObj.ref);
+  }
+
+  @protected
   void cst_api_fill_to_wire_box_autoadd_greenlight_node_config(
       GreenlightNodeConfig apiObj, ffi.Pointer<wire_cst_greenlight_node_config> wireObj) {
     cst_api_fill_to_wire_greenlight_node_config(apiObj, wireObj.ref);
@@ -2346,12 +2330,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
-  void cst_api_fill_to_wire_box_autoadd_ln_url_pay_error_data(
-      LnUrlPayErrorData apiObj, ffi.Pointer<wire_cst_ln_url_pay_error_data> wireObj) {
-    cst_api_fill_to_wire_ln_url_pay_error_data(apiObj, wireObj.ref);
-  }
-
-  @protected
   void cst_api_fill_to_wire_box_autoadd_ln_url_pay_request(
       LnUrlPayRequest apiObj, ffi.Pointer<wire_cst_ln_url_pay_request> wireObj) {
     cst_api_fill_to_wire_ln_url_pay_request(apiObj, wireObj.ref);
@@ -2361,12 +2339,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void cst_api_fill_to_wire_box_autoadd_ln_url_pay_request_data(
       LnUrlPayRequestData apiObj, ffi.Pointer<wire_cst_ln_url_pay_request_data> wireObj) {
     cst_api_fill_to_wire_ln_url_pay_request_data(apiObj, wireObj.ref);
-  }
-
-  @protected
-  void cst_api_fill_to_wire_box_autoadd_ln_url_pay_success_data(
-      LnUrlPaySuccessData apiObj, ffi.Pointer<wire_cst_ln_url_pay_success_data> wireObj) {
-    cst_api_fill_to_wire_ln_url_pay_success_data(apiObj, wireObj.ref);
   }
 
   @protected
@@ -2683,8 +2655,8 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     wireObj.spacing = cst_encode_opt_box_autoadd_u_32(apiObj.spacing);
     wireObj.symbol = cst_encode_opt_box_autoadd_symbol(apiObj.symbol);
     wireObj.uniq_symbol = cst_encode_opt_box_autoadd_symbol(apiObj.uniqSymbol);
-    wireObj.localized_name = cst_encode_opt_list_localized_name(apiObj.localizedName);
-    wireObj.locale_overrides = cst_encode_opt_list_locale_overrides(apiObj.localeOverrides);
+    wireObj.localized_name = cst_encode_list_localized_name(apiObj.localizedName);
+    wireObj.locale_overrides = cst_encode_list_locale_overrides(apiObj.localeOverrides);
   }
 
   @protected
@@ -2696,8 +2668,14 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   @protected
   void cst_api_fill_to_wire_greenlight_credentials(
       GreenlightCredentials apiObj, wire_cst_greenlight_credentials wireObj) {
-    wireObj.device_key = cst_encode_list_prim_u_8_strict(apiObj.deviceKey);
-    wireObj.device_cert = cst_encode_list_prim_u_8_strict(apiObj.deviceCert);
+    wireObj.developer_key = cst_encode_list_prim_u_8_strict(apiObj.developerKey);
+    wireObj.developer_cert = cst_encode_list_prim_u_8_strict(apiObj.developerCert);
+  }
+
+  @protected
+  void cst_api_fill_to_wire_greenlight_device_credentials(
+      GreenlightDeviceCredentials apiObj, wire_cst_greenlight_device_credentials wireObj) {
+    wireObj.device = cst_encode_list_prim_u_8_strict(apiObj.device);
   }
 
   @protected
@@ -2847,13 +2825,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
-  void cst_api_fill_to_wire_ln_url_pay_error_data(
-      LnUrlPayErrorData apiObj, wire_cst_ln_url_pay_error_data wireObj) {
-    wireObj.payment_hash = cst_encode_String(apiObj.paymentHash);
-    wireObj.reason = cst_encode_String(apiObj.reason);
-  }
-
-  @protected
   void cst_api_fill_to_wire_ln_url_pay_request(LnUrlPayRequest apiObj, wire_cst_ln_url_pay_request wireObj) {
     cst_api_fill_to_wire_ln_url_pay_request_data(apiObj.data, wireObj.data);
     wireObj.amount_msat = cst_encode_u_64(apiObj.amountMsat);
@@ -2873,35 +2844,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     wireObj.allows_nostr = cst_encode_bool(apiObj.allowsNostr);
     wireObj.nostr_pubkey = cst_encode_opt_String(apiObj.nostrPubkey);
     wireObj.ln_address = cst_encode_opt_String(apiObj.lnAddress);
-  }
-
-  @protected
-  void cst_api_fill_to_wire_ln_url_pay_result(LnUrlPayResult apiObj, wire_cst_ln_url_pay_result wireObj) {
-    if (apiObj is LnUrlPayResult_EndpointSuccess) {
-      var pre_data = cst_encode_box_autoadd_ln_url_pay_success_data(apiObj.data);
-      wireObj.tag = 0;
-      wireObj.kind.EndpointSuccess.data = pre_data;
-      return;
-    }
-    if (apiObj is LnUrlPayResult_EndpointError) {
-      var pre_data = cst_encode_box_autoadd_ln_url_error_data(apiObj.data);
-      wireObj.tag = 1;
-      wireObj.kind.EndpointError.data = pre_data;
-      return;
-    }
-    if (apiObj is LnUrlPayResult_PayError) {
-      var pre_data = cst_encode_box_autoadd_ln_url_pay_error_data(apiObj.data);
-      wireObj.tag = 2;
-      wireObj.kind.PayError.data = pre_data;
-      return;
-    }
-  }
-
-  @protected
-  void cst_api_fill_to_wire_ln_url_pay_success_data(
-      LnUrlPaySuccessData apiObj, wire_cst_ln_url_pay_success_data wireObj) {
-    cst_api_fill_to_wire_payment(apiObj.payment, wireObj.payment);
-    wireObj.success_action = cst_encode_opt_box_autoadd_success_action_processed(apiObj.successAction);
   }
 
   @protected
@@ -3011,7 +2953,7 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   @protected
   void cst_api_fill_to_wire_node_credentials(NodeCredentials apiObj, wire_cst_node_credentials wireObj) {
     if (apiObj is NodeCredentials_Greenlight) {
-      var pre_credentials = cst_encode_box_autoadd_greenlight_credentials(apiObj.credentials);
+      var pre_credentials = cst_encode_box_autoadd_greenlight_device_credentials(apiObj.credentials);
       wireObj.tag = 0;
       wireObj.kind.Greenlight.credentials = pre_credentials;
       return;
@@ -3452,6 +3394,14 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
+  int cst_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult raw);
+
+  @protected
+  int cst_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult raw);
+
+  @protected
   bool cst_encode_bool(bool raw);
 
   @protected
@@ -3507,6 +3457,14 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   void sse_encode_AnyhowException(AnyhowException self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_Auto_Owned_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      LnUrlPayResult self, SseSerializer serializer);
 
   @protected
   void sse_encode_StreamSink_breez_event_Dco(RustStreamSink<BreezEvent> self, SseSerializer serializer);
@@ -3582,6 +3540,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void sse_encode_box_autoadd_greenlight_credentials(GreenlightCredentials self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_greenlight_device_credentials(
+      GreenlightDeviceCredentials self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_greenlight_node_config(GreenlightNodeConfig self, SseSerializer serializer);
 
   @protected
@@ -3606,16 +3568,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void sse_encode_box_autoadd_ln_url_error_data(LnUrlErrorData self, SseSerializer serializer);
 
   @protected
-  void sse_encode_box_autoadd_ln_url_pay_error_data(LnUrlPayErrorData self, SseSerializer serializer);
-
-  @protected
   void sse_encode_box_autoadd_ln_url_pay_request(LnUrlPayRequest self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_ln_url_pay_request_data(LnUrlPayRequestData self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_box_autoadd_ln_url_pay_success_data(LnUrlPaySuccessData self, SseSerializer serializer);
 
   @protected
   void sse_encode_box_autoadd_ln_url_withdraw_request(LnUrlWithdrawRequest self, SseSerializer serializer);
@@ -3777,6 +3733,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void sse_encode_greenlight_credentials(GreenlightCredentials self, SseSerializer serializer);
 
   @protected
+  void sse_encode_greenlight_device_credentials(GreenlightDeviceCredentials self, SseSerializer serializer);
+
+  @protected
   void sse_encode_greenlight_node_config(GreenlightNodeConfig self, SseSerializer serializer);
 
   @protected
@@ -3865,19 +3824,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void sse_encode_ln_url_error_data(LnUrlErrorData self, SseSerializer serializer);
 
   @protected
-  void sse_encode_ln_url_pay_error_data(LnUrlPayErrorData self, SseSerializer serializer);
-
-  @protected
   void sse_encode_ln_url_pay_request(LnUrlPayRequest self, SseSerializer serializer);
 
   @protected
   void sse_encode_ln_url_pay_request_data(LnUrlPayRequestData self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_ln_url_pay_result(LnUrlPayResult self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_ln_url_pay_success_data(LnUrlPaySuccessData self, SseSerializer serializer);
 
   @protected
   void sse_encode_ln_url_withdraw_request(LnUrlWithdrawRequest self, SseSerializer serializer);
@@ -3990,12 +3940,6 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   void sse_encode_opt_list_String(List<String>? self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_opt_list_locale_overrides(List<LocaleOverrides>? self, SseSerializer serializer);
-
-  @protected
-  void sse_encode_opt_list_localized_name(List<LocalizedName>? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_metadata_filter(List<MetadataFilter>? self, SseSerializer serializer);
@@ -4175,6 +4119,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   void sse_encode_url_success_action_data(UrlSuccessActionData self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_usize(BigInt self, SseSerializer serializer);
 }
 
 // Section: wire_class
@@ -5179,6 +5126,38 @@ class BreezSdkBindingsWire implements BaseWire {
   late final _wire__crate__binding__unregister_webhook = _wire__crate__binding__unregister_webhookPtr
       .asFunction<void Function(int, ffi.Pointer<wire_cst_list_prim_u_8_strict>)>();
 
+  void
+      rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResultPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+          'frbgen_breez_sdk_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult');
+  late final _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult =
+      _rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResultPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
+  void
+      rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+    ffi.Pointer<ffi.Void> ptr,
+  ) {
+    return _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(
+      ptr,
+    );
+  }
+
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResultPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Pointer<ffi.Void>)>>(
+          'frbgen_breez_sdk_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult');
+  late final _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult =
+      _rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResultPtr
+          .asFunction<void Function(ffi.Pointer<ffi.Void>)>();
+
   ffi.Pointer<wire_cst_aes_success_action_data_decrypted>
       cst_new_box_autoadd_aes_success_action_data_decrypted() {
     return _cst_new_box_autoadd_aes_success_action_data_decrypted();
@@ -5317,6 +5296,17 @@ class BreezSdkBindingsWire implements BaseWire {
   late final _cst_new_box_autoadd_greenlight_credentials = _cst_new_box_autoadd_greenlight_credentialsPtr
       .asFunction<ffi.Pointer<wire_cst_greenlight_credentials> Function()>();
 
+  ffi.Pointer<wire_cst_greenlight_device_credentials> cst_new_box_autoadd_greenlight_device_credentials() {
+    return _cst_new_box_autoadd_greenlight_device_credentials();
+  }
+
+  late final _cst_new_box_autoadd_greenlight_device_credentialsPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_cst_greenlight_device_credentials> Function()>>(
+          'frbgen_breez_sdk_cst_new_box_autoadd_greenlight_device_credentials');
+  late final _cst_new_box_autoadd_greenlight_device_credentials =
+      _cst_new_box_autoadd_greenlight_device_credentialsPtr
+          .asFunction<ffi.Pointer<wire_cst_greenlight_device_credentials> Function()>();
+
   ffi.Pointer<wire_cst_greenlight_node_config> cst_new_box_autoadd_greenlight_node_config() {
     return _cst_new_box_autoadd_greenlight_node_config();
   }
@@ -5401,16 +5391,6 @@ class BreezSdkBindingsWire implements BaseWire {
   late final _cst_new_box_autoadd_ln_url_error_data = _cst_new_box_autoadd_ln_url_error_dataPtr
       .asFunction<ffi.Pointer<wire_cst_ln_url_error_data> Function()>();
 
-  ffi.Pointer<wire_cst_ln_url_pay_error_data> cst_new_box_autoadd_ln_url_pay_error_data() {
-    return _cst_new_box_autoadd_ln_url_pay_error_data();
-  }
-
-  late final _cst_new_box_autoadd_ln_url_pay_error_dataPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_cst_ln_url_pay_error_data> Function()>>(
-          'frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_error_data');
-  late final _cst_new_box_autoadd_ln_url_pay_error_data = _cst_new_box_autoadd_ln_url_pay_error_dataPtr
-      .asFunction<ffi.Pointer<wire_cst_ln_url_pay_error_data> Function()>();
-
   ffi.Pointer<wire_cst_ln_url_pay_request> cst_new_box_autoadd_ln_url_pay_request() {
     return _cst_new_box_autoadd_ln_url_pay_request();
   }
@@ -5430,16 +5410,6 @@ class BreezSdkBindingsWire implements BaseWire {
           'frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_request_data');
   late final _cst_new_box_autoadd_ln_url_pay_request_data = _cst_new_box_autoadd_ln_url_pay_request_dataPtr
       .asFunction<ffi.Pointer<wire_cst_ln_url_pay_request_data> Function()>();
-
-  ffi.Pointer<wire_cst_ln_url_pay_success_data> cst_new_box_autoadd_ln_url_pay_success_data() {
-    return _cst_new_box_autoadd_ln_url_pay_success_data();
-  }
-
-  late final _cst_new_box_autoadd_ln_url_pay_success_dataPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_cst_ln_url_pay_success_data> Function()>>(
-          'frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_success_data');
-  late final _cst_new_box_autoadd_ln_url_pay_success_data = _cst_new_box_autoadd_ln_url_pay_success_dataPtr
-      .asFunction<ffi.Pointer<wire_cst_ln_url_pay_success_data> Function()>();
 
   ffi.Pointer<wire_cst_ln_url_withdraw_request> cst_new_box_autoadd_ln_url_withdraw_request() {
     return _cst_new_box_autoadd_ln_url_withdraw_request();
@@ -6477,9 +6447,9 @@ final class wire_cst_configure_node_request extends ffi.Struct {
 }
 
 final class wire_cst_greenlight_credentials extends ffi.Struct {
-  external ffi.Pointer<wire_cst_list_prim_u_8_strict> device_key;
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> developer_key;
 
-  external ffi.Pointer<wire_cst_list_prim_u_8_strict> device_cert;
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> developer_cert;
 }
 
 final class wire_cst_greenlight_node_config extends ffi.Struct {
@@ -6834,20 +6804,12 @@ final class wire_cst_bitcoin_address_data extends ffi.Struct {
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> message;
 }
 
+final class wire_cst_greenlight_device_credentials extends ffi.Struct {
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> device;
+}
+
 final class wire_cst_ln_url_error_data extends ffi.Struct {
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> reason;
-}
-
-final class wire_cst_ln_url_pay_error_data extends ffi.Struct {
-  external ffi.Pointer<wire_cst_list_prim_u_8_strict> payment_hash;
-
-  external ffi.Pointer<wire_cst_list_prim_u_8_strict> reason;
-}
-
-final class wire_cst_ln_url_pay_success_data extends ffi.Struct {
-  external wire_cst_payment payment;
-
-  external ffi.Pointer<wire_cst_success_action_processed> success_action;
 }
 
 final class wire_cst_ln_url_withdraw_success_data extends ffi.Struct {
@@ -6894,7 +6856,7 @@ final class wire_cst_lsp_information extends ffi.Struct {
 }
 
 final class wire_cst_NodeCredentials_Greenlight extends ffi.Struct {
-  external ffi.Pointer<wire_cst_greenlight_credentials> credentials;
+  external ffi.Pointer<wire_cst_greenlight_device_credentials> credentials;
 }
 
 final class NodeCredentialsKind extends ffi.Union {
@@ -7130,33 +7092,6 @@ final class wire_cst_ln_url_callback_status extends ffi.Struct {
   external LnUrlCallbackStatusKind kind;
 }
 
-final class wire_cst_LnUrlPayResult_EndpointSuccess extends ffi.Struct {
-  external ffi.Pointer<wire_cst_ln_url_pay_success_data> data;
-}
-
-final class wire_cst_LnUrlPayResult_EndpointError extends ffi.Struct {
-  external ffi.Pointer<wire_cst_ln_url_error_data> data;
-}
-
-final class wire_cst_LnUrlPayResult_PayError extends ffi.Struct {
-  external ffi.Pointer<wire_cst_ln_url_pay_error_data> data;
-}
-
-final class LnUrlPayResultKind extends ffi.Union {
-  external wire_cst_LnUrlPayResult_EndpointSuccess EndpointSuccess;
-
-  external wire_cst_LnUrlPayResult_EndpointError EndpointError;
-
-  external wire_cst_LnUrlPayResult_PayError PayError;
-}
-
-final class wire_cst_ln_url_pay_result extends ffi.Struct {
-  @ffi.Int32()
-  external int tag;
-
-  external LnUrlPayResultKind kind;
-}
-
 final class wire_cst_LnUrlWithdrawResult_Ok extends ffi.Struct {
   external ffi.Pointer<wire_cst_ln_url_withdraw_success_data> data;
 }
@@ -7340,3 +7275,7 @@ const int INVOICE_PAYMENT_FEE_EXPIRY_SECONDS = 3600;
 const int ESTIMATED_CLAIM_TX_VSIZE = 138;
 
 const int ESTIMATED_LOCKUP_TX_VSIZE = 153;
+
+const int MOCK_REVERSE_SWAP_MIN = 50000;
+
+const int MOCK_REVERSE_SWAP_MAX = 1000000;
