@@ -553,6 +553,16 @@ typedef struct wire_cst_ln_url_error_data {
   struct wire_cst_list_prim_u_8_strict *reason;
 } wire_cst_ln_url_error_data;
 
+typedef struct wire_cst_ln_url_pay_error_data {
+  struct wire_cst_list_prim_u_8_strict *payment_hash;
+  struct wire_cst_list_prim_u_8_strict *reason;
+} wire_cst_ln_url_pay_error_data;
+
+typedef struct wire_cst_ln_url_pay_success_data {
+  struct wire_cst_payment payment;
+  struct wire_cst_success_action_processed *success_action;
+} wire_cst_ln_url_pay_success_data;
+
 typedef struct wire_cst_ln_url_withdraw_success_data {
   struct wire_cst_ln_invoice invoice;
 } wire_cst_ln_url_withdraw_success_data;
@@ -758,6 +768,29 @@ typedef struct wire_cst_ln_url_callback_status {
   int32_t tag;
   union LnUrlCallbackStatusKind kind;
 } wire_cst_ln_url_callback_status;
+
+typedef struct wire_cst_LnUrlPayResult_EndpointSuccess {
+  struct wire_cst_ln_url_pay_success_data *data;
+} wire_cst_LnUrlPayResult_EndpointSuccess;
+
+typedef struct wire_cst_LnUrlPayResult_EndpointError {
+  struct wire_cst_ln_url_error_data *data;
+} wire_cst_LnUrlPayResult_EndpointError;
+
+typedef struct wire_cst_LnUrlPayResult_PayError {
+  struct wire_cst_ln_url_pay_error_data *data;
+} wire_cst_LnUrlPayResult_PayError;
+
+typedef union LnUrlPayResultKind {
+  struct wire_cst_LnUrlPayResult_EndpointSuccess EndpointSuccess;
+  struct wire_cst_LnUrlPayResult_EndpointError EndpointError;
+  struct wire_cst_LnUrlPayResult_PayError PayError;
+} LnUrlPayResultKind;
+
+typedef struct wire_cst_ln_url_pay_result {
+  int32_t tag;
+  union LnUrlPayResultKind kind;
+} wire_cst_ln_url_pay_result;
 
 typedef struct wire_cst_LnUrlWithdrawResult_Ok {
   struct wire_cst_ln_url_withdraw_success_data *data;
@@ -1045,10 +1078,6 @@ void frbgen_breez_sdk_wire__crate__binding__sync(int64_t port_);
 void frbgen_breez_sdk_wire__crate__binding__unregister_webhook(int64_t port_,
                                                                struct wire_cst_list_prim_u_8_strict *webhook_url);
 
-void frbgen_breez_sdk_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(const void *ptr);
-
-void frbgen_breez_sdk_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult(const void *ptr);
-
 struct wire_cst_aes_success_action_data_decrypted *frbgen_breez_sdk_cst_new_box_autoadd_aes_success_action_data_decrypted(void);
 
 struct wire_cst_aes_success_action_data_result *frbgen_breez_sdk_cst_new_box_autoadd_aes_success_action_data_result(void);
@@ -1093,9 +1122,13 @@ struct wire_cst_ln_url_auth_request_data *frbgen_breez_sdk_cst_new_box_autoadd_l
 
 struct wire_cst_ln_url_error_data *frbgen_breez_sdk_cst_new_box_autoadd_ln_url_error_data(void);
 
+struct wire_cst_ln_url_pay_error_data *frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_error_data(void);
+
 struct wire_cst_ln_url_pay_request *frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_request(void);
 
 struct wire_cst_ln_url_pay_request_data *frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_request_data(void);
+
+struct wire_cst_ln_url_pay_success_data *frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_success_data(void);
 
 struct wire_cst_ln_url_withdraw_request *frbgen_breez_sdk_cst_new_box_autoadd_ln_url_withdraw_request(void);
 
@@ -1222,8 +1255,10 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_payment_details);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_auth_request_data);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_error_data);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_error_data);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_request_data);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_pay_success_data);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_withdraw_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_withdraw_request_data);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_withdraw_success_data);
@@ -1275,8 +1310,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_swap_info);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_tlv_entry);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_unspent_transaction_output);
-    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_rust_arc_decrement_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult);
-    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerLnUrlPayResult);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__backup);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__backup_status);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__binding_event_listener_on_event);
