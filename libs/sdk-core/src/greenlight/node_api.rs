@@ -551,7 +551,7 @@ impl Greenlight {
     ) -> Result<u64> {
         let pending_onchain_balance = peer_channels.iter().fold(0, |a, b| match b.state() {
             ChanneldShuttingDown | ClosingdSigexchange | ClosingdComplete | AwaitingUnilateral
-            | FundingSpendSeen => a + b.min_to_us_msat.clone().unwrap_or_default().msat,
+            | FundingSpendSeen => a + b.to_us_msat.clone().unwrap_or_default().msat,
 
             // When we  unilaterally close the channel it will get status as `AwaitingUnilateral`
             // first, but when the closing transaction is confirmed onchain the funds receive status
@@ -563,7 +563,7 @@ impl Greenlight {
                         .last()
                         .is_some_and(|status| status.contains("DELAYED_OUTPUT_TO_US"))
                 {
-                    a + b.min_to_us_msat.clone().unwrap_or_default().msat
+                    a + b.to_us_msat.clone().unwrap_or_default().msat
                 } else {
                     a
                 }
