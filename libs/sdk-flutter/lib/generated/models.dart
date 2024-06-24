@@ -3,10 +3,8 @@
 
 // ignore_for_file: invalid_use_of_internal_member, unused_import, unnecessary_import
 
+import 'binding.dart';
 import 'frb_generated.dart';
-import 'input_parser.dart';
-import 'invoice.dart';
-import 'lnurl/pay/model.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'models.freezed.dart';
@@ -253,24 +251,41 @@ enum EnvironmentType {
 
 /// Client-specific credentials to connect to and manage a Greenlight node in the cloud
 class GreenlightCredentials {
-  final Uint8List deviceKey;
-  final Uint8List deviceCert;
+  final Uint8List developerKey;
+  final Uint8List developerCert;
 
   const GreenlightCredentials({
-    required this.deviceKey,
-    required this.deviceCert,
+    required this.developerKey,
+    required this.developerCert,
   });
 
   @override
-  int get hashCode => deviceKey.hashCode ^ deviceCert.hashCode;
+  int get hashCode => developerKey.hashCode ^ developerCert.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is GreenlightCredentials &&
           runtimeType == other.runtimeType &&
-          deviceKey == other.deviceKey &&
-          deviceCert == other.deviceCert;
+          developerKey == other.developerKey &&
+          developerCert == other.developerCert;
+}
+
+/// Device credentials used to authenticate to Greenlight with the current device.
+class GreenlightDeviceCredentials {
+  final Uint8List device;
+
+  const GreenlightDeviceCredentials({
+    required this.device,
+  });
+
+  @override
+  int get hashCode => device.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GreenlightDeviceCredentials && runtimeType == other.runtimeType && device == other.device;
 }
 
 class GreenlightNodeConfig {
@@ -452,115 +467,6 @@ class LnPaymentDetails {
           pendingExpirationBlock == other.pendingExpirationBlock;
 }
 
-@freezed
-sealed class LnUrlCallbackStatus with _$LnUrlCallbackStatus {
-  const LnUrlCallbackStatus._();
-
-  /// On-wire format is: `{"status": "OK"}`
-  const factory LnUrlCallbackStatus.ok() = LnUrlCallbackStatus_Ok;
-
-  /// On-wire format is: `{"status": "ERROR", "reason": "error details..."}`
-  const factory LnUrlCallbackStatus.errorStatus({
-    required LnUrlErrorData data,
-  }) = LnUrlCallbackStatus_ErrorStatus;
-}
-
-/// Represents a LNURL-pay request.
-class LnUrlPayRequest {
-  /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
-  final LnUrlPayRequestData data;
-
-  /// The amount in millisatoshis for this payment
-  final BigInt amountMsat;
-
-  /// An optional comment for this payment
-  final String? comment;
-
-  /// The external label or identifier of the [Payment]
-  final String? paymentLabel;
-
-  const LnUrlPayRequest({
-    required this.data,
-    required this.amountMsat,
-    this.comment,
-    this.paymentLabel,
-  });
-
-  @override
-  int get hashCode => data.hashCode ^ amountMsat.hashCode ^ comment.hashCode ^ paymentLabel.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LnUrlPayRequest &&
-          runtimeType == other.runtimeType &&
-          data == other.data &&
-          amountMsat == other.amountMsat &&
-          comment == other.comment &&
-          paymentLabel == other.paymentLabel;
-}
-
-class LnUrlWithdrawRequest {
-  /// Request data containing information on how to call the lnurl withdraw
-  /// endpoint. Typically retrieved by calling `parse()` on a lnurl withdraw
-  /// input.
-  final LnUrlWithdrawRequestData data;
-
-  /// The amount to withdraw from the lnurl withdraw endpoint. Must be between
-  /// `min_withdrawable` and `max_withdrawable`.
-  final BigInt amountMsat;
-
-  /// Optional description that will be put in the payment request for the
-  /// lnurl withdraw endpoint.
-  final String? description;
-
-  const LnUrlWithdrawRequest({
-    required this.data,
-    required this.amountMsat,
-    this.description,
-  });
-
-  @override
-  int get hashCode => data.hashCode ^ amountMsat.hashCode ^ description.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LnUrlWithdrawRequest &&
-          runtimeType == other.runtimeType &&
-          data == other.data &&
-          amountMsat == other.amountMsat &&
-          description == other.description;
-}
-
-@freezed
-sealed class LnUrlWithdrawResult with _$LnUrlWithdrawResult {
-  const LnUrlWithdrawResult._();
-
-  const factory LnUrlWithdrawResult.ok({
-    required LnUrlWithdrawSuccessData data,
-  }) = LnUrlWithdrawResult_Ok;
-  const factory LnUrlWithdrawResult.errorStatus({
-    required LnUrlErrorData data,
-  }) = LnUrlWithdrawResult_ErrorStatus;
-}
-
-class LnUrlWithdrawSuccessData {
-  final LNInvoice invoice;
-
-  const LnUrlWithdrawSuccessData({
-    required this.invoice,
-  });
-
-  @override
-  int get hashCode => invoice.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is LnUrlWithdrawSuccessData && runtimeType == other.runtimeType && invoice == other.invoice;
-}
-
 /// Internal SDK log entry
 class LogEntry {
   final String line;
@@ -623,16 +529,6 @@ class MetadataFilter {
           jsonValue == other.jsonValue;
 }
 
-/// The different supported bitcoin networks
-enum Network {
-  /// Mainnet
-  Bitcoin,
-  Testnet,
-  Signet,
-  Regtest,
-  ;
-}
-
 @freezed
 sealed class NodeConfig with _$NodeConfig {
   const NodeConfig._();
@@ -647,7 +543,7 @@ sealed class NodeCredentials with _$NodeCredentials {
   const NodeCredentials._();
 
   const factory NodeCredentials.greenlight({
-    required GreenlightCredentials credentials,
+    required GreenlightDeviceCredentials credentials,
   }) = NodeCredentials_Greenlight;
 }
 
