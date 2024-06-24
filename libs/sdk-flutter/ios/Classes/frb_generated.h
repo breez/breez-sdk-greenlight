@@ -22,6 +22,10 @@ typedef struct _Dart_Handle* Dart_Handle;
 
 #define ESTIMATED_LOCKUP_TX_VSIZE 153
 
+#define MOCK_REVERSE_SWAP_MIN 50000
+
+#define MOCK_REVERSE_SWAP_MAX 1000000
+
 typedef struct wire_cst_binding_event_listener {
 
 } wire_cst_binding_event_listener;
@@ -303,8 +307,8 @@ typedef struct wire_cst_configure_node_request {
 } wire_cst_configure_node_request;
 
 typedef struct wire_cst_greenlight_credentials {
-  struct wire_cst_list_prim_u_8_strict *device_key;
-  struct wire_cst_list_prim_u_8_strict *device_cert;
+  struct wire_cst_list_prim_u_8_strict *developer_key;
+  struct wire_cst_list_prim_u_8_strict *developer_cert;
 } wire_cst_greenlight_credentials;
 
 typedef struct wire_cst_greenlight_node_config {
@@ -541,6 +545,10 @@ typedef struct wire_cst_bitcoin_address_data {
   struct wire_cst_list_prim_u_8_strict *message;
 } wire_cst_bitcoin_address_data;
 
+typedef struct wire_cst_greenlight_device_credentials {
+  struct wire_cst_list_prim_u_8_strict *device;
+} wire_cst_greenlight_device_credentials;
+
 typedef struct wire_cst_ln_url_error_data {
   struct wire_cst_list_prim_u_8_strict *reason;
 } wire_cst_ln_url_error_data;
@@ -583,7 +591,7 @@ typedef struct wire_cst_lsp_information {
 } wire_cst_lsp_information;
 
 typedef struct wire_cst_NodeCredentials_Greenlight {
-  struct wire_cst_greenlight_credentials *credentials;
+  struct wire_cst_greenlight_device_credentials *credentials;
 } wire_cst_NodeCredentials_Greenlight;
 
 typedef union NodeCredentialsKind {
@@ -1096,6 +1104,8 @@ struct wire_cst_connect_request *frbgen_breez_sdk_cst_new_box_autoadd_connect_re
 
 struct wire_cst_greenlight_credentials *frbgen_breez_sdk_cst_new_box_autoadd_greenlight_credentials(void);
 
+struct wire_cst_greenlight_device_credentials *frbgen_breez_sdk_cst_new_box_autoadd_greenlight_device_credentials(void);
+
 struct wire_cst_greenlight_node_config *frbgen_breez_sdk_cst_new_box_autoadd_greenlight_node_config(void);
 
 int64_t *frbgen_breez_sdk_cst_new_box_autoadd_i_64(int64_t value);
@@ -1236,6 +1246,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_configure_node_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_connect_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_greenlight_credentials);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_greenlight_device_credentials);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_greenlight_node_config);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_i_64);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_invoice_paid_details);

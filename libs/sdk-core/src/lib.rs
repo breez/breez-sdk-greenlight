@@ -174,7 +174,9 @@ mod greenlight;
 pub mod lnurl;
 mod lsp;
 mod lsps0;
+/// flutter_rust_bridge:ignore
 mod lsps2;
+mod models;
 mod moonpay;
 mod persist;
 mod support;
@@ -185,10 +187,6 @@ mod swap_out;
 #[allow(dead_code)]
 mod test_utils;
 mod tonic_wrap;
-// GRPC structs are documented as follows:
-// - if they are mirrored in Rust model structs, documented in the model structs
-// - if there is no corresponding model struct, documented in breez.proto
-mod grpc;
 
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,

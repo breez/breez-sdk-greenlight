@@ -1,12 +1,9 @@
+export 'generated/binding.dart';
 export 'generated/breez_services.dart';
 export 'generated/chain.dart';
-export 'generated/fiat.dart';
 export 'generated/frb_generated.dart';
 export 'generated/frb_generated.io.dart';
-export 'generated/input_parser.dart';
-export 'generated/invoice.dart';
-export 'generated/lnurl/pay/model.dart';
+export 'generated/lib.dart';
+export 'generated/lnurl/pay.dart';
 export 'generated/lsp.dart';
-export 'generated/models.dart';
-export 'generated/binding.dart';
 export 'exceptions.dart';

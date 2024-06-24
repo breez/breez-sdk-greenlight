@@ -8,12 +8,9 @@ import 'breez_services.dart';
 import 'chain.dart';
 import 'dart:async';
 import 'dart:convert';
-import 'fiat.dart';
 import 'frb_generated.dart';
 import 'frb_generated.io.dart' if (dart.library.js_interop) 'frb_generated.web.dart';
-import 'input_parser.dart';
-import 'invoice.dart';
-import 'lnurl/pay/model.dart';
+import 'lnurl/pay.dart';
 import 'lsp.dart';
 import 'models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
@@ -1746,6 +1743,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  GreenlightDeviceCredentials dco_decode_box_autoadd_greenlight_device_credentials(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_greenlight_device_credentials(raw);
+  }
+
+  @protected
   GreenlightNodeConfig dco_decode_box_autoadd_greenlight_node_config(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_greenlight_node_config(raw);
@@ -2182,8 +2185,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       spacing: dco_decode_opt_box_autoadd_u_32(arr[2]),
       symbol: dco_decode_opt_box_autoadd_symbol(arr[3]),
       uniqSymbol: dco_decode_opt_box_autoadd_symbol(arr[4]),
-      localizedName: dco_decode_opt_list_localized_name(arr[5]),
-      localeOverrides: dco_decode_opt_list_locale_overrides(arr[6]),
+      localizedName: dco_decode_list_localized_name(arr[5]),
+      localeOverrides: dco_decode_list_locale_overrides(arr[6]),
     );
   }
 
@@ -2216,8 +2219,18 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     final arr = raw as List<dynamic>;
     if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
     return GreenlightCredentials(
-      deviceKey: dco_decode_list_prim_u_8_strict(arr[0]),
-      deviceCert: dco_decode_list_prim_u_8_strict(arr[1]),
+      developerKey: dco_decode_list_prim_u_8_strict(arr[0]),
+      developerCert: dco_decode_list_prim_u_8_strict(arr[1]),
+    );
+  }
+
+  @protected
+  GreenlightDeviceCredentials dco_decode_greenlight_device_credentials(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
+    return GreenlightDeviceCredentials(
+      device: dco_decode_list_prim_u_8_strict(arr[0]),
     );
   }
 
@@ -2742,7 +2755,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     switch (raw[0]) {
       case 0:
         return NodeCredentials_Greenlight(
-          credentials: dco_decode_box_autoadd_greenlight_credentials(raw[1]),
+          credentials: dco_decode_box_autoadd_greenlight_device_credentials(raw[1]),
         );
       default:
         throw Exception("unreachable");
@@ -2922,18 +2935,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   List<String>? dco_decode_opt_list_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_list_String(raw);
-  }
-
-  @protected
-  List<LocaleOverrides>? dco_decode_opt_list_locale_overrides(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_list_locale_overrides(raw);
-  }
-
-  @protected
-  List<LocalizedName>? dco_decode_opt_list_localized_name(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return raw == null ? null : dco_decode_list_localized_name(raw);
   }
 
   @protected
@@ -3754,6 +3755,13 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  GreenlightDeviceCredentials sse_decode_box_autoadd_greenlight_device_credentials(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_greenlight_device_credentials(deserializer));
+  }
+
+  @protected
   GreenlightNodeConfig sse_decode_box_autoadd_greenlight_node_config(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_greenlight_node_config(deserializer));
@@ -4181,8 +4189,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     var var_spacing = sse_decode_opt_box_autoadd_u_32(deserializer);
     var var_symbol = sse_decode_opt_box_autoadd_symbol(deserializer);
     var var_uniqSymbol = sse_decode_opt_box_autoadd_symbol(deserializer);
-    var var_localizedName = sse_decode_opt_list_localized_name(deserializer);
-    var var_localeOverrides = sse_decode_opt_list_locale_overrides(deserializer);
+    var var_localizedName = sse_decode_list_localized_name(deserializer);
+    var var_localeOverrides = sse_decode_list_locale_overrides(deserializer);
     return CurrencyInfo(
         name: var_name,
         fractionSize: var_fractionSize,
@@ -4217,9 +4225,16 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   GreenlightCredentials sse_decode_greenlight_credentials(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_deviceKey = sse_decode_list_prim_u_8_strict(deserializer);
-    var var_deviceCert = sse_decode_list_prim_u_8_strict(deserializer);
-    return GreenlightCredentials(deviceKey: var_deviceKey, deviceCert: var_deviceCert);
+    var var_developerKey = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_developerCert = sse_decode_list_prim_u_8_strict(deserializer);
+    return GreenlightCredentials(developerKey: var_developerKey, developerCert: var_developerCert);
+  }
+
+  @protected
+  GreenlightDeviceCredentials sse_decode_greenlight_device_credentials(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_device = sse_decode_list_prim_u_8_strict(deserializer);
+    return GreenlightDeviceCredentials(device: var_device);
   }
 
   @protected
@@ -4836,7 +4851,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     var tag_ = sse_decode_i_32(deserializer);
     switch (tag_) {
       case 0:
-        var var_credentials = sse_decode_box_autoadd_greenlight_credentials(deserializer);
+        var var_credentials = sse_decode_box_autoadd_greenlight_device_credentials(deserializer);
         return NodeCredentials_Greenlight(credentials: var_credentials);
       default:
         throw UnimplementedError('');
@@ -5093,28 +5108,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_list_String(deserializer));
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  List<LocaleOverrides>? sse_decode_opt_list_locale_overrides(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return (sse_decode_list_locale_overrides(deserializer));
-    } else {
-      return null;
-    }
-  }
-
-  @protected
-  List<LocalizedName>? sse_decode_opt_list_localized_name(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    if (sse_decode_bool(deserializer)) {
-      return (sse_decode_list_localized_name(deserializer));
     } else {
       return null;
     }
@@ -6039,6 +6032,13 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  void sse_encode_box_autoadd_greenlight_device_credentials(
+      GreenlightDeviceCredentials self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_greenlight_device_credentials(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_greenlight_node_config(GreenlightNodeConfig self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_greenlight_node_config(self, serializer);
@@ -6444,8 +6444,8 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_opt_box_autoadd_u_32(self.spacing, serializer);
     sse_encode_opt_box_autoadd_symbol(self.symbol, serializer);
     sse_encode_opt_box_autoadd_symbol(self.uniqSymbol, serializer);
-    sse_encode_opt_list_localized_name(self.localizedName, serializer);
-    sse_encode_opt_list_locale_overrides(self.localeOverrides, serializer);
+    sse_encode_list_localized_name(self.localizedName, serializer);
+    sse_encode_list_locale_overrides(self.localeOverrides, serializer);
   }
 
   @protected
@@ -6470,8 +6470,14 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   void sse_encode_greenlight_credentials(GreenlightCredentials self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_list_prim_u_8_strict(self.deviceKey, serializer);
-    sse_encode_list_prim_u_8_strict(self.deviceCert, serializer);
+    sse_encode_list_prim_u_8_strict(self.developerKey, serializer);
+    sse_encode_list_prim_u_8_strict(self.developerCert, serializer);
+  }
+
+  @protected
+  void sse_encode_greenlight_device_credentials(GreenlightDeviceCredentials self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.device, serializer);
   }
 
   @protected
@@ -6947,7 +6953,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     switch (self) {
       case NodeCredentials_Greenlight(credentials: final credentials):
         sse_encode_i_32(0, serializer);
-        sse_encode_box_autoadd_greenlight_credentials(credentials, serializer);
+        sse_encode_box_autoadd_greenlight_device_credentials(credentials, serializer);
       default:
         throw UnimplementedError('');
     }
@@ -7168,26 +7174,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_list_String(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_list_locale_overrides(List<LocaleOverrides>? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_list_locale_overrides(self, serializer);
-    }
-  }
-
-  @protected
-  void sse_encode_opt_list_localized_name(List<LocalizedName>? self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-
-    sse_encode_bool(self != null, serializer);
-    if (self != null) {
-      sse_encode_list_localized_name(self, serializer);
     }
   }
 
