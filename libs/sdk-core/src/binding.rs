@@ -20,11 +20,11 @@ use once_cell::sync::{Lazy, OnceCell};
 use sdk_common::invoice;
 pub use sdk_common::prelude::{
     parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, BitcoinAddressData,
-    InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlError, LnUrlErrorData,
-    LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawRequest,
-    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-    MessageSuccessActionData, Network, RouteHint, RouteHintHop, SuccessActionProcessed,
-    UrlSuccessActionData,
+    CurrencyInfo, FiatCurrency, InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus,
+    LnUrlError, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
+    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
+    LocaleOverrides, LocalizedName, MessageSuccessActionData, Network, Rate, RouteHint,
+    RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
 };
 use tokio::sync::Mutex;
 
@@ -34,7 +34,6 @@ use crate::error::{
     ConnectError, ReceiveOnchainError, ReceivePaymentError, SdkError, SendOnchainError,
     SendPaymentError,
 };
-use crate::fiat::{FiatCurrency, Rate};
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
@@ -239,6 +238,50 @@ pub enum _LnUrlWithdrawResult {
 #[frb(mirror(LnUrlWithdrawSuccessData))]
 pub struct _LnUrlWithdrawSuccessData {
     pub invoice: LNInvoice,
+}
+
+#[frb(mirror(Rate))]
+pub struct _Rate {
+    pub coin: String,
+    pub value: f64,
+}
+
+#[frb(mirror(FiatCurrency))]
+pub struct _FiatCurrency {
+    pub id: String,
+    pub info: CurrencyInfo,
+}
+
+#[frb(mirror(CurrencyInfo))]
+pub struct _CurrencyInfo {
+    pub name: String,
+    pub fraction_size: u32,
+    pub spacing: Option<u32>,
+    pub symbol: Option<Symbol>,
+    pub uniq_symbol: Option<Symbol>,
+    pub localized_name: Vec<LocalizedName>,
+    pub locale_overrides: Vec<LocaleOverrides>,
+}
+
+#[frb(mirror(LocaleOverrides))]
+pub struct _LocaleOverrides {
+    pub locale: String,
+    pub spacing: Option<u32>,
+    pub symbol: Symbol,
+}
+
+#[frb(mirror(LocalizedName))]
+pub struct _LocalizedName {
+    pub locale: String,
+    pub name: String,
+}
+
+#[frb(mirror(Symbol))]
+pub struct _Symbol {
+    pub grapheme: Option<String>,
+    pub template: Option<String>,
+    pub rtl: Option<bool>,
+    pub position: Option<u32>,
 }
 
 /*

@@ -98,8 +98,8 @@ export interface CurrencyInfo {
     spacing?: number
     symbol?: SymbolType
     uniqSymbol?: SymbolType
-    localizedName?: LocalizedName[]
-    localeOverrides?: LocaleOverrides[]
+    localizedName: LocalizedName[]
+    localeOverrides: LocaleOverrides[]
 }
 
 export interface FiatCurrency {

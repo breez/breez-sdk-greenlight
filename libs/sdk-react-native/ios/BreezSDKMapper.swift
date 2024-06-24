@@ -601,15 +601,15 @@ enum BreezSDKMapper {
             uniqSymbol = try asSymbol(symbol: uniqSymbolTmp)
         }
 
-        var localizedName: [LocalizedName]?
-        if let localizedNameTmp = currencyInfo["localizedName"] as? [[String: Any?]] {
-            localizedName = try asLocalizedNameList(arr: localizedNameTmp)
+        guard let localizedNameTmp = currencyInfo["localizedName"] as? [[String: Any?]] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "localizedName", typeName: "CurrencyInfo"))
         }
+        let localizedName = try asLocalizedNameList(arr: localizedNameTmp)
 
-        var localeOverrides: [LocaleOverrides]?
-        if let localeOverridesTmp = currencyInfo["localeOverrides"] as? [[String: Any?]] {
-            localeOverrides = try asLocaleOverridesList(arr: localeOverridesTmp)
+        guard let localeOverridesTmp = currencyInfo["localeOverrides"] as? [[String: Any?]] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "localeOverrides", typeName: "CurrencyInfo"))
         }
+        let localeOverrides = try asLocaleOverridesList(arr: localeOverridesTmp)
 
         return CurrencyInfo(
             name: name,
@@ -629,8 +629,8 @@ enum BreezSDKMapper {
             "spacing": currencyInfo.spacing == nil ? nil : currencyInfo.spacing,
             "symbol": currencyInfo.symbol == nil ? nil : dictionaryOf(symbol: currencyInfo.symbol!),
             "uniqSymbol": currencyInfo.uniqSymbol == nil ? nil : dictionaryOf(symbol: currencyInfo.uniqSymbol!),
-            "localizedName": currencyInfo.localizedName == nil ? nil : arrayOf(localizedNameList: currencyInfo.localizedName!),
-            "localeOverrides": currencyInfo.localeOverrides == nil ? nil : arrayOf(localeOverridesList: currencyInfo.localeOverrides!),
+            "localizedName": arrayOf(localizedNameList: currencyInfo.localizedName),
+            "localeOverrides": arrayOf(localeOverridesList: currencyInfo.localeOverrides),
         ]
     }
 

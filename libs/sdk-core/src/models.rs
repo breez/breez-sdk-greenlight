@@ -21,7 +21,6 @@ use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
 use crate::error::SdkResult;
-use crate::fiat::{FiatCurrency, Rate};
 use crate::lsp::LspInformation;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::{SwapError, SwapResult};
@@ -81,16 +80,6 @@ pub trait LspAPI: Send + Sync {
         lsp_pubkey: Vec<u8>,
         payment_info: grpc::PaymentInformation,
     ) -> SdkResult<grpc::RegisterPaymentReply>;
-}
-
-/// Trait covering fiat-related functionality
-#[tonic::async_trait]
-pub trait FiatAPI: Send + Sync {
-    /// List all supported fiat currencies for which there is a known exchange rate.
-    async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>>;
-
-    /// Get the live rates from the server.
-    async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>>;
 }
 
 /// Summary of an ongoing swap

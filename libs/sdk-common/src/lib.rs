@@ -1,5 +1,6 @@
 mod breez_server;
 mod error;
+mod fiat;
 pub mod grpc;
 pub mod input_parser;
 pub mod invoice;
@@ -22,6 +23,7 @@ pub mod prelude {
     pub use crate::*;
     pub use crate::breez_server::*;
     pub use crate::error::*;
+    pub use crate::fiat::*;
     pub use crate::input_parser::*;
     pub use crate::invoice::*;
     pub use crate::lnurl::error::*;

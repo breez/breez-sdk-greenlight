@@ -13,6 +13,7 @@ use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
 use sdk_common::grpc;
+use sdk_common::prelude::{FiatAPI, FiatCurrency, Rate};
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
@@ -29,14 +30,12 @@ use crate::bitcoin::Network;
 use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
-use crate::fiat::{FiatCurrency, Rate};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
-    FiatAPI, LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse,
-    TlvEntry,
+    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
@@ -690,11 +689,11 @@ impl LspAPI for MockBreezServer {
 
 #[tonic::async_trait]
 impl FiatAPI for MockBreezServer {
-    async fn list_fiat_currencies(&self) -> SdkResult<Vec<FiatCurrency>> {
+    async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         Ok(vec![])
     }
 
-    async fn fetch_fiat_rates(&self) -> SdkResult<Vec<Rate>> {
+    async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         Ok(vec![Rate {
             coin: "USD".to_string(),
             value: 20_000.00,
