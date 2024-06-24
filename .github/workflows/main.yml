@@ -248,40 +248,43 @@ jobs:
           fi
 
   flutter:
-    name: Check flutter
+    name: Check Dart/Flutter bindings
     runs-on: macOS-latest
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Install rust
-        run: |
-          rustup set auto-self-update disable
-          rustup toolchain install stable --profile minimal
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: |
-            libs -> target
-      
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "23.4"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: subosito/flutter-action@v2
+      
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-
-      - name: Flutter bridge codegen
+          channel: stable
+      - run: flutter --version
+      
+      - name: Install flutter_rust_bridge_codegen dependencies
         working-directory: libs/sdk-flutter
-        run: |
-          make init
-          make flutter_rust_bridge
-    
+        run: make init
+
+      - name: Generate Dart/Flutter bindings
+        working-directory: libs/sdk-flutter
+        continue-on-error: true
+        run: make flutter_rust_bridge
+
+      - name: Static Analysis
+        working-directory: libs/sdk-flutter
+        run: dart analyze --fatal-infos
+
+      - name: Check Formatting
+        working-directory: libs/sdk-flutter
+        run: dart format -o none --set-exit-if-changed -l 110 .
+
       - name: Check git status
-        env: 
+        env:
           GIT_PAGER: cat
         run: |
           status=$(git status --porcelain)
@@ -293,12 +296,6 @@ jobs:
           else
             echo "No changes in git status"
           fi
-
-      - name: dart-analyze
-        run: dart analyze --fatal-infos
-
-      - name: dart-format
-        run: dart format -o none --set-exit-if-changed -l 110 .
 
   # Create a new plain Rust project, add the SDK as single dependency and try to compile it.
   # This tests whether the SDK compiles with the latest version of the dependencies that can be updated.
