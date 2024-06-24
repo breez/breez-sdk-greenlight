@@ -15,637 +15,6 @@ final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
 /// @nodoc
-mixin _$LnUrlCallbackStatus {
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function() ok,
-    required TResult Function(LnUrlErrorData data) errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? ok,
-    TResult? Function(LnUrlErrorData data)? errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? ok,
-    TResult Function(LnUrlErrorData data)? errorStatus,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlCallbackStatus_ErrorStatus value) errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlCallbackStatus_ErrorStatus value)? errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlCallbackStatus_ErrorStatus value)? errorStatus,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $LnUrlCallbackStatusCopyWith<$Res> {
-  factory $LnUrlCallbackStatusCopyWith(LnUrlCallbackStatus value, $Res Function(LnUrlCallbackStatus) then) =
-      _$LnUrlCallbackStatusCopyWithImpl<$Res, LnUrlCallbackStatus>;
-}
-
-/// @nodoc
-class _$LnUrlCallbackStatusCopyWithImpl<$Res, $Val extends LnUrlCallbackStatus>
-    implements $LnUrlCallbackStatusCopyWith<$Res> {
-  _$LnUrlCallbackStatusCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-}
-
-/// @nodoc
-abstract class _$$LnUrlCallbackStatus_OkImplCopyWith<$Res> {
-  factory _$$LnUrlCallbackStatus_OkImplCopyWith(
-          _$LnUrlCallbackStatus_OkImpl value, $Res Function(_$LnUrlCallbackStatus_OkImpl) then) =
-      __$$LnUrlCallbackStatus_OkImplCopyWithImpl<$Res>;
-}
-
-/// @nodoc
-class __$$LnUrlCallbackStatus_OkImplCopyWithImpl<$Res>
-    extends _$LnUrlCallbackStatusCopyWithImpl<$Res, _$LnUrlCallbackStatus_OkImpl>
-    implements _$$LnUrlCallbackStatus_OkImplCopyWith<$Res> {
-  __$$LnUrlCallbackStatus_OkImplCopyWithImpl(
-      _$LnUrlCallbackStatus_OkImpl _value, $Res Function(_$LnUrlCallbackStatus_OkImpl) _then)
-      : super(_value, _then);
-}
-
-/// @nodoc
-
-class _$LnUrlCallbackStatus_OkImpl extends LnUrlCallbackStatus_Ok {
-  const _$LnUrlCallbackStatus_OkImpl() : super._();
-
-  @override
-  String toString() {
-    return 'LnUrlCallbackStatus.ok()';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$LnUrlCallbackStatus_OkImpl);
-  }
-
-  @override
-  int get hashCode => runtimeType.hashCode;
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function() ok,
-    required TResult Function(LnUrlErrorData data) errorStatus,
-  }) {
-    return ok();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? ok,
-    TResult? Function(LnUrlErrorData data)? errorStatus,
-  }) {
-    return ok?.call();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? ok,
-    TResult Function(LnUrlErrorData data)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (ok != null) {
-      return ok();
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlCallbackStatus_ErrorStatus value) errorStatus,
-  }) {
-    return ok(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlCallbackStatus_ErrorStatus value)? errorStatus,
-  }) {
-    return ok?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlCallbackStatus_ErrorStatus value)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (ok != null) {
-      return ok(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class LnUrlCallbackStatus_Ok extends LnUrlCallbackStatus {
-  const factory LnUrlCallbackStatus_Ok() = _$LnUrlCallbackStatus_OkImpl;
-  const LnUrlCallbackStatus_Ok._() : super._();
-}
-
-/// @nodoc
-abstract class _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<$Res> {
-  factory _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith(_$LnUrlCallbackStatus_ErrorStatusImpl value,
-          $Res Function(_$LnUrlCallbackStatus_ErrorStatusImpl) then) =
-      __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({LnUrlErrorData data});
-}
-
-/// @nodoc
-class __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<$Res>
-    extends _$LnUrlCallbackStatusCopyWithImpl<$Res, _$LnUrlCallbackStatus_ErrorStatusImpl>
-    implements _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<$Res> {
-  __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl(_$LnUrlCallbackStatus_ErrorStatusImpl _value,
-      $Res Function(_$LnUrlCallbackStatus_ErrorStatusImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? data = null,
-  }) {
-    return _then(_$LnUrlCallbackStatus_ErrorStatusImpl(
-      data: null == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as LnUrlErrorData,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$LnUrlCallbackStatus_ErrorStatusImpl extends LnUrlCallbackStatus_ErrorStatus {
-  const _$LnUrlCallbackStatus_ErrorStatusImpl({required this.data}) : super._();
-
-  @override
-  final LnUrlErrorData data;
-
-  @override
-  String toString() {
-    return 'LnUrlCallbackStatus.errorStatus(data: $data)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$LnUrlCallbackStatus_ErrorStatusImpl &&
-            (identical(other.data, data) || other.data == data));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, data);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<_$LnUrlCallbackStatus_ErrorStatusImpl> get copyWith =>
-      __$$LnUrlCallbackStatus_ErrorStatusImplCopyWithImpl<_$LnUrlCallbackStatus_ErrorStatusImpl>(
-          this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function() ok,
-    required TResult Function(LnUrlErrorData data) errorStatus,
-  }) {
-    return errorStatus(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function()? ok,
-    TResult? Function(LnUrlErrorData data)? errorStatus,
-  }) {
-    return errorStatus?.call(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function()? ok,
-    TResult Function(LnUrlErrorData data)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (errorStatus != null) {
-      return errorStatus(data);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlCallbackStatus_Ok value) ok,
-    required TResult Function(LnUrlCallbackStatus_ErrorStatus value) errorStatus,
-  }) {
-    return errorStatus(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlCallbackStatus_Ok value)? ok,
-    TResult? Function(LnUrlCallbackStatus_ErrorStatus value)? errorStatus,
-  }) {
-    return errorStatus?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlCallbackStatus_Ok value)? ok,
-    TResult Function(LnUrlCallbackStatus_ErrorStatus value)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (errorStatus != null) {
-      return errorStatus(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class LnUrlCallbackStatus_ErrorStatus extends LnUrlCallbackStatus {
-  const factory LnUrlCallbackStatus_ErrorStatus({required final LnUrlErrorData data}) =
-      _$LnUrlCallbackStatus_ErrorStatusImpl;
-  const LnUrlCallbackStatus_ErrorStatus._() : super._();
-
-  LnUrlErrorData get data;
-  @JsonKey(ignore: true)
-  _$$LnUrlCallbackStatus_ErrorStatusImplCopyWith<_$LnUrlCallbackStatus_ErrorStatusImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-mixin _$LnUrlWithdrawResult {
-  Object get data => throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawSuccessData data) ok,
-    required TResult Function(LnUrlErrorData data) errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawSuccessData data)? ok,
-    TResult? Function(LnUrlErrorData data)? errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawSuccessData data)? ok,
-    TResult Function(LnUrlErrorData data)? errorStatus,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawResult_Ok value) ok,
-    required TResult Function(LnUrlWithdrawResult_ErrorStatus value) errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawResult_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
-  }) =>
-      throw _privateConstructorUsedError;
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawResult_Ok value)? ok,
-    TResult Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
-    required TResult orElse(),
-  }) =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class $LnUrlWithdrawResultCopyWith<$Res> {
-  factory $LnUrlWithdrawResultCopyWith(LnUrlWithdrawResult value, $Res Function(LnUrlWithdrawResult) then) =
-      _$LnUrlWithdrawResultCopyWithImpl<$Res, LnUrlWithdrawResult>;
-}
-
-/// @nodoc
-class _$LnUrlWithdrawResultCopyWithImpl<$Res, $Val extends LnUrlWithdrawResult>
-    implements $LnUrlWithdrawResultCopyWith<$Res> {
-  _$LnUrlWithdrawResultCopyWithImpl(this._value, this._then);
-
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
-}
-
-/// @nodoc
-abstract class _$$LnUrlWithdrawResult_OkImplCopyWith<$Res> {
-  factory _$$LnUrlWithdrawResult_OkImplCopyWith(
-          _$LnUrlWithdrawResult_OkImpl value, $Res Function(_$LnUrlWithdrawResult_OkImpl) then) =
-      __$$LnUrlWithdrawResult_OkImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({LnUrlWithdrawSuccessData data});
-}
-
-/// @nodoc
-class __$$LnUrlWithdrawResult_OkImplCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_OkImpl>
-    implements _$$LnUrlWithdrawResult_OkImplCopyWith<$Res> {
-  __$$LnUrlWithdrawResult_OkImplCopyWithImpl(
-      _$LnUrlWithdrawResult_OkImpl _value, $Res Function(_$LnUrlWithdrawResult_OkImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? data = null,
-  }) {
-    return _then(_$LnUrlWithdrawResult_OkImpl(
-      data: null == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as LnUrlWithdrawSuccessData,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$LnUrlWithdrawResult_OkImpl extends LnUrlWithdrawResult_Ok {
-  const _$LnUrlWithdrawResult_OkImpl({required this.data}) : super._();
-
-  @override
-  final LnUrlWithdrawSuccessData data;
-
-  @override
-  String toString() {
-    return 'LnUrlWithdrawResult.ok(data: $data)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$LnUrlWithdrawResult_OkImpl &&
-            (identical(other.data, data) || other.data == data));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, data);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$LnUrlWithdrawResult_OkImplCopyWith<_$LnUrlWithdrawResult_OkImpl> get copyWith =>
-      __$$LnUrlWithdrawResult_OkImplCopyWithImpl<_$LnUrlWithdrawResult_OkImpl>(this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawSuccessData data) ok,
-    required TResult Function(LnUrlErrorData data) errorStatus,
-  }) {
-    return ok(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawSuccessData data)? ok,
-    TResult? Function(LnUrlErrorData data)? errorStatus,
-  }) {
-    return ok?.call(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawSuccessData data)? ok,
-    TResult Function(LnUrlErrorData data)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (ok != null) {
-      return ok(data);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawResult_Ok value) ok,
-    required TResult Function(LnUrlWithdrawResult_ErrorStatus value) errorStatus,
-  }) {
-    return ok(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawResult_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
-  }) {
-    return ok?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawResult_Ok value)? ok,
-    TResult Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (ok != null) {
-      return ok(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class LnUrlWithdrawResult_Ok extends LnUrlWithdrawResult {
-  const factory LnUrlWithdrawResult_Ok({required final LnUrlWithdrawSuccessData data}) =
-      _$LnUrlWithdrawResult_OkImpl;
-  const LnUrlWithdrawResult_Ok._() : super._();
-
-  @override
-  LnUrlWithdrawSuccessData get data;
-  @JsonKey(ignore: true)
-  _$$LnUrlWithdrawResult_OkImplCopyWith<_$LnUrlWithdrawResult_OkImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
-abstract class _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<$Res> {
-  factory _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith(_$LnUrlWithdrawResult_ErrorStatusImpl value,
-          $Res Function(_$LnUrlWithdrawResult_ErrorStatusImpl) then) =
-      __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<$Res>;
-  @useResult
-  $Res call({LnUrlErrorData data});
-}
-
-/// @nodoc
-class __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<$Res>
-    extends _$LnUrlWithdrawResultCopyWithImpl<$Res, _$LnUrlWithdrawResult_ErrorStatusImpl>
-    implements _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<$Res> {
-  __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl(_$LnUrlWithdrawResult_ErrorStatusImpl _value,
-      $Res Function(_$LnUrlWithdrawResult_ErrorStatusImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? data = null,
-  }) {
-    return _then(_$LnUrlWithdrawResult_ErrorStatusImpl(
-      data: null == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as LnUrlErrorData,
-    ));
-  }
-}
-
-/// @nodoc
-
-class _$LnUrlWithdrawResult_ErrorStatusImpl extends LnUrlWithdrawResult_ErrorStatus {
-  const _$LnUrlWithdrawResult_ErrorStatusImpl({required this.data}) : super._();
-
-  @override
-  final LnUrlErrorData data;
-
-  @override
-  String toString() {
-    return 'LnUrlWithdrawResult.errorStatus(data: $data)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$LnUrlWithdrawResult_ErrorStatusImpl &&
-            (identical(other.data, data) || other.data == data));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, data);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<_$LnUrlWithdrawResult_ErrorStatusImpl> get copyWith =>
-      __$$LnUrlWithdrawResult_ErrorStatusImplCopyWithImpl<_$LnUrlWithdrawResult_ErrorStatusImpl>(
-          this, _$identity);
-
-  @override
-  @optionalTypeArgs
-  TResult when<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawSuccessData data) ok,
-    required TResult Function(LnUrlErrorData data) errorStatus,
-  }) {
-    return errorStatus(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawSuccessData data)? ok,
-    TResult? Function(LnUrlErrorData data)? errorStatus,
-  }) {
-    return errorStatus?.call(data);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeWhen<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawSuccessData data)? ok,
-    TResult Function(LnUrlErrorData data)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (errorStatus != null) {
-      return errorStatus(data);
-    }
-    return orElse();
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult map<TResult extends Object?>({
-    required TResult Function(LnUrlWithdrawResult_Ok value) ok,
-    required TResult Function(LnUrlWithdrawResult_ErrorStatus value) errorStatus,
-  }) {
-    return errorStatus(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult? mapOrNull<TResult extends Object?>({
-    TResult? Function(LnUrlWithdrawResult_Ok value)? ok,
-    TResult? Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
-  }) {
-    return errorStatus?.call(this);
-  }
-
-  @override
-  @optionalTypeArgs
-  TResult maybeMap<TResult extends Object?>({
-    TResult Function(LnUrlWithdrawResult_Ok value)? ok,
-    TResult Function(LnUrlWithdrawResult_ErrorStatus value)? errorStatus,
-    required TResult orElse(),
-  }) {
-    if (errorStatus != null) {
-      return errorStatus(this);
-    }
-    return orElse();
-  }
-}
-
-abstract class LnUrlWithdrawResult_ErrorStatus extends LnUrlWithdrawResult {
-  const factory LnUrlWithdrawResult_ErrorStatus({required final LnUrlErrorData data}) =
-      _$LnUrlWithdrawResult_ErrorStatusImpl;
-  const LnUrlWithdrawResult_ErrorStatus._() : super._();
-
-  @override
-  LnUrlErrorData get data;
-  @JsonKey(ignore: true)
-  _$$LnUrlWithdrawResult_ErrorStatusImplCopyWith<_$LnUrlWithdrawResult_ErrorStatusImpl> get copyWith =>
-      throw _privateConstructorUsedError;
-}
-
-/// @nodoc
 mixin _$NodeConfig {
   GreenlightNodeConfig get config => throw _privateConstructorUsedError;
   @optionalTypeArgs
@@ -850,20 +219,20 @@ abstract class NodeConfig_Greenlight extends NodeConfig {
 
 /// @nodoc
 mixin _$NodeCredentials {
-  GreenlightCredentials get credentials => throw _privateConstructorUsedError;
+  GreenlightDeviceCredentials get credentials => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(GreenlightCredentials credentials) greenlight,
+    required TResult Function(GreenlightDeviceCredentials credentials) greenlight,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(GreenlightCredentials credentials)? greenlight,
+    TResult? Function(GreenlightDeviceCredentials credentials)? greenlight,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(GreenlightCredentials credentials)? greenlight,
+    TResult Function(GreenlightDeviceCredentials credentials)? greenlight,
     required TResult orElse(),
   }) =>
       throw _privateConstructorUsedError;
@@ -893,7 +262,7 @@ abstract class $NodeCredentialsCopyWith<$Res> {
   factory $NodeCredentialsCopyWith(NodeCredentials value, $Res Function(NodeCredentials) then) =
       _$NodeCredentialsCopyWithImpl<$Res, NodeCredentials>;
   @useResult
-  $Res call({GreenlightCredentials credentials});
+  $Res call({GreenlightDeviceCredentials credentials});
 }
 
 /// @nodoc
@@ -915,7 +284,7 @@ class _$NodeCredentialsCopyWithImpl<$Res, $Val extends NodeCredentials>
       credentials: null == credentials
           ? _value.credentials
           : credentials // ignore: cast_nullable_to_non_nullable
-              as GreenlightCredentials,
+              as GreenlightDeviceCredentials,
     ) as $Val);
   }
 }
@@ -927,7 +296,7 @@ abstract class _$$NodeCredentials_GreenlightImplCopyWith<$Res> implements $NodeC
       __$$NodeCredentials_GreenlightImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({GreenlightCredentials credentials});
+  $Res call({GreenlightDeviceCredentials credentials});
 }
 
 /// @nodoc
@@ -947,7 +316,7 @@ class __$$NodeCredentials_GreenlightImplCopyWithImpl<$Res>
       credentials: null == credentials
           ? _value.credentials
           : credentials // ignore: cast_nullable_to_non_nullable
-              as GreenlightCredentials,
+              as GreenlightDeviceCredentials,
     ));
   }
 }
@@ -958,7 +327,7 @@ class _$NodeCredentials_GreenlightImpl extends NodeCredentials_Greenlight {
   const _$NodeCredentials_GreenlightImpl({required this.credentials}) : super._();
 
   @override
-  final GreenlightCredentials credentials;
+  final GreenlightDeviceCredentials credentials;
 
   @override
   String toString() {
@@ -985,7 +354,7 @@ class _$NodeCredentials_GreenlightImpl extends NodeCredentials_Greenlight {
   @override
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
-    required TResult Function(GreenlightCredentials credentials) greenlight,
+    required TResult Function(GreenlightDeviceCredentials credentials) greenlight,
   }) {
     return greenlight(credentials);
   }
@@ -993,7 +362,7 @@ class _$NodeCredentials_GreenlightImpl extends NodeCredentials_Greenlight {
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
-    TResult? Function(GreenlightCredentials credentials)? greenlight,
+    TResult? Function(GreenlightDeviceCredentials credentials)? greenlight,
   }) {
     return greenlight?.call(credentials);
   }
@@ -1001,7 +370,7 @@ class _$NodeCredentials_GreenlightImpl extends NodeCredentials_Greenlight {
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
-    TResult Function(GreenlightCredentials credentials)? greenlight,
+    TResult Function(GreenlightDeviceCredentials credentials)? greenlight,
     required TResult orElse(),
   }) {
     if (greenlight != null) {
@@ -1040,12 +409,12 @@ class _$NodeCredentials_GreenlightImpl extends NodeCredentials_Greenlight {
 }
 
 abstract class NodeCredentials_Greenlight extends NodeCredentials {
-  const factory NodeCredentials_Greenlight({required final GreenlightCredentials credentials}) =
+  const factory NodeCredentials_Greenlight({required final GreenlightDeviceCredentials credentials}) =
       _$NodeCredentials_GreenlightImpl;
   const NodeCredentials_Greenlight._() : super._();
 
   @override
-  GreenlightCredentials get credentials;
+  GreenlightDeviceCredentials get credentials;
   @override
   @JsonKey(ignore: true)
   _$$NodeCredentials_GreenlightImplCopyWith<_$NodeCredentials_GreenlightImpl> get copyWith =>
