@@ -249,7 +249,7 @@ jobs:
 
   flutter:
     name: Check Dart/Flutter bindings
-    runs-on: macOS-latest
+    runs-on: macos-13
     steps:
       - name: Checkout
         uses: actions/checkout@v4
