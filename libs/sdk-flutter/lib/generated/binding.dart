@@ -6,6 +6,7 @@
 import 'breez_services.dart';
 import 'chain.dart';
 import 'frb_generated.dart';
+import 'lnurl/pay.dart';
 import 'lsp.dart';
 import 'models.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
@@ -13,7 +14,7 @@ import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'binding.freezed.dart';
 
 // These functions are ignored because they are not marked as `pub`: `block_on`, `get_breez_services`, `init`, `new`, `rt`
-// These types are ignored because they are not used by any `pub` functions: `BindingLogger`, `LnUrlPayErrorData`, `LnUrlPayError`
+// These types are ignored because they are not used by any `pub` functions: `BindingLogger`, `LnUrlPayError`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `enabled`, `flush`, `log`
 
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
@@ -239,9 +240,6 @@ Future<String> executeCommand({required String command}) =>
 
 /// See [BreezServices::generate_diagnostic_data]
 Future<String> generateDiagnosticData() => BreezSdkBindings.instance.api.crateBindingGenerateDiagnosticData();
-
-// Rust type: RustOpaqueNom<flutter_rust_bridge::for_generated::RustAutoOpaqueInner< LnUrlPayResult>>
-abstract class LnUrlPayResult implements RustOpaqueInterface {}
 
 class AesSuccessActionDataDecrypted {
   final String description;
@@ -526,6 +524,27 @@ class LnUrlErrorData {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is LnUrlErrorData && runtimeType == other.runtimeType && reason == other.reason;
+}
+
+class LnUrlPayErrorData {
+  final String paymentHash;
+  final String reason;
+
+  const LnUrlPayErrorData({
+    required this.paymentHash,
+    required this.reason,
+  });
+
+  @override
+  int get hashCode => paymentHash.hashCode ^ reason.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LnUrlPayErrorData &&
+          runtimeType == other.runtimeType &&
+          paymentHash == other.paymentHash &&
+          reason == other.reason;
 }
 
 class LnUrlPayRequest {

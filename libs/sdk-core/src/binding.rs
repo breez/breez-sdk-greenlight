@@ -14,6 +14,7 @@ use std::future::Future;
 use std::sync::Arc;
 
 use crate::frb_generated::StreamSink;
+use crate::lnurl::pay::LnUrlPayResult;
 use anyhow::{anyhow, Result};
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -26,6 +27,7 @@ pub use sdk_common::prelude::{
     LocaleOverrides, LocalizedName, MessageSuccessActionData, Network, Rate, RouteHint,
     RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
 };
+use sdk_common::prelude::{LnUrlPayError, LnUrlWithdrawError};
 use tokio::sync::Mutex;
 
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
@@ -560,19 +562,19 @@ pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentRespo
 /*  LNURL API's */
 
 /// See [BreezServices::lnurl_pay]
-pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<crate::lnurl::pay::LnUrlPayResult> {
+pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
     block_on(async { get_breez_services().await?.lnurl_pay(req).await })
-        .map_err(anyhow::Error::new::<crate::LnUrlPayError>)
+        .map_err(anyhow::Error::new::<LnUrlPayError>)
 }
 
 /// See [BreezServices::lnurl_withdraw]
 pub fn lnurl_withdraw(req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
     block_on(async { get_breez_services().await?.lnurl_withdraw(req).await })
-        .map_err(anyhow::Error::new::<crate::LnUrlWithdrawError>)
+        .map_err(anyhow::Error::new::<LnUrlWithdrawError>)
 }
 
 /// See [BreezServices::lnurl_auth]
-pub fn lnurl_auth(req_data: crate::LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
+pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
     block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
         .map_err(anyhow::Error::new::<LnUrlAuthError>)
 }
