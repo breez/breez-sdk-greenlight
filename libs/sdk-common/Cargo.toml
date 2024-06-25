@@ -22,7 +22,12 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 strum_macros = { workspace = true }
 thiserror = { workspace = true }
-tonic = { workspace = true }
+tonic = { workspace = true, features = [
+    "tls",
+    "transport",
+    "tls-roots",
+    "tls-webpki-roots",
+] }
 
 [dev-dependencies]
 bitcoin = { workspace = true, features = ["rand"] }

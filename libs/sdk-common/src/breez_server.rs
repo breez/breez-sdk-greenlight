@@ -122,6 +122,31 @@ impl BreezServer {
 
         Ok(mempoolspace_urls)
     }
+
+    pub async fn fetch_boltz_swapper_urls(&self) -> Result<Vec<String>, ServiceConnectivityError> {
+        let mut client = self.get_information_client().await;
+
+        let chain_api_servers = client
+            .chain_api_servers(ChainApiServersRequest {})
+            .await
+            .map_err(|e| {
+                ServiceConnectivityError::new(&format!(
+                    "(Breez: {e:?}) Failed to fetch ChainApiServers"
+                ))
+            })?
+            .into_inner()
+            .servers;
+        trace!("Received chain_api_servers: {chain_api_servers:?}");
+
+        let boltz_swapper_urls = chain_api_servers
+            .iter()
+            .filter(|s| s.server_type == "BOLTZ_SWAPPER")
+            .map(|s| s.server_base_url.clone())
+            .collect();
+        trace!("Received boltz_swapper_urls: {boltz_swapper_urls:?}");
+
+        Ok(boltz_swapper_urls)
+    }
 }
 
 pub struct ApiKeyInterceptor {
