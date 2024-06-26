@@ -2188,7 +2188,6 @@ impl From<cln::ListpeersPeersChannels> for Channel {
                 ChannelState::PendingOpen
             }
             ChanneldNormal => ChannelState::Opened,
-            Onchain => ChannelState::Closed,
             _ => ChannelState::PendingClose,
         };
 
