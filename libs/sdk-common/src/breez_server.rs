@@ -16,6 +16,9 @@ use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::{ChainApiServersRequest, PingRequest};
 use crate::prelude::ServiceConnectivityError;
 
+pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443";
+pub static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443";
+
 pub struct BreezServer {
     grpc_channel: Channel,
     api_key: Option<String>,
