@@ -2188,7 +2188,6 @@ impl From<cln::ListpeersPeersChannels> for Channel {
                 ChannelState::PendingOpen
             }
             ChanneldNormal => ChannelState::Opened,
-            Onchain => ChannelState::Closed,
             _ => ChannelState::PendingClose,
         };
 
@@ -2436,7 +2435,7 @@ mod tests {
         }
 
         let c: models::Channel = cln_channel(&Onchain).into();
-        assert_eq!(c.state, models::ChannelState::Closed);
+        assert_eq!(c.state, models::ChannelState::PendingClose);
 
         Ok(())
     }
