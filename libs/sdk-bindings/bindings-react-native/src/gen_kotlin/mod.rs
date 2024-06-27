@@ -212,7 +212,7 @@ pub mod filters {
             Type::Int32 => format!("{name}.getInt(\"{field_name}\")"),
             Type::UInt64 => format!("{name}.getDouble(\"{field_name}\").toULong()"),
             Type::Int64 => format!("{name}.getDouble(\"{field_name}\").toLong()"),
-            Type::Float32 => format!("{name}.getDouble(\"{field_name}\")"),
+            Type::Float32 => format!("{name}.getDouble(\"{field_name}\").toFloat()"),
             Type::Float64 => format!("{name}.getDouble(\"{field_name}\")"),
             Type::Boolean => format!("{name}.getBoolean(\"{field_name}\")"),
             Type::String => format!("{name}.getString(\"{field_name}\"){mandatory_suffix}"),

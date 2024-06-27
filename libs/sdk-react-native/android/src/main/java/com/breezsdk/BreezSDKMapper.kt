@@ -4466,6 +4466,7 @@ fun pushToMap(
         is Boolean -> map.putBoolean(key, value)
         is Byte -> map.putInt(key, value.toInt())
         is Double -> map.putDouble(key, value)
+        is Float -> map.putDouble(key, value.toDouble())
         is Int -> map.putInt(key, value)
         is Long -> map.putDouble(key, value.toDouble())
         is ReadableArray -> map.putArray(key, value)
