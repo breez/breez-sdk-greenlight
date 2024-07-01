@@ -62,7 +62,7 @@ jobs:
       run: cargo lipo --release --targets ${{ matrix.target }}
     
     - name: Archive release
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: sdk-bindings-${{ matrix.target }}
         path: |
@@ -74,12 +74,12 @@ jobs:
     needs: build
     name: build darwin-universal
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: sdk-bindings-aarch64-apple-darwin
         path: aarch64-apple-darwin
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
         name: sdk-bindings-x86_64-apple-darwin
         path: x86_64-apple-darwin
@@ -91,7 +91,7 @@ jobs:
         lipo -create -output darwin-universal/libbreez_sdk_bindings.a aarch64-apple-darwin/libbreez_sdk_bindings.a x86_64-apple-darwin/libbreez_sdk_bindings.a
 
     - name: Archive release
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: sdk-bindings-darwin-universal
         path: |
@@ -116,7 +116,7 @@ jobs:
           touch libbreez_sdk_bindings.a
 
       - name: Upload dummy darwin ${{ matrix.target }} artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sdk-bindings-${{ matrix.target }}
           path: ./*

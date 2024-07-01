@@ -67,7 +67,7 @@ jobs:
           cp ../breez-sdk/libs/sdk-flutter/README.pub.md README.md || true
           cp ../breez-sdk/libs/sdk-flutter/CHANGELOG.md . || true
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: bindings-swift
           path: flutter/ios/bindings-swift/Sources/BreezSDK/
@@ -83,7 +83,7 @@ jobs:
           rm ios/breez_sdk.podspec.bak
 
       - name: Archive flutter release
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: breez-sdk-flutter-${{ inputs.package-version || github.sha }}
           path: |

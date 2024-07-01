@@ -31,58 +31,58 @@ jobs:
           ssh-key: ${{ secrets.REPO_SSH_KEY }}
           fetch-depth: 0
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: bindings-golang
           path: breez_sdk
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-i686-linux-android
           path: breez_sdk/lib/android-386
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-armv7-linux-androideabi
           path: breez_sdk/lib/android-aarch
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-aarch64-linux-android
           path: breez_sdk/lib/android-aarch64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-x86_64-linux-android
           path: breez_sdk/lib/android-amd64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-aarch64-apple-darwin
           path: breez_sdk/lib/darwin-aarch64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-x86_64-apple-darwin
           path: breez_sdk/lib/darwin-amd64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-aarch64-unknown-linux-gnu
           path: breez_sdk/lib/linux-aarch64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-x86_64-unknown-linux-gnu
           path: breez_sdk/lib/linux-amd64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-x86_64-pc-windows-msvc
           path: breez_sdk/lib/windows-amd64
 
       - name: Archive Go release
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: breez-sdk-go-${{ inputs.package-version || github.sha }}
           path: |

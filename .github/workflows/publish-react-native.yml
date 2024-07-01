@@ -54,7 +54,7 @@ jobs:
         run: yarn pack --filename sdk-react-native.tgz
 
       - name: Archive the package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: react-native-${{ inputs.package-version || '0.0.2' }}
           path: libs/sdk-react-native/sdk-react-native.tgz

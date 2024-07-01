@@ -42,12 +42,12 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-android-jniLibs
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/jniLibs
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: bindings-kmm
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src
@@ -57,17 +57,17 @@ jobs:
         run: |
           cp -r bindings-kotlin-multiplatform/breez-sdk-kmp/src/jvmMain/kotlin bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-aarch64-apple-ios
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-arm64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-aarch64-apple-ios-sim
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-arm64
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: sdk-bindings-x86_64-apple-ios
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-x64
@@ -79,7 +79,7 @@ jobs:
         run: ./gradlew :breez-sdk-kmp:assemble
 
       - name: Archive aar
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: kotlin-multiplatform-release.aar
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/build/outputs/aar/breez-sdk-kmp-release.aar

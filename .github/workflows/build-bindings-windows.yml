@@ -61,7 +61,7 @@ jobs:
       run: cargo build --release --target ${{ matrix.target }}
 
     - name: Archive release
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: sdk-bindings-${{ matrix.target }}
         path: libs/target/${{ matrix.target }}/release/breez_sdk_bindings.dll
@@ -82,7 +82,7 @@ jobs:
           touch breez_sdk_bindings.dll
 
       - name: Upload dummy windows ${{ matrix.target }} artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sdk-bindings-${{ matrix.target }}
           path: ./*

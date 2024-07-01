@@ -86,14 +86,14 @@ jobs:
   
       - name: Archive Kotlin binding
         if: ${{ inputs.kotlin }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-kotlin
           path: libs/sdk-bindings/ffi/kotlin/breez_sdk/breez_sdk.kt
 
       - name: Archive KMM bindings
         if: ${{ inputs.kotlin }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-kmm
           path: libs/sdk-bindings/ffi/kmm/*
@@ -107,7 +107,7 @@ jobs:
       
       - name: Archive Swift binding
         if: ${{ inputs.swift }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-swift
           path: libs/sdk-bindings/bindings-swift/Sources/BreezSDK/*
@@ -120,7 +120,7 @@ jobs:
     
       - name: Archive Python binding
         if: ${{ inputs.python }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-python
           path: libs/sdk-bindings/ffi/python/breez_sdk.py
@@ -134,7 +134,7 @@ jobs:
       
       - name: Archive C# binding
         if: ${{ inputs.csharp }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-csharp
           path: libs/sdk-bindings/ffi/csharp/breez_sdk.cs
@@ -148,7 +148,7 @@ jobs:
   
       - name: Archive golang binding
         if: ${{ inputs.golang }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bindings-golang
           path: libs/sdk-bindings/ffi/golang/breez/breez_sdk/breez_sdk.go
