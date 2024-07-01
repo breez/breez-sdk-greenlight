@@ -41,7 +41,7 @@ jobs:
           done
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           # Upload the entire doc folder
           path: './libs/target/doc'
