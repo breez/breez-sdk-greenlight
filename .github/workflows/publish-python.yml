@@ -32,7 +32,7 @@ jobs:
         python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: Checkout breez-sdk repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
@@ -88,7 +88,7 @@ jobs:
         python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
@@ -134,7 +134,7 @@ jobs:
         python: ["3.8", "3.9", "3.10", "3.11", "3.12"]
     steps:
       - name: "Checkout"
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
@@ -199,7 +199,7 @@ jobs:
     needs: [build-macos-wheels, build-linux-wheels, build-windows-wheels]
     steps:
       - name: Checkout breez-sdk repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}

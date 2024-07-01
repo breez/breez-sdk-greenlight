@@ -32,7 +32,7 @@ jobs:
     runs-on: macOS-latest
     steps:
       - name: Checkout breez-sdk repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository || github.repository }}
           ref: ${{ inputs.ref || github.sha }}
