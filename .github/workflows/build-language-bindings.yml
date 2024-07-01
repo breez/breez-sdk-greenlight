@@ -73,7 +73,7 @@ jobs:
           rustup toolchain install stable --profile minimal
   
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}

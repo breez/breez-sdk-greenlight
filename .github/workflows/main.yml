@@ -45,7 +45,7 @@ jobs:
           workspaces: libs/sdk-core -> ../target
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +71,7 @@ jobs:
           workspaces: libs/sdk-bindings -> ../target
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -134,7 +134,7 @@ jobs:
           workspaces: tools/sdk-cli -> target
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -160,7 +160,7 @@ jobs:
           workspaces: libs/sdk-common -> ../target
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -188,7 +188,7 @@ jobs:
             tools/sdk-cli -> target
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -220,7 +220,7 @@ jobs:
             libs -> target
       
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -265,7 +265,7 @@ jobs:
             libs -> target
       
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -334,7 +334,7 @@ jobs:
             libs -> target
 
       - name: Install Protoc
-        uses: arduino/setup-protoc@v2
+        uses: arduino/setup-protoc@v3
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
