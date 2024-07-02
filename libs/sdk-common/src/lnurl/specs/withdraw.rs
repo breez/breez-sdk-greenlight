@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use crate::prelude::*;
 
 /// Validates invoice and performs the second and last step of LNURL-withdraw, as per
@@ -38,7 +39,10 @@ pub async fn validate_lnurl_withdraw(
             data: LnUrlWithdrawSuccessData { invoice },
         },
         Ok(LnUrlCallbackStatus::ErrorStatus { data }) => LnUrlWithdrawResult::ErrorStatus { data },
-        Err(e) if e.to_string().contains("operation timed out") => LnUrlWithdrawResult::Timeout {
+        Err(ServiceConnectivityError {
+            kind: ServiceConnectivityErrorKind::Timeout,
+            err: _,
+        }) => LnUrlWithdrawResult::Timeout {
             data: LnUrlWithdrawSuccessData { invoice },
         },
         Err(e) => return Err(LnUrlError::ServiceConnectivity(e.to_string())),
