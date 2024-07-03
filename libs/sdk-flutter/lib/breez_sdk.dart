@@ -427,16 +427,16 @@ class BreezSDK {
   )
   Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
 
-  /// Processes an individual reverse swap.
+  /// Claims an individual reverse swap.
   ///
   /// To be used only in the context of mobile notifications, where the notification triggers
-  /// an individual reverse swap to be processed.
+  /// an individual reverse swap to be claimed.
   ///
   /// This is taken care of automatically in the context of typical SDK usage.
-  Future<void> processReverseSwap({
+  Future<void> claimReverseSwap({
     required String lockupAddress,
   }) async {
-    return await _lnToolkit.processReverseSwap(lockupAddress: lockupAddress);
+    return await _lnToolkit.claimReverseSwap(lockupAddress: lockupAddress);
   }
 
   /* Swap Fee API's */

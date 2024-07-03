@@ -289,7 +289,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    processReverseSwap: (NSString*)lockupAddress
+    claimReverseSwap: (NSString*)lockupAddress
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )

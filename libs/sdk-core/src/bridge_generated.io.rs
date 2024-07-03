@@ -282,8 +282,8 @@ pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_process_reverse_swap(port_: i64, lockup_address: *mut wire_uint_8_list) {
-    wire_process_reverse_swap_impl(port_, lockup_address)
+pub extern "C" fn wire_claim_reverse_swap(port_: i64, lockup_address: *mut wire_uint_8_list) {
+    wire_claim_reverse_swap_impl(port_, lockup_address)
 }
 
 #[no_mangle]

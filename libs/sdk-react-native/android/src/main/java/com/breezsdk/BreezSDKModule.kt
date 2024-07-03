@@ -825,13 +825,13 @@ class BreezSDKModule(
     }
 
     @ReactMethod
-    fun processReverseSwap(
+    fun claimReverseSwap(
         lockupAddress: String,
         promise: Promise,
     ) {
         executor.execute {
             try {
-                getBreezServices().processReverseSwap(lockupAddress)
+                getBreezServices().claimReverseSwap(lockupAddress)
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)

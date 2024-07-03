@@ -785,19 +785,19 @@ fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
         move || move |task_callback| in_progress_reverse_swaps(),
     )
 }
-fn wire_process_reverse_swap_impl(
+fn wire_claim_reverse_swap_impl(
     port_: MessagePort,
     lockup_address: impl Wire2Api<String> + UnwindSafe,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, (), _>(
         WrapInfo {
-            debug_name: "process_reverse_swap",
+            debug_name: "claim_reverse_swap",
             port: Some(port_),
             mode: FfiCallMode::Normal,
         },
         move || {
             let api_lockup_address = lockup_address.wire2api();
-            move |task_callback| process_reverse_swap(api_lockup_address)
+            move |task_callback| claim_reverse_swap(api_lockup_address)
         },
     )
 }

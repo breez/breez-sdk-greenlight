@@ -282,10 +282,10 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kInProgressReverseSwapsConstMeta;
 
-  /// See [BreezServices::process_reverse_swap]
-  Future<void> processReverseSwap({required String lockupAddress, dynamic hint});
+  /// See [BreezServices::claim_reverse_swap]
+  Future<void> claimReverseSwap({required String lockupAddress, dynamic hint});
 
-  FlutterRustBridgeTaskConstMeta get kProcessReverseSwapConstMeta;
+  FlutterRustBridgeTaskConstMeta get kClaimReverseSwapConstMeta;
 
   /// See [BreezServices::open_channel_fee]
   Future<OpenChannelFeeResponse> openChannelFee({required OpenChannelFeeRequest req, dynamic hint});
@@ -2876,20 +2876,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
-  Future<void> processReverseSwap({required String lockupAddress, dynamic hint}) {
+  Future<void> claimReverseSwap({required String lockupAddress, dynamic hint}) {
     var arg0 = _platform.api2wire_String(lockupAddress);
     return _platform.executeNormal(FlutterRustBridgeTask(
-      callFfi: (port_) => _platform.inner.wire_process_reverse_swap(port_, arg0),
+      callFfi: (port_) => _platform.inner.wire_claim_reverse_swap(port_, arg0),
       parseSuccessData: _wire2api_unit,
       parseErrorData: _wire2api_FrbAnyhowException,
-      constMeta: kProcessReverseSwapConstMeta,
+      constMeta: kClaimReverseSwapConstMeta,
       argValues: [lockupAddress],
       hint: hint,
     ));
   }
 
-  FlutterRustBridgeTaskConstMeta get kProcessReverseSwapConstMeta => const FlutterRustBridgeTaskConstMeta(
-        debugName: "process_reverse_swap",
+  FlutterRustBridgeTaskConstMeta get kClaimReverseSwapConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "claim_reverse_swap",
         argNames: ["lockupAddress"],
       );
 
@@ -5856,21 +5856,21 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_in_progress_reverse_swaps =
       _wire_in_progress_reverse_swapsPtr.asFunction<void Function(int)>();
 
-  void wire_process_reverse_swap(
+  void wire_claim_reverse_swap(
     int port_,
     ffi.Pointer<wire_uint_8_list> lockup_address,
   ) {
-    return _wire_process_reverse_swap(
+    return _wire_claim_reverse_swap(
       port_,
       lockup_address,
     );
   }
 
-  late final _wire_process_reverse_swapPtr =
+  late final _wire_claim_reverse_swapPtr =
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>)>>(
-          'wire_process_reverse_swap');
-  late final _wire_process_reverse_swap =
-      _wire_process_reverse_swapPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
+          'wire_claim_reverse_swap');
+  late final _wire_claim_reverse_swap =
+      _wire_claim_reverse_swapPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
   void wire_open_channel_fee(
     int port_,

@@ -942,7 +942,7 @@ interface BlockingBreezServices {
    sequence<ReverseSwapInfo> in_progress_reverse_swaps();
    
    [Throws=SdkError]
-   void process_reverse_swap(string lockup_address);
+   void claim_reverse_swap(string lockup_address);
 
    [Throws=SdkError]
    MaxReverseSwapAmountResponse max_reverse_swap_amount();

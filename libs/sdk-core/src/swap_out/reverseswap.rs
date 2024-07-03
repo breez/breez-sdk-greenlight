@@ -622,10 +622,10 @@ impl BTCSendSwap {
     async fn process_monitored_reverse_swaps(&self) -> Result<()> {
         let monitored = self.list_monitored().await?;
         debug!("Found {} monitored reverse swaps", monitored.len());
-        self.process_reverse_swaps(monitored).await
+        self.claim_reverse_swaps(monitored).await
     }
 
-    async fn process_reverse_swaps(&self, reverse_swaps: Vec<FullReverseSwapInfo>) -> Result<()> {
+    async fn claim_reverse_swaps(&self, reverse_swaps: Vec<FullReverseSwapInfo>) -> Result<()> {
         for rsi in reverse_swaps {
             debug!("Processing reverse swap {rsi:?}");
 
@@ -682,7 +682,7 @@ impl BTCSendSwap {
         Ok(())
     }
 
-    pub async fn process_reverse_swap(&self, lockup_address: String) -> ReverseSwapResult<()> {
+    pub async fn claim_reverse_swap(&self, lockup_address: String) -> ReverseSwapResult<()> {
         let rsis: Vec<FullReverseSwapInfo> = self
             .list_monitored()
             .await?
@@ -700,7 +700,7 @@ impl BTCSendSwap {
                 "Reverse swap address {} was not found",
                 lockup_address
             ))),
-            false => Ok(self.process_reverse_swaps(rsis).await?),
+            false => Ok(self.claim_reverse_swaps(rsis).await?),
         }
     }
 

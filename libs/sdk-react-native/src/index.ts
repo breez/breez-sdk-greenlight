@@ -1098,8 +1098,8 @@ export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     return response
 }
 
-export const processReverseSwap = async (lockupAddress: string): Promise<void> => {
-    await BreezSDK.processReverseSwap(lockupAddress)
+export const claimReverseSwap = async (lockupAddress: string): Promise<void> => {
+    await BreezSDK.claimReverseSwap(lockupAddress)
 }
 
 export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountResponse> => {

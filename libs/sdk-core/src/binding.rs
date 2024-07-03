@@ -705,12 +705,12 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
     .map_err(anyhow::Error::new::<SdkError>)
 }
 
-/// See [BreezServices::process_reverse_swap]
-pub fn process_reverse_swap(lockup_address: String) -> Result<()> {
+/// See [BreezServices::claim_reverse_swap]
+pub fn claim_reverse_swap(lockup_address: String) -> Result<()> {
     block_on(async {
         get_breez_services()
             .await?
-            .process_reverse_swap(lockup_address)
+            .claim_reverse_swap(lockup_address)
             .await
     })
     .map_err(anyhow::Error::new::<SdkError>)

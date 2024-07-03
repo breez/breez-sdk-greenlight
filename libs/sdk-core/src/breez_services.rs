@@ -796,16 +796,16 @@ impl BreezServices {
         Ok(())
     }
 
-    /// Processes an individual reverse swap.
+    /// Claims an individual reverse swap.
     ///
     /// To be used only in the context of mobile notifications, where the notification triggers
-    /// an individual reverse swap to be processed.
+    /// an individual reverse swap to be claimed.
     ///
     /// This is taken care of automatically in the context of typical SDK usage.
-    pub async fn process_reverse_swap(&self, lockup_address: String) -> SdkResult<()> {
+    pub async fn claim_reverse_swap(&self, lockup_address: String) -> SdkResult<()> {
         Ok(self
             .btc_send_swapper
-            .process_reverse_swap(lockup_address)
+            .claim_reverse_swap(lockup_address)
             .await?)
     }
 
