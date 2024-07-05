@@ -4,10 +4,12 @@ use ::bip21::Uri;
 use anyhow::{anyhow, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
+use lightning::offers::offer::Offer;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use LnUrlRequestData::*;
 
+use crate::prelude::InputType::Bolt12Offer;
 use crate::prelude::*;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
@@ -150,6 +152,7 @@ use crate::prelude::*;
 ///     }
 /// }
 /// ```
+
 pub async fn parse(input: &str) -> Result<InputType> {
     let input = input.trim();
 
@@ -183,6 +186,24 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     if let Ok(invoice) = parse_invoice(input) {
         return Ok(InputType::Bolt11 { invoice });
+    }
+
+    if let Ok(offer) = input.parse::<Offer>() {
+        return Ok(Bolt12Offer {
+            offer: LNOffer {
+                bolt12: input.to_string(),
+                chains: offer
+                    .chains()
+                    .iter()
+                    .map(|chain| chain.to_string())
+                    .collect(),
+                amount: offer.amount().map(|amount| amount.clone().into()),
+                description: offer.description().to_string(),
+                absolute_expiry: offer.absolute_expiry().map(|expiry| expiry.as_secs()),
+                issuer: offer.issuer().map(|s| s.to_string()),
+                signing_pubkey: offer.signing_pubkey().to_string(),
+            },
+        });
     }
 
     // Public key serialized in compressed form (66 hex chars)
@@ -410,6 +431,9 @@ pub enum InputType {
     /// and discards all other data.
     Bolt11 {
         invoice: LNInvoice,
+    },
+    Bolt12Offer {
+        offer: LNOffer,
     },
     NodeId {
         node_id: String,
@@ -916,6 +940,17 @@ pub(crate) mod tests {
             InputType::Bolt11 { invoice: _invoice }
         ));
 
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_bolt12_offer() -> Result<()> {
+        let offer = "lno1pqqnyzsmx5cx6umpwssx6atvw35j6ut4v9h8g6t50ysx7enxv4epyrmjw4ehgcm0wfczucm0d5hxzag5qqtzzq3lxgva5qlw9xsjmeqs0ek9cdj0vpec9ur972l7mywa66u3q7dlhs";
+
+        assert!(matches!(
+            parse(offer).await?,
+            InputType::Bolt12Offer { offer: _offer }
+        ));
         Ok(())
     }
 

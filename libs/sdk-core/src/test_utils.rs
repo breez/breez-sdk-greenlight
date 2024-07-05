@@ -44,10 +44,10 @@ use crate::swap_in::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
-    parse_invoice, BuyBitcoinProvider, Config, CustomMessage, LNInvoice, MaxChannelAmount,
-    NodeCredentials, OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
-    PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint,
-    RouteHintHop, SwapInfo,
+    parse_invoice, Config, CreateOfferRequest, CustomMessage, FetchInvoiceRequest,
+    FetchInvoiceResponse, LNInvoice, MaxChannelAmount, NodeCredentials, OpeningFeeParamsMenu,
+    PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint, RouteHintHop, SwapInfo,
 };
 
 pub const MOCK_REVERSE_SWAP_MIN: u64 = 50_000;
@@ -520,6 +520,14 @@ impl NodeAPI for MockNodeAPI {
 
     async fn get_open_peers(&self) -> NodeResult<HashSet<Vec<u8>>> {
         Ok(HashSet::new())
+    }
+
+    async fn fetch_invoice(&self, _req: FetchInvoiceRequest) -> NodeResult<FetchInvoiceResponse> {
+        Err(NodeError::Generic("Not implemented".to_string()))
+    }
+
+    async fn create_offer(&self, _req: CreateOfferRequest) -> NodeResult<String> {
+        Err(NodeError::Generic("Not implemented".to_string()))
     }
 }
 

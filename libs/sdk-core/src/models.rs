@@ -9,7 +9,6 @@ use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 use sdk_common::grpc;
-use sdk_common::prelude::Network::*;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
@@ -483,7 +482,7 @@ impl Config {
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
             mempoolspace_url: None,
             working_dir: ".".to_string(),
-            network: Bitcoin,
+            network: Network::Bitcoin,
             payment_timeout_sec: 60,
             default_lsp_id: None,
             api_key: Some(api_key),
@@ -499,7 +498,7 @@ impl Config {
             chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
             mempoolspace_url: None,
             working_dir: ".".to_string(),
-            network: Bitcoin,
+            network: Network::Bitcoin,
             payment_timeout_sec: 60,
             default_lsp_id: None,
             api_key: Some(api_key),
@@ -845,8 +844,8 @@ pub struct ReceivePaymentResponse {
 /// Represents a send payment request.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SendPaymentRequest {
-    /// The bolt11 invoice
-    pub bolt11: String,
+    /// The bolt11 or bolt12 invoice
+    pub invoice: String,
     /// Trampoline payments outsource pathfinding to the LSP. Trampoline payments can improve
     /// payment performance, but are generally more expensive in terms of fees and they
     /// compromise on privacy.
@@ -1065,6 +1064,44 @@ pub struct PrepareRefundResponse {
 
 pub struct RefundResponse {
     pub refund_tx_id: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FetchInvoiceRequest {
+    pub(crate) offer: String,
+    pub(crate) amount_msat: Option<u64>,
+    pub(crate) timeout: Option<f64>,
+    pub(crate) payer_note: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FetchInvoiceChanges {
+    pub(crate) vendor: Option<String>,
+    pub(crate) description: Option<String>,
+    pub(crate) amount: Option<u64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FetchInvoiceResponse {
+    pub(crate) bolt12: String,
+    pub(crate) changes: Option<FetchInvoiceChanges>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct PayOfferRequest {
+    pub offer: String,
+    pub amount_msat: Option<u64>,
+    pub timeout: Option<f64>,
+    pub payer_note: Option<String>,
+    pub label: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CreateOfferRequest {
+    pub amount_msat: Option<u64>,
+    pub description: String,
+    pub absolute_expiry: Option<u64>,
+    pub quantity_max: Option<u64>,
 }
 
 /// Dynamic fee parameters offered by the LSP for opening a new channel.

@@ -260,7 +260,7 @@ impl BreezServices {
         req: SendPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
         self.start_node().await?;
-        let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
+        let parsed_invoice = parse_invoice(req.invoice.as_str())?;
         let invoice_expiration = parsed_invoice.timestamp + parsed_invoice.expiry;
         let current_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
         if invoice_expiration < current_time {
@@ -435,7 +435,7 @@ impl BreezServices {
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
                 let pay_req = SendPaymentRequest {
-                    bolt11: cb.pr.clone(),
+                    invoice: cb.pr.clone(),
                     amount_msat: None,
                     use_trampoline: req.use_trampoline,
                     label: req.payment_label,
@@ -2198,6 +2198,45 @@ impl BreezServices {
           ***Swaps***\n{swaps}\n\n"
         );
         Ok(res)
+    }
+
+    pub async fn create_offer(&self, req: CreateOfferRequest) -> Result<String> {
+        self.start_node().await?;
+        Ok(self.node_api.create_offer(req).await?)
+    }
+
+    pub async fn pay_offer(
+        &self,
+        req: PayOfferRequest,
+    ) -> Result<SendPaymentResponse, SendPaymentError> {
+        self.start_node().await?;
+
+        let fetch_invoice_response = self
+            .node_api
+            .fetch_invoice(FetchInvoiceRequest {
+                offer: req.offer.clone(),
+                amount_msat: req.amount_msat,
+                timeout: req.timeout,
+                payer_note: req.payer_note.to_owned(),
+            })
+            .await?;
+
+        if let Some(_) = fetch_invoice_response.changes {
+            return Err(SendPaymentError::OfferChanged {
+                err: "Offer changed".to_string(),
+            });
+        }
+
+        Ok(self
+            .send_payment(SendPaymentRequest {
+                invoice: fetch_invoice_response.bolt12,
+                use_trampoline: false,
+                // we expect amount_msat from the invoice to be the same as the one in the
+                // PayOfferRequest due to the above check, can omit
+                amount_msat: None,
+                label: req.label,
+            })
+            .await?)
     }
 }
 

@@ -19,12 +19,12 @@ use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use sdk_common::invoice;
 pub use sdk_common::prelude::{
-    parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, BitcoinAddressData,
-    CurrencyInfo, FiatCurrency, InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlError, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
-    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-    LocaleOverrides, LocalizedName, MessageSuccessActionData, Network, Rate, RouteHint,
-    RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
+    parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, Amount, BitcoinAddressData,
+    CurrencyInfo, FiatCurrency, InputType, LNInvoice, LNOffer, LnUrlAuthRequestData,
+    LnUrlCallbackStatus, LnUrlError, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest,
+    LnUrlPayRequestData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult,
+    LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, MessageSuccessActionData, Network,
+    Rate, RouteHint, RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
 };
 use tokio::sync::Mutex;
 
@@ -38,10 +38,11 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, LnUrlAuthError,
-    MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
-    OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
-    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    ConfigureNodeRequest, ConnectRequest, CreateOfferRequest, EnvironmentType, ListPaymentsRequest,
+    LnUrlAuthError, MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials,
+    OnchainPaymentLimitsResponse, OpenChannelFeeRequest, OpenChannelFeeResponse, PayOfferRequest,
+    PayOnchainRequest, PayOnchainResponse, PrepareOnchainPaymentRequest,
+    PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
     ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
@@ -85,6 +86,28 @@ pub enum _Network {
     Testnet,
     Signet,
     Regtest,
+}
+
+#[frb(mirror(Amount))]
+pub enum _Amount {
+    Bitcoin {
+        amount_msat: u64,
+    },
+    Currency {
+        iso4217_code: String,
+        fractional_amount: u64,
+    },
+}
+
+#[frb(mirror(LNOffer))]
+pub struct _LNOffer {
+    pub bolt12: String,
+    pub chains: Vec<String>,
+    pub amount: Option<Amount>,
+    pub description: String,
+    pub absolute_expiry: Option<u64>,
+    pub issuer: Option<String>,
+    pub signing_pubkey: String,
 }
 
 #[frb(mirror(LNInvoice))]
@@ -162,6 +185,7 @@ pub struct _LnUrlWithdrawRequestData {
 pub enum _InputType {
     BitcoinAddress { address: BitcoinAddressData },
     Bolt11 { invoice: LNInvoice },
+    Bolt12Offer { offer: LNOffer },
     NodeId { node_id: String },
     Url { url: String },
     LnUrlPay { data: LnUrlPayRequestData },
@@ -559,6 +583,17 @@ pub fn send_spontaneous_payment(req: SendSpontaneousPaymentRequest) -> Result<Se
 pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentResponse> {
     block_on(async { get_breez_services().await?.receive_payment(req).await })
         .map_err(anyhow::Error::new::<ReceivePaymentError>)
+}
+
+/// See [BreezServices::create_offer]
+pub fn create_offer(req: CreateOfferRequest) -> Result<String> {
+    block_on(async { get_breez_services().await?.create_offer(req).await })
+}
+
+/// See [BreezServices::pay_offer]
+pub fn pay_offer(req: PayOfferRequest) -> Result<SendPaymentResponse> {
+    block_on(async { get_breez_services().await?.pay_offer(req).await })
+        .map_err(anyhow::Error::new::<SendPaymentError>)
 }
 
 /*  LNURL API's */

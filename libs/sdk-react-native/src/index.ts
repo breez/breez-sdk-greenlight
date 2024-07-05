@@ -93,6 +93,13 @@ export interface ConnectRequest {
     restoreOnly?: boolean
 }
 
+export interface CreateOfferRequest {
+    description: string
+    amountMsat?: number
+    absoluteExpiry?: number
+    quantityMax?: number
+}
+
 export interface CurrencyInfo {
     name: string
     fractionSize: number
@@ -141,6 +148,16 @@ export interface LnInvoice {
     routingHints: RouteHint[]
     paymentSecret: number[]
     minFinalCltvExpiryDelta: number
+}
+
+export interface LnOffer {
+    bolt12: string
+    chains: string[]
+    description: string
+    signingPubkey: string
+    amount?: Amount
+    absoluteExpiry?: number
+    issuer?: string
 }
 
 export interface ListPaymentsRequest {
@@ -325,6 +342,14 @@ export interface OpeningFeeParamsMenu {
     values: OpeningFeeParams[]
 }
 
+export interface PayOfferRequest {
+    offer: string
+    amountMsat?: number
+    timeout?: number
+    payerNote?: string
+    label?: string
+}
+
 export interface PayOnchainRequest {
     recipientAddress: string
     prepareRes: PrepareOnchainPaymentResponse
@@ -498,7 +523,7 @@ export interface SendOnchainResponse {
 }
 
 export interface SendPaymentRequest {
-    bolt11: string
+    invoice: string
     useTrampoline: boolean
     amountMsat?: number
     label?: string
@@ -601,6 +626,20 @@ export type AesSuccessActionDataResult = {
     reason: string
 }
 
+export enum AmountVariant {
+    BITCOIN = "bitcoin",
+    CURRENCY = "currency"
+}
+
+export type Amount = {
+    type: AmountVariant.BITCOIN,
+    amountMsat: number
+} | {
+    type: AmountVariant.CURRENCY,
+    iso4217Code: string
+    fractionalAmount: number
+}
+
 export enum BreezEventVariant {
     NEW_BLOCK = "newBlock",
     INVOICE_PAID = "invoicePaid",
@@ -674,6 +713,7 @@ export enum HealthCheckStatus {
 export enum InputTypeVariant {
     BITCOIN_ADDRESS = "bitcoinAddress",
     BOLT11 = "bolt11",
+    BOLT12_OFFER = "bolt12Offer",
     NODE_ID = "nodeId",
     URL = "url",
     LN_URL_PAY = "lnUrlPay",
@@ -688,6 +728,9 @@ export type InputType = {
 } | {
     type: InputTypeVariant.BOLT11,
     invoice: LnInvoice
+} | {
+    type: InputTypeVariant.BOLT12_OFFER,
+    offer: LnOffer
 } | {
     type: InputTypeVariant.NODE_ID,
     nodeId: string
@@ -1154,5 +1197,15 @@ export const buyBitcoin = async (req: BuyBitcoinRequest): Promise<BuyBitcoinResp
 
 export const prepareRedeemOnchainFunds = async (req: PrepareRedeemOnchainFundsRequest): Promise<PrepareRedeemOnchainFundsResponse> => {
     const response = await BreezSDK.prepareRedeemOnchainFunds(req)
+    return response
+}
+
+export const createOffer = async (req: CreateOfferRequest): Promise<string> => {
+    const response = await BreezSDK.createOffer(req)
+    return response
+}
+
+export const payOffer = async (req: PayOfferRequest): Promise<SendPaymentResponse> => {
+    const response = await BreezSDK.payOffer(req)
     return response
 }

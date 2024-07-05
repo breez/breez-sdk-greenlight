@@ -12,9 +12,10 @@ use crate::{
     bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
-    CustomMessage, LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment,
-    PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHint, RouteHintHop, SyncResponse, TlvEntry,
+    CreateOfferRequest, CustomMessage, FetchInvoiceRequest, FetchInvoiceResponse, LnUrlAuthError,
+    LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
+    SyncResponse, TlvEntry,
 };
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
@@ -29,6 +30,9 @@ pub enum NodeError {
 
     #[error(transparent)]
     InvalidInvoice(#[from] InvoiceError),
+
+    #[error("{0}")]
+    InvalidOffer(String),
 
     #[error("{0}")]
     InvoiceExpired(String),
@@ -47,6 +51,15 @@ pub enum NodeError {
 
     #[error(transparent)]
     Persistance(#[from] PersistError),
+
+    #[error("{0}")]
+    OfferExpired(String),
+
+    #[error("{0}")]
+    OfferInvoiceRequestError(String),
+
+    #[error("{0}")]
+    OfferInvoiceRequestTimeout(String),
 
     #[error("{0}")]
     RestoreOnly(String),
@@ -188,6 +201,8 @@ pub trait NodeAPI: Send + Sync {
     async fn stream_custom_messages(
         &self,
     ) -> NodeResult<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>>;
+    async fn fetch_invoice(&self, req: FetchInvoiceRequest) -> NodeResult<FetchInvoiceResponse>;
+    async fn create_offer(&self, req: CreateOfferRequest) -> NodeResult<String>;
 
     /// Gets the private key at the path specified
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;

@@ -113,7 +113,7 @@ typedef struct wire_ListPaymentsRequest {
 } wire_ListPaymentsRequest;
 
 typedef struct wire_SendPaymentRequest {
-  struct wire_uint_8_list *bolt11;
+  struct wire_uint_8_list *invoice;
   bool use_trampoline;
   uint64_t *amount_msat;
   struct wire_uint_8_list *label;
@@ -154,6 +154,21 @@ typedef struct wire_ReceivePaymentRequest {
   uint32_t *expiry;
   uint32_t *cltv;
 } wire_ReceivePaymentRequest;
+
+typedef struct wire_CreateOfferRequest {
+  uint64_t *amount_msat;
+  struct wire_uint_8_list *description;
+  uint64_t *absolute_expiry;
+  uint64_t *quantity_max;
+} wire_CreateOfferRequest;
+
+typedef struct wire_PayOfferRequest {
+  struct wire_uint_8_list *offer;
+  uint64_t *amount_msat;
+  double *timeout;
+  struct wire_uint_8_list *payer_note;
+  struct wire_uint_8_list *label;
+} wire_PayOfferRequest;
 
 typedef struct wire_LnUrlPayRequestData {
   struct wire_uint_8_list *callback;
@@ -368,6 +383,10 @@ void wire_send_spontaneous_payment(int64_t port_, struct wire_SendSpontaneousPay
 
 void wire_receive_payment(int64_t port_, struct wire_ReceivePaymentRequest *req);
 
+void wire_create_offer(int64_t port_, struct wire_CreateOfferRequest *req);
+
+void wire_pay_offer(int64_t port_, struct wire_PayOfferRequest *req);
+
 void wire_lnurl_pay(int64_t port_, struct wire_LnUrlPayRequest *req);
 
 void wire_lnurl_withdraw(int64_t port_, struct wire_LnUrlWithdrawRequest *req);
@@ -437,6 +456,10 @@ struct wire_ConfigureNodeRequest *new_box_autoadd_configure_node_request_0(void)
 
 struct wire_ConnectRequest *new_box_autoadd_connect_request_0(void);
 
+struct wire_CreateOfferRequest *new_box_autoadd_create_offer_request_0(void);
+
+double *new_box_autoadd_f64_0(double value);
+
 struct wire_GreenlightCredentials *new_box_autoadd_greenlight_credentials_0(void);
 
 struct wire_GreenlightNodeConfig *new_box_autoadd_greenlight_node_config_0(void);
@@ -456,6 +479,8 @@ struct wire_NodeConfig *new_box_autoadd_node_config_0(void);
 struct wire_OpenChannelFeeRequest *new_box_autoadd_open_channel_fee_request_0(void);
 
 struct wire_OpeningFeeParams *new_box_autoadd_opening_fee_params_0(void);
+
+struct wire_PayOfferRequest *new_box_autoadd_pay_offer_request_0(void);
 
 struct wire_PayOnchainRequest *new_box_autoadd_pay_onchain_request_0(void);
 
@@ -542,6 +567,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_send_payment);
     dummy_var ^= ((int64_t) (void*) wire_send_spontaneous_payment);
     dummy_var ^= ((int64_t) (void*) wire_receive_payment);
+    dummy_var ^= ((int64_t) (void*) wire_create_offer);
+    dummy_var ^= ((int64_t) (void*) wire_pay_offer);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_pay);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_withdraw);
     dummy_var ^= ((int64_t) (void*) wire_lnurl_auth);
@@ -576,6 +603,8 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_configure_node_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_connect_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_create_offer_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_f64_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_credentials_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
@@ -586,6 +615,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_open_channel_fee_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_opening_fee_params_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_pay_offer_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_pay_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_onchain_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_prepare_redeem_onchain_funds_request_0);

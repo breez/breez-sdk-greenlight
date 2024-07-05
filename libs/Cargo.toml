@@ -23,10 +23,10 @@ base64 = "0.13.0"
 bitcoin = "=0.29.2" # Same version as used in gl-client
 # Pin the reqwest dependency until macOS linker issue is fixed: https://github.com/seanmonstar/reqwest/issues/2006
 hex = "0.4"
-lightning = "=0.0.116" # Same version as used in gl-client
-lightning-invoice = "=0.24.0" # Same version as used in gl-client
+lightning = "=0.0.118" # Same version as used in gl-client
+lightning-invoice = "=0.26.0" # Same version as used in gl-client
 log = "0.4"
-mockito = "1"
+mockito = "1.4.0"
 once_cell = "1"
 prost = "^0.11"
 regex = "1.8.1"

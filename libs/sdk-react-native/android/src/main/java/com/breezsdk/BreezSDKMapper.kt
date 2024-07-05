@@ -517,6 +517,56 @@ fun asConnectRequestList(arr: ReadableArray): List<ConnectRequest> {
     return list
 }
 
+fun asCreateOfferRequest(createOfferRequest: ReadableMap): CreateOfferRequest? {
+    if (!validateMandatoryFields(
+            createOfferRequest,
+            arrayOf(
+                "description",
+            ),
+        )
+    ) {
+        return null
+    }
+    val description = createOfferRequest.getString("description")!!
+    val amountMsat = if (hasNonNullKey(createOfferRequest, "amountMsat")) createOfferRequest.getDouble("amountMsat").toULong() else null
+    val absoluteExpiry =
+        if (hasNonNullKey(
+                createOfferRequest,
+                "absoluteExpiry",
+            )
+        ) {
+            createOfferRequest.getDouble("absoluteExpiry").toULong()
+        } else {
+            null
+        }
+    val quantityMax = if (hasNonNullKey(createOfferRequest, "quantityMax")) createOfferRequest.getDouble("quantityMax").toULong() else null
+    return CreateOfferRequest(
+        description,
+        amountMsat,
+        absoluteExpiry,
+        quantityMax,
+    )
+}
+
+fun readableMapOf(createOfferRequest: CreateOfferRequest): ReadableMap =
+    readableMapOf(
+        "description" to createOfferRequest.description,
+        "amountMsat" to createOfferRequest.amountMsat,
+        "absoluteExpiry" to createOfferRequest.absoluteExpiry,
+        "quantityMax" to createOfferRequest.quantityMax,
+    )
+
+fun asCreateOfferRequestList(arr: ReadableArray): List<CreateOfferRequest> {
+    val list = ArrayList<CreateOfferRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asCreateOfferRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
     if (!validateMandatoryFields(
             currencyInfo,
@@ -824,6 +874,59 @@ fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnInvoice(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asLnOffer(lnOffer: ReadableMap): LnOffer? {
+    if (!validateMandatoryFields(
+            lnOffer,
+            arrayOf(
+                "bolt12",
+                "chains",
+                "description",
+                "signingPubkey",
+            ),
+        )
+    ) {
+        return null
+    }
+    val bolt12 = lnOffer.getString("bolt12")!!
+    val chains = lnOffer.getArray("chains")?.let { asStringList(it) }!!
+    val description = lnOffer.getString("description")!!
+    val signingPubkey = lnOffer.getString("signingPubkey")!!
+    val amount = if (hasNonNullKey(lnOffer, "amount")) lnOffer.getMap("amount")?.let { asAmount(it) } else null
+    val absoluteExpiry = if (hasNonNullKey(lnOffer, "absoluteExpiry")) lnOffer.getDouble("absoluteExpiry").toULong() else null
+    val issuer = if (hasNonNullKey(lnOffer, "issuer")) lnOffer.getString("issuer") else null
+    return LnOffer(
+        bolt12,
+        chains,
+        description,
+        signingPubkey,
+        amount,
+        absoluteExpiry,
+        issuer,
+    )
+}
+
+fun readableMapOf(lnOffer: LnOffer): ReadableMap =
+    readableMapOf(
+        "bolt12" to lnOffer.bolt12,
+        "chains" to readableArrayOf(lnOffer.chains),
+        "description" to lnOffer.description,
+        "signingPubkey" to lnOffer.signingPubkey,
+        "amount" to lnOffer.amount?.let { readableMapOf(it) },
+        "absoluteExpiry" to lnOffer.absoluteExpiry,
+        "issuer" to lnOffer.issuer,
+    )
+
+fun asLnOfferList(arr: ReadableArray): List<LnOffer> {
+    val list = ArrayList<LnOffer>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnOffer(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -2025,6 +2128,50 @@ fun asOpeningFeeParamsMenuList(arr: ReadableArray): List<OpeningFeeParamsMenu> {
     return list
 }
 
+fun asPayOfferRequest(payOfferRequest: ReadableMap): PayOfferRequest? {
+    if (!validateMandatoryFields(
+            payOfferRequest,
+            arrayOf(
+                "offer",
+            ),
+        )
+    ) {
+        return null
+    }
+    val offer = payOfferRequest.getString("offer")!!
+    val amountMsat = if (hasNonNullKey(payOfferRequest, "amountMsat")) payOfferRequest.getDouble("amountMsat").toULong() else null
+    val timeout = if (hasNonNullKey(payOfferRequest, "timeout")) payOfferRequest.getDouble("timeout") else null
+    val payerNote = if (hasNonNullKey(payOfferRequest, "payerNote")) payOfferRequest.getString("payerNote") else null
+    val label = if (hasNonNullKey(payOfferRequest, "label")) payOfferRequest.getString("label") else null
+    return PayOfferRequest(
+        offer,
+        amountMsat,
+        timeout,
+        payerNote,
+        label,
+    )
+}
+
+fun readableMapOf(payOfferRequest: PayOfferRequest): ReadableMap =
+    readableMapOf(
+        "offer" to payOfferRequest.offer,
+        "amountMsat" to payOfferRequest.amountMsat,
+        "timeout" to payOfferRequest.timeout,
+        "payerNote" to payOfferRequest.payerNote,
+        "label" to payOfferRequest.label,
+    )
+
+fun asPayOfferRequestList(arr: ReadableArray): List<PayOfferRequest> {
+    val list = ArrayList<PayOfferRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPayOfferRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asPayOnchainRequest(payOnchainRequest: ReadableMap): PayOnchainRequest? {
     if (!validateMandatoryFields(
             payOnchainRequest,
@@ -3202,19 +3349,19 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     if (!validateMandatoryFields(
             sendPaymentRequest,
             arrayOf(
-                "bolt11",
+                "invoice",
                 "useTrampoline",
             ),
         )
     ) {
         return null
     }
-    val bolt11 = sendPaymentRequest.getString("bolt11")!!
+    val invoice = sendPaymentRequest.getString("invoice")!!
     val useTrampoline = sendPaymentRequest.getBoolean("useTrampoline")
     val amountMsat = if (hasNonNullKey(sendPaymentRequest, "amountMsat")) sendPaymentRequest.getDouble("amountMsat").toULong() else null
     val label = if (hasNonNullKey(sendPaymentRequest, "label")) sendPaymentRequest.getString("label") else null
     return SendPaymentRequest(
-        bolt11,
+        invoice,
         useTrampoline,
         amountMsat,
         label,
@@ -3223,7 +3370,7 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
 
 fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap =
     readableMapOf(
-        "bolt11" to sendPaymentRequest.bolt11,
+        "invoice" to sendPaymentRequest.invoice,
         "useTrampoline" to sendPaymentRequest.useTrampoline,
         "amountMsat" to sendPaymentRequest.amountMsat,
         "label" to sendPaymentRequest.label,
@@ -3822,6 +3969,45 @@ fun asAesSuccessActionDataResultList(arr: ReadableArray): List<AesSuccessActionD
     return list
 }
 
+fun asAmount(amount: ReadableMap): Amount? {
+    val type = amount.getString("type")
+
+    if (type == "bitcoin") {
+        return Amount.Bitcoin(amount.getDouble("amountMsat").toULong())
+    }
+    if (type == "currency") {
+        return Amount.Currency(amount.getString("iso4217Code")!!)
+    }
+    return null
+}
+
+fun readableMapOf(amount: Amount): ReadableMap? {
+    val map = Arguments.createMap()
+    when (amount) {
+        is Amount.Bitcoin -> {
+            pushToMap(map, "type", "bitcoin")
+            pushToMap(map, "amountMsat", amount.amountMsat)
+        }
+        is Amount.Currency -> {
+            pushToMap(map, "type", "currency")
+            pushToMap(map, "iso4217Code", amount.iso4217Code)
+            pushToMap(map, "fractionalAmount", amount.fractionalAmount)
+        }
+    }
+    return map
+}
+
+fun asAmountList(arr: ReadableArray): List<Amount> {
+    val list = ArrayList<Amount>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asAmount(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
     val type = breezEvent.getString("type")
 
@@ -3987,6 +4173,9 @@ fun asInputType(inputType: ReadableMap): InputType? {
     if (type == "bolt11") {
         return InputType.Bolt11(inputType.getMap("invoice")?.let { asLnInvoice(it) }!!)
     }
+    if (type == "bolt12Offer") {
+        return InputType.Bolt12Offer(inputType.getMap("offer")?.let { asLnOffer(it) }!!)
+    }
     if (type == "nodeId") {
         return InputType.NodeId(inputType.getString("nodeId")!!)
     }
@@ -4018,6 +4207,10 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
         is InputType.Bolt11 -> {
             pushToMap(map, "type", "bolt11")
             pushToMap(map, "invoice", readableMapOf(inputType.invoice))
+        }
+        is InputType.Bolt12Offer -> {
+            pushToMap(map, "type", "bolt12Offer")
+            pushToMap(map, "offer", readableMapOf(inputType.offer))
         }
         is InputType.NodeId -> {
             pushToMap(map, "type", "nodeId")

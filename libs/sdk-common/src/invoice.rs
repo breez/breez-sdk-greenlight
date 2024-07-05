@@ -4,8 +4,11 @@ use std::time::{SystemTimeError, UNIX_EPOCH};
 use bitcoin::secp256k1::{self, PublicKey};
 use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
-use lightning::routing::*;
-use lightning_invoice::*;
+use lightning::routing::router;
+use lightning_invoice::{
+    Bolt11Invoice, Bolt11InvoiceDescription, Bolt11ParseError, Bolt11SemanticError, CreationError,
+    InvoiceBuilder, RawBolt11Invoice, SignedRawBolt11Invoice,
+};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
@@ -75,7 +78,49 @@ impl From<SystemTimeError> for InvoiceError {
     }
 }
 
-/// Wrapper for a BOLT11 LN invoice
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum Amount {
+    Bitcoin {
+        amount_msat: u64,
+    },
+    Currency {
+        // Reference to [FiatCurrency.id]
+        iso4217_code: String,
+        fractional_amount: u64,
+    },
+}
+
+impl From<lightning::offers::offer::Amount> for Amount {
+    fn from(amount: lightning::offers::offer::Amount) -> Self {
+        match amount {
+            lightning::offers::offer::Amount::Bitcoin { amount_msats } => Amount::Bitcoin {
+                amount_msat: amount_msats,
+            },
+            lightning::offers::offer::Amount::Currency {
+                iso4217_code,
+                amount,
+            } => Amount::Currency {
+                iso4217_code: String::from_utf8(iso4217_code.to_vec())
+                    .expect("Expecting a valid ISO 4217 character sequence"),
+                fractional_amount: amount,
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct LNOffer {
+    pub bolt12: String,
+    pub chains: Vec<String>,
+    pub amount: Option<Amount>,
+    pub description: String,
+    pub absolute_expiry: Option<u64>,
+    pub issuer: Option<String>,
+    pub signing_pubkey: String,
+    // pub paths: Vec<BlindedPath>,
+}
+
+/// Wrapper for a BOLT11 invoice
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {
     pub bolt11: String,
@@ -271,7 +316,7 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
     let converted_hints = invoice_hints.iter().map(RouteHint::from_ldk_hint).collect();
     // return the parsed invoice
     let ln_invoice = LNInvoice {
-        bolt11: bolt11.to_string(),
+        bolt11: invoice.to_string(),
         network: invoice.network().into(),
         payee_pubkey,
         expiry: invoice.expiry_time().as_secs(),
