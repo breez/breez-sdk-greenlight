@@ -41,6 +41,7 @@ use crate::models::ClosedChannelPaymentDetails;
 use crate::models::Config;
 use crate::models::ConfigureNodeRequest;
 use crate::models::ConnectRequest;
+use crate::models::CreateOfferRequest;
 use crate::models::EnvironmentType;
 use crate::models::GreenlightCredentials;
 use crate::models::GreenlightDeviceCredentials;
@@ -59,6 +60,7 @@ use crate::models::OpenChannelFeeRequest;
 use crate::models::OpenChannelFeeResponse;
 use crate::models::OpeningFeeParams;
 use crate::models::OpeningFeeParamsMenu;
+use crate::models::PayOfferRequest;
 use crate::models::PayOnchainRequest;
 use crate::models::PayOnchainResponse;
 use crate::models::Payment;
@@ -528,6 +530,32 @@ fn wire_receive_payment_impl(
         },
     )
 }
+fn wire_create_offer_impl(port_: MessagePort, req: impl Wire2Api<CreateOfferRequest> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, String, _>(
+        WrapInfo {
+            debug_name: "create_offer",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| create_offer(api_req)
+        },
+    )
+}
+fn wire_pay_offer_impl(port_: MessagePort, req: impl Wire2Api<PayOfferRequest> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, SendPaymentResponse, _>(
+        WrapInfo {
+            debug_name: "pay_offer",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| pay_offer(api_req)
+        },
+    )
+}
 fn wire_lnurl_pay_impl(port_: MessagePort, req: impl Wire2Api<LnUrlPayRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, LnUrlPayResult, _>(
         WrapInfo {
@@ -895,6 +923,9 @@ pub struct mirror_AesSuccessActionDataDecrypted(AesSuccessActionDataDecrypted);
 pub struct mirror_AesSuccessActionDataResult(AesSuccessActionDataResult);
 
 #[derive(Clone)]
+pub struct mirror_Amount(Amount);
+
+#[derive(Clone)]
 pub struct mirror_BitcoinAddressData(BitcoinAddressData);
 
 #[derive(Clone)]
@@ -908,6 +939,9 @@ pub struct mirror_InputType(InputType);
 
 #[derive(Clone)]
 pub struct mirror_LNInvoice(LNInvoice);
+
+#[derive(Clone)]
+pub struct mirror_LNOffer(LNOffer);
 
 #[derive(Clone)]
 pub struct mirror_LnUrlAuthRequestData(LnUrlAuthRequestData);
@@ -979,6 +1013,18 @@ const _: fn() = || {
             let _: String = reason;
         }
     }
+    match None::<Amount>.unwrap() {
+        Amount::Bitcoin { amount_msat } => {
+            let _: u64 = amount_msat;
+        }
+        Amount::Currency {
+            iso4217_code,
+            fractional_amount,
+        } => {
+            let _: String = iso4217_code;
+            let _: u64 = fractional_amount;
+        }
+    }
     {
         let BitcoinAddressData = None::<BitcoinAddressData>.unwrap();
         let _: String = BitcoinAddressData.address;
@@ -1008,6 +1054,9 @@ const _: fn() = || {
         }
         InputType::Bolt11 { invoice } => {
             let _: LNInvoice = invoice;
+        }
+        InputType::Bolt12Offer { offer } => {
+            let _: LNOffer = offer;
         }
         InputType::NodeId { node_id } => {
             let _: String = node_id;
@@ -1042,6 +1091,16 @@ const _: fn() = || {
         let _: Vec<RouteHint> = LNInvoice.routing_hints;
         let _: Vec<u8> = LNInvoice.payment_secret;
         let _: u64 = LNInvoice.min_final_cltv_expiry_delta;
+    }
+    {
+        let LNOffer = None::<LNOffer>.unwrap();
+        let _: String = LNOffer.bolt12;
+        let _: Vec<String> = LNOffer.chains;
+        let _: Option<Amount> = LNOffer.amount;
+        let _: String = LNOffer.description;
+        let _: Option<u64> = LNOffer.absolute_expiry;
+        let _: Option<String> = LNOffer.issuer;
+        let _: String = LNOffer.signing_pubkey;
     }
     {
         let LnUrlAuthRequestData = None::<LnUrlAuthRequestData>.unwrap();
@@ -1315,6 +1374,31 @@ impl support::IntoDartExceptPrimitive for mirror_AesSuccessActionDataResult {}
 impl rust2dart::IntoIntoDart<mirror_AesSuccessActionDataResult> for AesSuccessActionDataResult {
     fn into_into_dart(self) -> mirror_AesSuccessActionDataResult {
         mirror_AesSuccessActionDataResult(self)
+    }
+}
+
+impl support::IntoDart for mirror_Amount {
+    fn into_dart(self) -> support::DartAbi {
+        match self.0 {
+            Amount::Bitcoin { amount_msat } => {
+                vec![0.into_dart(), amount_msat.into_into_dart().into_dart()]
+            }
+            Amount::Currency {
+                iso4217_code,
+                fractional_amount,
+            } => vec![
+                1.into_dart(),
+                iso4217_code.into_into_dart().into_dart(),
+                fractional_amount.into_into_dart().into_dart(),
+            ],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for mirror_Amount {}
+impl rust2dart::IntoIntoDart<mirror_Amount> for Amount {
+    fn into_into_dart(self) -> mirror_Amount {
+        mirror_Amount(self)
     }
 }
 
@@ -1594,17 +1678,20 @@ impl support::IntoDart for mirror_InputType {
             InputType::Bolt11 { invoice } => {
                 vec![1.into_dart(), invoice.into_into_dart().into_dart()]
             }
+            InputType::Bolt12Offer { offer } => {
+                vec![2.into_dart(), offer.into_into_dart().into_dart()]
+            }
             InputType::NodeId { node_id } => {
-                vec![2.into_dart(), node_id.into_into_dart().into_dart()]
+                vec![3.into_dart(), node_id.into_into_dart().into_dart()]
             }
-            InputType::Url { url } => vec![3.into_dart(), url.into_into_dart().into_dart()],
-            InputType::LnUrlPay { data } => vec![4.into_dart(), data.into_into_dart().into_dart()],
+            InputType::Url { url } => vec![4.into_dart(), url.into_into_dart().into_dart()],
+            InputType::LnUrlPay { data } => vec![5.into_dart(), data.into_into_dart().into_dart()],
             InputType::LnUrlWithdraw { data } => {
-                vec![5.into_dart(), data.into_into_dart().into_dart()]
+                vec![6.into_dart(), data.into_into_dart().into_dart()]
             }
-            InputType::LnUrlAuth { data } => vec![6.into_dart(), data.into_into_dart().into_dart()],
+            InputType::LnUrlAuth { data } => vec![7.into_dart(), data.into_into_dart().into_dart()],
             InputType::LnUrlError { data } => {
-                vec![7.into_dart(), data.into_into_dart().into_dart()]
+                vec![8.into_dart(), data.into_into_dart().into_dart()]
             }
         }
         .into_dart()
@@ -1660,6 +1747,27 @@ impl support::IntoDartExceptPrimitive for mirror_LNInvoice {}
 impl rust2dart::IntoIntoDart<mirror_LNInvoice> for LNInvoice {
     fn into_into_dart(self) -> mirror_LNInvoice {
         mirror_LNInvoice(self)
+    }
+}
+
+impl support::IntoDart for mirror_LNOffer {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.0.bolt12.into_into_dart().into_dart(),
+            self.0.chains.into_into_dart().into_dart(),
+            self.0.amount.map(|v| mirror_Amount(v)).into_dart(),
+            self.0.description.into_into_dart().into_dart(),
+            self.0.absolute_expiry.into_dart(),
+            self.0.issuer.into_dart(),
+            self.0.signing_pubkey.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for mirror_LNOffer {}
+impl rust2dart::IntoIntoDart<mirror_LNOffer> for LNOffer {
+    fn into_into_dart(self) -> mirror_LNOffer {
+        mirror_LNOffer(self)
     }
 }
 

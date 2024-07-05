@@ -261,7 +261,7 @@ impl BreezServices {
         req: SendPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
         self.start_node().await?;
-        let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
+        let parsed_invoice = parse_invoice(req.invoice.as_str())?;
         let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
         let provided_amount_msat = req.amount_msat.unwrap_or_default();
 
@@ -292,11 +292,7 @@ impl BreezServices {
                 self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
                 let payment_res = self
                     .node_api
-                    .send_payment(
-                        parsed_invoice.bolt11.clone(),
-                        req.amount_msat,
-                        req.label.clone(),
-                    )
+                    .send_payment(req.invoice.clone(), req.amount_msat, req.label.clone())
                     .map_err(Into::into)
                     .await;
                 let payment = self
@@ -356,7 +352,7 @@ impl BreezServices {
             }
             ValidatedCallbackResponse::EndpointSuccess { data: cb } => {
                 let pay_req = SendPaymentRequest {
-                    bolt11: cb.pr.clone(),
+                    invoice: cb.pr.clone(),
                     amount_msat: None,
                     label: req.payment_label,
                 };
@@ -1995,6 +1991,44 @@ impl BreezServices {
           ***Swaps***\n{swaps}\n\n"
         );
         Ok(res)
+    }
+
+    pub async fn create_offer(&self, req: CreateOfferRequest) -> Result<String> {
+        self.start_node().await?;
+        Ok(self.node_api.create_offer(req).await?)
+    }
+
+    pub async fn pay_offer(
+        &self,
+        req: PayOfferRequest,
+    ) -> Result<SendPaymentResponse, SendPaymentError> {
+        self.start_node().await?;
+
+        let fetch_invoice_response = self
+            .node_api
+            .fetch_invoice(FetchInvoiceRequest {
+                offer: req.offer.clone(),
+                amount_msat: req.amount_msat,
+                timeout: req.timeout,
+                payer_note: req.payer_note.to_owned(),
+            })
+            .await?;
+
+        if let Some(_) = fetch_invoice_response.changes {
+            return Err(SendPaymentError::OfferChanged {
+                err: "Offer changed".to_string(),
+            });
+        }
+
+        Ok(self
+            .send_payment(SendPaymentRequest {
+                invoice: fetch_invoice_response.bolt12,
+                // we expect amount_msat from the invoice to be the same as the one in the
+                // PayOfferRequest due to the above check, can omit
+                amount_msat: None,
+                label: req.label,
+            })
+            .await?)
     }
 }
 

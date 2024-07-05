@@ -96,7 +96,9 @@ impl From<SendPaymentError> for LnUrlPayError {
     fn from(value: SendPaymentError) -> Self {
         match value {
             SendPaymentError::AlreadyPaid => Self::AlreadyPaid,
-            SendPaymentError::Generic { err } => Self::Generic { err },
+            SendPaymentError::Generic { err } | SendPaymentError::OfferChanged { err } => {
+                Self::Generic { err }
+            }
             SendPaymentError::InvalidAmount { err } => Self::InvalidAmount { err },
             SendPaymentError::InvalidInvoice { err } => Self::InvalidInvoice { err },
             SendPaymentError::InvalidNetwork { err } => Self::InvalidNetwork { err },
@@ -425,6 +427,7 @@ impl From<SendPaymentError> for SdkError {
             | SendPaymentError::InvoiceExpired { err }
             | SendPaymentError::PaymentFailed { err }
             | SendPaymentError::PaymentTimeout { err }
+            | SendPaymentError::OfferChanged { err }
             | SendPaymentError::RouteNotFound { err }
             | SendPaymentError::RouteTooExpensive { err } => Self::Generic { err },
             SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
@@ -551,6 +554,9 @@ pub enum SendPaymentError {
     /// This error is raised when attempting to make a payment takes too long.
     #[error("Payment timeout: {err}")]
     PaymentTimeout { err: String },
+
+    #[error("Offer has changed: {err}")]
+    OfferChanged { err: String },
 
     /// This error is raised when no route can be found when attempting to make a
     /// payment by the node.

@@ -348,6 +348,335 @@ abstract class AesSuccessActionDataResult_ErrorStatus implements AesSuccessActio
 }
 
 /// @nodoc
+mixin _$Amount {
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int amountMsat) bitcoin,
+    required TResult Function(String iso4217Code, int fractionalAmount) currency,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int amountMsat)? bitcoin,
+    TResult? Function(String iso4217Code, int fractionalAmount)? currency,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int amountMsat)? bitcoin,
+    TResult Function(String iso4217Code, int fractionalAmount)? currency,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(Amount_Bitcoin value) bitcoin,
+    required TResult Function(Amount_Currency value) currency,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(Amount_Bitcoin value)? bitcoin,
+    TResult? Function(Amount_Currency value)? currency,
+  }) =>
+      throw _privateConstructorUsedError;
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(Amount_Bitcoin value)? bitcoin,
+    TResult Function(Amount_Currency value)? currency,
+    required TResult orElse(),
+  }) =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class $AmountCopyWith<$Res> {
+  factory $AmountCopyWith(Amount value, $Res Function(Amount) then) = _$AmountCopyWithImpl<$Res, Amount>;
+}
+
+/// @nodoc
+class _$AmountCopyWithImpl<$Res, $Val extends Amount> implements $AmountCopyWith<$Res> {
+  _$AmountCopyWithImpl(this._value, this._then);
+
+  // ignore: unused_field
+  final $Val _value;
+  // ignore: unused_field
+  final $Res Function($Val) _then;
+}
+
+/// @nodoc
+abstract class _$$Amount_BitcoinImplCopyWith<$Res> {
+  factory _$$Amount_BitcoinImplCopyWith(
+          _$Amount_BitcoinImpl value, $Res Function(_$Amount_BitcoinImpl) then) =
+      __$$Amount_BitcoinImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({int amountMsat});
+}
+
+/// @nodoc
+class __$$Amount_BitcoinImplCopyWithImpl<$Res> extends _$AmountCopyWithImpl<$Res, _$Amount_BitcoinImpl>
+    implements _$$Amount_BitcoinImplCopyWith<$Res> {
+  __$$Amount_BitcoinImplCopyWithImpl(_$Amount_BitcoinImpl _value, $Res Function(_$Amount_BitcoinImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? amountMsat = null,
+  }) {
+    return _then(_$Amount_BitcoinImpl(
+      amountMsat: null == amountMsat
+          ? _value.amountMsat
+          : amountMsat // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$Amount_BitcoinImpl implements Amount_Bitcoin {
+  const _$Amount_BitcoinImpl({required this.amountMsat});
+
+  @override
+  final int amountMsat;
+
+  @override
+  String toString() {
+    return 'Amount.bitcoin(amountMsat: $amountMsat)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$Amount_BitcoinImpl &&
+            (identical(other.amountMsat, amountMsat) || other.amountMsat == amountMsat));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, amountMsat);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$Amount_BitcoinImplCopyWith<_$Amount_BitcoinImpl> get copyWith =>
+      __$$Amount_BitcoinImplCopyWithImpl<_$Amount_BitcoinImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int amountMsat) bitcoin,
+    required TResult Function(String iso4217Code, int fractionalAmount) currency,
+  }) {
+    return bitcoin(amountMsat);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int amountMsat)? bitcoin,
+    TResult? Function(String iso4217Code, int fractionalAmount)? currency,
+  }) {
+    return bitcoin?.call(amountMsat);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int amountMsat)? bitcoin,
+    TResult Function(String iso4217Code, int fractionalAmount)? currency,
+    required TResult orElse(),
+  }) {
+    if (bitcoin != null) {
+      return bitcoin(amountMsat);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(Amount_Bitcoin value) bitcoin,
+    required TResult Function(Amount_Currency value) currency,
+  }) {
+    return bitcoin(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(Amount_Bitcoin value)? bitcoin,
+    TResult? Function(Amount_Currency value)? currency,
+  }) {
+    return bitcoin?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(Amount_Bitcoin value)? bitcoin,
+    TResult Function(Amount_Currency value)? currency,
+    required TResult orElse(),
+  }) {
+    if (bitcoin != null) {
+      return bitcoin(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class Amount_Bitcoin implements Amount {
+  const factory Amount_Bitcoin({required final int amountMsat}) = _$Amount_BitcoinImpl;
+
+  int get amountMsat;
+  @JsonKey(ignore: true)
+  _$$Amount_BitcoinImplCopyWith<_$Amount_BitcoinImpl> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$Amount_CurrencyImplCopyWith<$Res> {
+  factory _$$Amount_CurrencyImplCopyWith(
+          _$Amount_CurrencyImpl value, $Res Function(_$Amount_CurrencyImpl) then) =
+      __$$Amount_CurrencyImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({String iso4217Code, int fractionalAmount});
+}
+
+/// @nodoc
+class __$$Amount_CurrencyImplCopyWithImpl<$Res> extends _$AmountCopyWithImpl<$Res, _$Amount_CurrencyImpl>
+    implements _$$Amount_CurrencyImplCopyWith<$Res> {
+  __$$Amount_CurrencyImplCopyWithImpl(
+      _$Amount_CurrencyImpl _value, $Res Function(_$Amount_CurrencyImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? iso4217Code = null,
+    Object? fractionalAmount = null,
+  }) {
+    return _then(_$Amount_CurrencyImpl(
+      iso4217Code: null == iso4217Code
+          ? _value.iso4217Code
+          : iso4217Code // ignore: cast_nullable_to_non_nullable
+              as String,
+      fractionalAmount: null == fractionalAmount
+          ? _value.fractionalAmount
+          : fractionalAmount // ignore: cast_nullable_to_non_nullable
+              as int,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$Amount_CurrencyImpl implements Amount_Currency {
+  const _$Amount_CurrencyImpl({required this.iso4217Code, required this.fractionalAmount});
+
+  @override
+  final String iso4217Code;
+  @override
+  final int fractionalAmount;
+
+  @override
+  String toString() {
+    return 'Amount.currency(iso4217Code: $iso4217Code, fractionalAmount: $fractionalAmount)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$Amount_CurrencyImpl &&
+            (identical(other.iso4217Code, iso4217Code) || other.iso4217Code == iso4217Code) &&
+            (identical(other.fractionalAmount, fractionalAmount) ||
+                other.fractionalAmount == fractionalAmount));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, iso4217Code, fractionalAmount);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$Amount_CurrencyImplCopyWith<_$Amount_CurrencyImpl> get copyWith =>
+      __$$Amount_CurrencyImplCopyWithImpl<_$Amount_CurrencyImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int amountMsat) bitcoin,
+    required TResult Function(String iso4217Code, int fractionalAmount) currency,
+  }) {
+    return currency(iso4217Code, fractionalAmount);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int amountMsat)? bitcoin,
+    TResult? Function(String iso4217Code, int fractionalAmount)? currency,
+  }) {
+    return currency?.call(iso4217Code, fractionalAmount);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int amountMsat)? bitcoin,
+    TResult Function(String iso4217Code, int fractionalAmount)? currency,
+    required TResult orElse(),
+  }) {
+    if (currency != null) {
+      return currency(iso4217Code, fractionalAmount);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(Amount_Bitcoin value) bitcoin,
+    required TResult Function(Amount_Currency value) currency,
+  }) {
+    return currency(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(Amount_Bitcoin value)? bitcoin,
+    TResult? Function(Amount_Currency value)? currency,
+  }) {
+    return currency?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(Amount_Bitcoin value)? bitcoin,
+    TResult Function(Amount_Currency value)? currency,
+    required TResult orElse(),
+  }) {
+    if (currency != null) {
+      return currency(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class Amount_Currency implements Amount {
+  const factory Amount_Currency({required final String iso4217Code, required final int fractionalAmount}) =
+      _$Amount_CurrencyImpl;
+
+  String get iso4217Code;
+  int get fractionalAmount;
+  @JsonKey(ignore: true)
+  _$$Amount_CurrencyImplCopyWith<_$Amount_CurrencyImpl> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
 mixin _$BreezEvent {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
@@ -1937,6 +2266,7 @@ mixin _$InputType {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -1949,6 +2279,7 @@ mixin _$InputType {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -1961,6 +2292,7 @@ mixin _$InputType {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -1974,6 +2306,7 @@ mixin _$InputType {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -1986,6 +2319,7 @@ mixin _$InputType {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -1998,6 +2332,7 @@ mixin _$InputType {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2091,6 +2426,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -2106,6 +2442,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2121,6 +2458,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2140,6 +2478,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -2155,6 +2494,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2170,6 +2510,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2260,6 +2601,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -2275,6 +2617,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2290,6 +2633,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2309,6 +2653,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -2324,6 +2669,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2339,6 +2685,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2360,6 +2707,181 @@ abstract class InputType_Bolt11 implements InputType {
   LNInvoice get invoice;
   @JsonKey(ignore: true)
   _$$InputType_Bolt11ImplCopyWith<_$InputType_Bolt11Impl> get copyWith => throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$InputType_Bolt12OfferImplCopyWith<$Res> {
+  factory _$$InputType_Bolt12OfferImplCopyWith(
+          _$InputType_Bolt12OfferImpl value, $Res Function(_$InputType_Bolt12OfferImpl) then) =
+      __$$InputType_Bolt12OfferImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({LNOffer offer});
+}
+
+/// @nodoc
+class __$$InputType_Bolt12OfferImplCopyWithImpl<$Res>
+    extends _$InputTypeCopyWithImpl<$Res, _$InputType_Bolt12OfferImpl>
+    implements _$$InputType_Bolt12OfferImplCopyWith<$Res> {
+  __$$InputType_Bolt12OfferImplCopyWithImpl(
+      _$InputType_Bolt12OfferImpl _value, $Res Function(_$InputType_Bolt12OfferImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? offer = null,
+  }) {
+    return _then(_$InputType_Bolt12OfferImpl(
+      offer: null == offer
+          ? _value.offer
+          : offer // ignore: cast_nullable_to_non_nullable
+              as LNOffer,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$InputType_Bolt12OfferImpl implements InputType_Bolt12Offer {
+  const _$InputType_Bolt12OfferImpl({required this.offer});
+
+  @override
+  final LNOffer offer;
+
+  @override
+  String toString() {
+    return 'InputType.bolt12Offer(offer: $offer)';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$InputType_Bolt12OfferImpl &&
+            (identical(other.offer, offer) || other.offer == offer));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, offer);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$InputType_Bolt12OfferImplCopyWith<_$InputType_Bolt12OfferImpl> get copyWith =>
+      __$$InputType_Bolt12OfferImplCopyWithImpl<_$InputType_Bolt12OfferImpl>(this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(BitcoinAddressData address) bitcoinAddress,
+    required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
+    required TResult Function(String nodeId) nodeId,
+    required TResult Function(String url) url,
+    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
+    required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
+    required TResult Function(LnUrlErrorData data) lnUrlError,
+  }) {
+    return bolt12Offer(offer);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(BitcoinAddressData address)? bitcoinAddress,
+    TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
+    TResult? Function(String nodeId)? nodeId,
+    TResult? Function(String url)? url,
+    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
+    TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
+    TResult? Function(LnUrlErrorData data)? lnUrlError,
+  }) {
+    return bolt12Offer?.call(offer);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(BitcoinAddressData address)? bitcoinAddress,
+    TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
+    TResult Function(String nodeId)? nodeId,
+    TResult Function(String url)? url,
+    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
+    TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
+    TResult Function(LnUrlErrorData data)? lnUrlError,
+    required TResult orElse(),
+  }) {
+    if (bolt12Offer != null) {
+      return bolt12Offer(offer);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
+    required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
+    required TResult Function(InputType_NodeId value) nodeId,
+    required TResult Function(InputType_Url value) url,
+    required TResult Function(InputType_LnUrlPay value) lnUrlPay,
+    required TResult Function(InputType_LnUrlWithdraw value) lnUrlWithdraw,
+    required TResult Function(InputType_LnUrlAuth value) lnUrlAuth,
+    required TResult Function(InputType_LnUrlError value) lnUrlError,
+  }) {
+    return bolt12Offer(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
+    TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
+    TResult? Function(InputType_NodeId value)? nodeId,
+    TResult? Function(InputType_Url value)? url,
+    TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
+    TResult? Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
+    TResult? Function(InputType_LnUrlAuth value)? lnUrlAuth,
+    TResult? Function(InputType_LnUrlError value)? lnUrlError,
+  }) {
+    return bolt12Offer?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
+    TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
+    TResult Function(InputType_NodeId value)? nodeId,
+    TResult Function(InputType_Url value)? url,
+    TResult Function(InputType_LnUrlPay value)? lnUrlPay,
+    TResult Function(InputType_LnUrlWithdraw value)? lnUrlWithdraw,
+    TResult Function(InputType_LnUrlAuth value)? lnUrlAuth,
+    TResult Function(InputType_LnUrlError value)? lnUrlError,
+    required TResult orElse(),
+  }) {
+    if (bolt12Offer != null) {
+      return bolt12Offer(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class InputType_Bolt12Offer implements InputType {
+  const factory InputType_Bolt12Offer({required final LNOffer offer}) = _$InputType_Bolt12OfferImpl;
+
+  LNOffer get offer;
+  @JsonKey(ignore: true)
+  _$$InputType_Bolt12OfferImplCopyWith<_$InputType_Bolt12OfferImpl> get copyWith =>
+      throw _privateConstructorUsedError;
 }
 
 /// @nodoc
@@ -2427,6 +2949,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -2442,6 +2965,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2457,6 +2981,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2476,6 +3001,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -2491,6 +3017,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2506,6 +3033,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2592,6 +3120,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -2607,6 +3136,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2622,6 +3152,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2641,6 +3172,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -2656,6 +3188,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2671,6 +3204,7 @@ class _$InputType_UrlImpl implements InputType_Url {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2760,6 +3294,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -2775,6 +3310,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2790,6 +3326,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2809,6 +3346,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -2824,6 +3362,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2839,6 +3378,7 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -2929,6 +3469,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -2944,6 +3485,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2959,6 +3501,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -2978,6 +3521,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -2993,6 +3537,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -3008,6 +3553,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -3099,6 +3645,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -3114,6 +3661,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -3129,6 +3677,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -3148,6 +3697,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -3163,6 +3713,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -3178,6 +3729,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -3268,6 +3820,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   TResult when<TResult extends Object?>({
     required TResult Function(BitcoinAddressData address) bitcoinAddress,
     required TResult Function(LNInvoice invoice) bolt11,
+    required TResult Function(LNOffer offer) bolt12Offer,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
     required TResult Function(LnUrlPayRequestData data) lnUrlPay,
@@ -3283,6 +3836,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function(BitcoinAddressData address)? bitcoinAddress,
     TResult? Function(LNInvoice invoice)? bolt11,
+    TResult? Function(LNOffer offer)? bolt12Offer,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
     TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -3298,6 +3852,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function(BitcoinAddressData address)? bitcoinAddress,
     TResult Function(LNInvoice invoice)? bolt11,
+    TResult Function(LNOffer offer)? bolt12Offer,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
     TResult Function(LnUrlPayRequestData data)? lnUrlPay,
@@ -3317,6 +3872,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   TResult map<TResult extends Object?>({
     required TResult Function(InputType_BitcoinAddress value) bitcoinAddress,
     required TResult Function(InputType_Bolt11 value) bolt11,
+    required TResult Function(InputType_Bolt12Offer value) bolt12Offer,
     required TResult Function(InputType_NodeId value) nodeId,
     required TResult Function(InputType_Url value) url,
     required TResult Function(InputType_LnUrlPay value) lnUrlPay,
@@ -3332,6 +3888,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult? Function(InputType_Bolt11 value)? bolt11,
+    TResult? Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult? Function(InputType_NodeId value)? nodeId,
     TResult? Function(InputType_Url value)? url,
     TResult? Function(InputType_LnUrlPay value)? lnUrlPay,
@@ -3347,6 +3904,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
   TResult maybeMap<TResult extends Object?>({
     TResult Function(InputType_BitcoinAddress value)? bitcoinAddress,
     TResult Function(InputType_Bolt11 value)? bolt11,
+    TResult Function(InputType_Bolt12Offer value)? bolt12Offer,
     TResult Function(InputType_NodeId value)? nodeId,
     TResult Function(InputType_Url value)? url,
     TResult Function(InputType_LnUrlPay value)? lnUrlPay,

@@ -185,11 +185,15 @@ impl From<tonic::Status> for NodeError {
                 JsonRpcErrCode::InvoiceExpiredDuringWait => {
                     Self::InvoiceExpired(wrapped_status.to_string())
                 }
-                JsonRpcErrCode::InvoiceNoDescription => {
-                    Self::InvoiceNoDescription(wrapped_status.to_string())
+                JsonRpcErrCode::OfferExpired => Self::OfferExpired(wrapped_status.to_string()),
+                JsonRpcErrCode::OfferBadInvreqReply => {
+                    Self::OfferInvoiceRequestError(wrapped_status.to_string())
                 }
-                JsonRpcErrCode::InvoicePreimageAlreadyExists => {
-                    Self::InvoicePreimageAlreadyExists(wrapped_status.to_string())
+                JsonRpcErrCode::OfferRouteNotFound => {
+                    Self::RouteNotFound(wrapped_status.to_string())
+                }
+                JsonRpcErrCode::OfferTimeout => {
+                    Self::OfferInvoiceRequestTimeout(wrapped_status.to_string())
                 }
                 _ => Self::Generic(wrapped_status.to_string()),
             },

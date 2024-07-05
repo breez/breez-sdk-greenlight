@@ -436,6 +436,7 @@ fun asConfigList(arr: ReadableArray): List<Config> {
     return list
 }
 
+<<<<<<< HEAD
 fun asConfigureNodeRequest(configureNodeRequest: ReadableMap): ConfigureNodeRequest? {
     if (!validateMandatoryFields(
             configureNodeRequest,
@@ -481,11 +482,19 @@ fun asConnectRequest(connectRequest: ReadableMap): ConnectRequest? {
             arrayOf(
                 "config",
                 "seed",
+=======
+fun asCreateOfferRequest(createOfferRequest: ReadableMap): CreateOfferRequest? {
+    if (!validateMandatoryFields(
+            createOfferRequest,
+            arrayOf(
+                "description",
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             ),
         )
     ) {
         return null
     }
+<<<<<<< HEAD
     val config = connectRequest.getMap("config")?.let { asConfig(it) }!!
     val seed = connectRequest.getArray("seed")?.let { asUByteList(it) }!!
     val restoreOnly = if (hasNonNullKey(connectRequest, "restoreOnly")) connectRequest.getBoolean("restoreOnly") else null
@@ -508,6 +517,40 @@ fun asConnectRequestList(arr: ReadableArray): List<ConnectRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asConnectRequest(value)!!)
+=======
+    val amountMsat = if (hasNonNullKey(createOfferRequest, "amountMsat")) createOfferRequest.getDouble("amountMsat").toULong() else null
+    val description = createOfferRequest.getString("description")!!
+    val absoluteExpiry =
+        if (hasNonNullKey(
+                createOfferRequest,
+                "absoluteExpiry",
+            )
+        ) {
+            createOfferRequest.getDouble("absoluteExpiry").toULong()
+        } else {
+            null
+        }
+    return CreateOfferRequest(
+        amountMsat,
+        description,
+        absoluteExpiry,
+    )
+}
+
+fun readableMapOf(createOfferRequest: CreateOfferRequest): ReadableMap {
+    return readableMapOf(
+        "amountMsat" to createOfferRequest.amountMsat,
+        "description" to createOfferRequest.description,
+        "absoluteExpiry" to createOfferRequest.absoluteExpiry,
+    )
+}
+
+fun asCreateOfferRequestList(arr: ReadableArray): List<CreateOfferRequest> {
+    val list = ArrayList<CreateOfferRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asCreateOfferRequest(value)!!)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -634,6 +677,7 @@ fun asGreenlightCredentialsList(arr: ReadableArray): List<GreenlightCredentials>
         when (value) {
             is ReadableMap -> list.add(asGreenlightCredentials(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -666,6 +710,8 @@ fun asGreenlightDeviceCredentialsList(arr: ReadableArray): List<GreenlightDevice
         when (value) {
             is ReadableMap -> list.add(asGreenlightDeviceCredentials(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -822,6 +868,63 @@ fun asLnInvoiceList(arr: ReadableArray): List<LnInvoice> {
         when (value) {
             is ReadableMap -> list.add(asLnInvoice(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
+=======
+        }
+    }
+    return list
+}
+
+fun asLnOffer(lnOffer: ReadableMap): LnOffer? {
+    if (!validateMandatoryFields(
+            lnOffer,
+            arrayOf(
+                "bolt12",
+                "chains",
+                "description",
+                "signingPubkey",
+            ),
+        )
+    ) {
+        return null
+    }
+    val bolt12 = lnOffer.getString("bolt12")!!
+    val chains = lnOffer.getArray("chains")?.let { asStringList(it) }!!
+    val description = lnOffer.getString("description")!!
+    val signingPubkey = lnOffer.getString("signingPubkey")!!
+    val amount = if (hasNonNullKey(lnOffer, "amount")) lnOffer.getMap("amount")?.let { asAmount(it) } else null
+    val absoluteExpiry = if (hasNonNullKey(lnOffer, "absoluteExpiry")) lnOffer.getDouble("absoluteExpiry").toULong() else null
+    val issuer = if (hasNonNullKey(lnOffer, "issuer")) lnOffer.getString("issuer") else null
+    return LnOffer(
+        bolt12,
+        chains,
+        description,
+        signingPubkey,
+        amount,
+        absoluteExpiry,
+        issuer,
+    )
+}
+
+fun readableMapOf(lnOffer: LnOffer): ReadableMap {
+    return readableMapOf(
+        "bolt12" to lnOffer.bolt12,
+        "chains" to readableArrayOf(lnOffer.chains),
+        "description" to lnOffer.description,
+        "signingPubkey" to lnOffer.signingPubkey,
+        "amount" to lnOffer.amount?.let { readableMapOf(it) },
+        "absoluteExpiry" to lnOffer.absoluteExpiry,
+        "issuer" to lnOffer.issuer,
+    )
+}
+
+fun asLnOfferList(arr: ReadableArray): List<LnOffer> {
+    val list = ArrayList<LnOffer>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asLnOffer(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -1584,6 +1687,7 @@ fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
         when (value) {
             is ReadableMap -> list.add(asLspInformation(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -1616,6 +1720,8 @@ fun asMaxReverseSwapAmountResponseList(arr: ReadableArray): List<MaxReverseSwapA
         when (value) {
             is ReadableMap -> list.add(asMaxReverseSwapAmountResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -1648,6 +1754,7 @@ fun asMessageSuccessActionDataList(arr: ReadableArray): List<MessageSuccessActio
         when (value) {
             is ReadableMap -> list.add(asMessageSuccessActionData(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -1684,6 +1791,8 @@ fun asMetadataFilterList(arr: ReadableArray): List<MetadataFilter> {
         when (value) {
             is ReadableMap -> list.add(asMetadataFilter(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -1796,6 +1905,7 @@ fun asNodeStateList(arr: ReadableArray): List<NodeState> {
         when (value) {
             is ReadableMap -> list.add(asNodeState(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -1832,6 +1942,8 @@ fun asOnchainPaymentLimitsResponseList(arr: ReadableArray): List<OnchainPaymentL
         when (value) {
             is ReadableMap -> list.add(asOnchainPaymentLimitsResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -1998,17 +2110,26 @@ fun asOpeningFeeParamsMenuList(arr: ReadableArray): List<OpeningFeeParamsMenu> {
     return list
 }
 
+<<<<<<< HEAD
 fun asPayOnchainRequest(payOnchainRequest: ReadableMap): PayOnchainRequest? {
     if (!validateMandatoryFields(
             payOnchainRequest,
             arrayOf(
                 "recipientAddress",
                 "prepareRes",
+=======
+fun asPayOfferRequest(payOfferRequest: ReadableMap): PayOfferRequest? {
+    if (!validateMandatoryFields(
+            payOfferRequest,
+            arrayOf(
+                "offer",
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             ),
         )
     ) {
         return null
     }
+<<<<<<< HEAD
     val recipientAddress = payOnchainRequest.getString("recipientAddress")!!
     val prepareRes = payOnchainRequest.getMap("prepareRes")?.let { asPrepareOnchainPaymentResponse(it) }!!
     return PayOnchainRequest(
@@ -2060,6 +2181,34 @@ fun asPayOnchainResponseList(arr: ReadableArray): List<PayOnchainResponse> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asPayOnchainResponse(value)!!)
+=======
+    val offer = payOfferRequest.getString("offer")!!
+    val amountMsat = if (hasNonNullKey(payOfferRequest, "amountMsat")) payOfferRequest.getDouble("amountMsat").toULong() else null
+    val timeout = if (hasNonNullKey(payOfferRequest, "timeout")) payOfferRequest.getDouble("timeout") else null
+    val payerNote = if (hasNonNullKey(payOfferRequest, "payerNote")) payOfferRequest.getString("payerNote") else null
+    return PayOfferRequest(
+        offer,
+        amountMsat,
+        timeout,
+        payerNote,
+    )
+}
+
+fun readableMapOf(payOfferRequest: PayOfferRequest): ReadableMap {
+    return readableMapOf(
+        "offer" to payOfferRequest.offer,
+        "amountMsat" to payOfferRequest.amountMsat,
+        "timeout" to payOfferRequest.timeout,
+        "payerNote" to payOfferRequest.payerNote,
+    )
+}
+
+fun asPayOfferRequestList(arr: ReadableArray): List<PayOfferRequest> {
+    val list = ArrayList<PayOfferRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPayOfferRequest(value)!!)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -2168,6 +2317,7 @@ fun asPaymentFailedDataList(arr: ReadableArray): List<PaymentFailedData> {
         when (value) {
             is ReadableMap -> list.add(asPaymentFailedData(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -2336,6 +2486,8 @@ fun asPrepareRedeemOnchainFundsResponseList(arr: ReadableArray): List<PrepareRed
         when (value) {
             is ReadableMap -> list.add(asPrepareRedeemOnchainFundsResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -2412,6 +2564,83 @@ fun asPrepareRefundResponseList(arr: ReadableArray): List<PrepareRefundResponse>
         when (value) {
             is ReadableMap -> list.add(asPrepareRefundResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
+=======
+        }
+    }
+    return list
+}
+
+fun asPrepareSweepRequest(prepareSweepRequest: ReadableMap): PrepareSweepRequest? {
+    if (!validateMandatoryFields(
+            prepareSweepRequest,
+            arrayOf(
+                "toAddress",
+                "satsPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = prepareSweepRequest.getString("toAddress")!!
+    val satsPerVbyte = prepareSweepRequest.getDouble("satsPerVbyte").toULong()
+    return PrepareSweepRequest(
+        toAddress,
+        satsPerVbyte,
+    )
+}
+
+fun readableMapOf(prepareSweepRequest: PrepareSweepRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to prepareSweepRequest.toAddress,
+        "satsPerVbyte" to prepareSweepRequest.satsPerVbyte,
+    )
+}
+
+fun asPrepareSweepRequestList(arr: ReadableArray): List<PrepareSweepRequest> {
+    val list = ArrayList<PrepareSweepRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareSweepRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asPrepareSweepResponse(prepareSweepResponse: ReadableMap): PrepareSweepResponse? {
+    if (!validateMandatoryFields(
+            prepareSweepResponse,
+            arrayOf(
+                "sweepTxWeight",
+                "sweepTxFeeSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val sweepTxWeight = prepareSweepResponse.getDouble("sweepTxWeight").toULong()
+    val sweepTxFeeSat = prepareSweepResponse.getDouble("sweepTxFeeSat").toULong()
+    return PrepareSweepResponse(
+        sweepTxWeight,
+        sweepTxFeeSat,
+    )
+}
+
+fun readableMapOf(prepareSweepResponse: PrepareSweepResponse): ReadableMap {
+    return readableMapOf(
+        "sweepTxWeight" to prepareSweepResponse.sweepTxWeight,
+        "sweepTxFeeSat" to prepareSweepResponse.sweepTxFeeSat,
+    )
+}
+
+fun asPrepareSweepResponseList(arr: ReadableArray): List<PrepareSweepResponse> {
+    val list = ArrayList<PrepareSweepResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asPrepareSweepResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -2673,6 +2902,7 @@ fun asRecommendedFeesList(arr: ReadableArray): List<RecommendedFees> {
         when (value) {
             is ReadableMap -> list.add(asRecommendedFees(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -2741,6 +2971,8 @@ fun asRedeemOnchainFundsResponseList(arr: ReadableArray): List<RedeemOnchainFund
         when (value) {
             is ReadableMap -> list.add(asRedeemOnchainFundsResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -2813,6 +3045,7 @@ fun asRefundResponseList(arr: ReadableArray): List<RefundResponse> {
         when (value) {
             is ReadableMap -> list.add(asRefundResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -2848,6 +3081,8 @@ fun asReportPaymentFailureDetailsList(arr: ReadableArray): List<ReportPaymentFai
         when (value) {
             is ReadableMap -> list.add(asReportPaymentFailureDetails(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -3175,25 +3410,31 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     if (!validateMandatoryFields(
             sendPaymentRequest,
             arrayOf(
-                "bolt11",
+                "invoice",
             ),
         )
     ) {
         return null
     }
-    val bolt11 = sendPaymentRequest.getString("bolt11")!!
+    val invoice = sendPaymentRequest.getString("invoice")!!
     val amountMsat = if (hasNonNullKey(sendPaymentRequest, "amountMsat")) sendPaymentRequest.getDouble("amountMsat").toULong() else null
     val label = if (hasNonNullKey(sendPaymentRequest, "label")) sendPaymentRequest.getString("label") else null
     return SendPaymentRequest(
-        bolt11,
+        invoice,
         amountMsat,
         label,
     )
 }
 
+<<<<<<< HEAD
 fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap =
     readableMapOf(
         "bolt11" to sendPaymentRequest.bolt11,
+=======
+fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap {
+    return readableMapOf(
+        "invoice" to sendPaymentRequest.invoice,
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         "amountMsat" to sendPaymentRequest.amountMsat,
         "label" to sendPaymentRequest.label,
     )
@@ -3289,6 +3530,7 @@ fun asSendSpontaneousPaymentRequestList(arr: ReadableArray): List<SendSpontaneou
         when (value) {
             is ReadableMap -> list.add(asSendSpontaneousPaymentRequest(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -3321,6 +3563,8 @@ fun asServiceHealthCheckResponseList(arr: ReadableArray): List<ServiceHealthChec
         when (value) {
             is ReadableMap -> list.add(asServiceHealthCheckResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -3583,6 +3827,79 @@ fun asSwapInfoList(arr: ReadableArray): List<SwapInfo> {
         when (value) {
             is ReadableMap -> list.add(asSwapInfo(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
+=======
+        }
+    }
+    return list
+}
+
+fun asSweepRequest(sweepRequest: ReadableMap): SweepRequest? {
+    if (!validateMandatoryFields(
+            sweepRequest,
+            arrayOf(
+                "toAddress",
+                "feeRateSatsPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val toAddress = sweepRequest.getString("toAddress")!!
+    val feeRateSatsPerVbyte = sweepRequest.getInt("feeRateSatsPerVbyte").toUInt()
+    return SweepRequest(
+        toAddress,
+        feeRateSatsPerVbyte,
+    )
+}
+
+fun readableMapOf(sweepRequest: SweepRequest): ReadableMap {
+    return readableMapOf(
+        "toAddress" to sweepRequest.toAddress,
+        "feeRateSatsPerVbyte" to sweepRequest.feeRateSatsPerVbyte,
+    )
+}
+
+fun asSweepRequestList(arr: ReadableArray): List<SweepRequest> {
+    val list = ArrayList<SweepRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSweepRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asSweepResponse(sweepResponse: ReadableMap): SweepResponse? {
+    if (!validateMandatoryFields(
+            sweepResponse,
+            arrayOf(
+                "txid",
+            ),
+        )
+    ) {
+        return null
+    }
+    val txid = sweepResponse.getArray("txid")?.let { asUByteList(it) }!!
+    return SweepResponse(
+        txid,
+    )
+}
+
+fun readableMapOf(sweepResponse: SweepResponse): ReadableMap {
+    return readableMapOf(
+        "txid" to readableArrayOf(sweepResponse.txid),
+    )
+}
+
+fun asSweepResponseList(arr: ReadableArray): List<SweepResponse> {
+    val list = ArrayList<SweepResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSweepResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -3622,6 +3939,7 @@ fun asSymbolList(arr: ReadableArray): List<Symbol> {
         when (value) {
             is ReadableMap -> list.add(asSymbol(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -3658,6 +3976,8 @@ fun asTlvEntryList(arr: ReadableArray): List<TlvEntry> {
         when (value) {
             is ReadableMap -> list.add(asTlvEntry(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -3747,6 +4067,7 @@ fun asUrlSuccessActionDataList(arr: ReadableArray): List<UrlSuccessActionData> {
     return list
 }
 
+<<<<<<< HEAD
 fun asAesSuccessActionDataResult(aesSuccessActionDataResult: ReadableMap): AesSuccessActionDataResult? {
     val type = aesSuccessActionDataResult.getString("type")
 
@@ -3757,10 +4078,21 @@ fun asAesSuccessActionDataResult(aesSuccessActionDataResult: ReadableMap): AesSu
     }
     if (type == "errorStatus") {
         return AesSuccessActionDataResult.ErrorStatus(aesSuccessActionDataResult.getString("reason")!!)
+=======
+fun asAmount(amount: ReadableMap): Amount? {
+    val type = amount.getString("type")
+
+    if (type == "bitcoin") {
+        return Amount.Bitcoin(amount.getDouble("amountMsat").toULong())
+    }
+    if (type == "currency") {
+        return Amount.Currency(amount.getString("iso4217Code")!!)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
     }
     return null
 }
 
+<<<<<<< HEAD
 fun readableMapOf(aesSuccessActionDataResult: AesSuccessActionDataResult): ReadableMap? {
     val map = Arguments.createMap()
     when (aesSuccessActionDataResult) {
@@ -3771,16 +4103,37 @@ fun readableMapOf(aesSuccessActionDataResult: AesSuccessActionDataResult): Reada
         is AesSuccessActionDataResult.ErrorStatus -> {
             pushToMap(map, "type", "errorStatus")
             pushToMap(map, "reason", aesSuccessActionDataResult.reason)
+=======
+fun readableMapOf(amount: Amount): ReadableMap? {
+    val map = Arguments.createMap()
+    when (amount) {
+        is Amount.Bitcoin -> {
+            pushToMap(map, "type", "bitcoin")
+            pushToMap(map, "amountMsat", amount.amountMsat)
+        }
+        is Amount.Currency -> {
+            pushToMap(map, "type", "currency")
+            pushToMap(map, "iso4217Code", amount.iso4217Code)
+            pushToMap(map, "fractionalAmount", amount.fractionalAmount)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return map
 }
 
+<<<<<<< HEAD
 fun asAesSuccessActionDataResultList(arr: ReadableArray): List<AesSuccessActionDataResult> {
     val list = ArrayList<AesSuccessActionDataResult>()
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asAesSuccessActionDataResult(value)!!)
+=======
+fun asAmountList(arr: ReadableArray): List<Amount> {
+    val list = ArrayList<Amount>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asAmount(value)!!)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -3918,6 +4271,7 @@ fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
         when (value) {
             is String -> list.add(asFeeratePreset(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -3931,6 +4285,8 @@ fun asHealthCheckStatusList(arr: ReadableArray): List<HealthCheckStatus> {
         when (value) {
             is String -> list.add(asHealthCheckStatus(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -3944,6 +4300,9 @@ fun asInputType(inputType: ReadableMap): InputType? {
     }
     if (type == "bolt11") {
         return InputType.Bolt11(inputType.getMap("invoice")?.let { asLnInvoice(it) }!!)
+    }
+    if (type == "bolt12Offer") {
+        return InputType.Bolt12Offer(inputType.getMap("offer")?.let { asLnOffer(it) }!!)
     }
     if (type == "nodeId") {
         return InputType.NodeId(inputType.getString("nodeId")!!)
@@ -3976,6 +4335,10 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
         is InputType.Bolt11 -> {
             pushToMap(map, "type", "bolt11")
             pushToMap(map, "invoice", readableMapOf(inputType.invoice))
+        }
+        is InputType.Bolt12Offer -> {
+            pushToMap(map, "type", "bolt12Offer")
+            pushToMap(map, "offer", readableMapOf(inputType.offer))
         }
         is InputType.NodeId -> {
             pushToMap(map, "type", "nodeId")
@@ -4182,6 +4545,7 @@ fun asNodeConfigList(arr: ReadableArray): List<NodeConfig> {
         when (value) {
             is ReadableMap -> list.add(asNodeConfig(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+<<<<<<< HEAD
         }
     }
     return list
@@ -4213,6 +4577,8 @@ fun asNodeCredentialsList(arr: ReadableArray): List<NodeCredentials> {
         when (value) {
             is ReadableMap -> list.add(asNodeCredentials(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
     return list
@@ -4524,6 +4890,7 @@ fun asStringList(arr: ReadableArray): List<String> {
 fun errMissingMandatoryField(
     fieldName: String,
     typeName: String,
+<<<<<<< HEAD
 ): String = "Missing mandatory field $fieldName for type $typeName"
 
 fun errUnexpectedType(typeName: String): String = "Unexpected type $typeName"
@@ -4533,4 +4900,16 @@ fun errUnexpectedValue(fieldName: String): String = "Unexpected value for option
 fun camelToUpperSnakeCase(str: String): String {
     val pattern = "(?<=.)[A-Z]".toRegex()
     return str.replace(pattern, "_$0").uppercase()
+=======
+): String {
+    return "Missing mandatory field $fieldName for type $typeName"
+}
+
+fun errUnexpectedType(typeName: String): String {
+    return "Unexpected type $typeName"
+}
+
+fun errUnexpectedValue(fieldName: String): String {
+    return "Unexpected value for optional field $fieldName"
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 }

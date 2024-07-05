@@ -663,6 +663,7 @@ export enum HealthCheckStatus {
 export enum InputTypeVariant {
     BITCOIN_ADDRESS = "bitcoinAddress",
     BOLT11 = "bolt11",
+    BOLT12_OFFER = "bolt12Offer",
     NODE_ID = "nodeId",
     URL = "url",
     LN_URL_PAY = "lnUrlPay",
@@ -677,6 +678,9 @@ export type InputType = {
 } | {
     type: InputTypeVariant.BOLT11,
     invoice: LnInvoice
+} | {
+    type: InputTypeVariant.BOLT12_OFFER,
+    offer: LnOffer
 } | {
     type: InputTypeVariant.NODE_ID,
     nodeId: string
@@ -1139,5 +1143,15 @@ export const buyBitcoin = async (req: BuyBitcoinRequest): Promise<BuyBitcoinResp
 
 export const prepareRedeemOnchainFunds = async (req: PrepareRedeemOnchainFundsRequest): Promise<PrepareRedeemOnchainFundsResponse> => {
     const response = await BreezSDK.prepareRedeemOnchainFunds(req)
+    return response
+}
+
+export const createOffer = async (req: CreateOfferRequest): Promise<string> => {
+    const response = await BreezSDK.createOffer(req)
+    return response
+}
+
+export const payOffer = async (req: PayOfferRequest): Promise<SendPaymentResponse> => {
+    const response = await BreezSDK.payOffer(req)
     return response
 }
