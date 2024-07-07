@@ -603,6 +603,7 @@ export enum BreezEventVariant {
     BACKUP_STARTED = "backupStarted",
     BACKUP_SUCCEEDED = "backupSucceeded",
     BACKUP_FAILED = "backupFailed",
+    REVERSE_SWAP_UPDATED = "reverseSwapUpdated",
     SWAP_UPDATED = "swapUpdated"
 }
 
@@ -627,6 +628,9 @@ export type BreezEvent = {
 } | {
     type: BreezEventVariant.BACKUP_FAILED,
     details: BackupFailedData
+} | {
+    type: BreezEventVariant.REVERSE_SWAP_UPDATED,
+    details: ReverseSwapInfo
 } | {
     type: BreezEventVariant.SWAP_UPDATED,
     details: SwapInfo
@@ -1096,6 +1100,10 @@ export const inProgressOnchainPayments = async (): Promise<ReverseSwapInfo[]> =>
 export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
     const response = await BreezSDK.inProgressReverseSwaps()
     return response
+}
+
+export const claimReverseSwap = async (lockupAddress: string): Promise<void> => {
+    await BreezSDK.claimReverseSwap(lockupAddress)
 }
 
 export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountResponse> => {
