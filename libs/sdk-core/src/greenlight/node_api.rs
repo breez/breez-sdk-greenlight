@@ -27,7 +27,7 @@ use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::{Error, Signer};
 use gl_client::{node, utils};
-use lightning::offers::offer::Offer;
+use lightning::offers::offer::{Offer, Quantity};
 use lightning::util::message_signing::verify;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -1827,14 +1827,24 @@ impl NodeAPI for Greenlight {
 
     async fn fetch_invoice(&self, req: FetchInvoiceRequest) -> NodeResult<FetchInvoiceResponse> {
         // Parse the offer locally, to avoid any unnecessary calls to the recipient
-        if let Err(_parse_error) = req.offer.parse::<Offer>() {
+        let Ok(offer) = req.offer.parse::<Offer>() else {
             return Err(NodeError::InvalidOffer("Invalid offer".to_string()));
         };
 
         // Fetch the invoice from the recipient's node
         let mut client = self.get_node_client().await?;
         let response = client
-            .fetch_invoice(Into::<cln::FetchinvoiceRequest>::into(req))
+            .fetch_invoice(cln::FetchinvoiceRequest {
+                offer: req.offer,
+                amount_msat: req.amount_msat.map(|msat| cln::Amount { msat }),
+                timeout: req.timeout,
+                payer_note: req.payer_note,
+                quantity: match offer.supported_quantity() {
+                    Quantity::One => None,
+                    _ => Some(1),
+                },
+                ..Default::default()
+            })
             .await?
             .into_inner();
 
@@ -2430,22 +2440,6 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
             closing_txid: None,
             htlcs: Vec::new(),
         })
-    }
-}
-
-impl From<FetchInvoiceRequest> for gl_client::pb::cln::FetchinvoiceRequest {
-    fn from(request: FetchInvoiceRequest) -> Self {
-        cln::FetchinvoiceRequest {
-            offer: request.offer,
-            amount_msat: request.amount_msat.map(|msat| cln::Amount { msat }),
-            timeout: request.timeout,
-            payer_note: request.payer_note,
-            // Not yet implemented
-            quantity: None,
-            recurrence_counter: None,
-            recurrence_start: None,
-            recurrence_label: None,
-        }
     }
 }
 

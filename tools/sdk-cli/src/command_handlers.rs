@@ -5,12 +5,13 @@ use anyhow::{anyhow, Context, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, ConnectRequest,
-    EventListener, GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest,
-    LnUrlWithdrawRequest, MetadataFilter, PayOnchainRequest, PrepareOnchainPaymentRequest,
-    PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
-    ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
-    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
-    SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, SwapAmountType,
+    CreateOfferRequest, EventListener, GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest,
+    LnUrlWithdrawRequest, MetadataFilter, PayOfferRequest, PayOnchainRequest,
+    PrepareOnchainPaymentRequest, PrepareRedeemOnchainFundsRequest, PrepareRefundRequest,
+    ReceiveOnchainRequest, ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest,
+    SendPaymentRequest, SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest,
+    SwapAmountType,
 };
 use breez_sdk_core::{GreenlightNodeConfig, NodeConfig};
 use once_cell::sync::OnceCell;
@@ -242,14 +243,14 @@ pub(crate) async fn handle_command(
             serde_json::to_string_pretty(&res).map_err(|e| e.into())
         }
         Commands::SendPayment {
-            bolt11,
+            invoice,
             amount_msat,
             label,
             use_trampoline,
         } => {
             let payment = sdk()?
                 .send_payment(SendPaymentRequest {
-                    bolt11,
+                    invoice,
                     amount_msat,
                     label,
                     use_trampoline,
@@ -267,6 +268,39 @@ pub(crate) async fn handle_command(
                     node_id,
                     amount_msat,
                     extra_tlvs: None,
+                    label,
+                })
+                .await?;
+            serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
+        }
+        Commands::CreateOffer {
+            description,
+            amount_msat,
+            absolute_expiry,
+            quantity_max,
+        } => {
+            sdk()?
+                .create_offer(CreateOfferRequest {
+                    description,
+                    amount_msat,
+                    absolute_expiry,
+                    quantity_max,
+                })
+                .await
+        }
+        Commands::PayOffer {
+            offer,
+            amount_msat,
+            timeout,
+            payer_note,
+            label,
+        } => {
+            let response = sdk()?
+                .pay_offer(PayOfferRequest {
+                    offer,
+                    amount_msat,
+                    timeout,
+                    payer_note,
                     label,
                 })
                 .await?;

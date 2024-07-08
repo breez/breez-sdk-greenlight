@@ -42,7 +42,8 @@ pub(crate) enum Commands {
 
     /// [pay] Send a lightning payment
     SendPayment {
-        bolt11: String,
+        /// A bolt11 or bolt12 invoice
+        invoice: String,
 
         #[clap(name = "amount_msat", short = 'a', long = "amt")]
         amount_msat: Option<u64>,
@@ -88,6 +89,39 @@ pub(crate) enum Commands {
 
         /// The expiration of the fee returned
         expiry: Option<u32>,
+    },
+
+    /// [pay] Create a new offer
+    CreateOffer {
+        description: String,
+
+        #[clap(name = "amount_msat", short = 'a', long = "amt")]
+        amount_msat: Option<u64>,
+
+        #[clap(name = "absolute_expiry", short = 'e', long = "expiry")]
+        absolute_expiry: Option<u64>,
+
+        #[clap(name = "quantity_max", short = 'q', long = "quantity")]
+        quantity_max: Option<u64>,
+    },
+
+    /// [pay] Pay an offer
+    PayOffer {
+        offer: String,
+
+        #[clap(name = "amount_msat", short = 'a', long = "amt")]
+        amount_msat: Option<u64>,
+
+        #[clap(name = "timeout", short = 't', long = "timeout")]
+        timeout: Option<f64>,
+
+        /// The note sent with the payment
+        #[clap(name = "payer_note", short = 'n', long = "note")]
+        payer_note: Option<String>,
+
+        /// The external label or identifier of the payment
+        #[clap(name = "label", short = 'l', long = "label")]
+        label: Option<String>,
     },
 
     /// [lnurl] Pay using lnurl pay

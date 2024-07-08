@@ -96,9 +96,9 @@ impl From<SendPaymentError> for LnUrlPayError {
     fn from(value: SendPaymentError) -> Self {
         match value {
             SendPaymentError::AlreadyPaid => Self::AlreadyPaid,
-            SendPaymentError::Generic { err } | SendPaymentError::OfferChanged { err } => {
-                Self::Generic { err }
-            }
+            SendPaymentError::Generic { err }
+            | SendPaymentError::InvalidOffer { err }
+            | SendPaymentError::OfferChanged { err } => Self::Generic { err },
             SendPaymentError::InvalidAmount { err } => Self::InvalidAmount { err },
             SendPaymentError::InvalidInvoice { err } => Self::InvalidInvoice { err },
             SendPaymentError::InvalidNetwork { err } => Self::InvalidNetwork { err },
@@ -471,6 +471,7 @@ impl From<SendPaymentError> for SdkError {
             | SendPaymentError::InvalidAmount { err }
             | SendPaymentError::InvalidInvoice { err }
             | SendPaymentError::InvalidNetwork { err }
+            | SendPaymentError::InvalidOffer { err }
             | SendPaymentError::InvoiceExpired { err }
             | SendPaymentError::PaymentFailed { err }
             | SendPaymentError::PaymentTimeout { err }
@@ -589,6 +590,10 @@ pub enum SendPaymentError {
     /// This error is raised when the lightning invoice is for a different Bitcoin network.
     #[error("Invalid network: {err}")]
     InvalidNetwork { err: String },
+
+    /// This error is raised when the bolt12 offer cannot be parsed.
+    #[error("Invalid offer: {err}")]
+    InvalidOffer { err: String },
 
     /// This error is raised when the lightning invoice has passed it's expiry time.
     #[error("Invoice expired: {err}")]

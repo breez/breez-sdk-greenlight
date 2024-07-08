@@ -44,10 +44,7 @@ use crate::swap_in::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
-    parse_invoice, Config, CreateOfferRequest, CustomMessage, FetchInvoiceRequest,
-    FetchInvoiceResponse, LNInvoice, MaxChannelAmount, NodeCredentials, OpeningFeeParamsMenu,
-    PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint, RouteHintHop, SwapInfo,
+    parse_invoice, BuyBitcoinProvider, Config, CreateOfferRequest, CustomMessage, FetchInvoiceRequest, FetchInvoiceResponse, LNInvoice, MaxChannelAmount, NodeCredentials, OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint, RouteHintHop, SwapInfo
 };
 
 pub const MOCK_REVERSE_SWAP_MIN: u64 = 50_000;

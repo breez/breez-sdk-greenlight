@@ -2221,7 +2221,7 @@ impl BreezServices {
             })
             .await?;
 
-        if let Some(_) = fetch_invoice_response.changes {
+        if fetch_invoice_response.changes.is_some() {
             return Err(SendPaymentError::OfferChanged {
                 err: "Offer changed".to_string(),
             });
