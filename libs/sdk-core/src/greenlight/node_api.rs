@@ -1,5 +1,5 @@
 use std::cmp::{min, Reverse};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::iter::Iterator;
 use std::pin::Pin;
 use std::str::FromStr;
@@ -14,10 +14,10 @@ use gl_client::credentials::{Device, Nobody, TlsConfigProvider};
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
-use gl_client::pb::cln::listpeers_peers_channels::ListpeersPeersChannelsState::*;
+use gl_client::pb::cln::listpeerchannels_channels::ListpeerchannelsChannelsState::*;
 use gl_client::pb::cln::{
     self, Amount, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
-    ListclosedchannelsClosedchannels, ListpeersPeersChannels, PreapproveinvoiceRequest,
+    ListclosedchannelsClosedchannels, ListpeerchannelsChannels, PreapproveinvoiceRequest,
     SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
 use gl_client::pb::scheduler::scheduler_client::SchedulerClient;
@@ -446,8 +446,8 @@ impl Greenlight {
         persister: Arc<SqliteStorage>,
         match_local_balance: bool,
     ) -> NodeResult<(
-        Vec<cln::ListpeersPeersChannels>,
-        Vec<cln::ListpeersPeersChannels>,
+        Vec<cln::ListpeerchannelsChannels>,
+        Vec<cln::ListpeerchannelsChannels>,
         Vec<String>,
         u64,
     )> {
@@ -481,32 +481,31 @@ impl Greenlight {
     async fn fetch_channels_and_balance(
         mut cln_client: node::ClnClient,
     ) -> NodeResult<(
-        Vec<cln::ListpeersPeersChannels>,
-        Vec<cln::ListpeersPeersChannels>,
+        Vec<cln::ListpeerchannelsChannels>,
+        Vec<cln::ListpeerchannelsChannels>,
         Vec<String>,
         u64,
     )> {
-        // list all peers
-        let peers = cln_client
-            .list_peers(cln::ListpeersRequest::default())
+        // list all channels
+        let peerchannels = cln_client
+            .list_peer_channels(cln::ListpeerchannelsRequest::default())
             .await?
             .into_inner();
 
         // filter only connected peers
-        let connected_peers: Vec<String> = peers
-            .peers
+        let connected_peers: Vec<String> = peerchannels
+            .channels
             .iter()
-            .filter(|p| p.connected)
-            .map(|p| hex::encode(p.id.clone()))
+            .filter(|channel| channel.peer_connected())
+            .filter_map(|channel| channel.peer_id.clone())
+            .map(hex::encode)
+            .collect::<HashSet<_>>()
+            .into_iter()
             .collect();
-        let mut all_channels: Vec<cln::ListpeersPeersChannels> = vec![];
-        peers.peers.iter().for_each(|p| {
-            let peer_channels = &mut p.channels.clone();
-            all_channels.append(peer_channels);
-        });
 
         // filter only opened channels
-        let opened_channels: Vec<cln::ListpeersPeersChannels> = all_channels
+        let opened_channels: Vec<cln::ListpeerchannelsChannels> = peerchannels
+            .channels
             .iter()
             .filter(|c| c.state() == ChanneldNormal)
             .cloned()
@@ -519,7 +518,7 @@ impl Greenlight {
             .map(|c| c.spendable_msat)
             .sum::<u64>();
         Ok((
-            all_channels,
+            peerchannels.channels,
             opened_channels,
             connected_peers,
             channels_balance,
@@ -547,7 +546,7 @@ impl Greenlight {
 
     async fn pending_onchain_balance(
         &self,
-        peer_channels: &[cln::ListpeersPeersChannels],
+        peer_channels: &[cln::ListpeerchannelsChannels],
     ) -> Result<u64> {
         let pending_onchain_balance = peer_channels.iter().fold(0, |a, b| match b.state() {
             ChanneldShuttingDown | ClosingdSigexchange | ClosingdComplete | AwaitingUnilateral
@@ -633,7 +632,7 @@ impl Greenlight {
     async fn max_sendable_amount_from_peer(
         &self,
         via_peer_id: Vec<u8>,
-        via_peer_channels: Vec<ListpeersPeersChannels>,
+        via_peer_channels: Vec<ListpeerchannelsChannels>,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
         last_hop_hint: Option<&RouteHintHop>,
@@ -694,7 +693,7 @@ impl Greenlight {
         );
 
         // We fetch the opened channels so can calculate max amount to send for each channel
-        let opened_channels: Vec<cln::ListpeersPeersChannels> = via_peer_channels
+        let opened_channels: Vec<cln::ListpeerchannelsChannels> = via_peer_channels
             .iter()
             .filter(|c| c.state() == ChanneldNormal)
             .cloned()
@@ -1549,17 +1548,26 @@ impl NodeAPI for Greenlight {
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         let mut client = self.get_node_client().await?;
 
-        let peers = client
-            .list_peers(cln::ListpeersRequest::default())
+        let mut peers = HashMap::new();
+        client
+            .list_peer_channels(cln::ListpeerchannelsRequest::default())
             .await?
-            .into_inner();
+            .into_inner()
+            .channels
+            .into_iter()
+            .for_each(|channel| {
+                peers
+                    .entry(channel.peer_id().to_vec())
+                    .or_insert(Vec::new())
+                    .push(channel)
+            });
 
         let mut max_channel_amounts = vec![];
-        for peer in peers.peers {
+        for (peer, channels) in peers {
             let max_amounts_for_peer = self
                 .max_sendable_amount_from_peer(
-                    peer.id,
-                    peer.channels,
+                    peer,
+                    channels,
                     payee_node_id.clone(),
                     max_hops,
                     last_hop_hint,
@@ -2172,18 +2180,9 @@ fn amount_to_msat(amount: &gl_client::pb::greenlight::Amount) -> u64 {
     }
 }
 
-impl From<cln::ListpeersPeers> for Peer {
-    fn from(c: cln::ListpeersPeers) -> Self {
-        Peer {
-            id: c.id,
-            channels: c.channels.into_iter().map(|c| c.into()).collect(),
-        }
-    }
-}
-
 /// Conversion for an open channel
-impl From<cln::ListpeersPeersChannels> for Channel {
-    fn from(c: cln::ListpeersPeersChannels) -> Self {
+impl From<cln::ListpeerchannelsChannels> for Channel {
+    fn from(c: cln::ListpeerchannelsChannels) -> Self {
         let state = match c.state() {
             Openingd | ChanneldAwaitingLockin | DualopendOpenInit | DualopendAwaitingLockin => {
                 ChannelState::PendingOpen
@@ -2212,7 +2211,7 @@ impl From<cln::ListpeersPeersChannels> for Channel {
             htlcs: c
                 .htlcs
                 .into_iter()
-                .map(|c| Htlc::from(c.expiry, c.payment_hash))
+                .map(|c| Htlc::from(c.expiry.unwrap_or(0), c.payment_hash.unwrap_or_default()))
                 .collect(),
         }
     }
@@ -2296,8 +2295,8 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use gl_client::pb::cln::listpeers_peers_channels::{
-        ListpeersPeersChannelsState, ListpeersPeersChannelsState::*,
+    use gl_client::pb::cln::listpeerchannels_channels::{
+        ListpeerchannelsChannelsState, ListpeerchannelsChannelsState::*,
     };
     use gl_client::pb::cln::Amount;
     use gl_client::pb::{self, cln};
@@ -2441,9 +2440,9 @@ mod tests {
         Ok(())
     }
 
-    fn cln_channel(state: &ListpeersPeersChannelsState) -> cln::ListpeersPeersChannels {
-        cln::ListpeersPeersChannels {
-            state: (*state).into(),
+    fn cln_channel(state: &ListpeerchannelsChannelsState) -> cln::ListpeerchannelsChannels {
+        cln::ListpeerchannelsChannels {
+            state: Some((*state).into()),
             scratch_txid: None,
             feerate: None,
             owner: None,
@@ -2458,9 +2457,8 @@ mod tests {
             inflight: vec![],
             close_to: None,
             private: Some(true),
-            opener: 0,
+            opener: Some(0),
             closer: None,
-            features: vec![],
             funding: None,
             to_us_msat: None,
             min_to_us_msat: None,
@@ -2492,6 +2490,12 @@ mod tests {
             out_fulfilled_msat: None,
             htlcs: vec![],
             close_to_addr: None,
+            peer_id: None,
+            peer_connected: None,
+            updates: None,
+            ignore_fee_limits: None,
+            lost_state: None,
+            last_stable_connection: None,
         }
     }
 }

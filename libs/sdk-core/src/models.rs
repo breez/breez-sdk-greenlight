@@ -45,12 +45,6 @@ pub struct CustomMessage {
     pub payload: Vec<u8>,
 }
 
-#[derive(Debug)]
-pub struct Peer {
-    pub id: Vec<u8>,
-    pub channels: Vec<Channel>,
-}
-
 /// Trait covering LSP-related functionality
 #[tonic::async_trait]
 pub trait LspAPI: Send + Sync {
