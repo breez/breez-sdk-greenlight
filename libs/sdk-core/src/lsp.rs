@@ -61,7 +61,7 @@ impl LspInformation {
             min_htlc_msat: lsp_info.min_htlc_msat,
             lsp_pubkey: lsp_info.lsp_pubkey,
             opening_fee_params_list: OpeningFeeParamsMenu::try_from(
-                lsp_info.opening_fee_params_list,
+                lsp_info.opening_fee_params_menu,
             )?,
         };
 
