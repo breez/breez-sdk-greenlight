@@ -657,6 +657,10 @@ impl LspAPI for MockBreezServer {
         }])
     }
 
+    async fn list_used_lsps(&self, _node_pubkey: String) -> SdkResult<Vec<LspInformation>> {
+        Ok(vec![])
+    }
+
     async fn register_payment_notifications(
         &self,
         _lsp_id: String,

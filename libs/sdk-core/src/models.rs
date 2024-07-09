@@ -54,7 +54,10 @@ pub struct Peer {
 /// Trait covering LSP-related functionality
 #[tonic::async_trait]
 pub trait LspAPI: Send + Sync {
+    /// List LSPs available to the given pubkey
     async fn list_lsps(&self, node_pubkey: String) -> SdkResult<Vec<LspInformation>>;
+    /// List all LSPs, active and historical, used by the given pubkey
+    async fn list_used_lsps(&self, node_pubkey: String) -> SdkResult<Vec<LspInformation>>;
     /// Register for webhook callbacks at the given `webhook_url` whenever a new payment is received
     async fn register_payment_notifications(
         &self,

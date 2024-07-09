@@ -5,9 +5,9 @@ use crate::models::{LspAPI, OpeningFeeParams, OpeningFeeParamsMenu};
 use anyhow::{anyhow, Result};
 use prost::Message;
 use sdk_common::grpc::{
-    self, LspListRequest, PaymentInformation, RegisterPaymentNotificationRequest,
-    RegisterPaymentNotificationResponse, RegisterPaymentReply, RegisterPaymentRequest,
-    RemovePaymentNotificationRequest, RemovePaymentNotificationResponse,
+    self, LspFullListRequest, LspListRequest, PaymentInformation,
+    RegisterPaymentNotificationRequest, RegisterPaymentNotificationResponse, RegisterPaymentReply,
+    RegisterPaymentRequest, RemovePaymentNotificationRequest, RemovePaymentNotificationResponse,
     SubscribeNotificationsRequest, UnsubscribeNotificationsRequest,
 };
 use sdk_common::prelude::BreezServer;
@@ -100,6 +100,23 @@ impl LspAPI for BreezServer {
         let mut lsp_list: Vec<LspInformation> = Vec::new();
         for (lsp_id, lsp_info) in response.into_inner().lsps.into_iter() {
             match LspInformation::try_from(&lsp_id, lsp_info) {
+                Ok(lsp) => lsp_list.push(lsp),
+                Err(e) => error!("LSP Information validation failed for LSP {lsp_id}: {e}"),
+            }
+        }
+        lsp_list.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+        Ok(lsp_list)
+    }
+
+    async fn list_used_lsps(&self, pubkey: String) -> SdkResult<Vec<LspInformation>> {
+        let mut client = self.get_channel_opener_client().await?;
+
+        let request = Request::new(LspFullListRequest { pubkey });
+        let response = client.lsp_full_list(request).await?;
+        let mut lsp_list: Vec<LspInformation> = Vec::new();
+        for grpc_lsp_info in response.into_inner().lsps.into_iter() {
+            let lsp_id = grpc_lsp_info.id.clone();
+            match LspInformation::try_from(&lsp_id, grpc_lsp_info) {
                 Ok(lsp) => lsp_list.push(lsp),
                 Err(e) => error!("LSP Information validation failed for LSP {lsp_id}: {e}"),
             }
