@@ -1891,36 +1891,44 @@ impl BreezServices {
 
     /// Registers for lightning payment notifications. When a payment is intercepted by the LSP
     /// to this node, a callback will be triggered to the `webhook_url`.
+    ///
+    /// Note: these notifications are registered for all LSPs used by this node, active and historical.
     async fn register_payment_notifications(&self, webhook_url: String) -> SdkResult<()> {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-        let lsp_info = self.lsp_info().await?;
-        self.lsp_api
-            .register_payment_notifications(
-                lsp_info.id,
-                lsp_info.lsp_pubkey,
-                webhook_url.clone(),
-                sign_response.signature,
-            )
-            .await?;
+        for lsp_info in get_used_lsps(self.persister.clone(), self.lsp_api.clone()).await? {
+            self.lsp_api
+                .register_payment_notifications(
+                    lsp_info.id,
+                    lsp_info.lsp_pubkey,
+                    webhook_url.clone(),
+                    sign_response.signature.clone(),
+                )
+                .await?;
+        }
+
         Ok(())
     }
 
     /// Unregisters lightning payment notifications with the current LSP for the `webhook_url`.
+    ///
+    /// Note: these notifications are unregistered for all LSPs used by this node, active and historical.
     async fn unregister_payment_notifications(&self, webhook_url: String) -> SdkResult<()> {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-        let lsp_info = self.lsp_info().await?;
-        self.lsp_api
-            .unregister_payment_notifications(
-                lsp_info.id,
-                lsp_info.lsp_pubkey,
-                webhook_url.clone(),
-                sign_response.signature,
-            )
-            .await?;
+        for lsp_info in get_used_lsps(self.persister.clone(), self.lsp_api.clone()).await? {
+            self.lsp_api
+                .unregister_payment_notifications(
+                    lsp_info.id,
+                    lsp_info.lsp_pubkey,
+                    webhook_url.clone(),
+                    sign_response.signature.clone(),
+                )
+                .await?;
+        }
+
         Ok(())
     }
 
@@ -2610,6 +2618,18 @@ async fn get_lsp_by_id(
         .iter()
         .find(|&lsp| lsp.id.as_str() == lsp_id)
         .cloned())
+}
+
+/// Convenience method to return all LSPs used by this node, active and historical.
+async fn get_used_lsps(
+    persister: Arc<SqliteStorage>,
+    lsp_api: Arc<dyn LspAPI>,
+) -> SdkResult<Vec<LspInformation>> {
+    let node_pubkey = persister
+        .get_node_state()?
+        .ok_or(SdkError::generic("Node info not found"))?
+        .id;
+    lsp_api.list_used_lsps(node_pubkey).await
 }
 
 #[cfg(test)]
