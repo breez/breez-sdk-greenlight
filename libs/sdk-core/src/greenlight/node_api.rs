@@ -1929,7 +1929,7 @@ impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
             id: hex::encode(invoice.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: invoice.payment_time as i64,
-            amount_msat: amount_to_msat(&invoice.amount.unwrap_or_default()),
+            amount_msat: amount_to_msat(&invoice.received.or(invoice.amount).unwrap_or_default()),
             fee_msat: 0,
             status: PaymentStatus::Complete,
             error: None,
@@ -2033,7 +2033,11 @@ impl TryFrom<cln::ListinvoicesInvoices> for Payment {
             id: hex::encode(invoice.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: invoice.paid_at.map(|i| i as i64).unwrap_or_default(),
-            amount_msat: invoice.amount_msat.map(|a| a.msat).unwrap_or_default(),
+            amount_msat: invoice
+                .amount_received_msat
+                .or(invoice.amount_msat)
+                .map(|a| a.msat)
+                .unwrap_or_default(),
             fee_msat: 0,
             status: PaymentStatus::Complete,
             error: None,
