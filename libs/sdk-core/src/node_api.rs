@@ -182,10 +182,16 @@ pub trait NodeAPI: Send + Sync {
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
     fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
 
-    // Gets the routing hints related to all private channels that the node has.
-    // Also returns a boolean indicating if the node has a public channel or not.
+    /// Gets the routing hints related to all private channels that the node has.
+    /// Also returns a boolean indicating if the node has a public channel or not.
     async fn get_routing_hints(
         &self,
         lsp_info: &LspInformation,
     ) -> NodeResult<(Vec<RouteHint>, bool)>;
+
+    /// Whether or not this node has  an active channel to this LSP
+    async fn has_active_channel_to(
+        &self,
+        lsp_info: &LspInformation,
+    ) -> NodeResult<bool>;
 }

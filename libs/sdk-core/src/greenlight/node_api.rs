@@ -1736,6 +1736,11 @@ impl NodeAPI for Greenlight {
         }
         Ok((hints, has_public_channel))
     }
+
+    async fn has_active_channel_to(&self, lsp_info: &LspInformation) -> NodeResult<bool> {
+        let (hints, has_public_channel) = self.get_routing_hints(lsp_info).await?;
+        Ok(has_public_channel || !hints.is_empty())
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
