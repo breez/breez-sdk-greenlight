@@ -1898,7 +1898,7 @@ impl BreezServices {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-        for lsp_info in get_lsps_with_active_channel(
+        for lsp_info in get_notification_lsps(
             self.persister.clone(),
             self.lsp_api.clone(),
             self.node_api.clone(),
@@ -1926,7 +1926,7 @@ impl BreezServices {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-        for lsp_info in get_lsps_with_active_channel(
+        for lsp_info in get_notification_lsps(
             self.persister.clone(),
             self.lsp_api.clone(),
             self.node_api.clone(),
@@ -2635,8 +2635,9 @@ async fn get_lsp_by_id(
         .cloned())
 }
 
-/// Convenience method to get all LSPs (active and historical) with whom we have an active channel
-async fn get_lsps_with_active_channel(
+/// Convenience method to get all LSPs (active and historical) relevant for registering or
+/// unregistering webhook notifications
+async fn get_notification_lsps(
     persister: Arc<SqliteStorage>,
     lsp_api: Arc<dyn LspAPI>,
     node_api: Arc<dyn NodeAPI>,
@@ -2645,17 +2646,26 @@ async fn get_lsps_with_active_channel(
         .get_node_state()?
         .ok_or(SdkError::generic("Node info not found"))?
         .id;
+    let active_lsp_id = persister
+        .get_lsp_id()?
+        .ok_or(SdkError::generic("No active LSP ID found"))?;
 
-    let used_lsps = lsp_api.list_used_lsps(node_pubkey).await?;
-
-    // Only consider LSPs with whom we have a channel
-    let mut lsps_with_active_channel = vec![];
-    for lsp in used_lsps {
-        if node_api.has_active_channel_to(&lsp).await? {
-            lsps_with_active_channel.push(lsp);
+    let mut notification_lsps = vec![];
+    for lsp in lsp_api.list_used_lsps(node_pubkey).await? {
+        match lsp.id == active_lsp_id {
+            true => {
+                // Always consider the active LSP for notifications
+                notification_lsps.push(lsp);
+            }
+            false => {
+                // Consider only historical LSPs with whom we have an active channel
+                if node_api.has_active_channel_to(&lsp).await? {
+                    notification_lsps.push(lsp);
+                }
+            }
         }
     }
-    Ok(lsps_with_active_channel)
+    Ok(notification_lsps)
 }
 
 #[cfg(test)]
