@@ -506,10 +506,6 @@ impl NodeAPI for MockNodeAPI {
     async fn fetch_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
         Ok(None)
     }
-
-    async fn has_active_channel_to(&self, _lsp_info: &LspInformation) -> NodeResult<bool> {
-        Ok(false)
-    }
 }
 
 impl MockNodeAPI {

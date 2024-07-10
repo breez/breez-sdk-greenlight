@@ -2481,12 +2481,13 @@ impl PaymentReceiver {
         invoice: &str,
         lsp_info: &LspInformation,
     ) -> Result<String, ReceivePaymentError> {
-        ensure_sdk!(
-            self.node_api.has_active_channel_to(lsp_info).await?,
-            ReceivePaymentError::InvoiceNoRoutingHints {
+        info!("Getting routing hints from node");
+        let (mut hints, has_public_channel) = self.node_api.get_routing_hints(lsp_info).await?;
+        if !has_public_channel && hints.is_empty() {
+            return Err(ReceivePaymentError::InvoiceNoRoutingHints {
                 err: "Must have at least one active channel".into(),
-            }
-        );
+            });
+        }
 
         let parsed_invoice = parse_invoice(invoice)?;
 
@@ -2494,8 +2495,6 @@ impl PaymentReceiver {
         info!("Existing routing hints {:?}", parsed_invoice.routing_hints);
 
         // limit the hints to max 3 and extract the lsp one.
-        info!("Getting routing hints from node");
-        let (mut hints, _) = self.node_api.get_routing_hints(lsp_info).await?;
         if let Some(lsp_hint) = Self::limit_and_extract_lsp_hint(&mut hints, lsp_info) {
             if parsed_invoice.contains_hint_for_node(lsp_info.pubkey.as_str()) {
                 return Ok(String::from(invoice));
@@ -2659,7 +2658,9 @@ async fn get_notification_lsps(
             }
             false => {
                 // Consider only historical LSPs with whom we have an active channel
-                if node_api.has_active_channel_to(&lsp).await? {
+                // TODO
+                let has_active_channel_to_lsp = false;
+                if has_active_channel_to_lsp {
                     notification_lsps.push(lsp);
                 }
             }

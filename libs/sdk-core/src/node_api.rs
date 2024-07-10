@@ -188,10 +188,4 @@ pub trait NodeAPI: Send + Sync {
         &self,
         lsp_info: &LspInformation,
     ) -> NodeResult<(Vec<RouteHint>, bool)>;
-
-    /// Whether or not this node has  an active channel to this LSP
-    async fn has_active_channel_to(
-        &self,
-        lsp_info: &LspInformation,
-    ) -> NodeResult<bool>;
 }
