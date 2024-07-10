@@ -44,7 +44,7 @@ use crate::swap_in::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
-    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
+    parse_invoice, Channel, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
     OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint,
     RouteHintHop, SwapInfo,
@@ -505,6 +505,10 @@ impl NodeAPI for MockNodeAPI {
 
     async fn fetch_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
         Ok(None)
+    }
+
+    async fn get_open_peer_channels(&self) -> NodeResult<HashMap<Vec<u8>, Channel>> {
+        Ok(HashMap::new())
     }
 }
 
