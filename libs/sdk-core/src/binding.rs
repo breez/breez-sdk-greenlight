@@ -232,6 +232,7 @@ pub enum _LnUrlPayError {
 #[frb(mirror(LnUrlWithdrawResult))]
 pub enum _LnUrlWithdrawResult {
     Ok { data: LnUrlWithdrawSuccessData },
+    Timeout { data: LnUrlWithdrawSuccessData },
     ErrorStatus { data: LnUrlErrorData },
 }
 
@@ -700,6 +701,17 @@ pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
         get_breez_services()
             .await?
             .in_progress_reverse_swaps()
+            .await
+    })
+    .map_err(anyhow::Error::new::<SdkError>)
+}
+
+/// See [BreezServices::claim_reverse_swap]
+pub fn claim_reverse_swap(lockup_address: String) -> Result<()> {
+    block_on(async {
+        get_breez_services()
+            .await?
+            .claim_reverse_swap(lockup_address)
             .await
     })
     .map_err(anyhow::Error::new::<SdkError>)

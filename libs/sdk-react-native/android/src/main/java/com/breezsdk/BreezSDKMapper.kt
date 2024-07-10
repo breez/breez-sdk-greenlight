@@ -3814,6 +3814,9 @@ fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
     if (type == "backupFailed") {
         return BreezEvent.BackupFailed(breezEvent.getMap("details")?.let { asBackupFailedData(it) }!!)
     }
+    if (type == "reverseSwapUpdated") {
+        return BreezEvent.ReverseSwapUpdated(breezEvent.getMap("details")?.let { asReverseSwapInfo(it) }!!)
+    }
     if (type == "swapUpdated") {
         return BreezEvent.SwapUpdated(breezEvent.getMap("details")?.let { asSwapInfo(it) }!!)
     }
@@ -3850,6 +3853,10 @@ fun readableMapOf(breezEvent: BreezEvent): ReadableMap? {
         }
         is BreezEvent.BackupFailed -> {
             pushToMap(map, "type", "backupFailed")
+            pushToMap(map, "details", readableMapOf(breezEvent.details))
+        }
+        is BreezEvent.ReverseSwapUpdated -> {
+            pushToMap(map, "type", "reverseSwapUpdated")
             pushToMap(map, "details", readableMapOf(breezEvent.details))
         }
         is BreezEvent.SwapUpdated -> {
@@ -4104,6 +4111,9 @@ fun asLnUrlWithdrawResult(lnUrlWithdrawResult: ReadableMap): LnUrlWithdrawResult
     if (type == "ok") {
         return LnUrlWithdrawResult.Ok(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!)
     }
+    if (type == "timeout") {
+        return LnUrlWithdrawResult.Timeout(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!)
+    }
     if (type == "errorStatus") {
         return LnUrlWithdrawResult.ErrorStatus(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
@@ -4115,6 +4125,10 @@ fun readableMapOf(lnUrlWithdrawResult: LnUrlWithdrawResult): ReadableMap? {
     when (lnUrlWithdrawResult) {
         is LnUrlWithdrawResult.Ok -> {
             pushToMap(map, "type", "ok")
+            pushToMap(map, "data", readableMapOf(lnUrlWithdrawResult.data))
+        }
+        is LnUrlWithdrawResult.Timeout -> {
+            pushToMap(map, "type", "timeout")
             pushToMap(map, "data", readableMapOf(lnUrlWithdrawResult.data))
         }
         is LnUrlWithdrawResult.ErrorStatus -> {
