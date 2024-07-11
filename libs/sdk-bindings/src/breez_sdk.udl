@@ -293,6 +293,7 @@ dictionary MessageSuccessActionData {
 dictionary UrlSuccessActionData {
     string description;
     string url;
+    boolean matches_callback_domain;
 };
 
 [Enum]

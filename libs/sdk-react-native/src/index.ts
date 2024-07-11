@@ -579,6 +579,7 @@ export interface UnspentTransactionOutput {
 export interface UrlSuccessActionData {
     description: string
     url: string
+    matchesCallbackDomain: boolean
 }
 
 export enum AesSuccessActionDataResultVariant {

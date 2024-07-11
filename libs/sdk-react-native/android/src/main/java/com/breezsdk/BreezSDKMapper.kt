@@ -3717,6 +3717,7 @@ fun asUrlSuccessActionData(urlSuccessActionData: ReadableMap): UrlSuccessActionD
             arrayOf(
                 "description",
                 "url",
+                "matchesCallbackDomain",
             ),
         )
     ) {
@@ -3724,9 +3725,11 @@ fun asUrlSuccessActionData(urlSuccessActionData: ReadableMap): UrlSuccessActionD
     }
     val description = urlSuccessActionData.getString("description")!!
     val url = urlSuccessActionData.getString("url")!!
+    val matchesCallbackDomain = urlSuccessActionData.getBoolean("matchesCallbackDomain")
     return UrlSuccessActionData(
         description,
         url,
+        matchesCallbackDomain,
     )
 }
 
@@ -3734,6 +3737,7 @@ fun readableMapOf(urlSuccessActionData: UrlSuccessActionData): ReadableMap =
     readableMapOf(
         "description" to urlSuccessActionData.description,
         "url" to urlSuccessActionData.url,
+        "matchesCallbackDomain" to urlSuccessActionData.matchesCallbackDomain,
     )
 
 fun asUrlSuccessActionDataList(arr: ReadableArray): List<UrlSuccessActionData> {
