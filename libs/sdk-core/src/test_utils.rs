@@ -703,7 +703,11 @@ impl FiatAPI for MockBreezServer {
 
 #[tonic::async_trait]
 impl MoonPayApi for MockBreezServer {
-    async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String> {
+    async fn buy_bitcoin_url(
+        &self,
+        swap_info: &SwapInfo,
+        _redirect_url: Option<String>,
+    ) -> Result<String> {
         Ok(format!(
             "https://mock.moonpay?wa={}&ma={}",
             swap_info.bitcoin_address.as_str(),

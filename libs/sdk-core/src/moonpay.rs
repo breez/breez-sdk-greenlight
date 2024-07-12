@@ -28,7 +28,11 @@ pub(crate) fn moonpay_config() -> MoonPayConfig {
     }
 }
 
-async fn create_moonpay_url(wallet_address: &str, max_amount: &str) -> Result<Url> {
+async fn create_moonpay_url(
+    wallet_address: &str,
+    max_amount: &str,
+    redirect_url: Option<String>,
+) -> Result<Url> {
     let config = moonpay_config();
     let url = Url::parse_with_params(
         &config.base_url,
@@ -36,7 +40,7 @@ async fn create_moonpay_url(wallet_address: &str, max_amount: &str) -> Result<Ur
             ("apiKey", &config.api_key),
             ("currencyCode", &config.currency_code),
             ("colorCode", &config.color_code),
-            ("redirectURL", &config.redirect_url),
+            ("redirectURL", &redirect_url.unwrap_or(config.redirect_url)),
             ("enabledPaymentMethods", &config.enabled_payment_methods),
             ("walletAddress", &wallet_address.to_string()),
             ("maxQuoteCurrencyAmount", &max_amount.to_string()),
@@ -47,16 +51,25 @@ async fn create_moonpay_url(wallet_address: &str, max_amount: &str) -> Result<Ur
 
 #[tonic::async_trait]
 pub(crate) trait MoonPayApi: Send + Sync {
-    async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String>;
+    async fn buy_bitcoin_url(
+        &self,
+        swap_info: &SwapInfo,
+        redirect_url: Option<String>,
+    ) -> Result<String>;
 }
 
 #[tonic::async_trait]
 impl MoonPayApi for BreezServer {
-    async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String> {
+    async fn buy_bitcoin_url(
+        &self,
+        swap_info: &SwapInfo,
+        redirect_url: Option<String>,
+    ) -> Result<String> {
         let config = moonpay_config();
         let url = create_moonpay_url(
             swap_info.bitcoin_address.as_str(),
             format!("{:.8}", swap_info.max_allowed_deposit as f64 / 100000000.0).as_str(),
+            redirect_url,
         )
         .await?;
         let mut signer = self.get_signer_client().await;
@@ -84,7 +97,7 @@ pub(crate) mod tests {
         let max_amount = "a max amount";
         let config = moonpay_config();
 
-        let url = create_moonpay_url(wallet_address, max_amount).await?;
+        let url = create_moonpay_url(wallet_address, max_amount, None).await?;
 
         let query_pairs = url.query_pairs().into_owned().collect::<HashMap<_, _>>();
         assert_eq!(url.host_str(), Some("buy.moonpay.io"));
@@ -93,6 +106,38 @@ pub(crate) mod tests {
         assert_eq!(query_pairs.get("currencyCode"), Some(&config.currency_code));
         assert_eq!(query_pairs.get("colorCode"), Some(&config.color_code));
         assert_eq!(query_pairs.get("redirectURL"), Some(&config.redirect_url));
+        assert_eq!(
+            query_pairs.get("enabledPaymentMethods"),
+            Some(&config.enabled_payment_methods),
+        );
+        assert_eq!(
+            query_pairs.get("walletAddress"),
+            Some(&String::from(wallet_address))
+        );
+        assert_eq!(
+            query_pairs.get("maxQuoteCurrencyAmount"),
+            Some(&String::from(max_amount)),
+        );
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_sign_moonpay_url_with_redirect() -> Result<(), Box<dyn std::error::Error>> {
+        let wallet_address = "a wallet address";
+        let max_amount = "a max amount";
+        let redirect_url = "https://test.moonpay.url/receipt".to_string();
+        let config = moonpay_config();
+
+        let url =
+            create_moonpay_url(wallet_address, max_amount, Some(redirect_url.clone())).await?;
+
+        let query_pairs = url.query_pairs().into_owned().collect::<HashMap<_, _>>();
+        assert_eq!(url.host_str(), Some("buy.moonpay.io"));
+        assert_eq!(url.path(), "/");
+        assert_eq!(query_pairs.get("apiKey"), Some(&config.api_key));
+        assert_eq!(query_pairs.get("currencyCode"), Some(&config.currency_code));
+        assert_eq!(query_pairs.get("colorCode"), Some(&config.color_code));
+        assert_eq!(query_pairs.get("redirectURL"), Some(&redirect_url));
         assert_eq!(
             query_pairs.get("enabledPaymentMethods"),
             Some(&config.enabled_payment_methods),

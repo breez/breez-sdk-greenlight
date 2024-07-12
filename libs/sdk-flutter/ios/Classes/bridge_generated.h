@@ -241,6 +241,7 @@ typedef struct wire_ReceiveOnchainRequest {
 typedef struct wire_BuyBitcoinRequest {
   int32_t provider;
   struct wire_OpeningFeeParams *opening_fee_params;
+  struct wire_uint_8_list *redirect_url;
 } wire_BuyBitcoinRequest;
 
 typedef struct wire_RedeemOnchainFundsRequest {

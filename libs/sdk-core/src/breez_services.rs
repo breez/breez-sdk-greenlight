@@ -1349,7 +1349,11 @@ impl BreezServices {
             })
             .await?;
         let url = match req.provider {
-            Moonpay => self.moonpay_api.buy_bitcoin_url(&swap_info).await?,
+            Moonpay => {
+                self.moonpay_api
+                    .buy_bitcoin_url(&swap_info, req.redirect_url)
+                    .await?
+            }
         };
 
         Ok(BuyBitcoinResponse {
@@ -3094,6 +3098,7 @@ pub(crate) mod tests {
             .buy_bitcoin(BuyBitcoinRequest {
                 provider: BuyBitcoinProvider::Moonpay,
                 opening_fee_params: None,
+                redirect_url: None,
             })
             .await?
             .url;

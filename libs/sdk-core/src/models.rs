@@ -949,6 +949,11 @@ pub struct ReceiveOnchainRequest {
 pub struct BuyBitcoinRequest {
     pub provider: BuyBitcoinProvider,
     pub opening_fee_params: Option<OpeningFeeParams>,
+
+    /// The optional URL to redirect to after completing the buy.
+    ///
+    /// See <https://dev.moonpay.com/docs/on-ramp-configure-user-journey-params>
+    pub redirect_url: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
