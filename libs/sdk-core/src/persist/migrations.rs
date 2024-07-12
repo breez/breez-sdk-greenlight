@@ -432,7 +432,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         ALTER TABLE channels ADD COLUMN local_balance_msat INTEGER;
         UPDATE channels SET local_balance_msat = spendable_msat;
        ",
-       "DELETE FROM cached_items WHERE key = 'gl_credentials'"
+       "DELETE FROM cached_items WHERE key = 'gl_credentials'",
+       "DELETE FROM cached_items WHERE key = 'last_sync_time'"
     ]
 }
 
