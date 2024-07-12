@@ -191,6 +191,7 @@ export interface LnUrlPayErrorData {
 export interface LnUrlPayRequest {
     data: LnUrlPayRequestData
     amountMsat: number
+    useTrampoline: boolean
     comment?: string
     paymentLabel?: string
     validateSuccessActionUrl?: boolean
@@ -498,6 +499,7 @@ export interface SendOnchainResponse {
 
 export interface SendPaymentRequest {
     bolt11: string
+    useTrampoline: boolean
     amountMsat?: number
     label?: string
 }

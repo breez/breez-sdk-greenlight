@@ -862,6 +862,7 @@ class LnUrlPayErrorData {
 class LnUrlPayRequest {
   final LnUrlPayRequestData data;
   final int amountMsat;
+  final bool useTrampoline;
   final String? comment;
   final String? paymentLabel;
   final bool? validateSuccessActionUrl;
@@ -869,6 +870,7 @@ class LnUrlPayRequest {
   const LnUrlPayRequest({
     required this.data,
     required this.amountMsat,
+    required this.useTrampoline,
     this.comment,
     this.paymentLabel,
     this.validateSuccessActionUrl,
@@ -1704,6 +1706,11 @@ class SendPaymentRequest {
   /// The bolt11 invoice
   final String bolt11;
 
+  /// Trampoline payments outsource pathfinding to the LSP. Trampoline payments can improve
+  /// payment performance, but are generally more expensive in terms of fees and they
+  /// compromise on privacy.
+  final bool useTrampoline;
+
   /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
   final int? amountMsat;
 
@@ -1712,6 +1719,7 @@ class SendPaymentRequest {
 
   const SendPaymentRequest({
     required this.bolt11,
+    required this.useTrampoline,
     this.amountMsat,
     this.label,
   });
@@ -4840,6 +4848,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_ln_url_pay_request(LnUrlPayRequest apiObj, wire_LnUrlPayRequest wireObj) {
     _api_fill_to_wire_ln_url_pay_request_data(apiObj.data, wireObj.data);
     wireObj.amount_msat = api2wire_u64(apiObj.amountMsat);
+    wireObj.use_trampoline = api2wire_bool(apiObj.useTrampoline);
     wireObj.comment = api2wire_opt_String(apiObj.comment);
     wireObj.payment_label = api2wire_opt_String(apiObj.paymentLabel);
     wireObj.validate_success_action_url = api2wire_opt_box_autoadd_bool(apiObj.validateSuccessActionUrl);
@@ -4999,6 +5008,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
   void _api_fill_to_wire_send_payment_request(SendPaymentRequest apiObj, wire_SendPaymentRequest wireObj) {
     wireObj.bolt11 = api2wire_String(apiObj.bolt11);
+    wireObj.use_trampoline = api2wire_bool(apiObj.useTrampoline);
     wireObj.amount_msat = api2wire_opt_box_autoadd_u64(apiObj.amountMsat);
     wireObj.label = api2wire_opt_String(apiObj.label);
   }
@@ -6576,6 +6586,9 @@ final class wire_ListPaymentsRequest extends ffi.Struct {
 final class wire_SendPaymentRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> bolt11;
 
+  @ffi.Bool()
+  external bool use_trampoline;
+
   external ffi.Pointer<ffi.Uint64> amount_msat;
 
   external ffi.Pointer<wire_uint_8_list> label;
@@ -6670,6 +6683,9 @@ final class wire_LnUrlPayRequest extends ffi.Struct {
 
   @ffi.Uint64()
   external int amount_msat;
+
+  @ffi.Bool()
+  external bool use_trampoline;
 
   external ffi.Pointer<wire_uint_8_list> comment;
 

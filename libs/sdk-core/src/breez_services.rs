@@ -365,6 +365,7 @@ impl BreezServices {
                 let pay_req = SendPaymentRequest {
                     bolt11: cb.pr.clone(),
                     amount_msat: None,
+                    use_trampoline: req.use_trampoline,
                     label: req.payment_label,
                 };
                 let invoice = parse_invoice(cb.pr.as_str())?;

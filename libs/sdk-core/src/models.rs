@@ -847,6 +847,10 @@ pub struct ReceivePaymentResponse {
 pub struct SendPaymentRequest {
     /// The bolt11 invoice
     pub bolt11: String,
+    /// Trampoline payments outsource pathfinding to the LSP. Trampoline payments can improve
+    /// payment performance, but are generally more expensive in terms of fees and they
+    /// compromise on privacy.
+    pub use_trampoline: bool,
     /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
     pub amount_msat: Option<u64>,
     /// The external label or identifier of the [Payment]
