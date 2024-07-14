@@ -225,14 +225,14 @@ pub(crate) fn get_utxos(
     Ok(address_utxos)
 }
 
-/// Get the total amount of satoshis that have been sent to the given onchain address
+/// Get the total count of transactions that have been sent to the given onchain address
 pub(crate) fn get_total_incoming_txs(address: String, transactions: Vec<OnchainTx>) -> u64 {
     let mut total_incoming_txs = 0;
     for tx in transactions.iter() {
         if tx.status.confirmed {
             for vout in tx.vout.iter() {
                 if vout.scriptpubkey_address == address {
-                    total_incoming_txs += vout.value;
+                    total_incoming_txs += 1;
                 }
             }
         }
