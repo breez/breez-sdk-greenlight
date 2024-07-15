@@ -1130,19 +1130,19 @@ class NodeState {
 }
 
 class OnchainPaymentLimitsResponse {
-  /// Minimum amount that can be sent. This value is influenced by
-  /// - what can be sent given the available channels and balance
-  /// - the lower limit of what the reverse swap service accepts as a send amount
+  /// Minimum amount the reverse swap service accepts as a send amount
   final int minSat;
 
-  /// Maximum amount that can be sent. This value is influenced by
-  /// - what can be sent given the available channels and balance
-  /// - the upper limit of what the reverse swap service accepts as a send amount
+  /// Maximum amount the reverse swap service accepts as a send amount
   final int maxSat;
+
+  /// Maximum amount this node can send with the current channels and the current local balance
+  final int maxPayableSat;
 
   const OnchainPaymentLimitsResponse({
     required this.minSat,
     required this.maxSat,
+    required this.maxPayableSat,
   });
 }
 
@@ -3760,10 +3760,11 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   OnchainPaymentLimitsResponse _wire2api_onchain_payment_limits_response(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return OnchainPaymentLimitsResponse(
       minSat: _wire2api_u64(arr[0]),
       maxSat: _wire2api_u64(arr[1]),
+      maxPayableSat: _wire2api_u64(arr[2]),
     );
   }
 

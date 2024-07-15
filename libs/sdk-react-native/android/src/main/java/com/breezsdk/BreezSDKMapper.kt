@@ -1807,6 +1807,7 @@ fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): O
             arrayOf(
                 "minSat",
                 "maxSat",
+                "maxPayableSat",
             ),
         )
     ) {
@@ -1814,9 +1815,11 @@ fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): O
     }
     val minSat = onchainPaymentLimitsResponse.getDouble("minSat").toULong()
     val maxSat = onchainPaymentLimitsResponse.getDouble("maxSat").toULong()
+    val maxPayableSat = onchainPaymentLimitsResponse.getDouble("maxPayableSat").toULong()
     return OnchainPaymentLimitsResponse(
         minSat,
         maxSat,
+        maxPayableSat,
     )
 }
 
@@ -1824,6 +1827,7 @@ fun readableMapOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse): R
     readableMapOf(
         "minSat" to onchainPaymentLimitsResponse.minSat,
         "maxSat" to onchainPaymentLimitsResponse.maxSat,
+        "maxPayableSat" to onchainPaymentLimitsResponse.maxPayableSat,
     )
 
 fun asOnchainPaymentLimitsResponseList(arr: ReadableArray): List<OnchainPaymentLimitsResponse> {
