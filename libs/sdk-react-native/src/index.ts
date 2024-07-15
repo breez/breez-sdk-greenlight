@@ -192,6 +192,7 @@ export interface LnUrlPayRequest {
     amountMsat: number
     comment?: string
     paymentLabel?: string
+    validateSuccessActionUrl?: boolean
 }
 
 export interface LnUrlPayRequestData {

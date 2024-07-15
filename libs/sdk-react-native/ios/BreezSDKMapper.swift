@@ -1326,12 +1326,20 @@ enum BreezSDKMapper {
             }
             paymentLabel = paymentLabelTmp
         }
+        var validateSuccessActionUrl: Bool?
+        if hasNonNilKey(data: lnUrlPayRequest, key: "validateSuccessActionUrl") {
+            guard let validateSuccessActionUrlTmp = lnUrlPayRequest["validateSuccessActionUrl"] as? Bool else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "validateSuccessActionUrl"))
+            }
+            validateSuccessActionUrl = validateSuccessActionUrlTmp
+        }
 
         return LnUrlPayRequest(
             data: data,
             amountMsat: amountMsat,
             comment: comment,
-            paymentLabel: paymentLabel
+            paymentLabel: paymentLabel,
+            validateSuccessActionUrl: validateSuccessActionUrl
         )
     }
 
@@ -1341,6 +1349,7 @@ enum BreezSDKMapper {
             "amountMsat": lnUrlPayRequest.amountMsat,
             "comment": lnUrlPayRequest.comment == nil ? nil : lnUrlPayRequest.comment,
             "paymentLabel": lnUrlPayRequest.paymentLabel == nil ? nil : lnUrlPayRequest.paymentLabel,
+            "validateSuccessActionUrl": lnUrlPayRequest.validateSuccessActionUrl == nil ? nil : lnUrlPayRequest.validateSuccessActionUrl,
         ]
     }
 

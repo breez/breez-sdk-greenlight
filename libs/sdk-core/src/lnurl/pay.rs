@@ -195,6 +195,7 @@ pub(crate) mod tests {
     /// Mock an LNURL-pay endpoint that responds with a Success Action of type URL
     fn mock_lnurl_pay_callback_endpoint_url_success_action(
         callback_params: LnurlPayCallbackParams,
+        success_action_url: Option<&str>,
     ) -> Result<Mock> {
         let LnurlPayCallbackParams {
             pay_req,
@@ -215,7 +216,7 @@ pub(crate) mod tests {
     "successAction": {
         "tag":"url",
         "description":"test description",
-        "url":"http://localhost:8080/test-url"
+        "url":"success-action-url"
     }
 }
         "#
@@ -223,6 +224,10 @@ pub(crate) mod tests {
         .replace(
             "token-invoice",
             &pr.unwrap_or_else(|| "token-invoice".to_string()),
+        )
+        .replace(
+            "success-action-url",
+            success_action_url.unwrap_or("http://localhost:8080/test-url"),
         );
 
         let response_body = match error {
@@ -399,6 +404,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await?
         {
@@ -443,6 +449,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await;
         // An unsupported Success Action results in an error
@@ -473,6 +480,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await?
         {
@@ -506,6 +514,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await?
         {
@@ -554,6 +563,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await
             .is_err());
@@ -584,6 +594,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await;
         assert!(matches!(res, Ok(LnUrlPayResult::EndpointError { data: _ })));
@@ -606,13 +617,16 @@ pub(crate) mod tests {
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
-        let _m = mock_lnurl_pay_callback_endpoint_url_success_action(LnurlPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: None,
-            pr: Some(inv.to_string()),
-            comment: comment.clone(),
-        })?;
+        let _m = mock_lnurl_pay_callback_endpoint_url_success_action(
+            LnurlPayCallbackParams {
+                pay_req: &pay_req,
+                user_amount_msat,
+                error: None,
+                pr: Some(inv.to_string()),
+                comment: comment.clone(),
+            },
+            None,
+        )?;
 
         let mock_breez_services = crate::breez_services::tests::breez_services().await?;
         match mock_breez_services
@@ -621,6 +635,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await?
         {
@@ -632,6 +647,97 @@ pub(crate) mod tests {
                     },
             } => {
                 if url.url == "http://localhost:8080/test-url"
+                    && url.description == "test description"
+                {
+                    Ok(())
+                } else {
+                    Err(anyhow!("Unexpected success action content"))
+                }
+            }
+            LnUrlPayResult::EndpointSuccess {
+                data:
+                    LnUrlPaySuccessData {
+                        success_action: None,
+                        ..
+                    },
+            } => Err(anyhow!(
+                "Expected success action in callback, but none provided"
+            )),
+            _ => Err(anyhow!("Unexpected success action type")),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_lnurl_pay_url_success_action_validate_url_invalid() -> Result<()> {
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
+        let temp_desc = pay_req.metadata_str.clone();
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
+        let _m = mock_lnurl_pay_callback_endpoint_url_success_action(
+            LnurlPayCallbackParams {
+                pay_req: &pay_req,
+                user_amount_msat,
+                error: None,
+                pr: Some(inv.to_string()),
+                comment: comment.clone(),
+            },
+            Some("http://different.localhost:8080/test-url"),
+        )?;
+
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let r = mock_breez_services
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+                payment_label: None,
+                validate_success_action_url: Some(true),
+            })
+            .await;
+        // An invalid Success Action URL results in an error
+        assert!(r.is_err());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_lnurl_pay_url_success_action_validate_url_valid() -> Result<()> {
+        let comment = rand_string(COMMENT_LENGTH as usize);
+        let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
+        let temp_desc = pay_req.metadata_str.clone();
+        let inv = rand_invoice_with_description_hash(temp_desc)?;
+        let user_amount_msat = inv.amount_milli_satoshis().unwrap();
+        let _m = mock_lnurl_pay_callback_endpoint_url_success_action(
+            LnurlPayCallbackParams {
+                pay_req: &pay_req,
+                user_amount_msat,
+                error: None,
+                pr: Some(inv.to_string()),
+                comment: comment.clone(),
+            },
+            Some("http://different.localhost:8080/test-url"),
+        )?;
+
+        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        match mock_breez_services
+            .lnurl_pay(LnUrlPayRequest {
+                data: pay_req,
+                amount_msat: user_amount_msat,
+                comment: Some(comment),
+                payment_label: None,
+                validate_success_action_url: Some(false),
+            })
+            .await?
+        {
+            LnUrlPayResult::EndpointSuccess {
+                data:
+                    LnUrlPaySuccessData {
+                        success_action: Some(SuccessActionProcessed::Url { data: url }),
+                        ..
+                    },
+            } => {
+                if url.url == "http://different.localhost:8080/test-url"
                     && url.description == "test description"
                 {
                     Ok(())
@@ -707,6 +813,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await?
         {
@@ -791,6 +898,7 @@ pub(crate) mod tests {
                 amount_msat: user_amount_msat,
                 comment: Some(comment),
                 payment_label: None,
+                validate_success_action_url: None,
             })
             .await?
         {

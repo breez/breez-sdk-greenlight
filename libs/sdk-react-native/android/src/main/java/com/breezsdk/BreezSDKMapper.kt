@@ -1156,11 +1156,22 @@ fun asLnUrlPayRequest(lnUrlPayRequest: ReadableMap): LnUrlPayRequest? {
     val amountMsat = lnUrlPayRequest.getDouble("amountMsat").toULong()
     val comment = if (hasNonNullKey(lnUrlPayRequest, "comment")) lnUrlPayRequest.getString("comment") else null
     val paymentLabel = if (hasNonNullKey(lnUrlPayRequest, "paymentLabel")) lnUrlPayRequest.getString("paymentLabel") else null
+    val validateSuccessActionUrl =
+        if (hasNonNullKey(
+                lnUrlPayRequest,
+                "validateSuccessActionUrl",
+            )
+        ) {
+            lnUrlPayRequest.getBoolean("validateSuccessActionUrl")
+        } else {
+            null
+        }
     return LnUrlPayRequest(
         data,
         amountMsat,
         comment,
         paymentLabel,
+        validateSuccessActionUrl,
     )
 }
 
@@ -1170,6 +1181,7 @@ fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap =
         "amountMsat" to lnUrlPayRequest.amountMsat,
         "comment" to lnUrlPayRequest.comment,
         "paymentLabel" to lnUrlPayRequest.paymentLabel,
+        "validateSuccessActionUrl" to lnUrlPayRequest.validateSuccessActionUrl,
     )
 
 fun asLnUrlPayRequestList(arr: ReadableArray): List<LnUrlPayRequest> {

@@ -869,6 +869,7 @@ impl Wire2Api<LnUrlPayRequest> for wire_LnUrlPayRequest {
             amount_msat: self.amount_msat.wire2api(),
             comment: self.comment.wire2api(),
             payment_label: self.payment_label.wire2api(),
+            validate_success_action_url: self.validate_success_action_url.wire2api(),
         }
     }
 }
@@ -1237,6 +1238,7 @@ pub struct wire_LnUrlPayRequest {
     amount_msat: u64,
     comment: *mut wire_uint_8_list,
     payment_label: *mut wire_uint_8_list,
+    validate_success_action_url: *mut bool,
 }
 
 #[repr(C)]
@@ -1644,6 +1646,7 @@ impl NewWithNullPtr for wire_LnUrlPayRequest {
             amount_msat: Default::default(),
             comment: core::ptr::null_mut(),
             payment_label: core::ptr::null_mut(),
+            validate_success_action_url: core::ptr::null_mut(),
         }
     }
 }

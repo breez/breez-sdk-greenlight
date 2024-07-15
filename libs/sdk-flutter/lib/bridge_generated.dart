@@ -858,12 +858,14 @@ class LnUrlPayRequest {
   final int amountMsat;
   final String? comment;
   final String? paymentLabel;
+  final bool? validateSuccessActionUrl;
 
   const LnUrlPayRequest({
     required this.data,
     required this.amountMsat,
     this.comment,
     this.paymentLabel,
+    this.validateSuccessActionUrl,
   });
 }
 
@@ -4825,6 +4827,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.amount_msat = api2wire_u64(apiObj.amountMsat);
     wireObj.comment = api2wire_opt_String(apiObj.comment);
     wireObj.payment_label = api2wire_opt_String(apiObj.paymentLabel);
+    wireObj.validate_success_action_url = api2wire_opt_box_autoadd_bool(apiObj.validateSuccessActionUrl);
   }
 
   void _api_fill_to_wire_ln_url_pay_request_data(
@@ -6656,6 +6659,8 @@ final class wire_LnUrlPayRequest extends ffi.Struct {
   external ffi.Pointer<wire_uint_8_list> comment;
 
   external ffi.Pointer<wire_uint_8_list> payment_label;
+
+  external ffi.Pointer<ffi.Bool> validate_success_action_url;
 }
 
 final class wire_LnUrlWithdrawRequestData extends ffi.Struct {

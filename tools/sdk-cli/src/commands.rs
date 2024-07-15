@@ -93,6 +93,10 @@ pub(crate) enum Commands {
         /// The external label or identifier of the payment
         #[clap(name = "label", short = 'l', long = "label")]
         label: Option<String>,
+
+        /// Validates the success action URL
+        #[clap(name = "validate_success_url", short = 'v', long = "validate")]
+        validate_success_url: Option<bool>,
     },
 
     /// [lnurl] Withdraw using lnurl withdraw

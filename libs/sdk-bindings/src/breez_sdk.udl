@@ -626,6 +626,7 @@ dictionary LnUrlPayRequest {
     u64 amount_msat;
     string? comment = null;
     string? payment_label = null;
+    boolean? validate_success_action_url = null;
 };
 
 dictionary LnUrlPayRequestData {
