@@ -1136,13 +1136,13 @@ class OnchainPaymentLimitsResponse {
   /// Maximum amount the reverse swap service accepts as a send amount
   final int maxSat;
 
-  /// Maximum amount this node can send without requiring a new channel open
-  final int maxSatWithCurrentChannels;
+  /// Maximum amount this node can send with the current channels and the current local balance
+  final int maxPayableSat;
 
   const OnchainPaymentLimitsResponse({
     required this.minSat,
     required this.maxSat,
-    required this.maxSatWithCurrentChannels,
+    required this.maxPayableSat,
   });
 }
 
@@ -3764,7 +3764,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return OnchainPaymentLimitsResponse(
       minSat: _wire2api_u64(arr[0]),
       maxSat: _wire2api_u64(arr[1]),
-      maxSatWithCurrentChannels: _wire2api_u64(arr[2]),
+      maxPayableSat: _wire2api_u64(arr[2]),
     );
   }
 

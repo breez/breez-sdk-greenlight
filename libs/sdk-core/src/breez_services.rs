@@ -937,7 +937,7 @@ impl BreezServices {
         Ok(OnchainPaymentLimitsResponse {
             min_sat: fee_info.min,
             max_sat: fee_info.max,
-            max_sat_with_current_channels: max_amt_current_channels.total_sat,
+            max_payable_sat: max_amt_current_channels.total_sat,
         })
     }
 

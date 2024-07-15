@@ -295,7 +295,7 @@ export interface NodeState {
 export interface OnchainPaymentLimitsResponse {
     minSat: number
     maxSat: number
-    maxSatWithCurrentChannels: number
+    maxPayableSat: number
 }
 
 export interface OpenChannelFeeRequest {

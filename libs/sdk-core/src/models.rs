@@ -1001,8 +1001,8 @@ pub struct OnchainPaymentLimitsResponse {
     pub min_sat: u64,
     /// Maximum amount the reverse swap service accepts as a send amount
     pub max_sat: u64,
-    /// Maximum amount this node can send without requiring a new channel open
-    pub max_sat_with_current_channels: u64,
+    /// Maximum amount this node can send with the current channels and the current local balance
+    pub max_payable_sat: u64,
 }
 
 /// Contains fields describing the reverse swap parameters (see [ReverseSwapPairInfo]), as well as
