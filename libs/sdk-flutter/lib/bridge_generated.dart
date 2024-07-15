@@ -1837,7 +1837,7 @@ class SwapInfo {
   /// Amount of millisatoshis claimed from sent funds and paid for via bolt11 invoice.
   final int paidMsat;
 
-  /// Total amount of transactions sent to the swap address.
+  /// Total count of transactions sent to the swap address.
   final int totalIncomingTxs;
 
   /// Confirmed onchain sats to be claim with an bolt11 invoice or refunded if swap fails.
