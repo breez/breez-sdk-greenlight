@@ -192,6 +192,7 @@ export interface LnUrlPayRequest {
     amountMsat: number
     comment?: string
     paymentLabel?: string
+    validateSuccessActionUrl?: boolean
 }
 
 export interface LnUrlPayRequestData {
@@ -580,6 +581,7 @@ export interface UnspentTransactionOutput {
 export interface UrlSuccessActionData {
     description: string
     url: string
+    matchesCallbackDomain: boolean
 }
 
 export enum AesSuccessActionDataResultVariant {

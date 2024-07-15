@@ -466,7 +466,11 @@ pub(crate) async fn handle_command(
             let res = sdk()?.check_message(req).await?;
             Ok(format!("Message was signed by node: {}", res.is_valid))
         }
-        Commands::LnurlPay { lnurl, label } => match parse(&lnurl).await? {
+        Commands::LnurlPay {
+            lnurl,
+            label,
+            validate_success_url,
+        } => match parse(&lnurl).await? {
             LnUrlPay { data: pd } => {
                 let prompt = format!(
                     "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
@@ -480,6 +484,7 @@ pub(crate) async fn handle_command(
                         amount_msat: amount_msat.parse::<u64>()?,
                         comment: None,
                         payment_label: label,
+                        validate_success_action_url: validate_success_url,
                     })
                     .await?;
                 //show_results(pay_res);

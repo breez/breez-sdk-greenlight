@@ -125,6 +125,7 @@ pub struct _LnUrlPayRequest {
     pub amount_msat: u64,
     pub comment: Option<String>,
     pub payment_label: Option<String>,
+    pub validate_success_action_url: Option<bool>,
 }
 
 #[frb(mirror(LnUrlPayRequestData))]

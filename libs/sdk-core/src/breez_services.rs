@@ -338,6 +338,7 @@ impl BreezServices {
             &req.comment,
             &req.data,
             self.config.network,
+            req.validate_success_action_url,
         )
         .await?
         {

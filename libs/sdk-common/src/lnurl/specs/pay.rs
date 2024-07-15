@@ -14,6 +14,7 @@ pub async fn validate_lnurl_pay(
     comment: &Option<String>,
     req_data: &LnUrlPayRequestData,
     network: Network,
+    validate_success_action_url: Option<bool>,
 ) -> LnUrlResult<ValidatedCallbackResponse> {
     validate_user_input(
         user_amount_msat,
@@ -31,12 +32,16 @@ pub async fn validate_lnurl_pay(
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })
     } else {
-        let callback_resp: CallbackResponse = serde_json::from_str(&callback_resp_text)?;
+        let mut callback_resp: CallbackResponse = serde_json::from_str(&callback_resp_text)?;
         if let Some(ref sa) = callback_resp.success_action {
             match sa {
                 SuccessAction::Aes(data) => data.validate()?,
                 SuccessAction::Message(data) => data.validate()?,
-                SuccessAction::Url(data) => data.validate(req_data)?,
+                SuccessAction::Url(data) => {
+                    callback_resp.success_action = Some(SuccessAction::Url(
+                        data.validate(req_data, validate_success_action_url.unwrap_or(true))?,
+                    ));
+                }
             }
         }
 
@@ -115,6 +120,7 @@ pub mod model {
     use anyhow::Result;
     use serde::{Deserialize, Serialize};
     use thiserror::Error;
+    use utils::default_true;
 
     use crate::prelude::specs::pay::{Aes256CbcDec, Aes256CbcEnc};
     use crate::prelude::*;
@@ -130,6 +136,9 @@ pub mod model {
         pub comment: Option<String>,
         /// The external label or identifier of the [Payment]
         pub payment_label: Option<String>,
+        /// Validates that, if there is a URL success action, the URL domain matches
+        /// the LNURL callback domain. Defaults to `true`
+        pub validate_success_action_url: Option<bool>,
     }
 
     pub enum ValidatedCallbackResponse {
@@ -194,8 +203,17 @@ pub mod model {
 
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct UrlSuccessActionData {
+        /// Contents description, up to 144 characters
         pub description: String,
+
+        /// URL of the success action
         pub url: String,
+
+        /// Indicates the success URL domain matches the LNURL callback domain.
+        ///
+        /// See <https://github.com/lnurl/luds/blob/luds/09.md>
+        #[serde(default = "default_true")]
+        pub matches_callback_domain: bool,
     }
 
     /// [SuccessAction] where contents are ready to be consumed by the caller
@@ -308,7 +326,12 @@ pub mod model {
     }
 
     impl UrlSuccessActionData {
-        pub fn validate(&self, data: &LnUrlPayRequestData) -> LnUrlResult<()> {
+        pub fn validate(
+            &self,
+            data: &LnUrlPayRequestData,
+            validate_url: bool,
+        ) -> LnUrlResult<UrlSuccessActionData> {
+            let mut validated_data = self.clone();
             match self.description.len() <= 144 {
                 true => Ok(()),
                 false => Err(LnUrlError::generic(
@@ -328,12 +351,14 @@ pub mod model {
                     LnUrlError::invalid_uri("Could not determine Success Action URL domain")
                 })?;
 
-                match req_domain == action_res_domain {
-                    true => Ok(()),
-                    false => Err(LnUrlError::generic(
+                if validate_url && req_domain != action_res_domain {
+                    return Err(LnUrlError::generic(
                         "Success Action URL has different domain than the callback domain",
-                    )),
+                    ));
                 }
+
+                validated_data.matches_callback_domain = req_domain == action_res_domain;
+                Ok(validated_data)
             })
         }
     }
@@ -605,27 +630,41 @@ pub(crate) mod tests {
     fn test_lnurl_pay_validate_success_url() -> Result<()> {
         let pay_req_data = get_test_pay_req_data(0, 100_000, 100);
 
+        let validated_data1 = UrlSuccessActionData {
+            description: "short msg".into(),
+            url: pay_req_data.callback.clone(),
+            matches_callback_domain: true,
+        }
+        .validate(&pay_req_data, true);
+        assert!(validated_data1.is_ok());
+        assert!(validated_data1.unwrap().matches_callback_domain);
+
+        // Different Success Action domain than in the callback URL with validation
         assert!(UrlSuccessActionData {
             description: "short msg".into(),
-            url: pay_req_data.callback.clone()
+            url: "https://new-domain.com/test-url".into(),
+            matches_callback_domain: true,
         }
-        .validate(&pay_req_data)
-        .is_ok());
+        .validate(&pay_req_data, true)
+        .is_err());
+
+        // Different Success Action domain than in the callback URL without validation
+        let validated_data2 = UrlSuccessActionData {
+            description: "short msg".into(),
+            url: "https://new-domain.com/test-url".into(),
+            matches_callback_domain: true,
+        }
+        .validate(&pay_req_data, false);
+        assert!(validated_data2.is_ok());
+        assert!(!validated_data2.unwrap().matches_callback_domain);
 
         // Too long description
         assert!(UrlSuccessActionData {
             description: rand_string(150),
-            url: pay_req_data.callback.clone()
+            url: pay_req_data.callback.clone(),
+            matches_callback_domain: true,
         }
-        .validate(&pay_req_data)
-        .is_err());
-
-        // Different Success Action domain than in the callback URL
-        assert!(UrlSuccessActionData {
-            description: "short msg".into(),
-            url: "https://new-domain.com/test-url".into()
-        }
-        .validate(&pay_req_data)
+        .validate(&pay_req_data, true)
         .is_err());
 
         Ok(())
