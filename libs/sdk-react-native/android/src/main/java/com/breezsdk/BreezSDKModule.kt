@@ -109,8 +109,12 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val envTypeTmp = asEnvironmentType(envType)
+<<<<<<< HEAD
                 val nodeConfigTmp =
                     asNodeConfig(nodeConfig) ?: run { throw SdkException.Generic(errMissingMandatoryField("nodeConfig", "NodeConfig")) }
+=======
+                val nodeConfigTmp = asNodeConfig(nodeConfig) ?: run { throw SdkException.Generic(errMissingMandatoryField("nodeConfig", "NodeConfig")) }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = defaultConfig(envTypeTmp, apiKey, nodeConfigTmp)
                 val workingDir = File(reactApplicationContext.filesDir.toString() + "/breezSdk")
 
@@ -130,7 +134,13 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val staticBackupRequest =
+<<<<<<< HEAD
                     asStaticBackupRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "StaticBackupRequest")) }
+=======
+                    asStaticBackupRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "StaticBackupRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = staticBackup(staticBackupRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -179,6 +189,7 @@ class BreezSDKModule(
             return
         }
 
+<<<<<<< HEAD
         executor.execute {
             try {
                 val connectRequest =
@@ -193,6 +204,19 @@ class BreezSDKModule(
                 e.printStackTrace()
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
+=======
+        try {
+            val configTmp = asConfig(config) ?: run { throw SdkException.Generic(errMissingMandatoryField("config", "Config")) }
+            val emitter = reactApplicationContext.getJSModule(RCTDeviceEventEmitter::class.java)
+
+            ensureWorkingDir(configTmp.workingDir)
+
+            breezServices = connect(configTmp, asUByteList(seed), BreezSDKListener(emitter))
+            promise.resolve(readableMapOf("status" to "ok"))
+        } catch (e: Exception) {
+            e.printStackTrace()
+            promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
     }
 
@@ -202,6 +226,7 @@ class BreezSDKModule(
             try {
                 getBreezServices().disconnect()
                 breezServices = null
+<<<<<<< HEAD
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
@@ -220,6 +245,8 @@ class BreezSDKModule(
                     asConfigureNodeRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ConfigureNodeRequest")) }
                 getBreezServices().configureNode(configureNodeRequest)
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 promise.resolve(readableMapOf("status" to "ok"))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
@@ -235,7 +262,13 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val sendPaymentRequest =
+<<<<<<< HEAD
                     asSendPaymentRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "SendPaymentRequest")) }
+=======
+                    asSendPaymentRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "SendPaymentRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().sendPayment(sendPaymentRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -252,8 +285,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val sendSpontaneousPaymentRequest =
+<<<<<<< HEAD
                     asSendSpontaneousPaymentRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "SendSpontaneousPaymentRequest")) }
+=======
+                    asSendSpontaneousPaymentRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "SendSpontaneousPaymentRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().sendSpontaneousPayment(sendSpontaneousPaymentRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -270,8 +309,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val receivePaymentRequest =
+<<<<<<< HEAD
                     asReceivePaymentRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ReceivePaymentRequest")) }
+=======
+                    asReceivePaymentRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "ReceivePaymentRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().receivePayment(receivePaymentRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -287,8 +332,12 @@ class BreezSDKModule(
     ) {
         executor.execute {
             try {
+<<<<<<< HEAD
                 val lnUrlPayRequest =
                     asLnUrlPayRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "LnUrlPayRequest")) }
+=======
+                val lnUrlPayRequest = asLnUrlPayRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "LnUrlPayRequest")) }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().payLnurl(lnUrlPayRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -305,8 +354,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val lnUrlWithdrawRequest =
+<<<<<<< HEAD
                     asLnUrlWithdrawRequest(request)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("request", "LnUrlWithdrawRequest")) }
+=======
+                    asLnUrlWithdrawRequest(request) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("request", "LnUrlWithdrawRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().withdrawLnurl(lnUrlWithdrawRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -323,8 +378,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val lnUrlAuthRequestData =
+<<<<<<< HEAD
                     asLnUrlAuthRequestData(reqData)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("reqData", "LnUrlAuthRequestData")) }
+=======
+                    asLnUrlAuthRequestData(reqData) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("reqData", "LnUrlAuthRequestData"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().lnurlAuth(lnUrlAuthRequestData)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -382,7 +443,13 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val signMessageRequest =
+<<<<<<< HEAD
                     asSignMessageRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "SignMessageRequest")) }
+=======
+                    asSignMessageRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "SignMessageRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().signMessage(signMessageRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -399,7 +466,13 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val checkMessageRequest =
+<<<<<<< HEAD
                     asCheckMessageRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "CheckMessageRequest")) }
+=======
+                    asCheckMessageRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "CheckMessageRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().checkMessage(checkMessageRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -472,8 +545,17 @@ class BreezSDKModule(
     ) {
         executor.execute {
             try {
+<<<<<<< HEAD
                 getBreezServices().setPaymentMetadata(hash, metadata)
                 promise.resolve(readableMapOf("status" to "ok"))
+=======
+                val listPaymentsRequest =
+                    asListPaymentsRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "ListPaymentsRequest"))
+                    }
+                val res = getBreezServices().listPayments(listPaymentsRequest)
+                promise.resolve(readableArrayOf(res))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
@@ -487,10 +569,15 @@ class BreezSDKModule(
     ) {
         executor.execute {
             try {
+<<<<<<< HEAD
                 val redeemOnchainFundsRequest =
                     asRedeemOnchainFundsRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "RedeemOnchainFundsRequest")) }
                 val res = getBreezServices().redeemOnchainFunds(redeemOnchainFundsRequest)
+=======
+                val sweepRequest = asSweepRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "SweepRequest")) }
+                val res = getBreezServices().sweep(sweepRequest)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
@@ -572,8 +659,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val openChannelFeeRequest =
+<<<<<<< HEAD
                     asOpenChannelFeeRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "OpenChannelFeeRequest")) }
+=======
+                    asOpenChannelFeeRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "OpenChannelFeeRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().openChannelFee(openChannelFeeRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -656,8 +749,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val receiveOnchainRequest =
+<<<<<<< HEAD
                     asReceiveOnchainRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ReceiveOnchainRequest")) }
+=======
+                    asReceiveOnchainRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "ReceiveOnchainRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().receiveOnchain(receiveOnchainRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -725,8 +824,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val prepareRefundRequest =
+<<<<<<< HEAD
                     asPrepareRefundRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "PrepareRefundRequest")) }
+=======
+                    asPrepareRefundRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "PrepareRefundRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().prepareRefund(prepareRefundRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -742,8 +847,12 @@ class BreezSDKModule(
     ) {
         executor.execute {
             try {
+<<<<<<< HEAD
                 val refundRequest =
                     asRefundRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "RefundRequest")) }
+=======
+                val refundRequest = asRefundRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "RefundRequest")) }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().refund(refundRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -760,8 +869,14 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val reverseSwapFeesRequest =
+<<<<<<< HEAD
                     asReverseSwapFeesRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ReverseSwapFeesRequest")) }
+=======
+                    asReverseSwapFeesRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "ReverseSwapFeesRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().fetchReverseSwapFees(reverseSwapFeesRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -859,7 +974,13 @@ class BreezSDKModule(
         executor.execute {
             try {
                 val sendOnchainRequest =
+<<<<<<< HEAD
                     asSendOnchainRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "SendOnchainRequest")) }
+=======
+                    asSendOnchainRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "SendOnchainRequest"))
+                    }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().sendOnchain(sendOnchainRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -943,8 +1064,12 @@ class BreezSDKModule(
     ) {
         executor.execute {
             try {
+<<<<<<< HEAD
                 val buyBitcoinRequest =
                     asBuyBitcoinRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "BuyBitcoinRequest")) }
+=======
+                val buyBitcoinRequest = asBuyBitcoinRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "BuyBitcoinRequest")) }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
                 val res = getBreezServices().buyBitcoin(buyBitcoinRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
@@ -960,10 +1085,53 @@ class BreezSDKModule(
     ) {
         executor.execute {
             try {
+<<<<<<< HEAD
                 val prepareRedeemOnchainFundsRequest =
                     asPrepareRedeemOnchainFundsRequest(req)
                         ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "PrepareRedeemOnchainFundsRequest")) }
                 val res = getBreezServices().prepareRedeemOnchainFunds(prepareRedeemOnchainFundsRequest)
+=======
+                val prepareSweepRequest =
+                    asPrepareSweepRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "PrepareSweepRequest"))
+                    }
+                val res = getBreezServices().prepareSweep(prepareSweepRequest)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
+                promise.resolve(readableMapOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun createOffer(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val createOfferRequest =
+                    asCreateOfferRequest(req) ?: run {
+                        throw SdkException.Generic(errMissingMandatoryField("req", "CreateOfferRequest"))
+                    }
+                val res = getBreezServices().createOffer(createOfferRequest)
+                promise.resolve(res)
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
+    fun payOffer(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val payOfferRequest = asPayOfferRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "PayOfferRequest")) }
+                val res = getBreezServices().payOffer(payOfferRequest)
                 promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)

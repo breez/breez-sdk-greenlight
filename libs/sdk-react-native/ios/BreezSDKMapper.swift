@@ -337,6 +337,12 @@ enum BreezSDKMapper {
     }
 
     static func asClosedChannelPaymentDetails(closedChannelPaymentDetails: [String: Any?]) throws -> ClosedChannelPaymentDetails {
+<<<<<<< HEAD
+=======
+        guard let shortChannelId = closedChannelPaymentDetails["shortChannelId"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "shortChannelId", typeName: "ClosedChannelPaymentDetails"))
+        }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         guard let stateTmp = closedChannelPaymentDetails["state"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "state", typeName: "ClosedChannelPaymentDetails"))
         }
@@ -345,6 +351,7 @@ enum BreezSDKMapper {
         guard let fundingTxid = closedChannelPaymentDetails["fundingTxid"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "fundingTxid", typeName: "ClosedChannelPaymentDetails"))
         }
+<<<<<<< HEAD
         var shortChannelId: String?
         if hasNonNilKey(data: closedChannelPaymentDetails, key: "shortChannelId") {
             guard let shortChannelIdTmp = closedChannelPaymentDetails["shortChannelId"] as? String else {
@@ -352,6 +359,8 @@ enum BreezSDKMapper {
             }
             shortChannelId = shortChannelIdTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var closingTxid: String?
         if hasNonNilKey(data: closedChannelPaymentDetails, key: "closingTxid") {
             guard let closingTxidTmp = closedChannelPaymentDetails["closingTxid"] as? String else {
@@ -398,6 +407,7 @@ enum BreezSDKMapper {
         guard let breezserver = config["breezserver"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "breezserver", typeName: "Config"))
         }
+<<<<<<< HEAD
         guard let chainnotifierUrl = config["chainnotifierUrl"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "chainnotifierUrl", typeName: "Config"))
         }
@@ -407,6 +417,10 @@ enum BreezSDKMapper {
                 throw SdkError.Generic(message: errUnexpectedValue(fieldName: "mempoolspaceUrl"))
             }
             mempoolspaceUrl = mempoolspaceUrlTmp
+=======
+        guard let mempoolspaceUrl = config["mempoolspaceUrl"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "mempoolspaceUrl", typeName: "Config"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
         guard let workingDir = config["workingDir"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "workingDir", typeName: "Config"))
@@ -492,6 +506,7 @@ enum BreezSDKMapper {
         return configList.map { v -> [String: Any?] in dictionaryOf(config: v) }
     }
 
+<<<<<<< HEAD
     static func asConfigureNodeRequest(configureNodeRequest: [String: Any?]) throws -> ConfigureNodeRequest {
         var closeToAddress: String?
         if hasNonNilKey(data: configureNodeRequest, key: "closeToAddress") {
@@ -568,13 +583,62 @@ enum BreezSDKMapper {
                 list.append(connectRequest)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "ConnectRequest"))
+=======
+    static func asCreateOfferRequest(createOfferRequest: [String: Any?]) throws -> CreateOfferRequest {
+        var amountMsat: UInt64?
+        if hasNonNilKey(data: createOfferRequest, key: "amountMsat") {
+            guard let amountMsatTmp = createOfferRequest["amountMsat"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "amountMsat"))
+            }
+            amountMsat = amountMsatTmp
+        }
+        guard let description = createOfferRequest["description"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "description", typeName: "CreateOfferRequest"))
+        }
+        var absoluteExpiry: UInt64?
+        if hasNonNilKey(data: createOfferRequest, key: "absoluteExpiry") {
+            guard let absoluteExpiryTmp = createOfferRequest["absoluteExpiry"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "absoluteExpiry"))
+            }
+            absoluteExpiry = absoluteExpiryTmp
+        }
+
+        return CreateOfferRequest(
+            amountMsat: amountMsat,
+            description: description,
+            absoluteExpiry: absoluteExpiry
+        )
+    }
+
+    static func dictionaryOf(createOfferRequest: CreateOfferRequest) -> [String: Any?] {
+        return [
+            "amountMsat": createOfferRequest.amountMsat == nil ? nil : createOfferRequest.amountMsat,
+            "description": createOfferRequest.description,
+            "absoluteExpiry": createOfferRequest.absoluteExpiry == nil ? nil : createOfferRequest.absoluteExpiry,
+        ]
+    }
+
+    static func asCreateOfferRequestList(arr: [Any]) throws -> [CreateOfferRequest] {
+        var list = [CreateOfferRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var createOfferRequest = try asCreateOfferRequest(createOfferRequest: val)
+                list.append(createOfferRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "CreateOfferRequest"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             }
         }
         return list
     }
 
+<<<<<<< HEAD
     static func arrayOf(connectRequestList: [ConnectRequest]) -> [Any] {
         return connectRequestList.map { v -> [String: Any?] in dictionaryOf(connectRequest: v) }
+=======
+    static func arrayOf(createOfferRequestList: [CreateOfferRequest]) -> [Any] {
+        return createOfferRequestList.map { v -> [String: Any?] in dictionaryOf(createOfferRequest: v) }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
     }
 
     static func asCurrencyInfo(currencyInfo: [String: Any?]) throws -> CurrencyInfo {
@@ -691,11 +755,19 @@ enum BreezSDKMapper {
     }
 
     static func asGreenlightCredentials(greenlightCredentials: [String: Any?]) throws -> GreenlightCredentials {
+<<<<<<< HEAD
         guard let developerKey = greenlightCredentials["developerKey"] as? [UInt8] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "developerKey", typeName: "GreenlightCredentials"))
         }
         guard let developerCert = greenlightCredentials["developerCert"] as? [UInt8] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "developerCert", typeName: "GreenlightCredentials"))
+=======
+        guard let deviceKey = greenlightCredentials["deviceKey"] as? [UInt8] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "deviceKey", typeName: "GreenlightCredentials"))
+        }
+        guard let deviceCert = greenlightCredentials["deviceCert"] as? [UInt8] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "deviceCert", typeName: "GreenlightCredentials"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
 
         return GreenlightCredentials(
@@ -811,10 +883,13 @@ enum BreezSDKMapper {
         guard let bolt11 = invoicePaidDetails["bolt11"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "bolt11", typeName: "InvoicePaidDetails"))
         }
+<<<<<<< HEAD
         var payment: Payment?
         if let paymentTmp = invoicePaidDetails["payment"] as? [String: Any?] {
             payment = try asPayment(payment: paymentTmp)
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return InvoicePaidDetails(
             paymentHash: paymentHash,
@@ -852,11 +927,14 @@ enum BreezSDKMapper {
         guard let bolt11 = lnInvoice["bolt11"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "bolt11", typeName: "LnInvoice"))
         }
+<<<<<<< HEAD
         guard let networkTmp = lnInvoice["network"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "network", typeName: "LnInvoice"))
         }
         let network = try asNetwork(network: networkTmp)
 
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         guard let payeePubkey = lnInvoice["payeePubkey"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "payeePubkey", typeName: "LnInvoice"))
         }
@@ -898,9 +976,12 @@ enum BreezSDKMapper {
         guard let paymentSecret = lnInvoice["paymentSecret"] as? [UInt8] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentSecret", typeName: "LnInvoice"))
         }
+<<<<<<< HEAD
         guard let minFinalCltvExpiryDelta = lnInvoice["minFinalCltvExpiryDelta"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minFinalCltvExpiryDelta", typeName: "LnInvoice"))
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return LnInvoice(
             bolt11: bolt11,
@@ -952,17 +1033,93 @@ enum BreezSDKMapper {
         return lnInvoiceList.map { v -> [String: Any?] in dictionaryOf(lnInvoice: v) }
     }
 
+    static func asLnOffer(lnOffer: [String: Any?]) throws -> LnOffer {
+        guard let bolt12 = lnOffer["bolt12"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "bolt12", typeName: "LnOffer"))
+        }
+        guard let chains = lnOffer["chains"] as? [String] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "chains", typeName: "LnOffer"))
+        }
+        guard let description = lnOffer["description"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "description", typeName: "LnOffer"))
+        }
+        guard let signingPubkey = lnOffer["signingPubkey"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "signingPubkey", typeName: "LnOffer"))
+        }
+        var amount: Amount?
+        if let amountTmp = lnOffer["amount"] as? [String: Any?] {
+            amount = try asAmount(amount: amountTmp)
+        }
+
+        var absoluteExpiry: UInt64?
+        if hasNonNilKey(data: lnOffer, key: "absoluteExpiry") {
+            guard let absoluteExpiryTmp = lnOffer["absoluteExpiry"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "absoluteExpiry"))
+            }
+            absoluteExpiry = absoluteExpiryTmp
+        }
+        var issuer: String?
+        if hasNonNilKey(data: lnOffer, key: "issuer") {
+            guard let issuerTmp = lnOffer["issuer"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "issuer"))
+            }
+            issuer = issuerTmp
+        }
+
+        return LnOffer(
+            bolt12: bolt12,
+            chains: chains,
+            description: description,
+            signingPubkey: signingPubkey,
+            amount: amount,
+            absoluteExpiry: absoluteExpiry,
+            issuer: issuer
+        )
+    }
+
+    static func dictionaryOf(lnOffer: LnOffer) -> [String: Any?] {
+        return [
+            "bolt12": lnOffer.bolt12,
+            "chains": lnOffer.chains,
+            "description": lnOffer.description,
+            "signingPubkey": lnOffer.signingPubkey,
+            "amount": lnOffer.amount == nil ? nil : dictionaryOf(amount: lnOffer.amount!),
+            "absoluteExpiry": lnOffer.absoluteExpiry == nil ? nil : lnOffer.absoluteExpiry,
+            "issuer": lnOffer.issuer == nil ? nil : lnOffer.issuer,
+        ]
+    }
+
+    static func asLnOfferList(arr: [Any]) throws -> [LnOffer] {
+        var list = [LnOffer]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var lnOffer = try asLnOffer(lnOffer: val)
+                list.append(lnOffer)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "LnOffer"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(lnOfferList: [LnOffer]) -> [Any] {
+        return lnOfferList.map { v -> [String: Any?] in dictionaryOf(lnOffer: v) }
+    }
+
     static func asListPaymentsRequest(listPaymentsRequest: [String: Any?]) throws -> ListPaymentsRequest {
         var filters: [PaymentTypeFilter]?
         if let filtersTmp = listPaymentsRequest["filters"] as? [String] {
             filters = try asPaymentTypeFilterList(arr: filtersTmp)
         }
 
+<<<<<<< HEAD
         var metadataFilters: [MetadataFilter]?
         if let metadataFiltersTmp = listPaymentsRequest["metadataFilters"] as? [[String: Any?]] {
             metadataFilters = try asMetadataFilterList(arr: metadataFiltersTmp)
         }
 
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var fromTimestamp: Int64?
         if hasNonNilKey(data: listPaymentsRequest, key: "fromTimestamp") {
             guard let fromTimestampTmp = listPaymentsRequest["fromTimestamp"] as? Int64 else {
@@ -1058,6 +1215,7 @@ enum BreezSDKMapper {
         guard let bolt11 = lnPaymentDetails["bolt11"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "bolt11", typeName: "LnPaymentDetails"))
         }
+<<<<<<< HEAD
         var openChannelBolt11: String?
         if hasNonNilKey(data: lnPaymentDetails, key: "openChannelBolt11") {
             guard let openChannelBolt11Tmp = lnPaymentDetails["openChannelBolt11"] as? String else {
@@ -1065,11 +1223,14 @@ enum BreezSDKMapper {
             }
             openChannelBolt11 = openChannelBolt11Tmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var lnurlSuccessAction: SuccessActionProcessed?
         if let lnurlSuccessActionTmp = lnPaymentDetails["lnurlSuccessAction"] as? [String: Any?] {
             lnurlSuccessAction = try asSuccessActionProcessed(successActionProcessed: lnurlSuccessActionTmp)
         }
 
+<<<<<<< HEAD
         var lnurlPayDomain: String?
         if hasNonNilKey(data: lnPaymentDetails, key: "lnurlPayDomain") {
             guard let lnurlPayDomainTmp = lnPaymentDetails["lnurlPayDomain"] as? String else {
@@ -1084,6 +1245,8 @@ enum BreezSDKMapper {
             }
             lnurlPayComment = lnurlPayCommentTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var lnurlMetadata: String?
         if hasNonNilKey(data: lnPaymentDetails, key: "lnurlMetadata") {
             guard let lnurlMetadataTmp = lnPaymentDetails["lnurlMetadata"] as? String else {
@@ -1105,6 +1268,7 @@ enum BreezSDKMapper {
             }
             lnurlWithdrawEndpoint = lnurlWithdrawEndpointTmp
         }
+<<<<<<< HEAD
         var swapInfo: SwapInfo?
         if let swapInfoTmp = lnPaymentDetails["swapInfo"] as? [String: Any?] {
             swapInfo = try asSwapInfo(swapInfo: swapInfoTmp)
@@ -1122,6 +1286,8 @@ enum BreezSDKMapper {
             }
             pendingExpirationBlock = pendingExpirationBlockTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return LnPaymentDetails(
             paymentHash: paymentHash,
@@ -1185,12 +1351,15 @@ enum BreezSDKMapper {
         guard let k1 = lnUrlAuthRequestData["k1"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "k1", typeName: "LnUrlAuthRequestData"))
         }
+<<<<<<< HEAD
         guard let domain = lnUrlAuthRequestData["domain"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "domain", typeName: "LnUrlAuthRequestData"))
         }
         guard let url = lnUrlAuthRequestData["url"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "url", typeName: "LnUrlAuthRequestData"))
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var action: String?
         if hasNonNilKey(data: lnUrlAuthRequestData, key: "action") {
             guard let actionTmp = lnUrlAuthRequestData["action"] as? String else {
@@ -1198,6 +1367,15 @@ enum BreezSDKMapper {
             }
             action = actionTmp
         }
+<<<<<<< HEAD
+=======
+        guard let domain = lnUrlAuthRequestData["domain"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "domain", typeName: "LnUrlAuthRequestData"))
+        }
+        guard let url = lnUrlAuthRequestData["url"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "url", typeName: "LnUrlAuthRequestData"))
+        }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return LnUrlAuthRequestData(
             k1: k1,
@@ -1319,6 +1497,7 @@ enum BreezSDKMapper {
             }
             comment = commentTmp
         }
+<<<<<<< HEAD
         var paymentLabel: String?
         if hasNonNilKey(data: lnUrlPayRequest, key: "paymentLabel") {
             guard let paymentLabelTmp = lnUrlPayRequest["paymentLabel"] as? String else {
@@ -1326,6 +1505,8 @@ enum BreezSDKMapper {
             }
             paymentLabel = paymentLabelTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return LnUrlPayRequest(
             data: data,
@@ -1380,6 +1561,7 @@ enum BreezSDKMapper {
         guard let domain = lnUrlPayRequestData["domain"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "domain", typeName: "LnUrlPayRequestData"))
         }
+<<<<<<< HEAD
         guard let allowsNostr = lnUrlPayRequestData["allowsNostr"] as? Bool else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "allowsNostr", typeName: "LnUrlPayRequestData"))
         }
@@ -1390,6 +1572,8 @@ enum BreezSDKMapper {
             }
             nostrPubkey = nostrPubkeyTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var lnAddress: String?
         if hasNonNilKey(data: lnUrlPayRequestData, key: "lnAddress") {
             guard let lnAddressTmp = lnUrlPayRequestData["lnAddress"] as? String else {
@@ -1448,10 +1632,16 @@ enum BreezSDKMapper {
             successAction = try asSuccessActionProcessed(successActionProcessed: successActionTmp)
         }
 
+<<<<<<< HEAD
         guard let paymentTmp = lnUrlPaySuccessData["payment"] as? [String: Any?] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "payment", typeName: "LnUrlPaySuccessData"))
         }
         let payment = try asPayment(payment: paymentTmp)
+=======
+        guard let paymentHash = lnUrlPaySuccessData["paymentHash"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentHash", typeName: "LnUrlPaySuccessData"))
+        }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return LnUrlPaySuccessData(
             successAction: successAction,
@@ -1758,6 +1948,15 @@ enum BreezSDKMapper {
         guard let host = lspInformation["host"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "host", typeName: "LspInformation"))
         }
+<<<<<<< HEAD
+=======
+        guard let channelCapacity = lspInformation["channelCapacity"] as? Int64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "channelCapacity", typeName: "LspInformation"))
+        }
+        guard let targetConf = lspInformation["targetConf"] as? Int32 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "targetConf", typeName: "LspInformation"))
+        }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         guard let baseFeeMsat = lspInformation["baseFeeMsat"] as? Int64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "baseFeeMsat", typeName: "LspInformation"))
         }
@@ -1979,9 +2178,12 @@ enum BreezSDKMapper {
         guard let onchainBalanceMsat = nodeState["onchainBalanceMsat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "onchainBalanceMsat", typeName: "NodeState"))
         }
+<<<<<<< HEAD
         guard let pendingOnchainBalanceMsat = nodeState["pendingOnchainBalanceMsat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "pendingOnchainBalanceMsat", typeName: "NodeState"))
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         guard let utxosTmp = nodeState["utxos"] as? [[String: Any?]] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "utxos", typeName: "NodeState"))
         }
@@ -2095,12 +2297,17 @@ enum BreezSDKMapper {
     }
 
     static func asOpenChannelFeeRequest(openChannelFeeRequest: [String: Any?]) throws -> OpenChannelFeeRequest {
+<<<<<<< HEAD
         var amountMsat: UInt64?
         if hasNonNilKey(data: openChannelFeeRequest, key: "amountMsat") {
             guard let amountMsatTmp = openChannelFeeRequest["amountMsat"] as? UInt64 else {
                 throw SdkError.Generic(message: errUnexpectedValue(fieldName: "amountMsat"))
             }
             amountMsat = amountMsatTmp
+=======
+        guard let amountMsat = openChannelFeeRequest["amountMsat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountMsat", typeName: "OpenChannelFeeRequest"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
         var expiry: UInt32?
         if hasNonNilKey(data: openChannelFeeRequest, key: "expiry") {
@@ -2141,12 +2348,21 @@ enum BreezSDKMapper {
     }
 
     static func asOpenChannelFeeResponse(openChannelFeeResponse: [String: Any?]) throws -> OpenChannelFeeResponse {
+<<<<<<< HEAD
         var feeMsat: UInt64?
         if hasNonNilKey(data: openChannelFeeResponse, key: "feeMsat") {
             guard let feeMsatTmp = openChannelFeeResponse["feeMsat"] as? UInt64 else {
                 throw SdkError.Generic(message: errUnexpectedValue(fieldName: "feeMsat"))
             }
             feeMsat = feeMsatTmp
+=======
+        guard let feeMsat = openChannelFeeResponse["feeMsat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feeMsat", typeName: "OpenChannelFeeResponse"))
+        }
+        var usedFeeParams: OpeningFeeParams?
+        if let usedFeeParamsTmp = openChannelFeeResponse["usedFeeParams"] as? [String: Any?] {
+            usedFeeParams = try asOpeningFeeParams(openingFeeParams: usedFeeParamsTmp)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
         guard let feeParamsTmp = openChannelFeeResponse["feeParams"] as? [String: Any?] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feeParams", typeName: "OpenChannelFeeResponse"))
@@ -2274,6 +2490,7 @@ enum BreezSDKMapper {
         return openingFeeParamsMenuList.map { v -> [String: Any?] in dictionaryOf(openingFeeParamsMenu: v) }
     }
 
+<<<<<<< HEAD
     static func asPayOnchainRequest(payOnchainRequest: [String: Any?]) throws -> PayOnchainRequest {
         guard let recipientAddress = payOnchainRequest["recipientAddress"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "recipientAddress", typeName: "PayOnchainRequest"))
@@ -2304,11 +2521,65 @@ enum BreezSDKMapper {
                 list.append(payOnchainRequest)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "PayOnchainRequest"))
+=======
+    static func asPayOfferRequest(payOfferRequest: [String: Any?]) throws -> PayOfferRequest {
+        guard let offer = payOfferRequest["offer"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "offer", typeName: "PayOfferRequest"))
+        }
+        var amountMsat: UInt64?
+        if hasNonNilKey(data: payOfferRequest, key: "amountMsat") {
+            guard let amountMsatTmp = payOfferRequest["amountMsat"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "amountMsat"))
+            }
+            amountMsat = amountMsatTmp
+        }
+        var timeout: Double?
+        if hasNonNilKey(data: payOfferRequest, key: "timeout") {
+            guard let timeoutTmp = payOfferRequest["timeout"] as? Double else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "timeout"))
+            }
+            timeout = timeoutTmp
+        }
+        var payerNote: String?
+        if hasNonNilKey(data: payOfferRequest, key: "payerNote") {
+            guard let payerNoteTmp = payOfferRequest["payerNote"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "payerNote"))
+            }
+            payerNote = payerNoteTmp
+        }
+
+        return PayOfferRequest(
+            offer: offer,
+            amountMsat: amountMsat,
+            timeout: timeout,
+            payerNote: payerNote
+        )
+    }
+
+    static func dictionaryOf(payOfferRequest: PayOfferRequest) -> [String: Any?] {
+        return [
+            "offer": payOfferRequest.offer,
+            "amountMsat": payOfferRequest.amountMsat == nil ? nil : payOfferRequest.amountMsat,
+            "timeout": payOfferRequest.timeout == nil ? nil : payOfferRequest.timeout,
+            "payerNote": payOfferRequest.payerNote == nil ? nil : payOfferRequest.payerNote,
+        ]
+    }
+
+    static func asPayOfferRequestList(arr: [Any]) throws -> [PayOfferRequest] {
+        var list = [PayOfferRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var payOfferRequest = try asPayOfferRequest(payOfferRequest: val)
+                list.append(payOfferRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PayOfferRequest"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             }
         }
         return list
     }
 
+<<<<<<< HEAD
     static func arrayOf(payOnchainRequestList: [PayOnchainRequest]) -> [Any] {
         return payOnchainRequestList.map { v -> [String: Any?] in dictionaryOf(payOnchainRequest: v) }
     }
@@ -2344,6 +2615,10 @@ enum BreezSDKMapper {
 
     static func arrayOf(payOnchainResponseList: [PayOnchainResponse]) -> [Any] {
         return payOnchainResponseList.map { v -> [String: Any?] in dictionaryOf(payOnchainResponse: v) }
+=======
+    static func arrayOf(payOfferRequestList: [PayOfferRequest]) -> [Any] {
+        return payOfferRequestList.map { v -> [String: Any?] in dictionaryOf(payOfferRequest: v) }
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
     }
 
     static func asPayment(payment: [String: Any?]) throws -> Payment {
@@ -2369,6 +2644,7 @@ enum BreezSDKMapper {
         }
         let status = try asPaymentStatus(paymentStatus: statusTmp)
 
+<<<<<<< HEAD
         var error: String?
         if hasNonNilKey(data: payment, key: "error") {
             guard let errorTmp = payment["error"] as? String else {
@@ -2376,6 +2652,8 @@ enum BreezSDKMapper {
             }
             error = errorTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var description: String?
         if hasNonNilKey(data: payment, key: "description") {
             guard let descriptionTmp = payment["description"] as? String else {
@@ -2761,6 +3039,85 @@ enum BreezSDKMapper {
         return prepareRefundResponseList.map { v -> [String: Any?] in dictionaryOf(prepareRefundResponse: v) }
     }
 
+<<<<<<< HEAD
+=======
+    static func asPrepareSweepRequest(prepareSweepRequest: [String: Any?]) throws -> PrepareSweepRequest {
+        guard let toAddress = prepareSweepRequest["toAddress"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "PrepareSweepRequest"))
+        }
+        guard let satsPerVbyte = prepareSweepRequest["satsPerVbyte"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satsPerVbyte", typeName: "PrepareSweepRequest"))
+        }
+
+        return PrepareSweepRequest(
+            toAddress: toAddress,
+            satsPerVbyte: satsPerVbyte
+        )
+    }
+
+    static func dictionaryOf(prepareSweepRequest: PrepareSweepRequest) -> [String: Any?] {
+        return [
+            "toAddress": prepareSweepRequest.toAddress,
+            "satsPerVbyte": prepareSweepRequest.satsPerVbyte,
+        ]
+    }
+
+    static func asPrepareSweepRequestList(arr: [Any]) throws -> [PrepareSweepRequest] {
+        var list = [PrepareSweepRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareSweepRequest = try asPrepareSweepRequest(prepareSweepRequest: val)
+                list.append(prepareSweepRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareSweepRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareSweepRequestList: [PrepareSweepRequest]) -> [Any] {
+        return prepareSweepRequestList.map { v -> [String: Any?] in dictionaryOf(prepareSweepRequest: v) }
+    }
+
+    static func asPrepareSweepResponse(prepareSweepResponse: [String: Any?]) throws -> PrepareSweepResponse {
+        guard let sweepTxWeight = prepareSweepResponse["sweepTxWeight"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "sweepTxWeight", typeName: "PrepareSweepResponse"))
+        }
+        guard let sweepTxFeeSat = prepareSweepResponse["sweepTxFeeSat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "sweepTxFeeSat", typeName: "PrepareSweepResponse"))
+        }
+
+        return PrepareSweepResponse(
+            sweepTxWeight: sweepTxWeight,
+            sweepTxFeeSat: sweepTxFeeSat
+        )
+    }
+
+    static func dictionaryOf(prepareSweepResponse: PrepareSweepResponse) -> [String: Any?] {
+        return [
+            "sweepTxWeight": prepareSweepResponse.sweepTxWeight,
+            "sweepTxFeeSat": prepareSweepResponse.sweepTxFeeSat,
+        ]
+    }
+
+    static func asPrepareSweepResponseList(arr: [Any]) throws -> [PrepareSweepResponse] {
+        var list = [PrepareSweepResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var prepareSweepResponse = try asPrepareSweepResponse(prepareSweepResponse: val)
+                list.append(prepareSweepResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "PrepareSweepResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(prepareSweepResponseList: [PrepareSweepResponse]) -> [Any] {
+        return prepareSweepResponseList.map { v -> [String: Any?] in dictionaryOf(prepareSweepResponse: v) }
+    }
+
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
     static func asRate(rate: [String: Any?]) throws -> Rate {
         guard let coin = rate["coin"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "coin", typeName: "Rate"))
@@ -3212,6 +3569,7 @@ enum BreezSDKMapper {
             }
             sendAmountSat = sendAmountSatTmp
         }
+<<<<<<< HEAD
         var claimTxFeerate: UInt32?
         if hasNonNilKey(data: reverseSwapFeesRequest, key: "claimTxFeerate") {
             guard let claimTxFeerateTmp = reverseSwapFeesRequest["claimTxFeerate"] as? UInt32 else {
@@ -3219,6 +3577,8 @@ enum BreezSDKMapper {
             }
             claimTxFeerate = claimTxFeerateTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return ReverseSwapFeesRequest(
             sendAmountSat: sendAmountSat,
@@ -3336,12 +3696,21 @@ enum BreezSDKMapper {
         guard let feesClaim = reverseSwapPairInfo["feesClaim"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesClaim", typeName: "ReverseSwapPairInfo"))
         }
+<<<<<<< HEAD
         var totalFees: UInt64?
         if hasNonNilKey(data: reverseSwapPairInfo, key: "totalFees") {
             guard let totalFeesTmp = reverseSwapPairInfo["totalFees"] as? UInt64 else {
                 throw SdkError.Generic(message: errUnexpectedValue(fieldName: "totalFees"))
             }
             totalFees = totalFeesTmp
+=======
+        var totalEstimatedFees: UInt64?
+        if hasNonNilKey(data: reverseSwapPairInfo, key: "totalEstimatedFees") {
+            guard let totalEstimatedFeesTmp = reverseSwapPairInfo["totalEstimatedFees"] as? UInt64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "totalEstimatedFees"))
+            }
+            totalEstimatedFees = totalEstimatedFeesTmp
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
 
         return ReverseSwapPairInfo(
@@ -3570,8 +3939,13 @@ enum BreezSDKMapper {
     }
 
     static func asSendPaymentRequest(sendPaymentRequest: [String: Any?]) throws -> SendPaymentRequest {
+<<<<<<< HEAD
         guard let bolt11 = sendPaymentRequest["bolt11"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "bolt11", typeName: "SendPaymentRequest"))
+=======
+        guard let invoice = sendPaymentRequest["invoice"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "invoice", typeName: "SendPaymentRequest"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
         var amountMsat: UInt64?
         if hasNonNilKey(data: sendPaymentRequest, key: "amountMsat") {
@@ -3580,6 +3954,7 @@ enum BreezSDKMapper {
             }
             amountMsat = amountMsatTmp
         }
+<<<<<<< HEAD
         var label: String?
         if hasNonNilKey(data: sendPaymentRequest, key: "label") {
             guard let labelTmp = sendPaymentRequest["label"] as? String else {
@@ -3592,12 +3967,18 @@ enum BreezSDKMapper {
             bolt11: bolt11,
             amountMsat: amountMsat,
             label: label
+=======
+
+        return SendPaymentRequest(
+            invoice: invoice,
+            amountMsat: amountMsat
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         )
     }
 
     static func dictionaryOf(sendPaymentRequest: SendPaymentRequest) -> [String: Any?] {
         return [
-            "bolt11": sendPaymentRequest.bolt11,
+            "invoice": sendPaymentRequest.invoice,
             "amountMsat": sendPaymentRequest.amountMsat == nil ? nil : sendPaymentRequest.amountMsat,
             "label": sendPaymentRequest.label == nil ? nil : sendPaymentRequest.label,
         ]
@@ -3660,6 +4041,7 @@ enum BreezSDKMapper {
         guard let amountMsat = sendSpontaneousPaymentRequest["amountMsat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountMsat", typeName: "SendSpontaneousPaymentRequest"))
         }
+<<<<<<< HEAD
         var extraTlvs: [TlvEntry]?
         if let extraTlvsTmp = sendSpontaneousPaymentRequest["extraTlvs"] as? [[String: Any?]] {
             extraTlvs = try asTlvEntryList(arr: extraTlvsTmp)
@@ -3672,6 +4054,8 @@ enum BreezSDKMapper {
             }
             label = labelTmp
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
         return SendSpontaneousPaymentRequest(
             nodeId: nodeId,
@@ -3907,8 +4291,13 @@ enum BreezSDKMapper {
             }
             bolt11 = bolt11Tmp
         }
+<<<<<<< HEAD
         guard let paidMsat = swapInfo["paidMsat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paidMsat", typeName: "SwapInfo"))
+=======
+        guard let paidSats = swapInfo["paidSats"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paidSats", typeName: "SwapInfo"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         }
         guard let unconfirmedSats = swapInfo["unconfirmedSats"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "unconfirmedSats", typeName: "SwapInfo"))
@@ -3916,9 +4305,12 @@ enum BreezSDKMapper {
         guard let confirmedSats = swapInfo["confirmedSats"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "confirmedSats", typeName: "SwapInfo"))
         }
+<<<<<<< HEAD
         guard let totalIncomingTxs = swapInfo["totalIncomingTxs"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalIncomingTxs", typeName: "SwapInfo"))
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         guard let statusTmp = swapInfo["status"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "status", typeName: "SwapInfo"))
         }
@@ -3939,9 +4331,12 @@ enum BreezSDKMapper {
         guard let maxAllowedDeposit = swapInfo["maxAllowedDeposit"] as? Int64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxAllowedDeposit", typeName: "SwapInfo"))
         }
+<<<<<<< HEAD
         guard let maxSwapperPayable = swapInfo["maxSwapperPayable"] as? Int64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxSwapperPayable", typeName: "SwapInfo"))
         }
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
         var lastRedeemError: String?
         if hasNonNilKey(data: swapInfo, key: "lastRedeemError") {
             guard let lastRedeemErrorTmp = swapInfo["lastRedeemError"] as? String else {
@@ -4036,6 +4431,79 @@ enum BreezSDKMapper {
         return swapInfoList.map { v -> [String: Any?] in dictionaryOf(swapInfo: v) }
     }
 
+<<<<<<< HEAD
+=======
+    static func asSweepRequest(sweepRequest: [String: Any?]) throws -> SweepRequest {
+        guard let toAddress = sweepRequest["toAddress"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "toAddress", typeName: "SweepRequest"))
+        }
+        guard let feeRateSatsPerVbyte = sweepRequest["feeRateSatsPerVbyte"] as? UInt32 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feeRateSatsPerVbyte", typeName: "SweepRequest"))
+        }
+
+        return SweepRequest(
+            toAddress: toAddress,
+            feeRateSatsPerVbyte: feeRateSatsPerVbyte
+        )
+    }
+
+    static func dictionaryOf(sweepRequest: SweepRequest) -> [String: Any?] {
+        return [
+            "toAddress": sweepRequest.toAddress,
+            "feeRateSatsPerVbyte": sweepRequest.feeRateSatsPerVbyte,
+        ]
+    }
+
+    static func asSweepRequestList(arr: [Any]) throws -> [SweepRequest] {
+        var list = [SweepRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sweepRequest = try asSweepRequest(sweepRequest: val)
+                list.append(sweepRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "SweepRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sweepRequestList: [SweepRequest]) -> [Any] {
+        return sweepRequestList.map { v -> [String: Any?] in dictionaryOf(sweepRequest: v) }
+    }
+
+    static func asSweepResponse(sweepResponse: [String: Any?]) throws -> SweepResponse {
+        guard let txid = sweepResponse["txid"] as? [UInt8] else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "txid", typeName: "SweepResponse"))
+        }
+
+        return SweepResponse(
+            txid: txid)
+    }
+
+    static func dictionaryOf(sweepResponse: SweepResponse) -> [String: Any?] {
+        return [
+            "txid": sweepResponse.txid,
+        ]
+    }
+
+    static func asSweepResponseList(arr: [Any]) throws -> [SweepResponse] {
+        var list = [SweepResponse]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var sweepResponse = try asSweepResponse(sweepResponse: val)
+                list.append(sweepResponse)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "SweepResponse"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(sweepResponseList: [SweepResponse]) -> [Any] {
+        return sweepResponseList.map { v -> [String: Any?] in dictionaryOf(sweepResponse: v) }
+    }
+
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
     static func asSymbol(symbol: [String: Any?]) throws -> Symbol {
         var grapheme: String?
         if hasNonNilKey(data: symbol, key: "grapheme") {
@@ -4229,6 +4697,7 @@ enum BreezSDKMapper {
         return urlSuccessActionDataList.map { v -> [String: Any?] in dictionaryOf(urlSuccessActionData: v) }
     }
 
+<<<<<<< HEAD
     static func asAesSuccessActionDataResult(aesSuccessActionDataResult: [String: Any?]) throws -> AesSuccessActionDataResult {
         let type = aesSuccessActionDataResult["type"] as! String
         if type == "decrypted" {
@@ -4265,10 +4734,48 @@ enum BreezSDKMapper {
             return [
                 "type": "errorStatus",
                 "reason": reason,
+=======
+    static func asAmount(amount: [String: Any?]) throws -> Amount {
+        let type = amount["type"] as! String
+        if type == "bitcoin" {
+            guard let _amountMsat = amount["amountMsat"] as? UInt64 else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountMsat", typeName: "Amount"))
+            }
+            return Amount.bitcoin(amountMsat: _amountMsat)
+        }
+        if type == "currency" {
+            guard let _iso4217Code = amount["iso4217Code"] as? String else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "iso4217Code", typeName: "Amount"))
+            }
+            return Amount.currency(iso4217Code: _iso4217Code)
+        }
+
+        throw SdkError.Generic(message: "Unexpected type \(type) for enum Amount")
+    }
+
+    static func dictionaryOf(amount: Amount) -> [String: Any?] {
+        switch amount {
+        case let .bitcoin(
+            amountMsat
+        ):
+            return [
+                "type": "bitcoin",
+                "amountMsat": amountMsat,
+            ]
+
+        case let .currency(
+            iso4217Code, fractionalAmount
+        ):
+            return [
+                "type": "currency",
+                "iso4217Code": iso4217Code,
+                "fractionalAmount": fractionalAmount,
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             ]
         }
     }
 
+<<<<<<< HEAD
     static func arrayOf(aesSuccessActionDataResultList: [AesSuccessActionDataResult]) -> [Any] {
         return aesSuccessActionDataResultList.map { v -> [String: Any?] in dictionaryOf(aesSuccessActionDataResult: v) }
     }
@@ -4281,6 +4788,20 @@ enum BreezSDKMapper {
                 list.append(aesSuccessActionDataResult)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "AesSuccessActionDataResult"))
+=======
+    static func arrayOf(amountList: [Amount]) -> [Any] {
+        return amountList.map { v -> [String: Any?] in dictionaryOf(amount: v) }
+    }
+
+    static func asAmountList(arr: [Any]) throws -> [Amount] {
+        var list = [Amount]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var amount = try asAmount(amount: val)
+                list.append(amount)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "Amount"))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             }
         }
         return list
@@ -4610,6 +5131,7 @@ enum BreezSDKMapper {
                 list.append(feeratePreset)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "FeeratePreset"))
+<<<<<<< HEAD
             }
         }
         return list
@@ -4655,6 +5177,8 @@ enum BreezSDKMapper {
                 list.append(healthCheckStatus)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "HealthCheckStatus"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             }
         }
         return list
@@ -4677,6 +5201,14 @@ enum BreezSDKMapper {
             let _invoice = try asLnInvoice(lnInvoice: invoiceTmp)
 
             return InputType.bolt11(invoice: _invoice)
+        }
+        if type == "bolt12Offer" {
+            guard let offerTmp = inputType["offer"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "offer", typeName: "InputType"))
+            }
+            let _offer = try asLnOffer(lnOffer: offerTmp)
+
+            return InputType.bolt12Offer(offer: _offer)
         }
         if type == "nodeId" {
             guard let _nodeId = inputType["nodeId"] as? String else {
@@ -4742,6 +5274,14 @@ enum BreezSDKMapper {
             return [
                 "type": "bolt11",
                 "invoice": dictionaryOf(lnInvoice: invoice),
+            ]
+
+        case let .bolt12Offer(
+            offer
+        ):
+            return [
+                "type": "bolt12Offer",
+                "offer": dictionaryOf(lnOffer: offer),
             ]
 
         case let .nodeId(
@@ -5101,6 +5641,7 @@ enum BreezSDKMapper {
                 list.append(nodeConfig)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "NodeConfig"))
+<<<<<<< HEAD
             }
         }
         return list
@@ -5144,6 +5685,8 @@ enum BreezSDKMapper {
                 list.append(nodeCredentials)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "NodeCredentials"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             }
         }
         return list
@@ -5338,6 +5881,7 @@ enum BreezSDKMapper {
                 list.append(paymentTypeFilter)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "PaymentTypeFilter"))
+<<<<<<< HEAD
             }
         }
         return list
@@ -5381,6 +5925,8 @@ enum BreezSDKMapper {
                 list.append(reportIssueRequest)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "ReportIssueRequest"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             }
         }
         return list
@@ -5446,10 +5992,17 @@ enum BreezSDKMapper {
     static func asSuccessActionProcessed(successActionProcessed: [String: Any?]) throws -> SuccessActionProcessed {
         let type = successActionProcessed["type"] as! String
         if type == "aes" {
+<<<<<<< HEAD
             guard let resultTmp = successActionProcessed["result"] as? [String: Any?] else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "result", typeName: "SuccessActionProcessed"))
             }
             let _result = try asAesSuccessActionDataResult(aesSuccessActionDataResult: resultTmp)
+=======
+            guard let dataTmp = successActionProcessed["data"] as? [String: Any?] else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "data", typeName: "SuccessActionProcessed"))
+            }
+            let _data = try asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: dataTmp)
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
 
             return SuccessActionProcessed.aes(result: _result)
         }
@@ -5513,6 +6066,7 @@ enum BreezSDKMapper {
                 list.append(successActionProcessed)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "SuccessActionProcessed"))
+<<<<<<< HEAD
             }
         }
         return list
@@ -5552,6 +6106,8 @@ enum BreezSDKMapper {
                 list.append(swapAmountType)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "SwapAmountType"))
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             }
         }
         return list

@@ -27,6 +27,8 @@ use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::{Error, Signer};
 use gl_client::{node, utils};
+use lightning::offers::offer::Offer;
+use lightning::util::message_signing::verify;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
@@ -46,7 +48,6 @@ use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::{
     Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
-use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
@@ -1745,6 +1746,55 @@ impl NodeAPI for Greenlight {
         }
         Ok((hints, has_public_channel))
     }
+
+    async fn fetch_invoice(&self, req: FetchInvoiceRequest) -> NodeResult<FetchInvoiceResponse> {
+        // Parse the offer locally, to avoid any unnecessary calls to the recipient
+        if let Err(_parse_error) = req.offer.parse::<Offer>() {
+            return Err(NodeError::InvalidOffer("Invalid offer".to_string()));
+        };
+
+        // Fetch the invoice from the recipient's node
+        let mut client = self.get_node_client().await?;
+        let response = client
+            .fetch_invoice(Into::<cln::FetchinvoiceRequest>::into(req))
+            .await?
+            .into_inner();
+
+        Ok(FetchInvoiceResponse {
+            bolt12: response.invoice,
+            changes: response.changes.map(|changes| FetchInvoiceChanges {
+                amount: changes.amount_msat.map(|amount| amount.msat),
+                vendor: changes.vendor,
+                description: changes.description,
+            }),
+        })
+    }
+
+    async fn create_offer(&self, req: CreateOfferRequest) -> NodeResult<String> {
+        let mut client = self.get_node_client().await?;
+
+        let offer = client
+            .offer(cln::OfferRequest {
+                amount: req
+                    .amount_msat
+                    .map(|msat| msat.to_string())
+                    .unwrap_or("any".to_string()),
+                description: req.description,
+                absolute_expiry: req.absolute_expiry,
+                single_use: Some(false),
+                issuer: None,
+                label: None,
+                quantity_max: req.quantity_max,
+                recurrence: None,
+                recurrence_base: None,
+                recurrence_paywindow: None,
+                recurrence_limit: None,
+            })
+            .await?
+            .into_inner();
+
+        Ok(offer.bolt12)
+    }
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize)]
@@ -2293,6 +2343,22 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
             closing_txid: None,
             htlcs: Vec::new(),
         })
+    }
+}
+
+impl From<FetchInvoiceRequest> for gl_client::pb::cln::FetchinvoiceRequest {
+    fn from(request: FetchInvoiceRequest) -> Self {
+        cln::FetchinvoiceRequest {
+            offer: request.offer,
+            amount_msat: request.amount_msat.map(|msat| cln::Amount { msat }),
+            timeout: request.timeout,
+            payer_note: request.payer_note,
+            // Not yet implemented
+            quantity: None,
+            recurrence_counter: None,
+            recurrence_start: None,
+            recurrence_label: None,
+        }
     }
 }
 

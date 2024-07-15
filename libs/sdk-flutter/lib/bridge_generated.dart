@@ -180,6 +180,16 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kReceivePaymentConstMeta;
 
+  /// See [BreezServices::create_offer]
+  Future<String> createOffer({required CreateOfferRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kCreateOfferConstMeta;
+
+  /// See [BreezServices::pay_offer]
+  Future<SendPaymentResponse> payOffer({required PayOfferRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kPayOfferConstMeta;
+
   /// See [BreezServices::lnurl_pay]
   Future<LnUrlPayResult> lnurlPay({required LnUrlPayRequest req, dynamic hint});
 
@@ -347,6 +357,17 @@ sealed class AesSuccessActionDataResult with _$AesSuccessActionDataResult {
   const factory AesSuccessActionDataResult.errorStatus({
     required String reason,
   }) = AesSuccessActionDataResult_ErrorStatus;
+}
+
+@freezed
+sealed class Amount with _$Amount {
+  const factory Amount.bitcoin({
+    required int amountMsat,
+  }) = Amount_Bitcoin;
+  const factory Amount.currency({
+    required String iso4217Code,
+    required int fractionalAmount,
+  }) = Amount_Currency;
 }
 
 class BackupFailedData {
@@ -583,6 +604,20 @@ class ConnectRequest {
   });
 }
 
+class CreateOfferRequest {
+  final int? amountMsat;
+  final String description;
+  final int? absoluteExpiry;
+  final int? quantityMax;
+
+  const CreateOfferRequest({
+    this.amountMsat,
+    required this.description,
+    this.absoluteExpiry,
+    this.quantityMax,
+  });
+}
+
 class CurrencyInfo {
   final String name;
   final int fractionSize;
@@ -664,6 +699,9 @@ sealed class InputType with _$InputType {
   const factory InputType.bolt11({
     required LNInvoice invoice,
   }) = InputType_Bolt11;
+  const factory InputType.bolt12Offer({
+    required LNOffer offer,
+  }) = InputType_Bolt12Offer;
   const factory InputType.nodeId({
     required String nodeId,
   }) = InputType_NodeId;
@@ -749,6 +787,26 @@ class LNInvoice {
     required this.routingHints,
     required this.paymentSecret,
     required this.minFinalCltvExpiryDelta,
+  });
+}
+
+class LNOffer {
+  final String bolt12;
+  final List<String> chains;
+  final Amount? amount;
+  final String description;
+  final int? absoluteExpiry;
+  final String? issuer;
+  final String signingPubkey;
+
+  const LNOffer({
+    required this.bolt12,
+    required this.chains,
+    this.amount,
+    required this.description,
+    this.absoluteExpiry,
+    this.issuer,
+    required this.signingPubkey,
   });
 }
 
@@ -1205,6 +1263,22 @@ class OpeningFeeParamsMenu {
 
   const OpeningFeeParamsMenu({
     required this.values,
+  });
+}
+
+class PayOfferRequest {
+  final String offer;
+  final int? amountMsat;
+  final double? timeout;
+  final String? payerNote;
+  final String? label;
+
+  const PayOfferRequest({
+    required this.offer,
+    this.amountMsat,
+    this.timeout,
+    this.payerNote,
+    this.label,
   });
 }
 
@@ -1687,17 +1761,17 @@ class SendOnchainResponse {
 
 /// Represents a send payment request.
 class SendPaymentRequest {
-  /// The bolt11 invoice
-  final String bolt11;
+  /// The bolt11/12 invoice
+  final String invoice;
 
-  /// The amount to pay in millisatoshis. Should only be set when `bolt11` is a zero-amount invoice.
+  /// The amount to pay in millisatoshis. Should only be set when `invoice` is a zero-amount invoice.
   final int? amountMsat;
 
   /// The external label or identifier of the [Payment]
   final String? label;
 
   const SendPaymentRequest({
-    required this.bolt11,
+    required this.invoice,
     this.amountMsat,
     this.label,
   });
@@ -2543,6 +2617,40 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
+  Future<String> createOffer({required CreateOfferRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_create_offer_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_create_offer(port_, arg0),
+      parseSuccessData: _wire2api_String,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kCreateOfferConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kCreateOfferConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "create_offer",
+        argNames: ["req"],
+      );
+
+  Future<SendPaymentResponse> payOffer({required PayOfferRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_pay_offer_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_pay_offer(port_, arg0),
+      parseSuccessData: _wire2api_send_payment_response,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kPayOfferConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kPayOfferConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "pay_offer",
+        argNames: ["req"],
+      );
+
   Future<LnUrlPayResult> lnurlPay({required LnUrlPayRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_ln_url_pay_request(req);
     return _platform.executeNormal(FlutterRustBridgeTask(
@@ -3071,6 +3179,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     }
   }
 
+  Amount _wire2api_amount(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return Amount_Bitcoin(
+          amountMsat: _wire2api_u64(raw[1]),
+        );
+      case 1:
+        return Amount_Currency(
+          iso4217Code: _wire2api_String(raw[1]),
+          fractionalAmount: _wire2api_u64(raw[2]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
   BackupFailedData _wire2api_backup_failed_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
@@ -3112,6 +3236,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_aes_success_action_data_result(raw);
   }
 
+  Amount _wire2api_box_autoadd_amount(dynamic raw) {
+    return _wire2api_amount(raw);
+  }
+
   BackupFailedData _wire2api_box_autoadd_backup_failed_data(dynamic raw) {
     return _wire2api_backup_failed_data(raw);
   }
@@ -3146,6 +3274,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LNInvoice _wire2api_box_autoadd_ln_invoice(dynamic raw) {
     return _wire2api_ln_invoice(raw);
+  }
+
+  LNOffer _wire2api_box_autoadd_ln_offer(dynamic raw) {
+    return _wire2api_ln_offer(raw);
   }
 
   LnPaymentDetails _wire2api_box_autoadd_ln_payment_details(dynamic raw) {
@@ -3399,26 +3531,30 @@ class BreezSdkCoreImpl implements BreezSdkCore {
           invoice: _wire2api_box_autoadd_ln_invoice(raw[1]),
         );
       case 2:
+        return InputType_Bolt12Offer(
+          offer: _wire2api_box_autoadd_ln_offer(raw[1]),
+        );
+      case 3:
         return InputType_NodeId(
           nodeId: _wire2api_String(raw[1]),
         );
-      case 3:
+      case 4:
         return InputType_Url(
           url: _wire2api_String(raw[1]),
         );
-      case 4:
+      case 5:
         return InputType_LnUrlPay(
           data: _wire2api_box_autoadd_ln_url_pay_request_data(raw[1]),
         );
-      case 5:
+      case 6:
         return InputType_LnUrlWithdraw(
           data: _wire2api_box_autoadd_ln_url_withdraw_request_data(raw[1]),
         );
-      case 6:
+      case 7:
         return InputType_LnUrlAuth(
           data: _wire2api_box_autoadd_ln_url_auth_request_data(raw[1]),
         );
-      case 7:
+      case 8:
         return InputType_LnUrlError(
           data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
         );
@@ -3501,6 +3637,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       routingHints: _wire2api_list_route_hint(arr[9]),
       paymentSecret: _wire2api_uint_8_list(arr[10]),
       minFinalCltvExpiryDelta: _wire2api_u64(arr[11]),
+    );
+  }
+
+  LNOffer _wire2api_ln_offer(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return LNOffer(
+      bolt12: _wire2api_String(arr[0]),
+      chains: _wire2api_StringList(arr[1]),
+      amount: _wire2api_opt_box_autoadd_amount(arr[2]),
+      description: _wire2api_String(arr[3]),
+      absoluteExpiry: _wire2api_opt_box_autoadd_u64(arr[4]),
+      issuer: _wire2api_opt_String(arr[5]),
+      signingPubkey: _wire2api_String(arr[6]),
     );
   }
 
@@ -3803,6 +3953,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   List<String>? _wire2api_opt_StringList(dynamic raw) {
     return raw == null ? null : _wire2api_StringList(raw);
+  }
+
+  Amount? _wire2api_opt_box_autoadd_amount(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_amount(raw);
   }
 
   bool? _wire2api_opt_box_autoadd_bool(dynamic raw) {
@@ -4303,6 +4457,18 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_CreateOfferRequest> api2wire_box_autoadd_create_offer_request(CreateOfferRequest raw) {
+    final ptr = inner.new_box_autoadd_create_offer_request_0();
+    _api_fill_to_wire_create_offer_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<ffi.Double> api2wire_box_autoadd_f64(double raw) {
+    return inner.new_box_autoadd_f64_0(api2wire_f64(raw));
+  }
+
+  @protected
   ffi.Pointer<wire_GreenlightCredentials> api2wire_box_autoadd_greenlight_credentials(
       GreenlightCredentials raw) {
     final ptr = inner.new_box_autoadd_greenlight_credentials_0();
@@ -4372,6 +4538,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   ffi.Pointer<wire_OpeningFeeParams> api2wire_box_autoadd_opening_fee_params(OpeningFeeParams raw) {
     final ptr = inner.new_box_autoadd_opening_fee_params_0();
     _api_fill_to_wire_opening_fee_params(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_PayOfferRequest> api2wire_box_autoadd_pay_offer_request(PayOfferRequest raw) {
+    final ptr = inner.new_box_autoadd_pay_offer_request_0();
+    _api_fill_to_wire_pay_offer_request(raw, ptr.ref);
     return ptr;
   }
 
@@ -4549,6 +4722,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<ffi.Double> api2wire_opt_box_autoadd_f64(double? raw) {
+    return raw == null ? ffi.nullptr : api2wire_box_autoadd_f64(raw);
+  }
+
+  @protected
   ffi.Pointer<wire_GreenlightCredentials> api2wire_opt_box_autoadd_greenlight_credentials(
       GreenlightCredentials? raw) {
     return raw == null ? ffi.nullptr : api2wire_box_autoadd_greenlight_credentials(raw);
@@ -4630,6 +4808,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     _api_fill_to_wire_connect_request(apiObj, wireObj.ref);
   }
 
+  void _api_fill_to_wire_box_autoadd_create_offer_request(
+      CreateOfferRequest apiObj, ffi.Pointer<wire_CreateOfferRequest> wireObj) {
+    _api_fill_to_wire_create_offer_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_greenlight_credentials(
       GreenlightCredentials apiObj, ffi.Pointer<wire_GreenlightCredentials> wireObj) {
     _api_fill_to_wire_greenlight_credentials(apiObj, wireObj.ref);
@@ -4672,6 +4855,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_box_autoadd_opening_fee_params(
       OpeningFeeParams apiObj, ffi.Pointer<wire_OpeningFeeParams> wireObj) {
     _api_fill_to_wire_opening_fee_params(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_pay_offer_request(
+      PayOfferRequest apiObj, ffi.Pointer<wire_PayOfferRequest> wireObj) {
+    _api_fill_to_wire_pay_offer_request(apiObj, wireObj.ref);
   }
 
   void _api_fill_to_wire_box_autoadd_pay_onchain_request(
@@ -4790,6 +4978,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.restore_only = api2wire_opt_box_autoadd_bool(apiObj.restoreOnly);
   }
 
+  void _api_fill_to_wire_create_offer_request(CreateOfferRequest apiObj, wire_CreateOfferRequest wireObj) {
+    wireObj.amount_msat = api2wire_opt_box_autoadd_u64(apiObj.amountMsat);
+    wireObj.description = api2wire_String(apiObj.description);
+    wireObj.absolute_expiry = api2wire_opt_box_autoadd_u64(apiObj.absoluteExpiry);
+    wireObj.quantity_max = api2wire_opt_box_autoadd_u64(apiObj.quantityMax);
+  }
+
   void _api_fill_to_wire_greenlight_credentials(
       GreenlightCredentials apiObj, wire_GreenlightCredentials wireObj) {
     wireObj.developer_key = api2wire_uint_8_list(apiObj.developerKey);
@@ -4886,6 +5081,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.promise = api2wire_String(apiObj.promise);
   }
 
+  void _api_fill_to_wire_pay_offer_request(PayOfferRequest apiObj, wire_PayOfferRequest wireObj) {
+    wireObj.offer = api2wire_String(apiObj.offer);
+    wireObj.amount_msat = api2wire_opt_box_autoadd_u64(apiObj.amountMsat);
+    wireObj.timeout = api2wire_opt_box_autoadd_f64(apiObj.timeout);
+    wireObj.payer_note = api2wire_opt_String(apiObj.payerNote);
+    wireObj.label = api2wire_opt_String(apiObj.label);
+  }
+
   void _api_fill_to_wire_pay_onchain_request(PayOnchainRequest apiObj, wire_PayOnchainRequest wireObj) {
     wireObj.recipient_address = api2wire_String(apiObj.recipientAddress);
     _api_fill_to_wire_prepare_onchain_payment_response(apiObj.prepareRes, wireObj.prepare_res);
@@ -4980,7 +5183,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   void _api_fill_to_wire_send_payment_request(SendPaymentRequest apiObj, wire_SendPaymentRequest wireObj) {
-    wireObj.bolt11 = api2wire_String(apiObj.bolt11);
+    wireObj.invoice = api2wire_String(apiObj.invoice);
     wireObj.amount_msat = api2wire_opt_box_autoadd_u64(apiObj.amountMsat);
     wireObj.label = api2wire_opt_String(apiObj.label);
   }
@@ -5569,6 +5772,38 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_receive_payment =
       _wire_receive_paymentPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceivePaymentRequest>)>();
 
+  void wire_create_offer(
+    int port_,
+    ffi.Pointer<wire_CreateOfferRequest> req,
+  ) {
+    return _wire_create_offer(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_create_offerPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_CreateOfferRequest>)>>(
+          'wire_create_offer');
+  late final _wire_create_offer =
+      _wire_create_offerPtr.asFunction<void Function(int, ffi.Pointer<wire_CreateOfferRequest>)>();
+
+  void wire_pay_offer(
+    int port_,
+    ffi.Pointer<wire_PayOfferRequest> req,
+  ) {
+    return _wire_pay_offer(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_pay_offerPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_PayOfferRequest>)>>(
+          'wire_pay_offer');
+  late final _wire_pay_offer =
+      _wire_pay_offerPtr.asFunction<void Function(int, ffi.Pointer<wire_PayOfferRequest>)>();
+
   void wire_lnurl_pay(
     int port_,
     ffi.Pointer<wire_LnUrlPayRequest> req,
@@ -6046,6 +6281,29 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_connect_request_0 =
       _new_box_autoadd_connect_request_0Ptr.asFunction<ffi.Pointer<wire_ConnectRequest> Function()>();
 
+  ffi.Pointer<wire_CreateOfferRequest> new_box_autoadd_create_offer_request_0() {
+    return _new_box_autoadd_create_offer_request_0();
+  }
+
+  late final _new_box_autoadd_create_offer_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_CreateOfferRequest> Function()>>(
+          'new_box_autoadd_create_offer_request_0');
+  late final _new_box_autoadd_create_offer_request_0 = _new_box_autoadd_create_offer_request_0Ptr
+      .asFunction<ffi.Pointer<wire_CreateOfferRequest> Function()>();
+
+  ffi.Pointer<ffi.Double> new_box_autoadd_f64_0(
+    double value,
+  ) {
+    return _new_box_autoadd_f64_0(
+      value,
+    );
+  }
+
+  late final _new_box_autoadd_f64_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Double> Function(ffi.Double)>>('new_box_autoadd_f64_0');
+  late final _new_box_autoadd_f64_0 =
+      _new_box_autoadd_f64_0Ptr.asFunction<ffi.Pointer<ffi.Double> Function(double)>();
+
   ffi.Pointer<wire_GreenlightCredentials> new_box_autoadd_greenlight_credentials_0() {
     return _new_box_autoadd_greenlight_credentials_0();
   }
@@ -6147,6 +6405,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_opening_fee_params_0');
   late final _new_box_autoadd_opening_fee_params_0 =
       _new_box_autoadd_opening_fee_params_0Ptr.asFunction<ffi.Pointer<wire_OpeningFeeParams> Function()>();
+
+  ffi.Pointer<wire_PayOfferRequest> new_box_autoadd_pay_offer_request_0() {
+    return _new_box_autoadd_pay_offer_request_0();
+  }
+
+  late final _new_box_autoadd_pay_offer_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_PayOfferRequest> Function()>>(
+          'new_box_autoadd_pay_offer_request_0');
+  late final _new_box_autoadd_pay_offer_request_0 =
+      _new_box_autoadd_pay_offer_request_0Ptr.asFunction<ffi.Pointer<wire_PayOfferRequest> Function()>();
 
   ffi.Pointer<wire_PayOnchainRequest> new_box_autoadd_pay_onchain_request_0() {
     return _new_box_autoadd_pay_onchain_request_0();
@@ -6556,7 +6824,7 @@ final class wire_ListPaymentsRequest extends ffi.Struct {
 }
 
 final class wire_SendPaymentRequest extends ffi.Struct {
-  external ffi.Pointer<wire_uint_8_list> bolt11;
+  external ffi.Pointer<wire_uint_8_list> invoice;
 
   external ffi.Pointer<ffi.Uint64> amount_msat;
 
@@ -6621,6 +6889,28 @@ final class wire_ReceivePaymentRequest extends ffi.Struct {
   external ffi.Pointer<ffi.Uint32> expiry;
 
   external ffi.Pointer<ffi.Uint32> cltv;
+}
+
+final class wire_CreateOfferRequest extends ffi.Struct {
+  external ffi.Pointer<ffi.Uint64> amount_msat;
+
+  external ffi.Pointer<wire_uint_8_list> description;
+
+  external ffi.Pointer<ffi.Uint64> absolute_expiry;
+
+  external ffi.Pointer<ffi.Uint64> quantity_max;
+}
+
+final class wire_PayOfferRequest extends ffi.Struct {
+  external ffi.Pointer<wire_uint_8_list> offer;
+
+  external ffi.Pointer<ffi.Uint64> amount_msat;
+
+  external ffi.Pointer<ffi.Double> timeout;
+
+  external ffi.Pointer<wire_uint_8_list> payer_note;
+
+  external ffi.Pointer<wire_uint_8_list> label;
 }
 
 final class wire_LnUrlPayRequestData extends ffi.Struct {

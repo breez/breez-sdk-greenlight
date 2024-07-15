@@ -5,31 +5,31 @@ use breez_sdk_core::lnurl::pay::{LnUrlPayResult, LnUrlPaySuccessData};
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, AesSuccessActionDataResult,
-    BackupFailedData, BackupStatus, BitcoinAddressData, BreezEvent, BreezServices,
+    Amount, BackupFailedData, BackupStatus, BitcoinAddressData, BreezEvent, BreezServices,
     BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
     CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
-    ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
-    GreenlightCredentials, GreenlightDeviceCredentials, GreenlightNodeConfig, HealthCheckStatus,
-    InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails,
-    LnUrlAuthError, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayError,
-    LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
-    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-    LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
-    MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
-    NodeConfig, NodeCredentials, NodeState, OnchainPaymentLimitsResponse, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, PayOnchainRequest,
-    PayOnchainResponse, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
-    PaymentTypeFilter, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
-    PrepareRefundResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RecommendedFees, RedeemOnchainFundsRequest, RedeemOnchainFundsResponse,
-    RefundRequest, RefundResponse, ReportIssueRequest, ReportPaymentFailureDetails,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
-    SwapAmountType, SwapInfo, SwapStatus, Symbol, TlvEntry, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    ConnectRequest, CreateOfferRequest, CurrencyInfo, EnvironmentType, EventListener,
+    FeeratePreset, FiatCurrency, GreenlightCredentials, GreenlightDeviceCredentials,
+    GreenlightNodeConfig, HealthCheckStatus, InputType, InvoicePaidDetails, LNInvoice, LNOffer,
+    ListPaymentsRequest, LnPaymentDetails, LnUrlAuthError, LnUrlAuthRequestData,
+    LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayError, LnUrlPayErrorData, LnUrlPayRequest,
+    LnUrlPayRequestData, LnUrlWithdrawError, LnUrlWithdrawRequest, LnUrlWithdrawRequestData,
+    LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, LogEntry,
+    LogStream, LspInformation, MaxReverseSwapAmountResponse, MessageSuccessActionData,
+    MetadataFilter, MetadataItem, Network, NodeConfig, NodeCredentials, NodeState,
+    OnchainPaymentLimitsResponse, OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams,
+    OpeningFeeParamsMenu, PayOfferRequest, PayOnchainRequest, PayOnchainResponse, Payment,
+    PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter,
+    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse, Rate,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
+    RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendOnchainRequest,
+    SendOnchainResponse, SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse, SuccessActionProcessed, SwapAmountType, SwapInfo, SwapStatus, Symbol,
+    TlvEntry, UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -384,6 +384,14 @@ impl BlockingBreezServices {
         req: PrepareRedeemOnchainFundsRequest,
     ) -> SdkResult<PrepareRedeemOnchainFundsResponse> {
         rt().block_on(self.breez_services.prepare_redeem_onchain_funds(req))
+    }
+
+    pub fn create_offer(&self, req: CreateOfferRequest) -> Result<String> {
+        rt().block_on(self.breez_services.create_offer(req))
+    }
+
+    pub fn pay_offer(&self, req: PayOfferRequest) -> Result<SendPaymentResponse, SendPaymentError> {
+        rt().block_on(self.breez_services.pay_offer(req))
     }
 }
 

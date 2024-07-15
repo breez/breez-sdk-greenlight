@@ -148,10 +148,18 @@ class RNBreezSDK: RCTEventEmitter {
         }
 
         do {
+<<<<<<< HEAD
             let connectRequest = try BreezSDKMapper.asConnectRequest(connectRequest: req)
             try ensureWorkingDir(workingDir: connectRequest.config.workingDir)
 
             breezServices = try BreezSDK.connect(req: connectRequest, listener: BreezSDKListener())
+=======
+            let configTmp = try BreezSDKMapper.asConfig(config: config)
+
+            try ensureWorkingDir(workingDir: configTmp.workingDir)
+
+            breezServices = try BreezSDK.connect(config: configTmp, seed: seed, listener: BreezSDKListener(emitter: self))
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
@@ -163,6 +171,7 @@ class RNBreezSDK: RCTEventEmitter {
         do {
             try getBreezServices().disconnect()
             breezServices = nil
+<<<<<<< HEAD
             resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
@@ -174,6 +183,8 @@ class RNBreezSDK: RCTEventEmitter {
         do {
             let configureNodeRequest = try BreezSDKMapper.asConfigureNodeRequest(configureNodeRequest: req)
             try getBreezServices().configureNode(req: configureNodeRequest)
+=======
+>>>>>>> 76cb54aa (Squash and rebase Bolt12 implementation)
             resolve(["status": "ok"])
         } catch let err {
             rejectErr(err: err, reject: reject)
@@ -716,6 +727,28 @@ class RNBreezSDK: RCTEventEmitter {
             let prepareRedeemOnchainFundsRequest = try BreezSDKMapper.asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: req)
             var res = try getBreezServices().prepareRedeemOnchainFunds(req: prepareRedeemOnchainFundsRequest)
             resolve(BreezSDKMapper.dictionaryOf(prepareRedeemOnchainFundsResponse: res))
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(createOffer:resolve:reject:)
+    func createOffer(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let createOfferRequest = try BreezSDKMapper.asCreateOfferRequest(createOfferRequest: req)
+            var res = try getBreezServices().createOffer(req: createOfferRequest)
+            resolve(res)
+        } catch let err {
+            rejectErr(err: err, reject: reject)
+        }
+    }
+
+    @objc(payOffer:resolve:reject:)
+    func payOffer(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+        do {
+            let payOfferRequest = try BreezSDKMapper.asPayOfferRequest(payOfferRequest: req)
+            var res = try getBreezServices().payOffer(req: payOfferRequest)
+            resolve(BreezSDKMapper.dictionaryOf(sendPaymentResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }

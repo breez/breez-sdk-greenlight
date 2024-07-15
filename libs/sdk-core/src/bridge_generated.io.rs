@@ -179,6 +179,16 @@ pub extern "C" fn wire_receive_payment(port_: i64, req: *mut wire_ReceivePayment
 }
 
 #[no_mangle]
+pub extern "C" fn wire_create_offer(port_: i64, req: *mut wire_CreateOfferRequest) {
+    wire_create_offer_impl(port_, req)
+}
+
+#[no_mangle]
+pub extern "C" fn wire_pay_offer(port_: i64, req: *mut wire_PayOfferRequest) {
+    wire_pay_offer_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_lnurl_pay(port_: i64, req: *mut wire_LnUrlPayRequest) {
     wire_lnurl_pay_impl(port_, req)
 }
@@ -357,6 +367,16 @@ pub extern "C" fn new_box_autoadd_connect_request_0() -> *mut wire_ConnectReques
 }
 
 #[no_mangle]
+pub extern "C" fn new_box_autoadd_create_offer_request_0() -> *mut wire_CreateOfferRequest {
+    support::new_leak_box_ptr(wire_CreateOfferRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_f64_0(value: f64) -> *mut f64 {
+    support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
 pub extern "C" fn new_box_autoadd_greenlight_credentials_0() -> *mut wire_GreenlightCredentials {
     support::new_leak_box_ptr(wire_GreenlightCredentials::new_with_null_ptr())
 }
@@ -404,6 +424,11 @@ pub extern "C" fn new_box_autoadd_open_channel_fee_request_0() -> *mut wire_Open
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_opening_fee_params_0() -> *mut wire_OpeningFeeParams {
     support::new_leak_box_ptr(wire_OpeningFeeParams::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_pay_offer_request_0() -> *mut wire_PayOfferRequest {
+    support::new_leak_box_ptr(wire_PayOfferRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -578,6 +603,17 @@ impl Wire2Api<ConnectRequest> for *mut wire_ConnectRequest {
         Wire2Api::<ConnectRequest>::wire2api(*wrap).into()
     }
 }
+impl Wire2Api<CreateOfferRequest> for *mut wire_CreateOfferRequest {
+    fn wire2api(self) -> CreateOfferRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<CreateOfferRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<f64> for *mut f64 {
+    fn wire2api(self) -> f64 {
+        unsafe { *support::box_from_leak_ptr(self) }
+    }
+}
 impl Wire2Api<GreenlightCredentials> for *mut wire_GreenlightCredentials {
     fn wire2api(self) -> GreenlightCredentials {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
@@ -635,6 +671,12 @@ impl Wire2Api<OpeningFeeParams> for *mut wire_OpeningFeeParams {
     fn wire2api(self) -> OpeningFeeParams {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<OpeningFeeParams>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<PayOfferRequest> for *mut wire_PayOfferRequest {
+    fn wire2api(self) -> PayOfferRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<PayOfferRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<PayOnchainRequest> for *mut wire_PayOnchainRequest {
@@ -791,6 +833,16 @@ impl Wire2Api<ConnectRequest> for wire_ConnectRequest {
             config: self.config.wire2api(),
             seed: self.seed.wire2api(),
             restore_only: self.restore_only.wire2api(),
+        }
+    }
+}
+impl Wire2Api<CreateOfferRequest> for wire_CreateOfferRequest {
+    fn wire2api(self) -> CreateOfferRequest {
+        CreateOfferRequest {
+            amount_msat: self.amount_msat.wire2api(),
+            description: self.description.wire2api(),
+            absolute_expiry: self.absolute_expiry.wire2api(),
+            quantity_max: self.quantity_max.wire2api(),
         }
     }
 }
@@ -951,6 +1003,17 @@ impl Wire2Api<OpeningFeeParams> for wire_OpeningFeeParams {
     }
 }
 
+impl Wire2Api<PayOfferRequest> for wire_PayOfferRequest {
+    fn wire2api(self) -> PayOfferRequest {
+        PayOfferRequest {
+            offer: self.offer.wire2api(),
+            amount_msat: self.amount_msat.wire2api(),
+            timeout: self.timeout.wire2api(),
+            payer_note: self.payer_note.wire2api(),
+            label: self.label.wire2api(),
+        }
+    }
+}
 impl Wire2Api<PayOnchainRequest> for wire_PayOnchainRequest {
     fn wire2api(self) -> PayOnchainRequest {
         PayOnchainRequest {
@@ -1079,7 +1142,7 @@ impl Wire2Api<SendOnchainRequest> for wire_SendOnchainRequest {
 impl Wire2Api<SendPaymentRequest> for wire_SendPaymentRequest {
     fn wire2api(self) -> SendPaymentRequest {
         SendPaymentRequest {
-            bolt11: self.bolt11.wire2api(),
+            invoice: self.invoice.wire2api(),
             amount_msat: self.amount_msat.wire2api(),
             label: self.label.wire2api(),
         }
@@ -1172,6 +1235,15 @@ pub struct wire_ConnectRequest {
     config: wire_Config,
     seed: *mut wire_uint_8_list,
     restore_only: *mut bool,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_CreateOfferRequest {
+    amount_msat: *mut u64,
+    description: *mut wire_uint_8_list,
+    absolute_expiry: *mut u64,
+    quantity_max: *mut u64,
 }
 
 #[repr(C)]
@@ -1298,6 +1370,16 @@ pub struct wire_OpeningFeeParams {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_PayOfferRequest {
+    offer: *mut wire_uint_8_list,
+    amount_msat: *mut u64,
+    timeout: *mut f64,
+    payer_note: *mut wire_uint_8_list,
+    label: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_PayOnchainRequest {
     recipient_address: *mut wire_uint_8_list,
     prepare_res: wire_PrepareOnchainPaymentResponse,
@@ -1397,7 +1479,7 @@ pub struct wire_SendOnchainRequest {
 #[repr(C)]
 #[derive(Clone)]
 pub struct wire_SendPaymentRequest {
-    bolt11: *mut wire_uint_8_list,
+    invoice: *mut wire_uint_8_list,
     amount_msat: *mut u64,
     label: *mut wire_uint_8_list,
 }
@@ -1565,6 +1647,23 @@ impl NewWithNullPtr for wire_ConnectRequest {
 }
 
 impl Default for wire_ConnectRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_CreateOfferRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            amount_msat: core::ptr::null_mut(),
+            description: core::ptr::null_mut(),
+            absolute_expiry: core::ptr::null_mut(),
+            quantity_max: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_CreateOfferRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
@@ -1778,6 +1877,24 @@ impl NewWithNullPtr for wire_OpeningFeeParams {
 }
 
 impl Default for wire_OpeningFeeParams {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_PayOfferRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            offer: core::ptr::null_mut(),
+            amount_msat: core::ptr::null_mut(),
+            timeout: core::ptr::null_mut(),
+            payer_note: core::ptr::null_mut(),
+            label: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_PayOfferRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }
@@ -2004,7 +2121,7 @@ impl Default for wire_SendOnchainRequest {
 impl NewWithNullPtr for wire_SendPaymentRequest {
     fn new_with_null_ptr() -> Self {
         Self {
-            bolt11: core::ptr::null_mut(),
+            invoice: core::ptr::null_mut(),
             amount_msat: core::ptr::null_mut(),
             label: core::ptr::null_mut(),
         }
