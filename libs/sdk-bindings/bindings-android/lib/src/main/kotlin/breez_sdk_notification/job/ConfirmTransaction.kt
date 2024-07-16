@@ -52,7 +52,7 @@ class ConfirmTransactionJob(
             }
 
             try {
-                breezSDK.processReverseSwap(address)
+                breezSDK.claimReverseSwap(address)
                 logger.log(TAG, "Found reverse swap for $address", "INFO")
                 return
             } catch (e: Exception) {

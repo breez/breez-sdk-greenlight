@@ -69,7 +69,7 @@ class ConfirmTransactionTask : TaskProtocol {
         }
         
         do {
-            try breezSDK.processReverseSwap(lockupAddress: address)
+            try breezSDK.claimReverseSwap(lockupAddress: address)
             self.logger.log(tag: TAG, line: "Found reverse swap for \(address)", level: "DEBUG")
         } catch let e {
             self.logger.log(tag: TAG, line: "Failed to process reverse swap: \(e)", level: "ERROR")
