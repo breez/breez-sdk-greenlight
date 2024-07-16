@@ -31,7 +31,11 @@ service Information {
 
 service ChannelOpener {
   rpc LSPList(LSPListRequest) returns (LSPListReply) {}
+
+  // Returns active and historical LSPs used by a node.
+  // In the response, the LSP with a non-empty fee list is active, the LSPs with an empty fee list are historical.
   rpc LSPFullList(LSPFullListRequest) returns (LSPFullListReply) {}
+
   rpc RegisterPayment(RegisterPaymentRequest) returns (RegisterPaymentReply) {}
   rpc CheckChannels(CheckChannelsRequest) returns (CheckChannelsReply) {}
 }
