@@ -2706,14 +2706,12 @@ async fn get_notification_lsps(
         .get_node_state()?
         .ok_or(SdkError::generic("Node info not found"))?
         .id;
-    let active_lsp_id = persister
-        .get_lsp_id()?
-        .ok_or(SdkError::generic("No active LSP ID found"))?;
+    let maybe_active_lsp_id = persister.get_lsp_id()?;
     let open_peers = node_api.get_open_peers().await?;
 
     let mut notification_lsps = vec![];
     for lsp in lsp_api.list_used_lsps(node_pubkey).await? {
-        match lsp.id == active_lsp_id {
+        match matches!(maybe_active_lsp_id, Some(ref active_lsp_id) if active_lsp_id == &lsp.id) {
             true => {
                 // Always consider the active LSP for notifications
                 notification_lsps.push(lsp);
