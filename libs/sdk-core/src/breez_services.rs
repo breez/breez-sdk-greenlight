@@ -1938,14 +1938,19 @@ impl BreezServices {
         )
         .await?
         {
-            self.lsp_api
+            let lsp_id = lsp_info.id;
+            let res = self
+                .lsp_api
                 .register_payment_notifications(
-                    lsp_info.id,
+                    lsp_id.clone(),
                     lsp_info.lsp_pubkey,
                     webhook_url.clone(),
                     sign_response.signature.clone(),
                 )
-                .await?;
+                .await;
+            if res.is_err() {
+                warn!("Failed to register notifications for LSP {lsp_id}: {res:?}");
+            }
         }
 
         Ok(())
@@ -1966,14 +1971,19 @@ impl BreezServices {
         )
         .await?
         {
-            self.lsp_api
+            let lsp_id = lsp_info.id;
+            let res = self
+                .lsp_api
                 .unregister_payment_notifications(
-                    lsp_info.id,
+                    lsp_id.clone(),
                     lsp_info.lsp_pubkey,
                     webhook_url.clone(),
                     sign_response.signature.clone(),
                 )
-                .await?;
+                .await;
+            if res.is_err() {
+                warn!("Failed to un-register notifications for LSP {lsp_id}: {res:?}");
+            }
         }
 
         Ok(())
