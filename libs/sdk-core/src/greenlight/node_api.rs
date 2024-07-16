@@ -1675,10 +1675,13 @@ impl NodeAPI for Greenlight {
         let mut node_client = self.get_node_client().await?;
 
         let open_peer_channels = self.get_open_peer_channels_pb().await?;
-        let has_public_channel = open_peer_channels.values().any(|c| {
-            let is_private = c.private.unwrap_or_default();
-            !is_private
-        });
+        let (open_peer_channels_private, open_peer_channels_public): (
+            HashMap<Vec<u8>, ListpeerchannelsChannels>,
+            HashMap<Vec<u8>, ListpeerchannelsChannels>,
+        ) = open_peer_channels
+            .into_iter()
+            .partition(|(_, c)| c.private.unwrap_or_default());
+        let has_public_channel = !open_peer_channels_public.is_empty();
 
         let mut hints: Vec<RouteHint> = vec![];
 
@@ -1700,8 +1703,8 @@ impl NodeAPI for Greenlight {
             .map(|c| (c.source.clone(), c))
             .collect();
 
-        // Create a routing hint from each channel.
-        for (peer_id, peer_channel) in open_peer_channels {
+        // Create a routing hint from each private channel.
+        for (peer_id, peer_channel) in open_peer_channels_private {
             let peer_id_str = hex::encode(&peer_id);
             let optional_channel_id = peer_channel
                 .alias
