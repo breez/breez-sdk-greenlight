@@ -2706,13 +2706,13 @@ async fn get_notification_lsps(
         .get_node_state()?
         .ok_or(SdkError::generic("Node info not found"))?
         .id;
-    let maybe_active_lsp_id = persister.get_lsp_id()?;
     let open_peers = node_api.get_open_peers().await?;
 
     let mut notification_lsps = vec![];
     for lsp in lsp_api.list_used_lsps(node_pubkey).await? {
-        match matches!(maybe_active_lsp_id, Some(ref active_lsp_id) if active_lsp_id == &lsp.id) {
+        match !lsp.opening_fee_params_list.values.is_empty() {
             true => {
+                // Non-empty fee params list = this is the active LSP
                 // Always consider the active LSP for notifications
                 notification_lsps.push(lsp);
             }
