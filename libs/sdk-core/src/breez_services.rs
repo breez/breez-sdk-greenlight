@@ -1931,6 +1931,9 @@ impl BreezServices {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
+
+        // Attempt register call for all relevant LSPs
+        let mut error_found = false;
         for lsp_info in get_notification_lsps(
             self.persister.clone(),
             self.lsp_api.clone(),
@@ -1949,11 +1952,17 @@ impl BreezServices {
                 )
                 .await;
             if res.is_err() {
+                error_found = true;
                 warn!("Failed to register notifications for LSP {lsp_id}: {res:?}");
             }
         }
 
-        Ok(())
+        match error_found {
+            true => Err(SdkError::generic(
+                "Failed to register notifications for at least one LSP, see logs for details",
+            )),
+            false => Ok(()),
+        }
     }
 
     /// Unregisters lightning payment notifications with the current LSP for the `webhook_url`.
@@ -1964,6 +1973,9 @@ impl BreezServices {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
+
+        // Attempt register call for all relevant LSPs
+        let mut error_found = false;
         for lsp_info in get_notification_lsps(
             self.persister.clone(),
             self.lsp_api.clone(),
@@ -1982,11 +1994,17 @@ impl BreezServices {
                 )
                 .await;
             if res.is_err() {
+                error_found = true;
                 warn!("Failed to un-register notifications for LSP {lsp_id}: {res:?}");
             }
         }
 
-        Ok(())
+        match error_found {
+            true => Err(SdkError::generic(
+                "Failed to un-register notifications for at least one LSP, see logs for details",
+            )),
+            false => Ok(()),
+        }
     }
 
     /// Registers for a onchain tx notification. When a new transaction to the specified `address`
