@@ -1919,37 +1919,87 @@ impl BreezServices {
 
     /// Registers for lightning payment notifications. When a payment is intercepted by the LSP
     /// to this node, a callback will be triggered to the `webhook_url`.
+    ///
+    /// Note: these notifications are registered for all LSPs (active and historical) with whom
+    /// we have a channel.
     async fn register_payment_notifications(&self, webhook_url: String) -> SdkResult<()> {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-        let lsp_info = self.lsp_info().await?;
-        self.lsp_api
-            .register_payment_notifications(
-                lsp_info.id,
-                lsp_info.lsp_pubkey,
-                webhook_url.clone(),
-                sign_response.signature,
-            )
-            .await?;
-        Ok(())
+
+        // Attempt register call for all relevant LSPs
+        let mut error_found = false;
+        for lsp_info in get_notification_lsps(
+            self.persister.clone(),
+            self.lsp_api.clone(),
+            self.node_api.clone(),
+        )
+        .await?
+        {
+            let lsp_id = lsp_info.id;
+            let res = self
+                .lsp_api
+                .register_payment_notifications(
+                    lsp_id.clone(),
+                    lsp_info.lsp_pubkey,
+                    webhook_url.clone(),
+                    sign_response.signature.clone(),
+                )
+                .await;
+            if res.is_err() {
+                error_found = true;
+                warn!("Failed to register notifications for LSP {lsp_id}: {res:?}");
+            }
+        }
+
+        match error_found {
+            true => Err(SdkError::generic(
+                "Failed to register notifications for at least one LSP, see logs for details",
+            )),
+            false => Ok(()),
+        }
     }
 
     /// Unregisters lightning payment notifications with the current LSP for the `webhook_url`.
+    ///
+    /// Note: these notifications are unregistered for all LSPs (active and historical) with whom
+    /// we have a channel.
     async fn unregister_payment_notifications(&self, webhook_url: String) -> SdkResult<()> {
         let message = webhook_url.clone();
         let sign_request = SignMessageRequest { message };
         let sign_response = self.sign_message(sign_request).await?;
-        let lsp_info = self.lsp_info().await?;
-        self.lsp_api
-            .unregister_payment_notifications(
-                lsp_info.id,
-                lsp_info.lsp_pubkey,
-                webhook_url.clone(),
-                sign_response.signature,
-            )
-            .await?;
-        Ok(())
+
+        // Attempt register call for all relevant LSPs
+        let mut error_found = false;
+        for lsp_info in get_notification_lsps(
+            self.persister.clone(),
+            self.lsp_api.clone(),
+            self.node_api.clone(),
+        )
+        .await?
+        {
+            let lsp_id = lsp_info.id;
+            let res = self
+                .lsp_api
+                .unregister_payment_notifications(
+                    lsp_id.clone(),
+                    lsp_info.lsp_pubkey,
+                    webhook_url.clone(),
+                    sign_response.signature.clone(),
+                )
+                .await;
+            if res.is_err() {
+                error_found = true;
+                warn!("Failed to un-register notifications for LSP {lsp_id}: {res:?}");
+            }
+        }
+
+        match error_found {
+            true => Err(SdkError::generic(
+                "Failed to un-register notifications for at least one LSP, see logs for details",
+            )),
+            false => Ok(()),
+        }
     }
 
     /// Registers for a onchain tx notification. When a new transaction to the specified `address`
@@ -2638,6 +2688,39 @@ async fn get_lsp_by_id(
         .iter()
         .find(|&lsp| lsp.id.as_str() == lsp_id)
         .cloned())
+}
+
+/// Convenience method to get all LSPs (active and historical) relevant for registering or
+/// unregistering webhook notifications
+async fn get_notification_lsps(
+    persister: Arc<SqliteStorage>,
+    lsp_api: Arc<dyn LspAPI>,
+    node_api: Arc<dyn NodeAPI>,
+) -> SdkResult<Vec<LspInformation>> {
+    let node_pubkey = persister
+        .get_node_state()?
+        .ok_or(SdkError::generic("Node info not found"))?
+        .id;
+    let open_peers = node_api.get_open_peers().await?;
+
+    let mut notification_lsps = vec![];
+    for lsp in lsp_api.list_used_lsps(node_pubkey).await? {
+        match !lsp.opening_fee_params_list.values.is_empty() {
+            true => {
+                // Non-empty fee params list = this is the active LSP
+                // Always consider the active LSP for notifications
+                notification_lsps.push(lsp);
+            }
+            false => {
+                // Consider only historical LSPs with whom we have an active channel
+                let has_active_channel_to_lsp = open_peers.contains(&lsp.lsp_pubkey);
+                if has_active_channel_to_lsp {
+                    notification_lsps.push(lsp);
+                }
+            }
+        }
+    }
+    Ok(notification_lsps)
 }
 
 #[cfg(test)]

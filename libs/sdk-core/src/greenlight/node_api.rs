@@ -746,6 +746,28 @@ impl Greenlight {
         Ok(max_per_channel)
     }
 
+    /// Get open peer channels (private and public) as raw protobuf structs, indexed by peer pubkey
+    async fn get_open_peer_channels_pb(
+        &self,
+    ) -> NodeResult<HashMap<Vec<u8>, cln::ListpeerchannelsChannels>> {
+        let mut node_client = self.get_node_client().await?;
+        // Get the peer channels
+        let peer_channels = node_client
+            .list_peer_channels(cln::ListpeerchannelsRequest::default())
+            .await?
+            .into_inner();
+
+        let open_peer_channels: HashMap<Vec<u8>, cln::ListpeerchannelsChannels> = peer_channels
+            .channels
+            .into_iter()
+            .filter(|c| {
+                c.state == Some(cln::ChannelState::ChanneldNormal as i32) && c.peer_id.is_some()
+            })
+            .map(|c| (c.peer_id.clone().unwrap(), c))
+            .collect();
+        Ok(open_peer_channels)
+    }
+
     async fn with_keep_alive<T, F>(&self, f: F) -> T
     where
         F: Future<Output = T>,
@@ -1650,27 +1672,19 @@ impl NodeAPI for Greenlight {
         &self,
         lsp_info: &LspInformation,
     ) -> NodeResult<(Vec<RouteHint>, bool)> {
-        let mut hints: Vec<RouteHint> = vec![];
         let mut node_client = self.get_node_client().await?;
-        // Get the peer channels
-        let peer_channels = node_client
-            .list_peer_channels(cln::ListpeerchannelsRequest::default())
-            .await?
-            .into_inner();
 
-        let mut has_public_channel = false;
-        let open_peer_channels: HashMap<Vec<u8>, cln::ListpeerchannelsChannels> = peer_channels
-            .channels
+        let open_peer_channels = self.get_open_peer_channels_pb().await?;
+        let (open_peer_channels_private, open_peer_channels_public): (
+            HashMap<Vec<u8>, ListpeerchannelsChannels>,
+            HashMap<Vec<u8>, ListpeerchannelsChannels>,
+        ) = open_peer_channels
             .into_iter()
-            .filter(|c| {
-                let is_private = c.private.unwrap_or_default();
-                has_public_channel |= !is_private;
-                is_private
-                    && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
-                    && c.peer_id.is_some()
-            })
-            .map(|c| (c.peer_id.clone().unwrap(), c))
-            .collect();
+            .partition(|(_, c)| c.private.unwrap_or_default());
+        let has_public_channel = !open_peer_channels_public.is_empty();
+
+        let mut hints: Vec<RouteHint> = vec![];
+
         // Get channels where our node is the destination
         let pubkey = self
             .persister
@@ -1689,8 +1703,8 @@ impl NodeAPI for Greenlight {
             .map(|c| (c.source.clone(), c))
             .collect();
 
-        // Create a routing hint from each channel.
-        for (peer_id, peer_channel) in open_peer_channels {
+        // Create a routing hint from each private channel.
+        for (peer_id, peer_channel) in open_peer_channels_private {
             let peer_id_str = hex::encode(&peer_id);
             let optional_channel_id = peer_channel
                 .alias
@@ -1744,6 +1758,12 @@ impl NodeAPI for Greenlight {
             }
         }
         Ok((hints, has_public_channel))
+    }
+
+    async fn get_open_peers(&self) -> NodeResult<HashSet<Vec<u8>>> {
+        let open_peer_channels = self.get_open_peer_channels_pb().await?;
+        let open_peers: HashSet<Vec<u8>> = open_peer_channels.into_keys().collect();
+        Ok(open_peers)
     }
 }
 

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::pin::Pin;
 
 use anyhow::Result;
@@ -182,10 +183,12 @@ pub trait NodeAPI: Send + Sync {
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
     fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
 
-    // Gets the routing hints related to all private channels that the node has.
-    // Also returns a boolean indicating if the node has a public channel or not.
+    /// Gets the routing hints related to all private channels that the node has.
+    /// Also returns a boolean indicating if the node has a public channel or not.
     async fn get_routing_hints(
         &self,
         lsp_info: &LspInformation,
     ) -> NodeResult<(Vec<RouteHint>, bool)>;
+    /// Get peers with whom we have an open channel
+    async fn get_open_peers(&self) -> NodeResult<HashSet<Vec<u8>>>;
 }

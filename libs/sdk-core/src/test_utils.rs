@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::time::{Duration, SystemTime};
 use std::{mem, vec};
@@ -506,6 +506,10 @@ impl NodeAPI for MockNodeAPI {
     async fn fetch_bolt11(&self, _payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
         Ok(None)
     }
+
+    async fn get_open_peers(&self) -> NodeResult<HashSet<Vec<u8>>> {
+        Ok(HashSet::new())
+    }
 }
 
 impl MockNodeAPI {
@@ -655,6 +659,10 @@ impl LspAPI for MockBreezServer {
                 10, 12,
             )])?,
         }])
+    }
+
+    async fn list_used_lsps(&self, _node_pubkey: String) -> SdkResult<Vec<LspInformation>> {
+        Ok(vec![])
     }
 
     async fn register_payment_notifications(
