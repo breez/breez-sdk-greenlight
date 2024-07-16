@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::HashSet;
 use std::pin::Pin;
 
 use anyhow::Result;
@@ -12,7 +12,7 @@ use crate::{
     bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
-    CustomMessage, LspInformation, Channel, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
+    CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
     PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
     SyncResponse, TlvEntry, LnUrlAuthError
 };
@@ -189,6 +189,6 @@ pub trait NodeAPI: Send + Sync {
         &self,
         lsp_info: &LspInformation,
     ) -> NodeResult<(Vec<RouteHint>, bool)>;
-    /// Open peer channels, indexed by peer pubkey
-    async fn get_open_peer_channels(&self) -> NodeResult<HashMap<Vec<u8>, Channel>>;
+    /// Get peers with whom we have an open channel
+    async fn get_open_peers(&self) -> NodeResult<HashSet<Vec<u8>>>;
 }

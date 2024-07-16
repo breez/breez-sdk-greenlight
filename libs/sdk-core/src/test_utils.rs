@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::time::{Duration, SystemTime};
 use std::{mem, vec};
@@ -44,7 +44,7 @@ use crate::swap_in::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
-    parse_invoice, Channel, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
+    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
     OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint,
     RouteHintHop, SwapInfo,
@@ -507,8 +507,8 @@ impl NodeAPI for MockNodeAPI {
         Ok(None)
     }
 
-    async fn get_open_peer_channels(&self) -> NodeResult<HashMap<Vec<u8>, Channel>> {
-        Ok(HashMap::new())
+    async fn get_open_peers(&self) -> NodeResult<HashSet<Vec<u8>>> {
+        Ok(HashSet::new())
     }
 }
 

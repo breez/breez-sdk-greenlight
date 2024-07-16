@@ -1761,13 +1761,10 @@ impl NodeAPI for Greenlight {
         Ok((hints, has_public_channel))
     }
 
-    async fn get_open_peer_channels(&self) -> NodeResult<HashMap<Vec<u8>, Channel>> {
+    async fn get_open_peers(&self) -> NodeResult<HashSet<Vec<u8>>> {
         let open_peer_channels = self.get_open_peer_channels_pb().await?;
-        let open_peer_channels_converted: HashMap<Vec<u8>, Channel> = open_peer_channels
-            .into_iter()
-            .map(|(k, v)| (k, v.into()))
-            .collect();
-        Ok(open_peer_channels_converted)
+        let open_peers: HashSet<Vec<u8>> = open_peer_channels.into_keys().collect();
+        Ok(open_peers)
     }
 }
 

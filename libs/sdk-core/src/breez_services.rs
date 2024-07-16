@@ -2681,7 +2681,7 @@ async fn get_notification_lsps(
     let active_lsp_id = persister
         .get_lsp_id()?
         .ok_or(SdkError::generic("No active LSP ID found"))?;
-    let open_peer_channels = node_api.get_open_peer_channels().await?;
+    let open_peers = node_api.get_open_peers().await?;
 
     let mut notification_lsps = vec![];
     for lsp in lsp_api.list_used_lsps(node_pubkey).await? {
@@ -2692,7 +2692,7 @@ async fn get_notification_lsps(
             }
             false => {
                 // Consider only historical LSPs with whom we have an active channel
-                let has_active_channel_to_lsp = open_peer_channels.contains_key(&lsp.lsp_pubkey);
+                let has_active_channel_to_lsp = open_peers.contains(&lsp.lsp_pubkey);
                 if has_active_channel_to_lsp {
                     notification_lsps.push(lsp);
                 }
