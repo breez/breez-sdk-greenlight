@@ -746,7 +746,7 @@ impl Greenlight {
         Ok(max_per_channel)
     }
 
-    /// Get open peer channels as raw protobuf structs, indexed by peer pubkey
+    /// Get open peer channels (private and public) as raw protobuf structs, indexed by peer pubkey
     async fn get_open_peer_channels_pb(
         &self,
     ) -> NodeResult<HashMap<Vec<u8>, cln::ListpeerchannelsChannels>> {
@@ -761,11 +761,7 @@ impl Greenlight {
             .channels
             .into_iter()
             .filter(|c| {
-                let is_private = c.private.unwrap_or_default();
-
-                is_private
-                    && c.state == Some(cln::ChannelState::ChanneldNormal as i32)
-                    && c.peer_id.is_some()
+                c.state == Some(cln::ChannelState::ChanneldNormal as i32) && c.peer_id.is_some()
             })
             .map(|c| (c.peer_id.clone().unwrap(), c))
             .collect();
