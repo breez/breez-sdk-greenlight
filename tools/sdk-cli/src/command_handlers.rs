@@ -574,6 +574,7 @@ pub(crate) async fn handle_command(
                 .buy_bitcoin(BuyBitcoinRequest {
                     provider: provider.clone(),
                     opening_fee_params: None,
+                    redirect_url: None,
                 })
                 .await?;
             Ok(format!("Here your {provider:?} url: {}", res.url))

@@ -28,6 +28,7 @@ use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKe
 use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::Network;
 use crate::breez_services::{OpenChannelParams, Receiver};
+use crate::buy::BuyBitcoinApi;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::invoice::{InvoiceError, InvoiceResult};
@@ -37,15 +38,14 @@ use crate::lsp::LspInformation;
 use crate::models::{
     LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry,
 };
-use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::swap_in::error::SwapResult;
 use crate::swap_in::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
-    parse_invoice, Config, CustomMessage, LNInvoice, MaxChannelAmount, NodeCredentials,
-    OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
+    parse_invoice, BuyBitcoinProvider, Config, CustomMessage, LNInvoice, MaxChannelAmount,
+    NodeCredentials, OpeningFeeParamsMenu, PaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, ReceivePaymentRequest, ReverseSwapPairInfo, RouteHint,
     RouteHintHop, SwapInfo,
 };
@@ -709,9 +709,16 @@ impl FiatAPI for MockBreezServer {
     }
 }
 
+pub struct MockBuyBitcoinService {}
+
 #[tonic::async_trait]
-impl MoonPayApi for MockBreezServer {
-    async fn buy_bitcoin_url(&self, swap_info: &SwapInfo) -> Result<String> {
+impl BuyBitcoinApi for MockBuyBitcoinService {
+    async fn buy_bitcoin(
+        &self,
+        _provider: BuyBitcoinProvider,
+        swap_info: &SwapInfo,
+        _redirect_url: Option<String>,
+    ) -> Result<String> {
         Ok(format!(
             "https://mock.moonpay?wa={}&ma={}",
             swap_info.bitcoin_address.as_str(),
