@@ -1,4 +1,5 @@
 mod breez_server;
+mod buy;
 mod error;
 mod fiat;
 pub mod grpc;
@@ -24,6 +25,8 @@ pub mod prelude {
     pub use crate::breez_server::*;
     pub use crate::error::*;
     pub use crate::fiat::*;
+    pub use crate::buy::*;
+    pub use crate::buy::moonpay::*;
     pub use crate::input_parser::*;
     pub use crate::invoice::*;
     pub use crate::lnurl::error::*;

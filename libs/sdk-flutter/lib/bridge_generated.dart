@@ -443,9 +443,15 @@ class BuyBitcoinRequest {
   final BuyBitcoinProvider provider;
   final OpeningFeeParams? openingFeeParams;
 
+  /// The optional URL to redirect to after completing the buy.
+  ///
+  /// For Moonpay, see <https://dev.moonpay.com/docs/on-ramp-configure-user-journey-params>
+  final String? redirectUrl;
+
   const BuyBitcoinRequest({
     required this.provider,
     this.openingFeeParams,
+    this.redirectUrl,
   });
 }
 
@@ -4760,6 +4766,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_buy_bitcoin_request(BuyBitcoinRequest apiObj, wire_BuyBitcoinRequest wireObj) {
     wireObj.provider = api2wire_buy_bitcoin_provider(apiObj.provider);
     wireObj.opening_fee_params = api2wire_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
+    wireObj.redirect_url = api2wire_opt_String(apiObj.redirectUrl);
   }
 
   void _api_fill_to_wire_check_message_request(CheckMessageRequest apiObj, wire_CheckMessageRequest wireObj) {
@@ -6767,6 +6774,8 @@ final class wire_BuyBitcoinRequest extends ffi.Struct {
   external int provider;
 
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
+
+  external ffi.Pointer<wire_uint_8_list> redirect_url;
 }
 
 final class wire_RedeemOnchainFundsRequest extends ffi.Struct {

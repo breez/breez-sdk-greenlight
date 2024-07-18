@@ -44,6 +44,7 @@ export interface BitcoinAddressData {
 export interface BuyBitcoinRequest {
     provider: BuyBitcoinProvider
     openingFeeParams?: OpeningFeeParams
+    redirectUrl?: string
 }
 
 export interface BuyBitcoinResponse {

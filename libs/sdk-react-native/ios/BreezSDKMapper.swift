@@ -192,9 +192,18 @@ enum BreezSDKMapper {
             openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
+        var redirectUrl: String?
+        if hasNonNilKey(data: buyBitcoinRequest, key: "redirectUrl") {
+            guard let redirectUrlTmp = buyBitcoinRequest["redirectUrl"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "redirectUrl"))
+            }
+            redirectUrl = redirectUrlTmp
+        }
+
         return BuyBitcoinRequest(
             provider: provider,
-            openingFeeParams: openingFeeParams
+            openingFeeParams: openingFeeParams,
+            redirectUrl: redirectUrl
         )
     }
 
@@ -202,6 +211,7 @@ enum BreezSDKMapper {
         return [
             "provider": valueOf(buyBitcoinProvider: buyBitcoinRequest.provider),
             "openingFeeParams": buyBitcoinRequest.openingFeeParams == nil ? nil : dictionaryOf(openingFeeParams: buyBitcoinRequest.openingFeeParams!),
+            "redirectUrl": buyBitcoinRequest.redirectUrl == nil ? nil : buyBitcoinRequest.redirectUrl,
         ]
     }
 

@@ -491,6 +491,7 @@ dictionary ReceiveOnchainRequest {
 dictionary BuyBitcoinRequest {
     BuyBitcoinProvider provider;
     OpeningFeeParams? opening_fee_params = null;
+    string? redirect_url = null;
 };
 
 dictionary BuyBitcoinResponse {

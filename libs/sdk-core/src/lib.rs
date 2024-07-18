@@ -172,11 +172,11 @@ mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenligh
 mod greenlight;
 #[rustfmt::skip]
 pub mod lnurl;
+mod buy;
 mod lsp;
 mod lsps0;
 mod lsps2;
 mod models;
-mod moonpay;
 mod persist;
 mod support;
 mod swap_in;

@@ -21,6 +21,7 @@ use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
 
 use crate::backup::{BackupRequest, BackupTransport, BackupWatcher};
+use crate::buy::{BuyBitcoinApi, BuyBitcoinService};
 use crate::chain::{
     ChainService, Outspend, RecommendedFees, RedundantChainService, RedundantChainServiceTrait,
     DEFAULT_MEMPOOL_SPACE_URL,
@@ -37,13 +38,11 @@ use crate::models::{
     LspAPI, NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo,
     ReverseSwapServiceAPI, SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
-use crate::moonpay::MoonPayApi;
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
 use crate::swap_in::swap::BTCReceiveSwap;
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
-use crate::BuyBitcoinProvider::Moonpay;
 use crate::*;
 
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
@@ -148,7 +147,7 @@ pub struct BreezServices {
     node_api: Arc<dyn NodeAPI>,
     lsp_api: Arc<dyn LspAPI>,
     fiat_api: Arc<dyn FiatAPI>,
-    moonpay_api: Arc<dyn MoonPayApi>,
+    buy_bitcoin_api: Arc<dyn BuyBitcoinApi>,
     support_api: Arc<dyn SupportAPI>,
     chain_service: Arc<dyn ChainService>,
     persister: Arc<SqliteStorage>,
@@ -1343,9 +1342,10 @@ impl BreezServices {
                 opening_fee_params: req.opening_fee_params,
             })
             .await?;
-        let url = match req.provider {
-            Moonpay => self.moonpay_api.buy_bitcoin_url(&swap_info).await?,
-        };
+        let url = self
+            .buy_bitcoin_api
+            .buy_bitcoin(req.provider, &swap_info, req.redirect_url)
+            .await?;
 
         Ok(BuyBitcoinResponse {
             url,
@@ -2117,7 +2117,7 @@ struct BreezServicesBuilder {
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
     reverse_swap_service_api: Option<Arc<dyn ReverseSwapServiceAPI>>,
-    moonpay_api: Option<Arc<dyn MoonPayApi>>,
+    buy_bitcoin_api: Option<Arc<dyn BuyBitcoinApi>>,
 }
 
 #[allow(dead_code)]
@@ -2134,7 +2134,7 @@ impl BreezServicesBuilder {
             swapper_api: None,
             reverse_swapper_api: None,
             reverse_swap_service_api: None,
-            moonpay_api: None,
+            buy_bitcoin_api: None,
             backup_transport: None,
         }
     }
@@ -2154,8 +2154,8 @@ impl BreezServicesBuilder {
         self
     }
 
-    pub fn moonpay_api(&mut self, moonpay_api: Arc<dyn MoonPayApi>) -> &mut Self {
-        self.moonpay_api = Some(moonpay_api.clone());
+    pub fn buy_bitcoin_api(&mut self, buy_bitcoin_api: Arc<dyn BuyBitcoinApi>) -> &mut Self {
+        self.buy_bitcoin_api = Some(buy_bitcoin_api.clone());
         self
     }
 
@@ -2341,6 +2341,11 @@ impl BreezServicesBuilder {
         // create a shutdown channel (sender and receiver)
         let (shutdown_sender, shutdown_receiver) = watch::channel::<()>(());
 
+        let buy_bitcoin_api = self
+            .buy_bitcoin_api
+            .clone()
+            .unwrap_or_else(|| Arc::new(BuyBitcoinService::new(breez_server.clone())));
+
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             config: self.config.clone(),
@@ -2355,10 +2360,7 @@ impl BreezServicesBuilder {
                 .support_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
-            moonpay_api: self
-                .moonpay_api
-                .clone()
-                .unwrap_or_else(|| breez_server.clone()),
+            buy_bitcoin_api,
             chain_service,
             persister: persister.clone(),
             btc_receive_swapper,
@@ -3172,6 +3174,7 @@ pub(crate) mod tests {
             .buy_bitcoin(BuyBitcoinRequest {
                 provider: BuyBitcoinProvider::Moonpay,
                 opening_fee_params: None,
+                redirect_url: None,
             })
             .await?
             .url;
@@ -3214,7 +3217,7 @@ pub(crate) mod tests {
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
             .reverse_swap_service_api(Arc::new(MockReverseSwapperAPI {}))
-            .moonpay_api(Arc::new(MockBreezServer {}))
+            .buy_bitcoin_api(Arc::new(MockBuyBitcoinService {}))
             .persister(persister)
             .node_api(node_api)
             .backup_transport(Arc::new(MockBackupTransport::new()))

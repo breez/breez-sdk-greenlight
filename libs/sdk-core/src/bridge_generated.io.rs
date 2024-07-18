@@ -749,6 +749,7 @@ impl Wire2Api<BuyBitcoinRequest> for wire_BuyBitcoinRequest {
         BuyBitcoinRequest {
             provider: self.provider.wire2api(),
             opening_fee_params: self.opening_fee_params.wire2api(),
+            redirect_url: self.redirect_url.wire2api(),
         }
     }
 }
@@ -1135,6 +1136,7 @@ impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
 pub struct wire_BuyBitcoinRequest {
     provider: i32,
     opening_fee_params: *mut wire_OpeningFeeParams,
+    redirect_url: *mut wire_uint_8_list,
 }
 
 #[repr(C)]
@@ -1492,6 +1494,7 @@ impl NewWithNullPtr for wire_BuyBitcoinRequest {
         Self {
             provider: Default::default(),
             opening_fee_params: core::ptr::null_mut(),
+            redirect_url: core::ptr::null_mut(),
         }
     }
 }
