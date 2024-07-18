@@ -61,6 +61,7 @@ buck-out/
 
 # Ruby / CocoaPods
 /ios/Pods/
+/ios/Podfile.lock
 /vendor/bundle/
 
 .watchman-cookie-.*
