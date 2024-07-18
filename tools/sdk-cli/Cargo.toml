@@ -1,6 +1,6 @@
 [package]
 name = "breez-sdk-cli"
-version = "0.5.1-rc4"
+version = "0.5.1-rc5"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
