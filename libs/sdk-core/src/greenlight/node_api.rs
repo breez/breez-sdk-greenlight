@@ -17,8 +17,8 @@ use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::listpeerchannels_channels::ListpeerchannelsChannelsState::*;
 use gl_client::pb::cln::{
     self, Amount, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
-    ListclosedchannelsClosedchannels, ListpeerchannelsChannels, PreapproveinvoiceRequest,
-    SendpayRequest, SendpayRoute, WaitsendpayRequest,
+    ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels,
+    PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
 use gl_client::pb::scheduler::scheduler_client::SchedulerClient;
 use gl_client::pb::scheduler::{NodeInfoRequest, UpgradeRequest};
@@ -435,10 +435,18 @@ impl Greenlight {
             retry += 1;
         }
 
-        if response.pays.is_empty() {
+        // CLN also returns failed ListpaysPays along with the complete one
+        debug!("list_pays: {:?}", response.pays);
+        let pays: Vec<ListpaysPays> = response
+            .pays
+            .into_iter()
+            .filter(|pay| pay.status() == cln::listpays_pays::ListpaysPaysStatus::Complete)
+            .collect();
+
+        if pays.is_empty() {
             return Err(anyhow!("Payment not found"));
         }
-        Ok(response.pays[0].clone())
+        Ok(pays[0].clone())
     }
 
     async fn fetch_channels_and_balance_with_retry(
