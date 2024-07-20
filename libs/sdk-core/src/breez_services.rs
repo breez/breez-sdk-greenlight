@@ -16,7 +16,9 @@ use log::{LevelFilter, Metadata, Record};
 use reqwest::{header::CONTENT_TYPE, Body, Url};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
+use serde::Serialize;
 use serde_json::json;
+use strum_macros::EnumString;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
 
@@ -138,6 +140,13 @@ pub struct CheckMessageResponse {
     /// Boolean value indicating whether the signature covers the message and
     /// was signed by the given pubkey.
     pub is_valid: bool,
+}
+
+#[derive(Clone, PartialEq, EnumString, Serialize)]
+enum DevCommand {
+    /// Generates diagnostic data report.
+    #[strum(serialize = "generatediagnosticdata")]
+    GenerateDiagnosticData,
 }
 
 /// BreezServices is a facade and the single entry point for the SDK.
@@ -1051,15 +1060,35 @@ impl BreezServices {
     /// Execute a command directly on the NodeAPI interface.
     /// Mainly used to debugging.
     pub async fn execute_dev_command(&self, command: String) -> SdkResult<String> {
-        Ok(self.node_api.execute_command(command).await?)
+        let dev_cmd_res = DevCommand::from_str(&command);
+
+        match dev_cmd_res {
+            Ok(dev_cmd) => match dev_cmd {
+                DevCommand::GenerateDiagnosticData => self.generate_diagnostic_data().await,
+            },
+            Err(_) => Ok(self.node_api.execute_command(command).await?),
+        }
     }
 
     // Collects various user data from the node and the sdk storage.
     // This is used for debugging and support purposes only.
     pub async fn generate_diagnostic_data(&self) -> SdkResult<String> {
-        let node_data = self.node_api.generate_diagnostic_data().await?;
-        let sdk_data = self.generate_sdk_diagnostic_data().await?;
-        Ok(format!("Node Data\n{node_data}\n\nSDK Data\n{sdk_data}"))
+        let now_sec = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or_default();
+        let node_data = self
+            .node_api
+            .generate_diagnostic_data()
+            .await
+            .unwrap_or_else(|e| e.to_string());
+        let sdk_data = self
+            .generate_sdk_diagnostic_data()
+            .await
+            .unwrap_or_else(|e| e.to_string());
+        Ok(format!(
+            "Diagnostic Timestamp: {now_sec}\nNode Data\n{node_data}\n\nSDK Data\n{sdk_data}"
+        ))
     }
 
     /// This method sync the local state with the remote node state.
