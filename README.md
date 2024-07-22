@@ -1,91 +1,119 @@
-# Breez SDK
+# **Breez SDK - *Greenlight***
 
-## Overview
-The Breez SDK enables developers to integrate Lightning and bitcoin payments into their apps with a very shallow learning curve. The use cases are endless – from social apps that want to integrate tipping between users to content-creation apps interested in adding bitcoin monetization. Crucially, this SDK is an end-to-end, non-custodial, drop-in solution powered by Greenlight, a built-in LSP, on-chain interoperability, third-party fiat on-ramps, and other services users and operators need. The Breez SDK is free for developers.
-   
-The Breez SDK provides the following services:
-* Sending payments (via various protocols such as: bolt11, keysend, lnurl-pay, lightning address, etc.)
-* Receiving payments (via various protocols such as: bolt11, lnurl-withdraw, etc.)
-* Fetching node status (e.g. balance, max allow to pay, max allow to receive, on-chain balance, etc.)
-* Connecting to a new or existing node.
+## **Overview**
 
-Download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3QoTUKLNWgjgWN2I/view?usp=drivesdk). 
+## **What Is the Breez SDK?**
 
-To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
+The Breez SDK provides developers with a end-to-end solution for integrating self-custodial Lightning payments into their apps and services. It eliminates the need for third-parties, simplifies the complexities of Bitcoin and Lightning, and enables seamless onboarding for billions of users to the future of peer-to-peer payments.
 
-Note: in order to use the Breez SDK you need an API key from Breez, please email us at contact@breez.technology for more information.
+To provide the best experience for their end-users, developers can choose between the following implementations:
 
-## Demo
+- [Breez SDK - Greenlight](../README.md#what-is-the-greenlight-implementation)
+- [Breez SDK - Liquid](https://sdk-doc-liquid.breez.technology/)
 
-https://user-images.githubusercontent.com/31890660/208511040-989ff42c-ceb8-4a34-b2cb-a17a0a8c0150.mp4
+**The Breez SDK is free for developers.** 
 
-For a higher resolution video, click [here](https://youtu.be/PRVWB4K52Es).
+Learn more about the Breez SDK—download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3QoTUKLNWgjgWN2I/view?usp=drivesdk).
 
-## Features
+## **What Is the *Greenlight* Implementation?**
 
-![Screenshot_2023-06-27-20-18-57-35_e2d5b3f32b79de1d45acd1fad96fbb0f](https://github.com/breez/breez-sdk/assets/31890660/e54cf75a-b9e4-43c7-a448-34da4022c59f)
+The *Greenlight* implementation is a cloud-based Lightning integration. It offers a self-custodial, end-to-end solution for integrating Lightning payments, utilizing nodes-on-demand provided by Blockstream’s Greenlight, with built-in Lightning Service Providers (LSP), on-chain interoperability, and third-party fiat on-ramps.
 
-## Using the SDK
-To get started with the Breez SDK, follow [these examples](https://sdk-doc.breez.technology/).
+**Core Functions**
 
-## API
-API documentation is [here](https://breez.github.io/breez-sdk/breez_sdk_core/). 
+- **Sending payments** *via protocols such as: bolt11, keysend, lnurl-pay, lightning address, btc address.*
+- **Receiving payments** *via protocols such as: bolt11, lnurl-withdraw, btc address.*
+- **Interacting with a node** *e.g. balance, max allow to pay, max allow to receive, on-chain balance.*
 
-## Support
-Join [this telegram group](https://t.me/breezsdk).
+**Key Features**
 
-## Architecture
-This diagram is a high-level description of the Breez SDK:
+- [x]  On-chain interoperability
+- [x]  Built-in LSP
+- [x]  Integrated watchtower
+- [x]  LNURL functionality
+- [x]  Multi-app support
+- [x]  Multi-device support
+- [x]  Real-time state backup
+- [x]  Keys are only held by users
+- [x]  Fiat on-ramps
+- [x]  Open-source
 
-![SDK Architecture](https://user-images.githubusercontent.com/31890660/208512955-6e648b86-4c8a-457a-b844-3dda8b2aa8ec.png)
+Get started with the Breez SDK - *Greenlight* : [Documentation](https://sdk-doc.breez.technology/). 
 
-## Command line
-[Breez sdk-cli](https://github.com/breez/breez-sdk/tree/main/tools/sdk-cli) is a command line client that allows you to test the functionality of the Breez SDK.
+> To use the Breez SDK - *Greenlight*, you need an API key. Email us at contact@breez.technology for more info.
+> 
 
-## Build & Test
-The libs folder contains three sub folders and is a structured as a cargo workspace:
-* **sdk-core**: the core SDK rust library. 
-* **sdk-bindings**: ffi bindings for Kotlin, Python, Swift, C# and Go. 
-* **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
-* **sdk-react-native**: a react-native plugin.
+## **API**
+
+API documentation is [here](https://breez.github.io/breez-sdk/breez_sdk_core/).
+
+## **Command line**
+
+[Breez sdk-cli](https://github.com/breez/breez-sdk/tree/main/tools/sdk-cli) is a command line client that allows you to interact with and test the functionality of the Breez SDK.
+
+## **Support**
+
+Have a question for the team? Join our [Telegram channel](https://t.me/breezsdk) or email us at [contact@breez.technology](mailto:contact@breez.technology) 
+
+## How Does the Greenlight Implementation Work?
+
+The *Greenlight* implementation allows end-users to send and receive payments using the Breez SDK through several key components:
+
+- **Signer**: The app integrating the Breez SDK runs a validating signer that interacts with the end-user node.
+- **Node**: End-user nodes are hosted on Blockstream’s Greenlight cloud infrastructure. The SDK creates a node when an end-user needs to send or receive a payment via the Lightning Network. Each end-user has their own node.
+- **Lightning Service Providers (LSP)**: Design partners use LSPs, operated by entities other than Breez, to facilitate channel connectivity. LSP nodes are connected to Breez’s routing nodes, which in turn connect to other nodes in the Lightning Network.
+- **Submarine Swaps**: Submarine swaps and reverse submarine swaps are used for transactions involving BTC addresses (on-chain). When receiving funds, submarine swaps convert the BTC to the user node on the Lightning Network. When sending funds to BTC addresses, reverse submarine swaps convert Lightning Network funds back to BTC.
+
+![Breez SDK - Greenlight](https://github.com/breez/breez-sdk-docs/raw/main/src/images/BreezSDK_Greenlight.png)
+
+## **Build & Test**
+
+The libs folder contains three sub-folders and is a structured as a cargo workspace:
+
+- **sdk-core**: the core SDK rust library.
+- **sdk-bindings**: ffi bindings for Kotlin, Python, Swift, C#, and Go.
+- **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
+- **sdk-react-native**: a react-native plugin.
 
 The tools folder contains a simple command line interface (sdk-cli) to the SDK.
-See the instructions in each sub project readme on how to build, test and run.
 
-## TODOs
-- [x] ‘On-the-fly’ channel creation
-- [x] Send/receive bolt11
-- [x] LNURL-Pay
-- [x] LNURL-Withdraw
-- [x] Backup/restore using mnemonics 
-- [x] Send zero-amount invoices
-- [x] Fiat currencies
-- [x] Send spontaneous payments
-- [x] Send to a Lightning address
-- [x] Send to BIP 21
-- [x] cli inteface 
-- [x] Swift bindings
-- [x] Kotlin bindings
-- [x] API key
-- [x] Receive via on-chain address
-- [x] React Native bindings
-- [x] LNURL-Auth
-- [x] Send to an on-chain address
-- [x] MoonPay fiat on-ramp
-- [x] C# bindings 
-- [x] Python bindings 
-- [x] Spend all funds
-- [x] Webhook for receiving payments
-- [x] Offline receive via notifications
-- [ ] LSPS2 support 
-- [ ] LSPS1 support
-- [ ] Send/receive bolt12
-- [ ] Simplifed key management (cloud key backup)
-- [ ] WebAssembly support
-- [ ] Improve key share 
-- [ ] Close channels to a predefined address 
-- [ ] Make mempool.space dependency optional 
-- [ ] Receive 0 amount invoice via LSP (unified QR)
-- [ ] Async payments
-- [ ] LDK support
-- [ ] Splicing
+See the instructions in each sub-project readme on how to build, test, and run.
+
+## SDK Development Roadmap
+
+- [x]  ‘On-the-fly’ channel creation
+- [x]  Send/receive bolt11
+- [x]  LNURL-Pay
+- [x]  LNURL-Withdraw
+- [x]  Backup/restore using mnemonics
+- [x]  Send zero-amount invoices
+- [x]  Fiat currencies
+- [x]  Send spontaneous payments
+- [x]  Send to a Lightning address
+- [x]  Send to BIP 21
+- [x]  cli inteface
+- [x]  Swift bindings
+- [x]  Kotlin bindings
+- [x]  API key
+- [x]  Receive via on-chain address
+- [x]  React Native bindings
+- [x]  LNURL-Auth
+- [x]  Send to an on-chain address
+- [x]  MoonPay fiat on-ramp
+- [x]  C# bindings
+- [x]  Python bindings
+- [x]  Spend all funds
+- [x]  Webhook for receiving payments
+- [x]  Offline receive via notifications
+- [ ]  LSPS2 support
+- [ ]  LSPS1 support
+- [ ]  Send/receive bolt12
+- [ ]  Simplifed key management (cloud key backup)
+- [ ]  WebAssembly support
+- [ ]  Improve key share
+- [ ]  Close channels to a predefined address
+- [ ]  Make mempool.space dependency optional
+- [ ]  Receive 0 amount invoice via LSP (unified QR)
+- [ ]  Async payments
+- [ ]  LDK support
+- [ ]  Splicing
