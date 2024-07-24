@@ -8,7 +8,7 @@ The Breez SDK provides developers with a end-to-end solution for integrating sel
 
 To provide the best experience for their end-users, developers can choose between the following implementations:
 
-- [Breez SDK - Greenlight](../README.md#what-is-the-greenlight-implementation)
+- [Breez SDK - Greenlight](https://sdk-doc.breez.technology/)
 - [Breez SDK - Liquid](https://sdk-doc-liquid.breez.technology/)
 
 **The Breez SDK is free for developers.** 
