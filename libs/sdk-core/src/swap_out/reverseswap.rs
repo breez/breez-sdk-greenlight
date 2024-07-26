@@ -2,6 +2,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, ensure, Result};
+use rand::thread_rng;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tokio::time::{sleep, Duration};
@@ -11,13 +12,15 @@ use super::error::{ReverseSwapError, ReverseSwapResult};
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::bitcoin::consensus::serialize;
 use crate::bitcoin::hashes::hex::{FromHex, ToHex};
+use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::psbt::serialize::Serialize as PsbtSerialize;
 use crate::bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
 use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
-    Address, AddressType, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
+    Address, AddressType, EcdsaSighashType, KeyPair, Network, OutPoint, Script, Sequence,
+    Transaction, TxIn, TxOut, Txid, Witness,
 };
-use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx};
+use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx, Utxo};
 use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
@@ -515,15 +518,7 @@ impl BTCSendSwap {
     }
 
     pub(crate) fn calculate_claim_tx_fee(claim_tx_feerate: u32) -> SdkResult<u64> {
-        let tx = Transaction {
-            version: 2,
-            lock_time: crate::bitcoin::PackedLockTime(0),
-            input: vec![TxIn {
-                sequence: Sequence(0),
-                ..Default::default()
-            }],
-            output: vec![TxOut::default()],
-        };
+        let tx = build_fake_claim_tx()?;
 
         // Based on https://github.com/breez/boltz/blob/master/boltz.go#L32
         let claim_witness_input_size: u32 = 1 + 1 + 8 + 73 + 1 + 32 + 1 + 100;
@@ -775,6 +770,53 @@ impl BTCSendSwap {
             status: full_rsi.cache.status,
         })
     }
+}
+
+/// Internal utility to create a fake claim tx: a tx that has the claim tx structure (input,
+/// output, witness, etc) but with random values.
+///
+/// This is used to get the claim tx size, in order to then estimate the claim tx fee, before
+/// knowing the actual claim tx.
+fn build_fake_claim_tx() -> Result<Transaction> {
+    let keys = KeyPair::new(&Secp256k1::new(), &mut thread_rng());
+
+    let sk = keys.secret_key();
+    let pk_compressed_bytes = keys.public_key().serialize().to_vec();
+    let preimage_bytes = sha256::Hash::hash("123".as_bytes()).to_vec();
+    let redeem_script = FullReverseSwapInfo::build_expected_reverse_swap_script(
+        sha256::Hash::hash(&preimage_bytes).to_vec(), // 32 bytes
+        pk_compressed_bytes.clone(),                  // 33 bytes
+        pk_compressed_bytes,                          // 33 bytes
+        840_000,
+    )?;
+
+    // Use a P2TR output, which is slightly larger than a P2WPKH (native segwit) output
+    // This means we will slightly overpay when claiming to segwit addresses
+    let claim_addr = Address::p2tr(
+        &Secp256k1::new(),
+        keys.public_key().x_only_public_key().0,
+        None,
+        Network::Bitcoin,
+    );
+
+    BTCSendSwap::build_claim_tx_inner(
+        sk,
+        preimage_bytes,
+        AddressUtxos {
+            unconfirmed: vec![],
+            confirmed: vec![Utxo {
+                out: OutPoint {
+                    txid: Txid::all_zeros(),
+                    vout: 1,
+                },
+                value: 1_000,
+                block_height: Some(123),
+            }],
+        },
+        claim_addr,
+        redeem_script,
+        1_000,
+    )
 }
 
 #[cfg(test)]

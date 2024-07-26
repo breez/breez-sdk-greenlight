@@ -178,7 +178,7 @@ pub struct ReverseSwapInfoCached {
 
 impl FullReverseSwapInfo {
     /// Builds the expected redeem script
-    fn build_expected_reverse_swap_script(
+    pub(crate) fn build_expected_reverse_swap_script(
         preimage_hash: Vec<u8>,
         compressed_pub_key: Vec<u8>,
         sig: Vec<u8>,
