@@ -17,7 +17,7 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, AddressType, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::chain::{get_utxos, ChainService, OnchainTx};
+use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx};
 use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
@@ -437,65 +437,81 @@ impl BTCSendSwap {
                 };
                 debug!("Tx out amount: {tx_out_value} sat");
 
-                let txins: Vec<TxIn> = utxos
-                    .confirmed
-                    .iter()
-                    .map(|utxo| TxIn {
-                        previous_output: utxo.out,
-                        script_sig: Script::new(),
-                        sequence: Sequence(0),
-                        witness: Witness::default(),
-                    })
-                    .collect();
-
-                let tx_out: Vec<TxOut> = vec![TxOut {
-                    value: tx_out_value,
-                    script_pubkey: claim_addr.script_pubkey(),
-                }];
-
-                // construct the transaction
-                let mut tx = Transaction {
-                    version: 2,
-                    lock_time: crate::bitcoin::PackedLockTime(0),
-                    input: txins.clone(),
-                    output: tx_out,
-                };
-
-                let claim_script_bytes = PsbtSerialize::serialize(&redeem_script);
-
-                // Sign inputs (iterate, even though we only have one input)
-                let scpt = Secp256k1::signing_only();
-                let mut signed_inputs: Vec<TxIn> = Vec::new();
-                for (index, input) in tx.input.iter().enumerate() {
-                    let mut signer = SighashCache::new(&tx);
-                    let sig = signer.segwit_signature_hash(
-                        index,
-                        &redeem_script,
-                        utxos.confirmed[index].value,
-                        EcdsaSighashType::All,
-                    )?;
-                    let msg = Message::from_slice(&sig[..])?;
-                    let secret_key = SecretKey::from_slice(rs.private_key.as_slice())?;
-                    let sig = scpt.sign_ecdsa(&msg, &secret_key);
-
-                    let mut sigvec = sig.serialize_der().to_vec();
-                    sigvec.push(EcdsaSighashType::All as u8);
-
-                    let witness: Vec<Vec<u8>> =
-                        vec![sigvec, rs.preimage.clone(), claim_script_bytes.clone()];
-
-                    let mut signed_input = input.clone();
-                    let w = Witness::from_vec(witness);
-                    signed_input.witness = w;
-                    signed_inputs.push(signed_input);
-                }
-                tx.input = signed_inputs;
-
-                Ok(tx)
+                Self::build_claim_tx_inner(
+                    SecretKey::from_slice(rs.private_key.as_slice())?,
+                    rs.preimage.clone(),
+                    utxos,
+                    claim_addr,
+                    redeem_script,
+                    tx_out_value,
+                )
             }
             Some(addr_type) => Err(anyhow!("Unexpected lock address type: {addr_type:?}")),
             None => Err(anyhow!("Could not determine lock address type")),
         }
+    }
+
+    fn build_claim_tx_inner(
+        secret_key: SecretKey,
+        preimage: Vec<u8>,
+        utxos: AddressUtxos,
+        claim_addr: Address,
+        redeem_script: Script,
+        tx_out_value: u64,
+    ) -> Result<Transaction> {
+        let txins: Vec<TxIn> = utxos
+            .confirmed
+            .iter()
+            .map(|utxo| TxIn {
+                previous_output: utxo.out,
+                script_sig: Script::new(),
+                sequence: Sequence(0),
+                witness: Witness::default(),
+            })
+            .collect();
+
+        let tx_out: Vec<TxOut> = vec![TxOut {
+            value: tx_out_value,
+            script_pubkey: claim_addr.script_pubkey(),
+        }];
+
+        // construct the transaction
+        let mut tx = Transaction {
+            version: 2,
+            lock_time: crate::bitcoin::PackedLockTime(0),
+            input: txins.clone(),
+            output: tx_out,
+        };
+
+        let claim_script_bytes = PsbtSerialize::serialize(&redeem_script);
+
+        // Sign inputs (iterate, even though we only have one input)
+        let scpt = Secp256k1::signing_only();
+        let mut signed_inputs: Vec<TxIn> = Vec::new();
+        for (index, input) in tx.input.iter().enumerate() {
+            let mut signer = SighashCache::new(&tx);
+            let sig = signer.segwit_signature_hash(
+                index,
+                &redeem_script,
+                utxos.confirmed[index].value,
+                EcdsaSighashType::All,
+            )?;
+            let msg = Message::from_slice(&sig[..])?;
+            let sig = scpt.sign_ecdsa(&msg, &secret_key);
+
+            let mut sigvec = sig.serialize_der().to_vec();
+            sigvec.push(EcdsaSighashType::All as u8);
+
+            let witness: Vec<Vec<u8>> = vec![sigvec, preimage.clone(), claim_script_bytes.clone()];
+
+            let mut signed_input = input.clone();
+            let w = Witness::from_vec(witness);
+            signed_input.witness = w;
+            signed_inputs.push(signed_input);
+        }
+        tx.input = signed_inputs;
+
+        Ok(tx)
     }
 
     pub(crate) fn calculate_claim_tx_fee(claim_tx_feerate: u32) -> SdkResult<u64> {
