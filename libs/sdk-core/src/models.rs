@@ -279,7 +279,7 @@ impl FullReverseSwapInfo {
     ///
     /// - checks if amount matches the amount requested by the user
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
-    /// included in the create request
+    ///   included in the create request
     pub(crate) fn validate_invoice(&self, expected_amount_msat: u64) -> ReverseSwapResult<()> {
         self.validate_invoice_amount(expected_amount_msat)?;
 

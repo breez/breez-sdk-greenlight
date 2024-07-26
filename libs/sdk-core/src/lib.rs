@@ -98,7 +98,7 @@
 //! ### C. Receiving an on-chain transaction (swap-in)
 //!
 //! * [BreezServices::receive_onchain] accepting an optional user-selected [OpeningFeeParams] for
-//! the case when the operation requires a new channel with the LSP
+//!   the case when the operation requires a new channel with the LSP
 //! * [BreezServices::in_progress_swap]
 //! * [BreezServices::list_refundables] to get a list of swaps
 //! * [BreezServices::refund] to broadcast a transaction for failed or expired swaps
@@ -113,7 +113,7 @@
 //!
 //! 1. [parse] the LNURL endpoint URL to get the workflow parameters.
 //! 2. After getting the user input or confirmation, complete the workflow with [BreezServices::lnurl_pay] or
-//! [BreezServices::lnurl_withdraw].
+//!    [BreezServices::lnurl_withdraw].
 //!
 //! ### F. Supporting fiat currencies
 //!

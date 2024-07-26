@@ -168,10 +168,10 @@ pub struct LockTxData {
 ///
 /// Note that Some Boltz statuses are not reflected here, for any of the following reasons:
 /// - we're not using that version of the reverse swap protocol (like `channel.created`,
-/// `transaction.zeroconf.rejected` for zero-conf, or `invoice.pending` and `minerfee.paid` for
-/// Reverse Swap with prepay miner fee where)
+///   `transaction.zeroconf.rejected` for zero-conf, or `invoice.pending` and `minerfee.paid` for
+///   Reverse Swap with prepay miner fee where)
 /// - the statuses refer to normal swaps, not reverse swaps (like `invoice.set`, `invoice.paid`,
-/// `invoice.failedToPay`, `transaction.claimed`)
+///   `invoice.failedToPay`, `transaction.claimed`)
 /// - the statuses affect only non-BTC pairs (like `transaction.lockupFailed`)
 ///
 /// https://docs.boltz.exchange/en/latest/lifecycle/#reverse-submarine-swaps

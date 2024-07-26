@@ -4,8 +4,9 @@ use serde::{Deserialize, Serialize};
 ///
 /// * `Ok` indicates the interaction with the endpoint was valid, and the endpoint
 ///  - started to pay the invoice asynchronously in the case of LNURL-withdraw,
-///  - verified the client signature in the case of LNURL-auth,////// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
-/// description of the reason.
+///  - verified the client signature in the case of LNURL-auth
+/// * `Error` indicates a generic issue the LNURL endpoint encountered, including a freetext
+///    description of the reason.
 ///
 /// Both cases are described in LUD-03 <https://github.com/lnurl/luds/blob/luds/03.md> & LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
 #[derive(Clone, Deserialize, Debug, Serialize)]
