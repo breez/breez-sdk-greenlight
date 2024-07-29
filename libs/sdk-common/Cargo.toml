@@ -29,6 +29,7 @@ tonic = { workspace = true, features = [
     "tls-webpki-roots",
 ] }
 url = "2.5.0"
+elements = "0.24.1"
 
 [dev-dependencies]
 bitcoin = { workspace = true, features = ["rand"] }
