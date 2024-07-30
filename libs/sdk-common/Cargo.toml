@@ -40,3 +40,6 @@ once_cell = { workspace = true }
 
 [build-dependencies]
 tonic-build = { workspace = true }
+
+[features]
+liquid = []

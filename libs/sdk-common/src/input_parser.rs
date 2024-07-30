@@ -9,6 +9,7 @@ use LnUrlRequestData::*;
 
 use crate::prelude::*;
 
+#[cfg(feature = "liquid")]
 use self::liquid::bip21::LiquidURI;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
@@ -177,6 +178,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
         };
     }
 
+    #[cfg(feature = "liquid")]
     // Covers BIP 21 URIs and simple onchain Liquid addresses (which are valid BIP 21 with the 'liquidnetwork:' prefix)
     if let Ok(address) = LiquidURI::from_addr(input).or(input.parse::<LiquidURI>()) {
         return Ok(InputType::LiquidAddress { address });
@@ -402,6 +404,7 @@ pub enum InputType {
     ///
     /// - plain on-chain liquid address
     /// - BIP21 on liquid/liquidtestnet
+    #[cfg(feature = "liquid")]
     LiquidAddress {
         address: LiquidURI,
     },
@@ -738,6 +741,7 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "liquid")]
     async fn test_liquid_address() -> Result<()> {
         assert!(parse("tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk")
             .await
