@@ -1,4 +1,4 @@
-use std::{collections::HashMap, str::FromStr};
+use std::str::FromStr;
 
 use anyhow::{anyhow, Result};
 use bip21::Uri;
@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
+
+use self::liquid::bip21::LiquidURI;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -175,25 +177,9 @@ pub async fn parse(input: &str) -> Result<InputType> {
         };
     }
 
-    // Covers BIP 21 URIs and simple onchain Liquid addresses (which are valid BIP 21 with the 'liquid:' or 'liquidtestnet:' prefix)
-    if let Ok(liquid_address_data) = parse_liquid_bip21(input) {
-        // Special case of LN BOLT11 with onchain fallback
-        // Search for the `lightning=bolt11` param in the BIP21 URI and, if found, extract the bolt11
-        let mut invoice_param: Option<LNInvoice> = None;
-        if let Some(query) = input.split('?').collect::<Vec<_>>().get(1) {
-            invoice_param = querystring::querify(query)
-                .iter()
-                .find(|(key, _)| key == &"lightning")
-                .map(|(_, value)| parse_invoice(value))
-                .transpose()?;
-        }
-
-        return match invoice_param {
-            None => Ok(InputType::LiquidAddress {
-                address: liquid_address_data,
-            }),
-            Some(invoice) => Ok(InputType::Bolt11 { invoice }),
-        };
+    // Covers BIP 21 URIs and simple onchain Liquid addresses (which are valid BIP 21 with the 'liquidnetwork:' prefix)
+    if let Ok(address) = LiquidURI::from_addr(input).or(input.parse::<LiquidURI>()) {
+        return Ok(InputType::LiquidAddress { address });
     }
 
     if let Ok(invoice) = parse_invoice(input) {
@@ -248,68 +234,6 @@ fn prepend_if_missing(prefix: &str, input: &str) -> String {
         true => input.into(),
         false => format!("{}{}", prefix, input.trim_start_matches(prefix)),
     }
-}
-/// Parse a Liquid BIP21 String to retrieve [LiquidAddressData]
-pub fn parse_liquid_bip21(uri: &str) -> Result<AddressData> {
-    let mut parts = uri.split('?');
-
-    let Some(network_address) = parts.next() else {
-        return Err(anyhow!(
-            "Unable to extract network and address from bip21 string"
-        ));
-    };
-
-    // Extract network and address
-    let mut network_address_parts = network_address.split(':');
-    let network = match network_address_parts.next() {
-        Some("liquid") => Network::Bitcoin,
-        Some("liquidtestnet") => Network::Testnet,
-        Some(_) | None => {
-            return Err(anyhow!("Unable to extract network from bip21 string"));
-        }
-    };
-
-    let address = match network_address_parts.next() {
-        Some(address) => {
-            address.parse::<elements::Address>()?;
-            address.into()
-        }
-        None => {
-            return Err(anyhow!("Unable to extract address from bip21 string"));
-        }
-    };
-
-    if let Some(params) = parts.next() {
-        // Parse URI parameters
-        let mut pairs: HashMap<String, String> = HashMap::new();
-        for pair in params.split('&') {
-            let Some((key, val)) = pair.split_once('=') else {
-                continue;
-            };
-            pairs.insert(key.to_string(), val.to_string());
-        }
-
-        let amount_sat = match pairs.get("amount") {
-            Some(amount) => Some((amount.parse::<f64>()? * 100_000_000.0) as u64),
-            None => None,
-        };
-
-        return Ok(AddressData {
-            address,
-            network,
-            amount_sat,
-            label: pairs.get("label").cloned(),
-            message: pairs.get("message").cloned(),
-        });
-    }
-
-    Ok(AddressData {
-        address,
-        network,
-        amount_sat: None,
-        label: None,
-        message: None,
-    })
 }
 
 /// Converts the LN Address to the corresponding LNURL-pay endpoint, as per LUD-16:
@@ -479,7 +403,7 @@ pub enum InputType {
     /// - plain on-chain liquid address
     /// - BIP21 on liquid/liquidtestnet
     LiquidAddress {
-        address: AddressData,
+        address: LiquidURI,
     },
 
     /// Also covers URIs like `bitcoin:...&lightning=bolt11`. In this case, it returns the BOLT11
@@ -814,19 +738,23 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
-    async fn test_liquid_address_bip21() -> Result<()> {
-        assert!(parse("liquid:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk")
+    async fn test_liquid_address() -> Result<()> {
+        assert!(parse("tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk")
+            .await
+            .is_ok());
+        assert!(parse("liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk")
             .await
             .is_ok());
         assert!(parse("wrong-net:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk").await.is_err());
-        assert!(parse("liquid:testinvalidaddress").await.is_err());
+        assert!(parse("liquidnetwork:testinvalidaddress").await.is_err());
 
         let address: elements::Address = "tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk".parse()?;
         let amount_btc = 0.00001; // 1000 sats
         let label = "label";
-        let message = "msg";
+        let message = "this%20is%20a%20message";
+        let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
         let output = parse(&format!(
-            "liquid:{}?amount={amount_btc}&label={label}&message={message}",
+            "liquidnetwork:{}?amount={amount_btc}&assetid={asset_id}&label={label}&message={message}",
             address.to_string()
         ))
         .await?;
@@ -842,7 +770,10 @@ pub(crate) mod tests {
                 liquid_address_data.amount_sat
             );
             assert_eq!(Some(label.to_string()), liquid_address_data.label);
-            assert_eq!(Some(message.to_string()), liquid_address_data.message);
+            assert_eq!(
+                Some(urlencoding::decode(message).unwrap().into_owned()),
+                liquid_address_data.message
+            );
         } else {
             panic!("Invalid input type received");
         }

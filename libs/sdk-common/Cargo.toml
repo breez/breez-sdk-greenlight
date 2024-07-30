@@ -30,6 +30,7 @@ tonic = { workspace = true, features = [
 ] }
 url = "2.5.0"
 elements = "0.24.1"
+urlencoding = "2.1.3"
 
 [dev-dependencies]
 bitcoin = { workspace = true, features = ["rand"] }

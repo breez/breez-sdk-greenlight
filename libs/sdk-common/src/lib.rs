@@ -5,6 +5,7 @@ mod fiat;
 pub mod grpc;
 pub mod input_parser;
 pub mod invoice;
+pub mod liquid;
 mod lnurl;
 mod model;
 mod utils;
