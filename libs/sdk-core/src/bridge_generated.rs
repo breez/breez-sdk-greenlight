@@ -911,7 +911,7 @@ pub struct mirror_AesSuccessActionDataDecrypted(AesSuccessActionDataDecrypted);
 pub struct mirror_AesSuccessActionDataResult(AesSuccessActionDataResult);
 
 #[derive(Clone)]
-pub struct mirror_BitcoinAddressData(AddressData);
+pub struct mirror_BitcoinAddressData(BitcoinAddressData);
 
 #[derive(Clone)]
 pub struct mirror_CurrencyInfo(CurrencyInfo);
@@ -996,7 +996,7 @@ const _: fn() = || {
         }
     }
     {
-        let BitcoinAddressData = None::<AddressData>.unwrap();
+        let BitcoinAddressData = None::<BitcoinAddressData>.unwrap();
         let _: String = BitcoinAddressData.address;
         let _: Network = BitcoinAddressData.network;
         let _: Option<u64> = BitcoinAddressData.amount_sat;
@@ -1020,7 +1020,10 @@ const _: fn() = || {
     }
     match None::<InputType>.unwrap() {
         InputType::BitcoinAddress { address } => {
-            let _: AddressData = address;
+            let _: BitcoinAddressData = address;
+        }
+        InputType::LiquidAddress { address } => {
+            todo!()
         }
         InputType::Bolt11 { invoice } => {
             let _: LNInvoice = invoice;
@@ -1375,7 +1378,7 @@ impl support::IntoDart for mirror_BitcoinAddressData {
     }
 }
 impl support::IntoDartExceptPrimitive for mirror_BitcoinAddressData {}
-impl rust2dart::IntoIntoDart<mirror_BitcoinAddressData> for AddressData {
+impl rust2dart::IntoIntoDart<mirror_BitcoinAddressData> for BitcoinAddressData {
     fn into_into_dart(self) -> mirror_BitcoinAddressData {
         mirror_BitcoinAddressData(self)
     }
@@ -1609,6 +1612,9 @@ impl support::IntoDart for mirror_InputType {
         match self.0 {
             InputType::BitcoinAddress { address } => {
                 vec![0.into_dart(), address.into_into_dart().into_dart()]
+            }
+            InputType::LiquidAddress { address } => {
+                todo!()
             }
             InputType::Bolt11 { invoice } => {
                 vec![1.into_dart(), invoice.into_into_dart().into_dart()]

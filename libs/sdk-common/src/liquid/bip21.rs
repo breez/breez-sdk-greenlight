@@ -4,7 +4,7 @@ use elements::{
     issuance::AssetId,
 };
 use serde::Serialize;
-use std::{collections::HashMap, num::ParseFloatError, str::FromStr, string::FromUtf8Error};
+use std::{num::ParseFloatError, str::FromStr, string::FromUtf8Error};
 use urlencoding::decode;
 
 use crate::{
@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[derive(Debug, Clone, Serialize)]
-pub struct LiquidURI {
+pub struct LiquidAddressData {
     pub address: String,
     pub network: Network,
     pub asset_id: Option<String>,
@@ -21,7 +21,6 @@ pub struct LiquidURI {
     pub label: Option<String>,
     pub message: Option<String>,
     pub invoice: Option<String>,
-    pub extras: HashMap<String, String>,
 }
 
 #[derive(Debug)]
@@ -37,7 +36,7 @@ pub enum DeserializeError {
     InvalidInvoice(InvoiceError),
 }
 
-impl LiquidURI {
+impl LiquidAddressData {
     fn deserialize_raw(string: &str) -> Result<Self, DeserializeError> {
         let Some((network, address_params)) = string.split_once(':') else {
             return Err(DeserializeError::InvalidScheme);
@@ -67,7 +66,6 @@ impl LiquidURI {
         let mut label = None;
         let mut message = None;
         let mut invoice = None;
-        let mut extras = HashMap::new();
         if let Some(params) = address_params.next() {
             for pair in params.split('&') {
                 if let Some((key, val)) = pair.split_once('=') {
@@ -99,9 +97,7 @@ impl LiquidURI {
                             parse_invoice(val).map_err(DeserializeError::InvalidInvoice)?;
                             invoice = Some(val.to_string());
                         }
-                        _ => {
-                            extras.insert(key.to_string(), val.to_string());
-                        }
+                        _ => {}
                     }
                 } else {
                     return Err(DeserializeError::MissingEquals);
@@ -123,7 +119,6 @@ impl LiquidURI {
             label,
             message,
             invoice,
-            extras,
         })
     }
 
@@ -150,12 +145,11 @@ impl LiquidURI {
             label: None,
             message: None,
             invoice: None,
-            extras: HashMap::new(),
         })
     }
 }
 
-impl FromStr for LiquidURI {
+impl FromStr for LiquidAddressData {
     type Err = DeserializeError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -163,7 +157,7 @@ impl FromStr for LiquidURI {
     }
 }
 
-impl TryFrom<&str> for LiquidURI {
+impl TryFrom<&str> for LiquidAddressData {
     type Error = DeserializeError;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
@@ -171,7 +165,7 @@ impl TryFrom<&str> for LiquidURI {
     }
 }
 
-impl TryFrom<String> for LiquidURI {
+impl TryFrom<String> for LiquidAddressData {
     type Error = DeserializeError;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {

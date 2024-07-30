@@ -19,12 +19,12 @@ use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use sdk_common::invoice;
 pub use sdk_common::prelude::{
-    parse, AddressData, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, CurrencyInfo,
-    FiatCurrency, InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlError,
-    LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawRequest,
-    LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData, LocaleOverrides,
-    LocalizedName, MessageSuccessActionData, Network, Rate, RouteHint, RouteHintHop,
-    SuccessActionProcessed, Symbol, UrlSuccessActionData,
+    parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, BitcoinAddressData,
+    CurrencyInfo, FiatCurrency, InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus,
+    LnUrlError, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
+    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
+    LocaleOverrides, LocalizedName, MessageSuccessActionData, Network, Rate, RouteHint,
+    RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
 };
 use tokio::sync::Mutex;
 
@@ -159,8 +159,8 @@ pub struct _LnUrlWithdrawRequestData {
 
 #[frb(mirror(InputType))]
 pub enum _InputType {
-    BitcoinAddress { address: AddressData },
-    LiquidAddress { address: AddressData },
+    BitcoinAddress { address: BitcoinAddressData },
+    LiquidAddress { address: () },
     Bolt11 { invoice: LNInvoice },
     NodeId { node_id: String },
     Url { url: String },

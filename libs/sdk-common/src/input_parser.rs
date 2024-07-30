@@ -10,7 +10,7 @@ use LnUrlRequestData::*;
 use crate::prelude::*;
 
 #[cfg(feature = "liquid")]
-use self::liquid::bip21::LiquidURI;
+use self::liquid::bip21::LiquidAddressData;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -180,7 +180,8 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     #[cfg(feature = "liquid")]
     // Covers BIP 21 URIs and simple onchain Liquid addresses (which are valid BIP 21 with the 'liquidnetwork:' prefix)
-    if let Ok(address) = LiquidURI::from_addr(input).or(input.parse::<LiquidURI>()) {
+    if let Ok(address) = LiquidAddressData::from_addr(input).or(input.parse::<LiquidAddressData>())
+    {
         return Ok(InputType::LiquidAddress { address });
     }
 
@@ -397,7 +398,7 @@ pub enum InputType {
     /// - plain on-chain BTC address
     /// - BIP21
     BitcoinAddress {
-        address: AddressData,
+        address: BitcoinAddressData,
     },
 
     /// # Supported standards
@@ -406,7 +407,7 @@ pub enum InputType {
     /// - BIP21 on liquid/liquidtestnet
     #[cfg(feature = "liquid")]
     LiquidAddress {
-        address: LiquidURI,
+        address: LiquidAddressData,
     },
 
     /// Also covers URIs like `bitcoin:...&lightning=bolt11`. In this case, it returns the BOLT11
@@ -587,7 +588,7 @@ pub struct MetadataItem {
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 #[derive(Clone, Debug, Serialize)]
-pub struct AddressData {
+pub struct BitcoinAddressData {
     pub address: String,
     pub network: super::prelude::Network,
     pub amount_sat: Option<u64>,
@@ -595,9 +596,9 @@ pub struct AddressData {
     pub message: Option<String>,
 }
 
-impl From<Uri<'_>> for AddressData {
+impl From<Uri<'_>> for BitcoinAddressData {
     fn from(uri: Uri) -> Self {
-        AddressData {
+        BitcoinAddressData {
             address: uri.address.to_string(),
             network: uri.address.network.into(),
             amount_sat: uri.amount.map(|a| a.to_sat()),
