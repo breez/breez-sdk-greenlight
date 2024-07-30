@@ -51,9 +51,9 @@ pub async fn get_and_log_response(
 ///
 /// - `url`: the URL on which GET will be called
 /// - `enforce_status_check`: if true, the HTTP status code is checked in addition to trying to
-/// parse the payload. In this case, an HTTP error code will automatically cause this function to
-/// return `Err`, regardless of the payload. If false, the result type will be determined only
-/// by the result of parsing the payload into the desired target type.
+///    parse the payload. In this case, an HTTP error code will automatically cause this function to
+///    return `Err`, regardless of the payload. If false, the result type will be determined only
+///    by the result of parsing the payload into the desired target type.
 pub async fn get_parse_and_log_response<T>(
     url: &str,
     enforce_status_check: bool,

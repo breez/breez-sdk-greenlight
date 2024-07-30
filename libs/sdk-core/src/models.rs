@@ -178,7 +178,7 @@ pub struct ReverseSwapInfoCached {
 
 impl FullReverseSwapInfo {
     /// Builds the expected redeem script
-    fn build_expected_reverse_swap_script(
+    pub(crate) fn build_expected_reverse_swap_script(
         preimage_hash: Vec<u8>,
         compressed_pub_key: Vec<u8>,
         sig: Vec<u8>,
@@ -279,7 +279,7 @@ impl FullReverseSwapInfo {
     ///
     /// - checks if amount matches the amount requested by the user
     /// - checks if the payment hash is the same preimage hash (derived from local secret bytes)
-    /// included in the create request
+    ///   included in the create request
     pub(crate) fn validate_invoice(&self, expected_amount_msat: u64) -> ReverseSwapResult<()> {
         self.validate_invoice_amount(expected_amount_msat)?;
 

@@ -175,9 +175,10 @@ impl BreezServices {
     ///
     /// # Arguments
     ///
-    /// * `req` - The connect request containing the `config` SDK configuration and `seed` node private key, typically derived from the mnemonic.
-    /// When using a new `invite_code`, the seed should be derived from a new random mnemonic.
-    /// When re-using an `invite_code`, the same mnemonic should be used as when the `invite_code` was first used.
+    /// * `req` - The connect request containing the `config` SDK configuration and `seed` node
+    ///   private key, typically derived from the mnemonic. When using a new `invite_code`,
+    ///   the seed should be derived from a new random mnemonic. When re-using an `invite_code`,
+    ///   the same mnemonic should be used as when the `invite_code` was first used.
     /// * `event_listener` - Listener to SDK events
     ///
     pub async fn connect(
@@ -523,7 +524,7 @@ impl BreezServices {
     ///
     /// Calling `report_issue` with a [ReportIssueRequest] enum param sends an issue report using the Support API.
     /// - [ReportIssueRequest::PaymentFailure] sends a payment failure report to the Support API
-    /// using the provided `payment_hash` to lookup the failed payment and the current [NodeState].
+    ///   using the provided `payment_hash` to lookup the failed payment and the current [NodeState].
     pub async fn report_issue(&self, req: ReportIssueRequest) -> SdkResult<()> {
         match self.persister.get_node_state()? {
             Some(node_state) => match req {
@@ -955,8 +956,8 @@ impl BreezServices {
     /// ### Errors
     ///
     /// - `OutOfRange`: This indicates the send amount is outside the range of minimum and maximum
-    /// values returned by [BreezServices::onchain_payment_limits]. When you get this error, please first call
-    /// [BreezServices::onchain_payment_limits] to get the new limits, before calling this method again.
+    ///   values returned by [BreezServices::onchain_payment_limits]. When you get this error, please first call
+    ///   [BreezServices::onchain_payment_limits] to get the new limits, before calling this method again.
     pub async fn prepare_onchain_payment(
         &self,
         req: PrepareOnchainPaymentRequest,
