@@ -179,9 +179,7 @@ pub async fn parse(input: &str) -> Result<InputType> {
     }
 
     #[cfg(feature = "liquid")]
-    // Covers BIP 21 URIs and simple onchain Liquid addresses (which are valid BIP 21 with the 'liquidnetwork:' prefix)
-    if let Ok(address) = LiquidAddressData::from_addr(input).or(input.parse::<LiquidAddressData>())
-    {
+    if let Ok(address) = parse_liquid_address(input) {
         return Ok(InputType::LiquidAddress { address });
     }
 
