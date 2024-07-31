@@ -609,16 +609,6 @@ dictionary BitcoinAddressData {
     string? message;
 };
 
-dictionary LiquidAddressData {
-    string address;
-    Network network;
-    u64? amount_sat;
-    string? asset_id;
-    string? label;
-    string? message;
-    string? invoice;
-};
-
 dictionary LnUrlPaySuccessData {
     SuccessActionProcessed? success_action;
     Payment payment;
@@ -734,7 +724,6 @@ dictionary RecommendedFees {
 [Enum]
 interface InputType {
     BitcoinAddress(BitcoinAddressData address);
-    LiquidAddress(LiquidAddressData address);
     Bolt11(LNInvoice invoice);
     NodeId(string node_id);
     Url(string url);

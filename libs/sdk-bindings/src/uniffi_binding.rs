@@ -34,9 +34,6 @@ use breez_sdk_core::{
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 
-#[cfg(feature = "liquid")]
-use sdk_common::liquid::LiquidAddressData;
-
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
 static LOG_INIT: OnceCell<bool> = OnceCell::new();
 
