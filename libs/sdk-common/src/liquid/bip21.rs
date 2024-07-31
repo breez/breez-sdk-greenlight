@@ -38,9 +38,9 @@ pub enum DeserializeError {
 
 impl LiquidAddressData {
     fn deserialize_raw(string: &str) -> Result<Self, DeserializeError> {
-        let Some((network, address_params)) = string.split_once(':') else {
-            return Err(DeserializeError::InvalidScheme);
-        };
+        let (network, address_params) = string
+            .split_once(':')
+            .ok_or(DeserializeError::InvalidScheme)?;
 
         let network = match network {
             "liquidnetwork" => Network::Bitcoin,
@@ -50,16 +50,16 @@ impl LiquidAddressData {
 
         let mut address_params = address_params.split('?');
 
-        let address = if let Some(address) = address_params.next() {
-            address
-                .parse::<Address>()
-                .map_err(DeserializeError::InvalidAddress)?
-                .to_string()
-        } else {
-            return Err(DeserializeError::InvalidAddress(
-                AddressError::InvalidAddress("No address provided".to_string()),
-            ));
-        };
+        let address = address_params
+            .next()
+            .ok_or_else(|| {
+                DeserializeError::InvalidAddress(AddressError::InvalidAddress(
+                    "No address provided".to_string(),
+                ))
+            })?
+            .parse::<Address>()
+            .map_err(DeserializeError::InvalidAddress)?
+            .to_string();
 
         let mut amount_sat = None;
         let mut asset_id = None;
