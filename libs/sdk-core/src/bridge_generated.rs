@@ -1022,9 +1022,6 @@ const _: fn() = || {
         InputType::BitcoinAddress { address } => {
             let _: BitcoinAddressData = address;
         }
-        InputType::LiquidAddress { address } => {
-            todo!()
-        }
         InputType::Bolt11 { invoice } => {
             let _: LNInvoice = invoice;
         }
@@ -1612,9 +1609,6 @@ impl support::IntoDart for mirror_InputType {
         match self.0 {
             InputType::BitcoinAddress { address } => {
                 vec![0.into_dart(), address.into_into_dart().into_dart()]
-            }
-            InputType::LiquidAddress { address } => {
-                todo!()
             }
             InputType::Bolt11 { invoice } => {
                 vec![1.into_dart(), invoice.into_into_dart().into_dart()]

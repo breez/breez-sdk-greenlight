@@ -160,7 +160,6 @@ pub struct _LnUrlWithdrawRequestData {
 #[frb(mirror(InputType))]
 pub enum _InputType {
     BitcoinAddress { address: BitcoinAddressData },
-    LiquidAddress { address: () },
     Bolt11 { invoice: LNInvoice },
     NodeId { node_id: String },
     Url { url: String },
@@ -170,10 +169,10 @@ pub enum _InputType {
     LnUrlError { data: LnUrlErrorData },
 }
 
-#[frb(mirror(AddressData))]
-pub struct _AddressData {
+#[frb(mirror(BitcoinAddressData))]
+pub struct _BitcoinAddressData {
     pub address: String,
-    pub network: crate::prelude::Network,
+    pub network: Network,
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,
