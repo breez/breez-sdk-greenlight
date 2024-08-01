@@ -7,10 +7,7 @@ use serde::Serialize;
 use std::{num::ParseFloatError, str::FromStr, string::FromUtf8Error};
 use urlencoding::decode;
 
-use crate::{
-    invoice::{parse_invoice, InvoiceError},
-    prelude::Network,
-};
+use crate::prelude::Network;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LiquidAddressData {
@@ -20,7 +17,6 @@ pub struct LiquidAddressData {
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,
-    pub invoice: Option<String>,
 }
 
 #[derive(Debug)]
@@ -33,7 +29,6 @@ pub enum DeserializeError {
     InvalidAmount(ParseFloatError),
     InvalidAsset(HexToArrayError),
     InvalidAddress(AddressError),
-    InvalidInvoice(InvoiceError),
 }
 
 impl LiquidAddressData {
@@ -65,7 +60,6 @@ impl LiquidAddressData {
         let mut asset_id = None;
         let mut label = None;
         let mut message = None;
-        let mut invoice = None;
         if let Some(params) = address_params.next() {
             for pair in params.split('&') {
                 if let Some((key, val)) = pair.split_once('=') {
@@ -93,10 +87,6 @@ impl LiquidAddressData {
                                 .into_owned();
                             message = Some(decoded)
                         }
-                        "lightning" => {
-                            parse_invoice(val).map_err(DeserializeError::InvalidInvoice)?;
-                            invoice = Some(val.to_string());
-                        }
                         _ => {}
                     }
                 } else {
@@ -118,7 +108,6 @@ impl LiquidAddressData {
             amount_sat,
             label,
             message,
-            invoice,
         })
     }
 
@@ -144,7 +133,6 @@ impl LiquidAddressData {
             amount_sat: None,
             label: None,
             message: None,
-            invoice: None,
         })
     }
 }
