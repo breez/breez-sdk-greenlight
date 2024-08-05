@@ -38,10 +38,10 @@ The *Greenlight* implementation is a cloud-based Lightning integration. It offer
 - [x]  Fiat on-ramps
 - [x]  Open-source
 
-Get started with the Breez SDK - *Greenlight* : [Documentation](https://sdk-doc.breez.technology/). 
+## Getting Started
+Get started with the [Breez SDK - *Greenlight*](https://sdk-doc.breez.technology/). 
 
-> To use the Breez SDK - *Greenlight*, you need an API key. Email us at contact@breez.technology for more info.
-> 
+To use the Breez SDK - *Greenlight*, you need an API key. Email us at contact@breez.technology for more info.
 
 ## **API**
 
