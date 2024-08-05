@@ -29,8 +29,8 @@ use crate::chain::{
     DEFAULT_MEMPOOL_SPACE_URL,
 };
 use crate::error::{
-    ConnectError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError, SdkError,
-    SdkResult, SendOnchainError, SendPaymentError,
+    ConnectError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError,
+    RedeemOnchainResult, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::lnurl::pay::*;
@@ -626,7 +626,7 @@ impl BreezServices {
     pub async fn redeem_onchain_funds(
         &self,
         req: RedeemOnchainFundsRequest,
-    ) -> SdkResult<RedeemOnchainFundsResponse> {
+    ) -> RedeemOnchainResult<RedeemOnchainFundsResponse> {
         self.start_node().await?;
         let txid = self
             .node_api
@@ -639,7 +639,7 @@ impl BreezServices {
     pub async fn prepare_redeem_onchain_funds(
         &self,
         req: PrepareRedeemOnchainFundsRequest,
-    ) -> SdkResult<PrepareRedeemOnchainFundsResponse> {
+    ) -> RedeemOnchainResult<PrepareRedeemOnchainFundsResponse> {
         self.start_node().await?;
         let response = self.node_api.prepare_redeem_onchain_funds(req).await?;
         Ok(response)

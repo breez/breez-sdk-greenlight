@@ -12,9 +12,9 @@ use crate::{
     bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
-    CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
-    SyncResponse, TlvEntry, LnUrlAuthError
+    CustomMessage, LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment,
+    PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
+    RouteHint, RouteHintHop, SyncResponse, TlvEntry,
 };
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;
@@ -59,6 +59,9 @@ pub enum NodeError {
 
     #[error("{0}")]
     ServiceConnectivity(String),
+
+    #[error("{0}")]
+    InsufficientFunds(String),
 }
 
 impl NodeError {
@@ -86,7 +89,7 @@ impl From<NodeError> for LnUrlAuthError {
         match value {
             NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
-                err: value.to_string()
+                err: value.to_string(),
             },
         }
     }

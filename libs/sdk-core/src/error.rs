@@ -201,6 +201,52 @@ impl From<PersistError> for ReceiveOnchainError {
     }
 }
 
+pub type RedeemOnchainResult<T, E = RedeemOnchainError> = Result<T, E>;
+
+#[derive(Debug, Error)]
+pub enum RedeemOnchainError {
+    /// This error is raised when a general error occurs not specific to other error variants
+    /// in this enum.
+    #[error("Generic: {err}")]
+    Generic { err: String },
+
+    /// This error is raised when a connection to an external service fails.
+    #[error("Service connectivity: {err}")]
+    ServiceConnectivity { err: String },
+
+    // This error is raised when the node does not have enough funds to redeem the onchain balance.
+    #[error("{err}")]
+    InsufficientFunds { err: String },
+}
+
+impl From<NodeError> for RedeemOnchainError {
+    fn from(value: NodeError) -> Self {
+        match value {
+            NodeError::InsufficientFunds(err) => Self::InsufficientFunds { err },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
+        }
+    }
+}
+
+impl From<anyhow::Error> for RedeemOnchainError {
+    fn from(err: anyhow::Error) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
+
+impl From<SdkError> for RedeemOnchainError {
+    fn from(value: SdkError) -> Self {
+        match value {
+            SdkError::Generic { err } => Self::Generic { err },
+            SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+        }
+    }
+}
+
 /// Error returned by [crate::breez_services::BreezServices::receive_payment]
 #[derive(Debug, Error)]
 pub enum ReceivePaymentError {

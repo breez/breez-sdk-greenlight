@@ -31,8 +31,8 @@ use tokio::sync::Mutex;
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
 use crate::chain::RecommendedFees;
 use crate::error::{
-    ConnectError, ReceiveOnchainError, ReceivePaymentError, SdkError, SendOnchainError,
-    SendPaymentError,
+    ConnectError, ReceiveOnchainError, ReceivePaymentError, RedeemOnchainError, SdkError,
+    SendOnchainError, SendPaymentError,
 };
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
@@ -639,7 +639,7 @@ pub fn buy_bitcoin(req: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
 /// See [BreezServices::redeem_onchain_funds]
 pub fn redeem_onchain_funds(req: RedeemOnchainFundsRequest) -> Result<RedeemOnchainFundsResponse> {
     block_on(async { get_breez_services().await?.redeem_onchain_funds(req).await })
-        .map_err(anyhow::Error::new::<SdkError>)
+        .map_err(anyhow::Error::new::<RedeemOnchainError>)
 }
 
 /// See [BreezServices::prepare_redeem_onchain_funds]
@@ -652,7 +652,7 @@ pub fn prepare_redeem_onchain_funds(
             .prepare_redeem_onchain_funds(req)
             .await
     })
-    .map_err(anyhow::Error::new::<SdkError>)
+    .map_err(anyhow::Error::new::<RedeemOnchainError>)
 }
 
 /*  Refundables API's */
