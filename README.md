@@ -39,9 +39,10 @@ The *Greenlight* implementation is a cloud-based Lightning integration. It offer
 - [x]  Open-source
 
 ## Getting Started
-Get started with the [Breez SDK - *Greenlight*](https://sdk-doc.breez.technology/). 
 
-To use the Breez SDK - *Greenlight*, you need an API key. Email us at contact@breez.technology for more info.
+Head over to the [Breez SDK - *Greenlight* documentation](https://sdk-doc.breez.technology/) to start implementing Lightning into your app.
+
+Note: You'll need an API key to use the *Greenlight* implementation. For more info, email us at contact@breez.technology.
 
 ## **API**
 
