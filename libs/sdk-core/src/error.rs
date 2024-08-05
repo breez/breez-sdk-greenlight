@@ -214,7 +214,7 @@ pub enum RedeemOnchainError {
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
 
-    // This error is raised when the node does not have enough funds to redeem the onchain balance.
+    /// This error is raised when the node does not have enough funds to redeem the onchain balance.
     #[error("{err}")]
     InsufficientFunds { err: String },
 }
@@ -223,6 +223,7 @@ impl From<NodeError> for RedeemOnchainError {
     fn from(value: NodeError) -> Self {
         match value {
             NodeError::InsufficientFunds(err) => Self::InsufficientFunds { err },
+            NodeError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
