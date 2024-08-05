@@ -629,6 +629,11 @@ pub struct NodeState {
     pub max_single_payment_amount_msat: u64,
     pub max_chan_reserve_msats: u64,
     pub connected_peers: Vec<String>,
+
+    /// Maximum receivable in a single payment without requiring a new channel open.
+    pub max_receivable_single_payment_amount_msat: u64,
+
+    /// Total receivable on all available channels
     pub inbound_liquidity_msats: u64,
 }
 

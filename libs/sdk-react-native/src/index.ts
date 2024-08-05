@@ -291,6 +291,7 @@ export interface NodeState {
     maxSinglePaymentAmountMsat: number
     maxChanReserveMsats: number
     connectedPeers: string[]
+    maxReceivableSinglePaymentAmountMsat: number
     inboundLiquidityMsats: number
 }
 

@@ -2021,6 +2021,9 @@ enum BreezSDKMapper {
         guard let connectedPeers = nodeState["connectedPeers"] as? [String] else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "connectedPeers", typeName: "NodeState"))
         }
+        guard let maxReceivableSinglePaymentAmountMsat = nodeState["maxReceivableSinglePaymentAmountMsat"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxReceivableSinglePaymentAmountMsat", typeName: "NodeState"))
+        }
         guard let inboundLiquidityMsats = nodeState["inboundLiquidityMsats"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "inboundLiquidityMsats", typeName: "NodeState"))
         }
@@ -2037,6 +2040,7 @@ enum BreezSDKMapper {
             maxSinglePaymentAmountMsat: maxSinglePaymentAmountMsat,
             maxChanReserveMsats: maxChanReserveMsats,
             connectedPeers: connectedPeers,
+            maxReceivableSinglePaymentAmountMsat: maxReceivableSinglePaymentAmountMsat,
             inboundLiquidityMsats: inboundLiquidityMsats
         )
     }
@@ -2054,6 +2058,7 @@ enum BreezSDKMapper {
             "maxSinglePaymentAmountMsat": nodeState.maxSinglePaymentAmountMsat,
             "maxChanReserveMsats": nodeState.maxChanReserveMsats,
             "connectedPeers": nodeState.connectedPeers,
+            "maxReceivableSinglePaymentAmountMsat": nodeState.maxReceivableSinglePaymentAmountMsat,
             "inboundLiquidityMsats": nodeState.inboundLiquidityMsats,
         ]
     }

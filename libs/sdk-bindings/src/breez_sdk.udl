@@ -187,6 +187,7 @@ dictionary NodeState {
     u64 max_single_payment_amount_msat;
     u64 max_chan_reserve_msats;
     sequence<string> connected_peers;
+    u64 max_receivable_single_payment_amount_msat;
     u64 inbound_liquidity_msats;
 };
 

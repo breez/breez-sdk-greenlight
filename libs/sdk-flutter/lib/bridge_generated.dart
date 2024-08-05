@@ -1119,6 +1119,11 @@ class NodeState {
   final int maxSinglePaymentAmountMsat;
   final int maxChanReserveMsats;
   final List<String> connectedPeers;
+
+  /// Maximum receivable in a single payment without requiring a new channel open.
+  final int maxReceivableSinglePaymentAmountMsat;
+
+  /// Total receivable on all available channels
   final int inboundLiquidityMsats;
 
   const NodeState({
@@ -1133,6 +1138,7 @@ class NodeState {
     required this.maxSinglePaymentAmountMsat,
     required this.maxChanReserveMsats,
     required this.connectedPeers,
+    required this.maxReceivableSinglePaymentAmountMsat,
     required this.inboundLiquidityMsats,
   });
 }
@@ -3749,7 +3755,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   NodeState _wire2api_node_state(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 13) throw Exception('unexpected arr length: expect 13 but see ${arr.length}');
     return NodeState(
       id: _wire2api_String(arr[0]),
       blockHeight: _wire2api_u32(arr[1]),
@@ -3762,7 +3768,8 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       maxSinglePaymentAmountMsat: _wire2api_u64(arr[8]),
       maxChanReserveMsats: _wire2api_u64(arr[9]),
       connectedPeers: _wire2api_StringList(arr[10]),
-      inboundLiquidityMsats: _wire2api_u64(arr[11]),
+      maxReceivableSinglePaymentAmountMsat: _wire2api_u64(arr[11]),
+      inboundLiquidityMsats: _wire2api_u64(arr[12]),
     );
   }
 
