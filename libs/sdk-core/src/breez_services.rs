@@ -264,7 +264,7 @@ impl BreezServices {
         let invoice_expiration = parsed_invoice.timestamp + parsed_invoice.expiry;
         if invoice_expiration < SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() {
             return Err(SendPaymentError::InvoiceExpired {
-                err: format!("Invoice expired at {}", parsed_invoice.expiry),
+                err: format!("Invoice expired at {}", invoice_expiration),
             });
         }
         let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
