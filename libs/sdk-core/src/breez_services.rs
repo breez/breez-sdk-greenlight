@@ -262,7 +262,8 @@ impl BreezServices {
         self.start_node().await?;
         let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
         let invoice_expiration = parsed_invoice.timestamp + parsed_invoice.expiry;
-        if invoice_expiration < SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() {
+        let current_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
+        if invoice_expiration < current_time {
             return Err(SendPaymentError::InvoiceExpired {
                 err: format!("Invoice expired at {}", invoice_expiration),
             });
