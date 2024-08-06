@@ -943,7 +943,7 @@ impl NodeAPI for Greenlight {
         // calculate payment limits and inbound liquidity
         let mut max_payable: u64 = 0;
         let mut max_receivable_single_channel: u64 = 0;
-        let mut inbound_liquidity_msats: u64 = 0;
+        let mut total_inbound_liquidity_msats: u64 = 0;
         opened_channels.iter().try_for_each(|c| -> Result<()> {
             max_payable += c
                 .spendable_msat
@@ -955,7 +955,7 @@ impl NodeAPI for Greenlight {
                 .as_ref()
                 .map(|a| a.msat)
                 .unwrap_or_default();
-            inbound_liquidity_msats += receivable_amount;
+            total_inbound_liquidity_msats += receivable_amount;
             if receivable_amount > max_receivable_single_channel {
                 max_receivable_single_channel = receivable_amount;
             }
@@ -979,7 +979,7 @@ impl NodeAPI for Greenlight {
             max_chan_reserve_msats: channels_balance - min(max_payable, channels_balance),
             connected_peers,
             max_receivable_single_payment_amount_msat: max_receivable_single_channel,
-            inbound_liquidity_msats,
+            total_inbound_liquidity_msats,
         };
         let mut htlc_list: Vec<Htlc> = Vec::new();
         for channel in all_channel_models.clone() {

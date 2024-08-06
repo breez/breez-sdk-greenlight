@@ -3275,7 +3275,7 @@ pub(crate) mod tests {
             max_chan_reserve_msats: 0,
             connected_peers: vec!["1111".to_string()],
             max_receivable_single_payment_amount_msat: 2_000,
-            inbound_liquidity_msats: 10_000,
+            total_inbound_liquidity_msats: 10_000,
         }
     }
 }

@@ -292,7 +292,7 @@ export interface NodeState {
     maxChanReserveMsats: number
     connectedPeers: string[]
     maxReceivableSinglePaymentAmountMsat: number
-    inboundLiquidityMsats: number
+    totalInboundLiquidityMsats: number
 }
 
 export interface OnchainPaymentLimitsResponse {

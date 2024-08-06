@@ -634,7 +634,7 @@ pub struct NodeState {
     pub max_receivable_single_payment_amount_msat: u64,
 
     /// Total receivable on all available channels
-    pub inbound_liquidity_msats: u64,
+    pub total_inbound_liquidity_msats: u64,
 }
 
 /// Internal response to a [crate::node_api::NodeAPI::pull_changed] call

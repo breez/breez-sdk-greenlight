@@ -1124,7 +1124,7 @@ class NodeState {
   final int maxReceivableSinglePaymentAmountMsat;
 
   /// Total receivable on all available channels
-  final int inboundLiquidityMsats;
+  final int totalInboundLiquidityMsats;
 
   const NodeState({
     required this.id,
@@ -1139,7 +1139,7 @@ class NodeState {
     required this.maxChanReserveMsats,
     required this.connectedPeers,
     required this.maxReceivableSinglePaymentAmountMsat,
-    required this.inboundLiquidityMsats,
+    required this.totalInboundLiquidityMsats,
   });
 }
 
@@ -3769,7 +3769,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       maxChanReserveMsats: _wire2api_u64(arr[9]),
       connectedPeers: _wire2api_StringList(arr[10]),
       maxReceivableSinglePaymentAmountMsat: _wire2api_u64(arr[11]),
-      inboundLiquidityMsats: _wire2api_u64(arr[12]),
+      totalInboundLiquidityMsats: _wire2api_u64(arr[12]),
     );
   }
 

@@ -2061,7 +2061,9 @@ impl support::IntoDart for NodeState {
             self.max_receivable_single_payment_amount_msat
                 .into_into_dart()
                 .into_dart(),
-            self.inbound_liquidity_msats.into_into_dart().into_dart(),
+            self.total_inbound_liquidity_msats
+                .into_into_dart()
+                .into_dart(),
         ]
         .into_dart()
     }
