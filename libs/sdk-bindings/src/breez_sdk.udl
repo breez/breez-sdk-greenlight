@@ -98,6 +98,13 @@ enum SendPaymentError {
     "ServiceConnectivity",
 };
 
+[Error]
+enum RedeemOnchainError {    
+    "Generic",    
+    "ServiceConnectivity",
+    "InsufficientFunds",
+};
+
 enum EnvironmentType {
     "Production",
     "Staging",
@@ -874,7 +881,7 @@ interface BlockingBreezServices {
    [Throws=SdkError]
    void set_payment_metadata(string hash, string metadata);
 
-   [Throws=SdkError]
+   [Throws=RedeemOnchainError]
    RedeemOnchainFundsResponse redeem_onchain_funds(RedeemOnchainFundsRequest req);
 
    [Throws=SdkError]
@@ -973,7 +980,7 @@ interface BlockingBreezServices {
    [Throws=ReceiveOnchainError]
    BuyBitcoinResponse buy_bitcoin(BuyBitcoinRequest req);
 
-   [Throws=SdkError]
+   [Throws=RedeemOnchainError]
    PrepareRedeemOnchainFundsResponse prepare_redeem_onchain_funds(PrepareRedeemOnchainFundsRequest req);
 };
 

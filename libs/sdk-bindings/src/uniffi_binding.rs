@@ -212,7 +212,7 @@ impl BlockingBreezServices {
     pub fn redeem_onchain_funds(
         &self,
         req: RedeemOnchainFundsRequest,
-    ) -> SdkResult<RedeemOnchainFundsResponse> {
+    ) -> RedeemOnchainResult<RedeemOnchainFundsResponse> {
         rt().block_on(self.breez_services.redeem_onchain_funds(req))
     }
 
@@ -382,7 +382,7 @@ impl BlockingBreezServices {
     pub fn prepare_redeem_onchain_funds(
         &self,
         req: PrepareRedeemOnchainFundsRequest,
-    ) -> SdkResult<PrepareRedeemOnchainFundsResponse> {
+    ) -> RedeemOnchainResult<PrepareRedeemOnchainFundsResponse> {
         rt().block_on(self.breez_services.prepare_redeem_onchain_funds(req))
     }
 }
