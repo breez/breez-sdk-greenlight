@@ -1584,6 +1584,127 @@ impl PaymentPathEdge {
     }
 }
 
+pub(crate) mod sanitize {
+    use anyhow::Result;
+    use serde::Serialize;
+
+    use crate::{
+        FullReverseSwapInfo, OpeningFeeParams, ReverseSwapInfoCached, SwapInfo, SwapStatus,
+    };
+
+    pub(crate) trait Sanitize<R, S> {
+        /// Sanitizes a raw struct [R] to a sanitized version of it [S]
+        fn sanitize(self) -> S;
+    }
+
+    pub(crate) fn sanitize_vec<R, S>(vals: Vec<R>) -> Vec<S>
+    where
+        R: Sanitize<R, S>,
+    {
+        vals.into_iter()
+            .map(|val| val.sanitize())
+            .collect::<Vec<S>>()
+    }
+
+    pub(crate) fn sanitize_vec_pretty_print<R, S>(vals: Vec<R>) -> Result<String>
+    where
+        R: Sanitize<R, S>,
+        S: Serialize,
+    {
+        serde_json::to_string_pretty(&sanitize_vec(vals)).map_err(anyhow::Error::new)
+    }
+
+    /// Sanitized version of [FullReverseSwapInfo], without the following fields:
+    /// - `preimage`
+    /// - `private_key`
+    #[derive(Serialize)]
+    pub(crate) struct FullReverseSwapInfoSanitized {
+        pub id: String,
+        pub created_at_block_height: u32,
+        pub claim_pubkey: String,
+        pub timeout_block_height: u32,
+        pub invoice: String,
+        pub redeem_script: String,
+        pub onchain_amount_sat: u64,
+        pub sat_per_vbyte: Option<u32>,
+        pub receive_amount_sat: Option<u64>,
+        pub cache: ReverseSwapInfoCached,
+    }
+    impl Sanitize<FullReverseSwapInfo, FullReverseSwapInfoSanitized> for FullReverseSwapInfo {
+        fn sanitize(self) -> FullReverseSwapInfoSanitized {
+            FullReverseSwapInfoSanitized {
+                id: self.id,
+                created_at_block_height: self.created_at_block_height,
+                claim_pubkey: self.claim_pubkey,
+                timeout_block_height: self.timeout_block_height,
+                invoice: self.invoice,
+                redeem_script: self.redeem_script,
+                onchain_amount_sat: self.onchain_amount_sat,
+                sat_per_vbyte: self.sat_per_vbyte,
+                receive_amount_sat: self.receive_amount_sat,
+                cache: self.cache,
+            }
+        }
+    }
+
+    /// Sanitized version of [SwapInfo], without the following fields:
+    /// - `preimage`
+    /// - `private_key`
+    #[derive(Serialize)]
+    pub(crate) struct SwapInfoSanitized {
+        pub bitcoin_address: String,
+        pub created_at: i64,
+        pub lock_height: i64,
+        pub payment_hash: Vec<u8>,
+        pub public_key: Vec<u8>,
+        pub swapper_public_key: Vec<u8>,
+        pub script: Vec<u8>,
+        pub bolt11: Option<String>,
+        pub paid_msat: u64,
+        pub total_incoming_txs: u64,
+        pub confirmed_sats: u64,
+        pub unconfirmed_sats: u64,
+        pub status: SwapStatus,
+        pub refund_tx_ids: Vec<String>,
+        pub unconfirmed_tx_ids: Vec<String>,
+        pub confirmed_tx_ids: Vec<String>,
+        pub min_allowed_deposit: i64,
+        pub max_allowed_deposit: i64,
+        pub max_swapper_payable: i64,
+        pub last_redeem_error: Option<String>,
+        pub channel_opening_fees: Option<OpeningFeeParams>,
+        pub confirmed_at: Option<u32>,
+    }
+    impl Sanitize<SwapInfo, SwapInfoSanitized> for SwapInfo {
+        fn sanitize(self) -> SwapInfoSanitized {
+            SwapInfoSanitized {
+                bitcoin_address: self.bitcoin_address,
+                created_at: self.created_at,
+                lock_height: self.lock_height,
+                payment_hash: self.payment_hash,
+                public_key: self.public_key,
+                swapper_public_key: self.swapper_public_key,
+                script: self.script,
+                bolt11: self.bolt11,
+                paid_msat: self.paid_msat,
+                total_incoming_txs: self.total_incoming_txs,
+                confirmed_sats: self.confirmed_sats,
+                unconfirmed_sats: self.unconfirmed_sats,
+                status: self.status,
+                refund_tx_ids: self.refund_tx_ids,
+                unconfirmed_tx_ids: self.unconfirmed_tx_ids,
+                confirmed_tx_ids: self.confirmed_tx_ids,
+                min_allowed_deposit: self.min_allowed_deposit,
+                max_allowed_deposit: self.max_allowed_deposit,
+                max_swapper_payable: self.max_swapper_payable,
+                last_redeem_error: self.last_redeem_error,
+                channel_opening_fees: self.channel_opening_fees,
+                confirmed_at: self.confirmed_at,
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
