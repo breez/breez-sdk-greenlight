@@ -58,7 +58,7 @@ publishing {
         }
         maven {
             name = "breezGitHubPackages"
-            url = uri("https://maven.pkg.github.com/breez/breez-sdk")
+            url = uri("https://maven.pkg.github.com/breez/breez-sdk-greenlight")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
