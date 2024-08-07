@@ -1247,7 +1247,7 @@ checksum = "4271d37baee1b8c7e4b708028c57d816cf9d2434acb33a549475f78c181f6253"
 [[package]]
 name = "gl-client"
 version = "0.2.0"
-source = "git+https://github.com/Blockstream/greenlight.git?rev=16fa13d40f4fc271cf99febf3f40246b6b23716a#16fa13d40f4fc271cf99febf3f40246b6b23716a"
+source = "git+https://github.com/Blockstream/greenlight.git?rev=b9d1ecb9ea7325b041d08ddc171486fdad646a63#b9d1ecb9ea7325b041d08ddc171486fdad646a63"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -3504,9 +3504,9 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vls-core"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1210aae1bc771b5ff39372466cf94ea23130a9d3ed0bbbafb6ee4443976de945"
+checksum = "7e930b25c7dd20dabbff7f564f6a33729ed59c85d759ecfe026d3723c492601b"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -3531,9 +3531,9 @@ dependencies = [
 
 [[package]]
 name = "vls-persist"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8a9de079c84145fd4df1f826970d140f1a364fbd0f68f1944d16149988a3931"
+checksum = "bd59da7c08b3ec90791c4acc13a590a32b7cfef17c58f42690f1ae1cb2a39e7a"
 dependencies = [
  "hex",
  "log",
@@ -3546,9 +3546,9 @@ dependencies = [
 
 [[package]]
 name = "vls-protocol"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e01ad8baa041296e8d715fd34d052d00ee5210038cc755e0f993c8c827935a85"
+checksum = "931878f2eaa91810f7cc183cd9909d6db5c967bda6b7a317aafe710a3e14d30c"
 dependencies = [
  "as-any",
  "bitcoin-consensus-derive",
@@ -3561,9 +3561,9 @@ dependencies = [
 
 [[package]]
 name = "vls-protocol-signer"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4435ed40d9bab3350f0caa305685bc3ac95e268e9c3b3f09bc08b002fac19ba"
+checksum = "bfd8e85b22aa3fd45097652a6064e85963ac66f95ce027fe9a5cc87c571ba453"
 dependencies = [
  "bit-vec",
  "log",
