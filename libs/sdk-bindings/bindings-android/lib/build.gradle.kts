@@ -82,13 +82,13 @@ publishing {
                 licenses {
                     license {
                         name.set("MIT")
-                        url.set("https://github.com/breez/breez-sdk/blob/main/LICENSE")
+                        url.set("https://github.com/breez/breez-sdk-greenlight/blob/main/LICENSE")
                     }
                 }
                 scm {
-                    connection.set("scm:git:github.com/breez/breez-sdk.git")
-                    developerConnection.set("scm:git:ssh://github.com/breez/breez-sdk.git")
-                    url.set("https://github.com/breez/breez-sdk")
+                    connection.set("scm:git:github.com/breez/breez-sdk-greenlight.git")
+                    developerConnection.set("scm:git:ssh://github.com/breez/breez-sdk-greenlight.git")
+                    url.set("https://github.com/breez/breez-sdk-greenlight")
                 }
             }
         }
