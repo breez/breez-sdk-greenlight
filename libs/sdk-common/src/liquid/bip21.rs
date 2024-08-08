@@ -48,24 +48,25 @@ impl LiquidAddressData {
             optional_keys.insert("label", urlencoding::encode(label).to_string());
         }
 
-        if optional_keys.is_empty() {
-            Ok(self.address.clone())
-        } else {
-            let scheme = match self.network {
-                Network::Bitcoin => "liquidnetwork",
-                Network::Testnet => "liquidtestnet",
-                _ => {
-                    return Err(URISerializationError::UnsupportedNetwork);
-                }
-            };
+        match optional_keys.is_empty() {
+            true => Ok(self.address.clone()),
+            false => {
+                let scheme = match self.network {
+                    Network::Bitcoin => "liquidnetwork",
+                    Network::Testnet => "liquidtestnet",
+                    _ => {
+                        return Err(URISerializationError::UnsupportedNetwork);
+                    }
+                };
 
-            let suffix_str = optional_keys
-                .iter()
-                .map(|(key, value)| format!("{key}={value}"))
-                .collect::<Vec<String>>()
-                .join("&");
+                let suffix_str = optional_keys
+                    .iter()
+                    .map(|(key, value)| format!("{key}={value}"))
+                    .collect::<Vec<String>>()
+                    .join("&");
 
-            Ok(format!("{scheme}:{}{suffix_str}", self.address))
+                Ok(format!("{scheme}:{}{suffix_str}", self.address))
+            }
         }
     }
 }

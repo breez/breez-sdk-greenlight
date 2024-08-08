@@ -606,8 +606,6 @@ impl BitcoinAddressData {
     /// Converts the structure to a BIP21 URI while also
     /// ensuring that all the fields are valid
     pub fn to_uri(&self) -> Result<String, URISerializationError> {
-        let scheme = "bitcoin";
-
         self.address
             .parse::<bitcoin::Address>()
             .map_err(|_| URISerializationError::InvalidAddress)?;
@@ -627,15 +625,17 @@ impl BitcoinAddressData {
             optional_keys.insert("label", urlencoding::encode(label).to_string());
         }
 
-        if optional_keys.is_empty() {
-            Ok(self.address.clone())
-        } else {
-            let suffix_str = optional_keys
-                .iter()
-                .map(|(key, value)| format!("{key}={value}"))
-                .collect::<Vec<String>>()
-                .join("&");
-            Ok(format!("{scheme}:{}{suffix_str}", self.address))
+        match optional_keys.is_empty() {
+            true => Ok(self.address.clone()),
+            false => {
+                let scheme = "bitcoin";
+                let suffix_str = optional_keys
+                    .iter()
+                    .map(|(key, value)| format!("{key}={value}"))
+                    .collect::<Vec<String>>()
+                    .join("&");
+                Ok(format!("{scheme}:{}{suffix_str}", self.address))
+            }
         }
     }
 }
