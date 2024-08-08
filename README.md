@@ -46,7 +46,7 @@ Note: You'll need an API key to use the *Greenlight* implementation. For more in
 
 ## **API**
 
-API documentation is [here](https://breez.github.io/breez-sdk/breez_sdk_core/).
+API documentation is [here](https://breez.github.io/breez-sdk-greenlight/breez_sdk_core/).
 
 ## **Command line**
 
