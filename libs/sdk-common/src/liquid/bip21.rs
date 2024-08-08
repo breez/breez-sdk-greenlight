@@ -65,7 +65,7 @@ impl LiquidAddressData {
                     .collect::<Vec<String>>()
                     .join("&");
 
-                Ok(format!("{scheme}:{}{suffix_str}", self.address))
+                Ok(format!("{scheme}:{}?{suffix_str}", self.address))
             }
         }
     }
