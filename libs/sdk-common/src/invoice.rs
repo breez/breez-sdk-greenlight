@@ -11,6 +11,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 
+#[cfg(feature = "liquid")]
+use crate::liquid::{bip21::DeserializeError, LiquidAddressData};
+
 pub type InvoiceResult<T, E = InvoiceError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
@@ -291,6 +294,12 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
         min_final_cltv_expiry_delta: invoice.min_final_cltv_expiry_delta(),
     };
     Ok(ln_invoice)
+}
+
+#[cfg(feature = "liquid")]
+// Covers BIP 21 URIs and simple onchain Liquid addresses (which are valid BIP 21 with the 'liquidnetwork:' prefix)
+pub fn parse_liquid_address(input: &str) -> Result<LiquidAddressData, DeserializeError> {
+    LiquidAddressData::from_addr(input).or_else(|_| input.parse::<LiquidAddressData>())
 }
 
 #[cfg(test)]

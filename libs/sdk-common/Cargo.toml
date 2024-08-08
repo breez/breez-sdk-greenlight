@@ -29,6 +29,8 @@ tonic = { workspace = true, features = [
     "tls-webpki-roots",
 ] }
 url = "2.5.0"
+elements = { version = "0.24.1", optional = true }
+urlencoding = { version = "2.1.3" }
 
 [dev-dependencies]
 bitcoin = { workspace = true, features = ["rand"] }
@@ -38,3 +40,6 @@ once_cell = { workspace = true }
 
 [build-dependencies]
 tonic-build = { workspace = true }
+
+[features]
+liquid = ["dep:elements"]

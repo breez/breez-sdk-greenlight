@@ -172,7 +172,7 @@ pub enum _InputType {
 #[frb(mirror(BitcoinAddressData))]
 pub struct _BitcoinAddressData {
     pub address: String,
-    pub network: crate::prelude::Network,
+    pub network: Network,
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,

@@ -5,9 +5,13 @@ use bip21::Uri;
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
+
+#[cfg(feature = "liquid")]
+use self::liquid::bip21::LiquidAddressData;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -173,6 +177,11 @@ pub async fn parse(input: &str) -> Result<InputType> {
             }),
             Some(invoice) => Ok(InputType::Bolt11 { invoice }),
         };
+    }
+
+    #[cfg(feature = "liquid")]
+    if let Ok(address) = parse_liquid_address(input) {
+        return Ok(InputType::LiquidAddress { address });
     }
 
     if let Ok(invoice) = parse_invoice(input) {
@@ -391,6 +400,15 @@ pub enum InputType {
         address: BitcoinAddressData,
     },
 
+    /// # Supported standards
+    ///
+    /// - plain on-chain liquid address
+    /// - BIP21 on liquid/liquidtestnet
+    #[cfg(feature = "liquid")]
+    LiquidAddress {
+        address: LiquidAddressData,
+    },
+
     /// Also covers URIs like `bitcoin:...&lightning=bolt11`. In this case, it returns the BOLT11
     /// and discards all other data.
     Bolt11 {
@@ -577,6 +595,51 @@ pub struct BitcoinAddressData {
     pub message: Option<String>,
 }
 
+#[derive(Debug)]
+pub enum URISerializationError {
+    UnsupportedNetwork,
+    AssetIdMissing,
+    InvalidAddress,
+}
+
+impl BitcoinAddressData {
+    /// Converts the structure to a BIP21 URI while also
+    /// ensuring that all the fields are valid
+    pub fn to_uri(&self) -> Result<String, URISerializationError> {
+        self.address
+            .parse::<bitcoin::Address>()
+            .map_err(|_| URISerializationError::InvalidAddress)?;
+
+        let mut optional_keys = HashMap::new();
+
+        if let Some(amount_sat) = self.amount_sat {
+            let amount_btc = amount_sat as f64 / 100_000_000.0;
+            optional_keys.insert("amount", format!("{amount_btc:.8}"));
+        }
+
+        if let Some(message) = &self.message {
+            optional_keys.insert("message", urlencoding::encode(message).to_string());
+        }
+
+        if let Some(label) = &self.label {
+            optional_keys.insert("label", urlencoding::encode(label).to_string());
+        }
+
+        match optional_keys.is_empty() {
+            true => Ok(self.address.clone()),
+            false => {
+                let scheme = "bitcoin";
+                let suffix_str = optional_keys
+                    .iter()
+                    .map(|(key, value)| format!("{key}={value}"))
+                    .collect::<Vec<String>>()
+                    .join("&");
+                Ok(format!("{scheme}:{}{suffix_str}", self.address))
+            }
+        }
+    }
+}
+
 impl From<Uri<'_>> for BitcoinAddressData {
     fn from(uri: Uri) -> Self {
         BitcoinAddressData {
@@ -717,6 +780,51 @@ pub(crate) mod tests {
                 assert_eq!(addr_with_amount_parsed.message, Some(message.into()));
             }
             _ => return Err(anyhow!("Invalid type parsed")),
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    #[cfg(feature = "liquid")]
+    async fn test_liquid_address() -> Result<()> {
+        assert!(parse("tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk")
+            .await
+            .is_ok());
+        assert!(parse("liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk")
+            .await
+            .is_ok());
+        assert!(parse("wrong-net:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk").await.is_err());
+        assert!(parse("liquidnetwork:testinvalidaddress").await.is_err());
+
+        let address: elements::Address = "tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk".parse()?;
+        let amount_btc = 0.00001; // 1000 sats
+        let label = "label";
+        let message = "this%20is%20a%20message";
+        let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
+        let output = parse(&format!(
+            "liquidnetwork:{}?amount={amount_btc}&assetid={asset_id}&label={label}&message={message}",
+            address
+        ))
+        .await?;
+
+        if let InputType::LiquidAddress {
+            address: liquid_address_data,
+        } = output
+        {
+            assert_eq!(Network::Bitcoin, liquid_address_data.network);
+            assert_eq!(address.to_string(), liquid_address_data.address.to_string());
+            assert_eq!(
+                Some((amount_btc * 100_000_000.0) as u64),
+                liquid_address_data.amount_sat
+            );
+            assert_eq!(Some(label.to_string()), liquid_address_data.label);
+            assert_eq!(
+                Some(urlencoding::decode(message).unwrap().into_owned()),
+                liquid_address_data.message
+            );
+        } else {
+            panic!("Invalid input type received");
         }
 
         Ok(())

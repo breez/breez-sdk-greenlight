@@ -169,6 +169,10 @@ jobs:
         working-directory: libs/sdk-common
         run: cargo test
 
+      - name: Run sdk-common tests with 'liquid' feature
+        working-directory: libs/sdk-common
+        run: cargo test --features=liquid
+
   clippy:
     name: Clippy
     runs-on: ubuntu-latest

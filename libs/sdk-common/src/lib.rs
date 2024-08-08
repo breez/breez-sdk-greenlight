@@ -5,6 +5,8 @@ mod fiat;
 pub mod grpc;
 pub mod input_parser;
 pub mod invoice;
+#[cfg(feature = "liquid")]
+pub mod liquid;
 mod lnurl;
 mod model;
 mod utils;
