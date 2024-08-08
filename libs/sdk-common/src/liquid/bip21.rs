@@ -4,10 +4,11 @@ use elements::{
     issuance::AssetId,
 };
 use serde::Serialize;
+use std::collections::HashMap;
 use std::{num::ParseFloatError, str::FromStr, string::FromUtf8Error};
 use urlencoding::decode;
 
-use crate::prelude::Network;
+use crate::prelude::{Network, URISerializationError};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct LiquidAddressData {
@@ -17,6 +18,56 @@ pub struct LiquidAddressData {
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,
+}
+
+impl LiquidAddressData {
+    /// Converts the structure to a BIP21 URI while also
+    /// ensuring that all the fields are valid
+    pub fn to_uri(&self) -> Result<String, URISerializationError> {
+        let scheme = match self.network {
+            Network::Bitcoin => "liquidnetwork",
+            Network::Testnet => "liquidtestnet",
+            _ => {
+                return Err(URISerializationError::UnsupportedNetwork);
+            }
+        };
+
+        self.address
+            .parse::<Address>()
+            .map_err(|_| URISerializationError::InvalidAddress)?;
+
+        let mut optional_keys = HashMap::new();
+
+        if let Some(amount_sat) = self.amount_sat {
+            let Some(asset_id) = self.asset_id.clone() else {
+                return Err(URISerializationError::AssetIdMissing);
+            };
+
+            let amount_btc = amount_sat as f64 / 100_000_000.0;
+            optional_keys.insert("amount", format!("{amount_btc:.8}"));
+            optional_keys.insert("assetid", asset_id);
+        }
+
+        if let Some(message) = &self.message {
+            optional_keys.insert("message", urlencoding::encode(message).to_string());
+        }
+
+        if let Some(label) = &self.label {
+            optional_keys.insert("label", urlencoding::encode(label).to_string());
+        }
+
+        let suffix_str = if optional_keys.is_empty() {
+            "".to_string()
+        } else {
+            optional_keys
+                .iter()
+                .map(|(key, value)| format!("{key}={value}"))
+                .collect::<Vec<String>>()
+                .join("&")
+        };
+
+        Ok(format!("{scheme}:{}{suffix_str}", self.address))
+    }
 }
 
 #[derive(Debug)]

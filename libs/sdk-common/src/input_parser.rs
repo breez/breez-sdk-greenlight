@@ -5,6 +5,7 @@ use bip21::Uri;
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
@@ -594,6 +595,52 @@ pub struct BitcoinAddressData {
     pub message: Option<String>,
 }
 
+#[derive(Debug)]
+pub enum URISerializationError {
+    UnsupportedNetwork,
+    AssetIdMissing,
+    InvalidAddress,
+}
+
+impl BitcoinAddressData {
+    /// Converts the structure to a BIP21 URI while also
+    /// ensuring that all the fields are valid
+    pub fn to_uri(&self) -> Result<String, URISerializationError> {
+        let scheme = "bitcoin";
+
+        self.address
+            .parse::<bitcoin::Address>()
+            .map_err(|_| URISerializationError::InvalidAddress)?;
+
+        let mut optional_keys = HashMap::new();
+
+        if let Some(amount_sat) = self.amount_sat {
+            let amount_btc = amount_sat as f64 / 100_000_000.0;
+            optional_keys.insert("amount", format!("{amount_btc:.8}"));
+        }
+
+        if let Some(message) = &self.message {
+            optional_keys.insert("message", urlencoding::encode(message).to_string());
+        }
+
+        if let Some(label) = &self.label {
+            optional_keys.insert("label", urlencoding::encode(label).to_string());
+        }
+
+        let suffix_str = if optional_keys.is_empty() {
+            "".to_string()
+        } else {
+            optional_keys
+                .iter()
+                .map(|(key, value)| format!("{key}={value}"))
+                .collect::<Vec<String>>()
+                .join("&")
+        };
+
+        Ok(format!("{scheme}:{}{suffix_str}", self.address))
+    }
+}
+
 impl From<Uri<'_>> for BitcoinAddressData {
     fn from(uri: Uri) -> Self {
         BitcoinAddressData {
@@ -758,7 +805,7 @@ pub(crate) mod tests {
         let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
         let output = parse(&format!(
             "liquidnetwork:{}?amount={amount_btc}&assetid={asset_id}&label={label}&message={message}",
-            address.to_string()
+            address
         ))
         .await?;
 
