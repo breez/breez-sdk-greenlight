@@ -2058,7 +2058,12 @@ impl support::IntoDart for NodeState {
                 .into_dart(),
             self.max_chan_reserve_msats.into_into_dart().into_dart(),
             self.connected_peers.into_into_dart().into_dart(),
-            self.inbound_liquidity_msats.into_into_dart().into_dart(),
+            self.max_receivable_single_payment_amount_msat
+                .into_into_dart()
+                .into_dart(),
+            self.total_inbound_liquidity_msats
+                .into_into_dart()
+                .into_dart(),
         ]
         .into_dart()
     }

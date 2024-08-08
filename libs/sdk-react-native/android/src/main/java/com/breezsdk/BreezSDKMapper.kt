@@ -1755,7 +1755,8 @@ fun asNodeState(nodeState: ReadableMap): NodeState? {
                 "maxSinglePaymentAmountMsat",
                 "maxChanReserveMsats",
                 "connectedPeers",
-                "inboundLiquidityMsats",
+                "maxReceivableSinglePaymentAmountMsat",
+                "totalInboundLiquidityMsats",
             ),
         )
     ) {
@@ -1772,7 +1773,8 @@ fun asNodeState(nodeState: ReadableMap): NodeState? {
     val maxSinglePaymentAmountMsat = nodeState.getDouble("maxSinglePaymentAmountMsat").toULong()
     val maxChanReserveMsats = nodeState.getDouble("maxChanReserveMsats").toULong()
     val connectedPeers = nodeState.getArray("connectedPeers")?.let { asStringList(it) }!!
-    val inboundLiquidityMsats = nodeState.getDouble("inboundLiquidityMsats").toULong()
+    val maxReceivableSinglePaymentAmountMsat = nodeState.getDouble("maxReceivableSinglePaymentAmountMsat").toULong()
+    val totalInboundLiquidityMsats = nodeState.getDouble("totalInboundLiquidityMsats").toULong()
     return NodeState(
         id,
         blockHeight,
@@ -1785,7 +1787,8 @@ fun asNodeState(nodeState: ReadableMap): NodeState? {
         maxSinglePaymentAmountMsat,
         maxChanReserveMsats,
         connectedPeers,
-        inboundLiquidityMsats,
+        maxReceivableSinglePaymentAmountMsat,
+        totalInboundLiquidityMsats,
     )
 }
 
@@ -1802,7 +1805,8 @@ fun readableMapOf(nodeState: NodeState): ReadableMap =
         "maxSinglePaymentAmountMsat" to nodeState.maxSinglePaymentAmountMsat,
         "maxChanReserveMsats" to nodeState.maxChanReserveMsats,
         "connectedPeers" to readableArrayOf(nodeState.connectedPeers),
-        "inboundLiquidityMsats" to nodeState.inboundLiquidityMsats,
+        "maxReceivableSinglePaymentAmountMsat" to nodeState.maxReceivableSinglePaymentAmountMsat,
+        "totalInboundLiquidityMsats" to nodeState.totalInboundLiquidityMsats,
     )
 
 fun asNodeStateList(arr: ReadableArray): List<NodeState> {

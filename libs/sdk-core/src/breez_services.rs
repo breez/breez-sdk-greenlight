@@ -711,7 +711,7 @@ impl BreezServices {
 
         let node_state = self.node_info()?;
         let fee_msat = req.amount_msat.map(|req_amount_msat| {
-            match node_state.inbound_liquidity_msats >= req_amount_msat {
+            match node_state.max_receivable_single_payment_amount_msat >= req_amount_msat {
                 // In case we have enough inbound liquidity we return zero fee.
                 true => 0,
                 // Otherwise we need to calculate the fee for opening a new channel.
@@ -2476,7 +2476,8 @@ impl Receiver for PaymentReceiver {
         let mut channel_fees_msat = None;
 
         // check if we need to open channel
-        let open_channel_needed = node_state.inbound_liquidity_msats < req.amount_msat;
+        let open_channel_needed =
+            node_state.max_receivable_single_payment_amount_msat < req.amount_msat;
         if open_channel_needed {
             info!("We need to open a channel");
 
@@ -3280,7 +3281,8 @@ pub(crate) mod tests {
             max_single_payment_amount_msat: 1_000,
             max_chan_reserve_msats: 0,
             connected_peers: vec!["1111".to_string()],
-            inbound_liquidity_msats: 2_000,
+            max_receivable_single_payment_amount_msat: 2_000,
+            total_inbound_liquidity_msats: 10_000,
         }
     }
 }
