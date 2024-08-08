@@ -53,6 +53,20 @@ jobs:
       - name: Run sdk-core tests
         working-directory: libs/sdk-core
         run: cargo test
+      
+      - name: Check git status
+        env: 
+          GIT_PAGER: cat
+        run: |
+          status=$(git status --porcelain)
+          if [[ -n "$status" ]]; then
+            echo "Git status has changes"
+            echo "$status"
+            git diff
+            exit 1
+          else
+            echo "No changes in git status"
+          fi
   
   build-bindings:
     name: Test sdk-bindings
@@ -142,6 +156,20 @@ jobs:
       - name: Run tools tests
         working-directory: tools/sdk-cli    
         run: cargo test
+      
+      - name: Check git status
+        env: 
+          GIT_PAGER: cat
+        run: |
+          status=$(git status --porcelain)
+          if [[ -n "$status" ]]; then
+            echo "Git status has changes"
+            echo "$status"
+            git diff
+            exit 1
+          else
+            echo "No changes in git status"
+          fi
 
   build-common:
     name: Test sdk-common
@@ -168,6 +196,20 @@ jobs:
       - name: Run sdk-common tests
         working-directory: libs/sdk-common
         run: cargo test
+      
+      - name: Check git status
+        env: 
+          GIT_PAGER: cat
+        run: |
+          status=$(git status --porcelain)
+          if [[ -n "$status" ]]; then
+            echo "Git status has changes"
+            echo "$status"
+            git diff
+            exit 1
+          else
+            echo "No changes in git status"
+          fi
 
       - name: Run sdk-common tests with 'liquid' feature
         working-directory: libs/sdk-common
