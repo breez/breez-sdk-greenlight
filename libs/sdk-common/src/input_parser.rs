@@ -634,7 +634,7 @@ impl BitcoinAddressData {
                     .map(|(key, value)| format!("{key}={value}"))
                     .collect::<Vec<String>>()
                     .join("&");
-                Ok(format!("{scheme}:{}{suffix_str}", self.address))
+                Ok(format!("{scheme}:{}?{suffix_str}", self.address))
             }
         }
     }
