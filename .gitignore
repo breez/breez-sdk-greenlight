@@ -20,3 +20,4 @@ libs/sdk-flutter/ios/bindings-swift/
 
 # fenv
 libs/sdk-flutter/.flutter-version
+/.flutter-version

@@ -318,6 +318,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          flutter-version: 3.22.3
 
       - name: Flutter bridge codegen
         working-directory: libs/sdk-flutter
