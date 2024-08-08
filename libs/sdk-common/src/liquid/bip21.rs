@@ -24,14 +24,6 @@ impl LiquidAddressData {
     /// Converts the structure to a BIP21 URI while also
     /// ensuring that all the fields are valid
     pub fn to_uri(&self) -> Result<String, URISerializationError> {
-        let scheme = match self.network {
-            Network::Bitcoin => "liquidnetwork",
-            Network::Testnet => "liquidtestnet",
-            _ => {
-                return Err(URISerializationError::UnsupportedNetwork);
-            }
-        };
-
         self.address
             .parse::<Address>()
             .map_err(|_| URISerializationError::InvalidAddress)?;
@@ -56,17 +48,25 @@ impl LiquidAddressData {
             optional_keys.insert("label", urlencoding::encode(label).to_string());
         }
 
-        let suffix_str = if optional_keys.is_empty() {
-            "".to_string()
+        if optional_keys.is_empty() {
+            Ok(self.address.clone())
         } else {
-            optional_keys
+            let scheme = match self.network {
+                Network::Bitcoin => "liquidnetwork",
+                Network::Testnet => "liquidtestnet",
+                _ => {
+                    return Err(URISerializationError::UnsupportedNetwork);
+                }
+            };
+
+            let suffix_str = optional_keys
                 .iter()
                 .map(|(key, value)| format!("{key}={value}"))
                 .collect::<Vec<String>>()
-                .join("&")
-        };
+                .join("&");
 
-        Ok(format!("{scheme}:{}{suffix_str}", self.address))
+            Ok(format!("{scheme}:{}{suffix_str}", self.address))
+        }
     }
 }
 

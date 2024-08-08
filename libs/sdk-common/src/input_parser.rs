@@ -627,17 +627,16 @@ impl BitcoinAddressData {
             optional_keys.insert("label", urlencoding::encode(label).to_string());
         }
 
-        let suffix_str = if optional_keys.is_empty() {
-            "".to_string()
+        if optional_keys.is_empty() {
+            Ok(self.address.clone())
         } else {
-            optional_keys
+            let suffix_str = optional_keys
                 .iter()
                 .map(|(key, value)| format!("{key}={value}"))
                 .collect::<Vec<String>>()
-                .join("&")
-        };
-
-        Ok(format!("{scheme}:{}{suffix_str}", self.address))
+                .join("&");
+            Ok(format!("{scheme}:{}{suffix_str}", self.address))
+        }
     }
 }
 
