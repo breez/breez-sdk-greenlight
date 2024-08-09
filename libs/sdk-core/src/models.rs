@@ -1588,118 +1588,45 @@ pub(crate) mod sanitize {
     use anyhow::Result;
     use serde::Serialize;
 
-    use crate::{
-        FullReverseSwapInfo, OpeningFeeParams, ReverseSwapInfoCached, SwapInfo, SwapStatus,
-    };
+    use crate::{FullReverseSwapInfo, SwapInfo};
 
-    pub(crate) trait Sanitize<R, S> {
-        /// Sanitizes a raw struct [R] to a sanitized version of it [S]
-        fn sanitize(self) -> S;
+    pub(crate) trait Sanitize<T> {
+        /// Sanitizes a raw struct [T] to a clone of itself where sensitive fields are blanked
+        fn sanitize(self) -> T;
     }
 
-    pub(crate) fn sanitize_vec<R, S>(vals: Vec<R>) -> Vec<S>
+    pub(crate) fn sanitize_vec<T>(vals: Vec<T>) -> Vec<T>
     where
-        R: Sanitize<R, S>,
+        T: Sanitize<T>,
     {
         vals.into_iter()
             .map(|val| val.sanitize())
-            .collect::<Vec<S>>()
+            .collect::<Vec<T>>()
     }
 
-    pub(crate) fn sanitize_vec_pretty_print<R, S>(vals: Vec<R>) -> Result<String>
+    pub(crate) fn sanitize_vec_pretty_print<T>(vals: Vec<T>) -> Result<String>
     where
-        R: Sanitize<R, S>,
-        S: Serialize,
+        T: Sanitize<T> + Serialize,
     {
         serde_json::to_string_pretty(&sanitize_vec(vals)).map_err(anyhow::Error::new)
     }
 
-    /// Sanitized version of [FullReverseSwapInfo], without the following fields:
-    /// - `preimage`
-    /// - `private_key`
-    #[derive(Serialize)]
-    pub(crate) struct FullReverseSwapInfoSanitized {
-        pub id: String,
-        pub created_at_block_height: u32,
-        pub claim_pubkey: String,
-        pub timeout_block_height: u32,
-        pub invoice: String,
-        pub redeem_script: String,
-        pub onchain_amount_sat: u64,
-        pub sat_per_vbyte: Option<u32>,
-        pub receive_amount_sat: Option<u64>,
-        pub cache: ReverseSwapInfoCached,
-    }
-    impl Sanitize<FullReverseSwapInfo, FullReverseSwapInfoSanitized> for FullReverseSwapInfo {
-        fn sanitize(self) -> FullReverseSwapInfoSanitized {
-            FullReverseSwapInfoSanitized {
-                id: self.id,
-                created_at_block_height: self.created_at_block_height,
-                claim_pubkey: self.claim_pubkey,
-                timeout_block_height: self.timeout_block_height,
-                invoice: self.invoice,
-                redeem_script: self.redeem_script,
-                onchain_amount_sat: self.onchain_amount_sat,
-                sat_per_vbyte: self.sat_per_vbyte,
-                receive_amount_sat: self.receive_amount_sat,
-                cache: self.cache,
+    impl Sanitize<FullReverseSwapInfo> for FullReverseSwapInfo {
+        fn sanitize(self) -> FullReverseSwapInfo {
+            FullReverseSwapInfo {
+                preimage: vec![],
+                private_key: vec![],
+                ..self.clone()
             }
         }
     }
 
-    /// Sanitized version of [SwapInfo], without the following fields:
-    /// - `preimage`
-    /// - `private_key`
-    #[derive(Serialize)]
-    pub(crate) struct SwapInfoSanitized {
-        pub bitcoin_address: String,
-        pub created_at: i64,
-        pub lock_height: i64,
-        pub payment_hash: Vec<u8>,
-        pub public_key: Vec<u8>,
-        pub swapper_public_key: Vec<u8>,
-        pub script: Vec<u8>,
-        pub bolt11: Option<String>,
-        pub paid_msat: u64,
-        pub total_incoming_txs: u64,
-        pub confirmed_sats: u64,
-        pub unconfirmed_sats: u64,
-        pub status: SwapStatus,
-        pub refund_tx_ids: Vec<String>,
-        pub unconfirmed_tx_ids: Vec<String>,
-        pub confirmed_tx_ids: Vec<String>,
-        pub min_allowed_deposit: i64,
-        pub max_allowed_deposit: i64,
-        pub max_swapper_payable: i64,
-        pub last_redeem_error: Option<String>,
-        pub channel_opening_fees: Option<OpeningFeeParams>,
-        pub confirmed_at: Option<u32>,
-    }
-    impl Sanitize<SwapInfo, SwapInfoSanitized> for SwapInfo {
-        fn sanitize(self) -> SwapInfoSanitized {
-            SwapInfoSanitized {
-                bitcoin_address: self.bitcoin_address,
-                created_at: self.created_at,
-                lock_height: self.lock_height,
-                payment_hash: self.payment_hash,
-                public_key: self.public_key,
-                swapper_public_key: self.swapper_public_key,
-                script: self.script,
-                bolt11: self.bolt11,
-                paid_msat: self.paid_msat,
-                total_incoming_txs: self.total_incoming_txs,
-                confirmed_sats: self.confirmed_sats,
-                unconfirmed_sats: self.unconfirmed_sats,
-                status: self.status,
-                refund_tx_ids: self.refund_tx_ids,
-                unconfirmed_tx_ids: self.unconfirmed_tx_ids,
-                confirmed_tx_ids: self.confirmed_tx_ids,
-                min_allowed_deposit: self.min_allowed_deposit,
-                max_allowed_deposit: self.max_allowed_deposit,
-                max_swapper_payable: self.max_swapper_payable,
-                last_redeem_error: self.last_redeem_error,
-                channel_opening_fees: self.channel_opening_fees,
-                confirmed_at: self.confirmed_at,
+    impl Sanitize<SwapInfo> for SwapInfo {
+        fn sanitize(self) -> SwapInfo {
+            SwapInfo {
+                preimage: vec![],
+                private_key: vec![],
+                ..self.clone()
             }
         }
     }
@@ -1712,8 +1639,12 @@ mod tests {
     use rand::random;
     use sdk_common::grpc;
 
-    use crate::test_utils::{get_test_ofp, rand_vec_u8};
-    use crate::{OpeningFeeParams, PaymentPath, PaymentPathEdge};
+    use crate::models::sanitize::Sanitize;
+    use crate::test_utils::{get_test_ofp, get_test_ofp_48h, rand_string, rand_vec_u8};
+    use crate::{
+        FullReverseSwapInfo, OpeningFeeParams, PaymentPath, PaymentPathEdge, ReverseSwapInfoCached,
+        ReverseSwapStatus, SwapInfo,
+    };
 
     #[test]
     fn test_route_fees() -> Result<()> {
@@ -1872,5 +1803,63 @@ mod tests {
         let mut ofp: OpeningFeeParams = get_test_ofp(1, 1, true).into();
         ofp.valid_until = "2023-08-03T00:30:35.117Z".to_string();
         ofp.valid_until_date().map(|_| ())
+    }
+
+    /// Tests whether sanitization works for key structures used in the diagnostic data output
+    #[test]
+    fn test_sanitization() -> Result<()> {
+        let rev_swap_info_sanitized = FullReverseSwapInfo {
+            id: "rev_swap_id".to_string(),
+            created_at_block_height: 0,
+            preimage: rand_vec_u8(32),
+            private_key: vec![],
+            claim_pubkey: "claim_pubkey".to_string(),
+            timeout_block_height: 600_000,
+            invoice: "645".to_string(),
+            redeem_script: "redeem_script".to_string(),
+            onchain_amount_sat: 250,
+            sat_per_vbyte: Some(50),
+            receive_amount_sat: None,
+            cache: ReverseSwapInfoCached {
+                status: ReverseSwapStatus::CompletedConfirmed,
+                lockup_txid: Some("lockup_txid".to_string()),
+                claim_txid: Some("claim_txid".to_string()),
+            },
+        }
+        .sanitize();
+        assert_eq!(rev_swap_info_sanitized.preimage, Vec::<u8>::new());
+        assert_eq!(rev_swap_info_sanitized.private_key, Vec::<u8>::new());
+
+        let swap_info_sanitized = SwapInfo {
+            bitcoin_address: rand_string(10),
+            created_at: 10,
+            lock_height: random(),
+            payment_hash: rand_vec_u8(32),
+            preimage: rand_vec_u8(32),
+            private_key: rand_vec_u8(32),
+            public_key: rand_vec_u8(10),
+            swapper_public_key: rand_vec_u8(10),
+            script: rand_vec_u8(10),
+            bolt11: None,
+            paid_msat: 0,
+            unconfirmed_sats: 0,
+            confirmed_sats: 0,
+            total_incoming_txs: 0,
+            status: crate::models::SwapStatus::Initial,
+            refund_tx_ids: Vec::new(),
+            unconfirmed_tx_ids: Vec::new(),
+            confirmed_tx_ids: Vec::new(),
+            min_allowed_deposit: 0,
+            max_allowed_deposit: 100,
+            max_swapper_payable: 200,
+            last_redeem_error: None,
+            channel_opening_fees: Some(get_test_ofp_48h(random(), random()).into()),
+            confirmed_at: None,
+        }
+        .sanitize();
+        assert_eq!(swap_info_sanitized.preimage, Vec::<u8>::new());
+        assert_eq!(swap_info_sanitized.private_key, Vec::<u8>::new());
+
+        Ok(())
     }
 }
