@@ -22,7 +22,7 @@ use gl_client::pb::cln::{
 };
 use gl_client::pb::scheduler::scheduler_client::SchedulerClient;
 use gl_client::pb::scheduler::{NodeInfoRequest, UpgradeRequest};
-use gl_client::pb::{OffChainPayment, PayStatus};
+use gl_client::pb::{OffChainPayment, PayStatus, TrampolinePayRequest};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::{Error, Signer};
@@ -70,6 +70,14 @@ pub(crate) struct Greenlight {
 struct InvoiceLabel {
     pub unix_milli: u128,
     pub payer_amount_msat: Option<u64>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct PaymentLabel {
+    pub unix_nano: u128,
+    pub trampoline: bool,
+    pub client_label: Option<String>,
+    pub amount_msat: u64,
 }
 
 impl Greenlight {
@@ -1147,6 +1155,47 @@ impl NodeAPI for Greenlight {
         payment.try_into()
     }
 
+    async fn send_trampoline_payment(
+        &self,
+        bolt11: String,
+        amount_msat: u64,
+        label: Option<String>,
+        trampoline_node_id: Vec<u8>,
+    ) -> NodeResult<Payment> {
+        let invoice = parse_invoice(&bolt11)?;
+        validate_network(invoice.clone(), self.sdk_config.network)?;
+        let label = serde_json::to_string(&PaymentLabel {
+            trampoline: true,
+            client_label: label,
+            unix_nano: SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos(),
+            amount_msat,
+        })?;
+        let mut client = self.get_client().await?;
+        let request = TrampolinePayRequest {
+            bolt11,
+            trampoline_node_id,
+            amount_msat,
+            label,
+            maxdelay: u32::default(),
+            description: String::default(),
+            maxfeepercent: f32::default(),
+        };
+        let result = self
+            .with_keep_alive(client.trampoline_pay(request))
+            .await?
+            .into_inner();
+
+        let client = self.get_node_client().await?;
+
+        // Before returning from send_payment we need to make sure it is
+        // persisted in the backend node. We do so by polling for the payment.
+        // TODO: Ensure this works with trampoline payments
+        // NOTE: If this doesn't work with trampoline payments, the sync also
+        // needs updating.
+        let payment = Self::fetch_outgoing_payment_with_retry(client, result.payment_hash).await?;
+        payment.try_into()
+    }
+
     async fn send_spontaneous_payment(
         &self,
         node_id: String,
@@ -2114,16 +2163,29 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             .as_ref()
             .ok_or(InvoiceError::generic("No bolt11 invoice"))
             .and_then(|b| parse_invoice(b));
-        let payment_amount = payment
-            .amount_msat
-            .clone()
-            .map(|a| a.msat)
-            .unwrap_or_default();
         let payment_amount_sent = payment
             .amount_sent_msat
             .clone()
             .map(|a| a.msat)
             .unwrap_or_default();
+
+        // For trampoline payments the amount_msat doesn't match the actual
+        // amount. If it's a trampoline payment, take the amount from the label.
+        let (payment_amount, client_label) = serde_json::from_str::<PaymentLabel>(payment.label())
+            .ok()
+            .and_then(|label| {
+                label
+                    .trampoline
+                    .then_some((label.amount_msat, label.client_label))
+            })
+            .unwrap_or((
+                payment
+                    .amount_msat
+                    .clone()
+                    .map(|a| a.msat)
+                    .unwrap_or_default(),
+                payment.label.clone(),
+            ));
         let status = payment.status().into();
 
         Ok(Payment {
@@ -2143,7 +2205,7 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(payment.payment_hash),
-                    label: payment.label.unwrap_or_default(),
+                    label: client_label.unwrap_or_default(),
                     destination_pubkey: payment.destination.map(hex::encode).unwrap_or_default(),
                     payment_preimage: payment.preimage.map(hex::encode).unwrap_or_default(),
                     keysend: payment.bolt11.is_none(),
