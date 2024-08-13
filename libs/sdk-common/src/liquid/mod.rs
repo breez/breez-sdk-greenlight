@@ -41,7 +41,8 @@ mod tests {
                 message: None,
             };
 
-            let serialized = data.to_uri()
+            let serialized = data
+                .to_uri()
                 .map_err(|e| anyhow!("BIP21 URI serialization error {e:?}"))?;
 
             assert!(serialized.contains(&format!("amount={amount_btc}")));
