@@ -859,6 +859,7 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
+    #[cfg(feature = "liquid")]
     async fn test_liquid_address_bip21_rounding() -> Result<()> {
         let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {

@@ -195,7 +195,7 @@ jobs:
 
       - name: Run sdk-common tests
         working-directory: libs/sdk-common
-        run: cargo test
+        run: cargo test --features liquid
       
       - name: Check git status
         env: 
