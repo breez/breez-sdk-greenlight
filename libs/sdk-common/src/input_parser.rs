@@ -785,6 +785,34 @@ pub(crate) mod tests {
         Ok(())
     }
 
+    /// BIP21 amounts which can lead to rounding errors.
+    /// The format is: (sat amount, BIP21 BTC amount)
+    pub(crate) fn get_bip21_rounding_test_vectors() -> Vec<(u64, f64)> {
+        vec![
+            (999, 0.0000_0999),
+            (1_000, 0.0000_1000),
+            (59_810, 0.0005_9810),
+        ]
+    }
+
+    #[tokio::test]
+    async fn test_bitcoin_address_bip21_rounding() -> Result<()> {
+        for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
+            let addr = format!("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount={amount_btc}");
+
+            match parse(&addr).await? {
+                InputType::BitcoinAddress {
+                    address: addr_with_amount_parsed,
+                } => {
+                    assert_eq!(addr_with_amount_parsed.amount_sat, Some(amount_sat));
+                }
+                _ => return Err(anyhow!("Invalid type parsed")),
+            }
+        }
+
+        Ok(())
+    }
+
     #[tokio::test]
     #[cfg(feature = "liquid")]
     async fn test_liquid_address() -> Result<()> {

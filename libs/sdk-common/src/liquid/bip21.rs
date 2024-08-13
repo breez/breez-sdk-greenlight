@@ -1,3 +1,5 @@
+use bitcoin::util::amount::ParseAmountError;
+use bitcoin::Denomination;
 use elements::{
     address::{Address, AddressError, AddressParams},
     hashes::hex::HexToArrayError,
@@ -5,7 +7,7 @@ use elements::{
 };
 use serde::Serialize;
 use std::collections::HashMap;
-use std::{num::ParseFloatError, str::FromStr, string::FromUtf8Error};
+use std::{str::FromStr, string::FromUtf8Error};
 use urlencoding::decode;
 
 use crate::prelude::{Network, URISerializationError};
@@ -78,7 +80,7 @@ pub enum DeserializeError {
     UnknownParameter,
     AssetNotProvided,
     InvalidString(FromUtf8Error),
-    InvalidAmount(ParseFloatError),
+    InvalidAmount(ParseAmountError),
     InvalidAsset(HexToArrayError),
     InvalidAddress(AddressError),
 }
@@ -117,10 +119,9 @@ impl LiquidAddressData {
                 if let Some((key, val)) = pair.split_once('=') {
                     match key {
                         "amount" => {
-                            let parsed_amount = val
-                                .parse::<f64>()
+                            amount_sat = bitcoin::Amount::from_str_in(val, Denomination::Bitcoin)
+                                .map(|amt| Some(amt.to_sat()))
                                 .map_err(DeserializeError::InvalidAmount)?;
-                            amount_sat = Some((parsed_amount * 100_000_000.0) as u64);
                         }
                         "assetid" => {
                             val.parse::<AssetId>()
