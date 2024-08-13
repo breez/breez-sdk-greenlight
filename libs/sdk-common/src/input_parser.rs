@@ -787,7 +787,7 @@ pub(crate) mod tests {
 
     /// BIP21 amounts which can lead to rounding errors.
     /// The format is: (sat amount, BIP21 BTC amount)
-    fn get_bip21_rounding_test_vectors() -> Vec<(u64, f64)> {
+    pub(crate) fn get_bip21_rounding_test_vectors() -> Vec<(u64, f64)> {
         vec![
             (999, 0.0000_0999),
             (1_000, 0.0000_1000),
@@ -853,26 +853,6 @@ pub(crate) mod tests {
             );
         } else {
             panic!("Invalid input type received");
-        }
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    #[cfg(feature = "liquid")]
-    async fn test_liquid_address_bip21_rounding() -> Result<()> {
-        let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
-        for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
-            let addr = format!("liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk?amount={amount_btc}&assetid={asset_id}");
-
-            match parse(&addr).await? {
-                InputType::LiquidAddress {
-                    address: addr_with_amount_parsed,
-                } => {
-                    assert_eq!(addr_with_amount_parsed.amount_sat, Some(amount_sat));
-                }
-                _ => return Err(anyhow!("Invalid type parsed")),
-            }
         }
 
         Ok(())

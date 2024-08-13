@@ -1,2 +1,29 @@
 pub mod bip21;
 pub use bip21::*;
+
+#[cfg(test)]
+mod tests {
+    use anyhow::{anyhow, Result};
+
+    use crate::input_parser::tests::get_bip21_rounding_test_vectors;
+    use crate::input_parser::*;
+
+    #[tokio::test]
+    async fn test_liquid_address_bip21_rounding() -> Result<()> {
+        let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
+        for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
+            let addr = format!("liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk?amount={amount_btc}&assetid={asset_id}");
+
+            match parse(&addr).await? {
+                InputType::LiquidAddress {
+                    address: addr_with_amount_parsed,
+                } => {
+                    assert_eq!(addr_with_amount_parsed.amount_sat, Some(amount_sat));
+                }
+                _ => return Err(anyhow!("Invalid type parsed")),
+            }
+        }
+
+        Ok(())
+    }
+}
