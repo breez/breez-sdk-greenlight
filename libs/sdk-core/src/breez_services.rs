@@ -755,8 +755,7 @@ impl BreezServices {
             }
         };
 
-        self.persister.set_lsp_id(lsp_id)?;
-        self.persister.set_lsp_pubkey(lsp_pubkey)?;
+        self.persister.set_lsp(lsp_id, Some(lsp_pubkey))?;
         self.sync().await?;
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
             self.register_payment_notifications(webhook_url).await?
@@ -1257,8 +1256,7 @@ impl BreezServices {
             None => return Ok(()),
         };
 
-        self.persister.set_lsp_id(lsp.id)?;
-        self.persister.set_lsp_pubkey(lsp.pubkey.clone())?;
+        self.persister.set_lsp(lsp.id, Some(lsp.pubkey.clone()))?;
         let node_state = match self.node_info() {
             Ok(node_state) => node_state,
             Err(_) => return Ok(()),
@@ -2409,7 +2407,7 @@ impl BreezServicesBuilder {
 
         let current_lsp_id = persister.get_lsp_id()?;
         if current_lsp_id.is_none() && self.config.default_lsp_id.is_some() {
-            persister.set_lsp_id(self.config.default_lsp_id.clone().unwrap())?;
+            persister.set_lsp(self.config.default_lsp_id.clone().unwrap(), None)?;
         }
 
         let payment_receiver = Arc::new(PaymentReceiver {
@@ -3233,7 +3231,7 @@ pub(crate) mod tests {
         let node_api = Arc::new(MockNodeAPI::new(dummy_node_state.clone()));
 
         let breez_server = Arc::new(MockBreezServer {});
-        persister.set_lsp_id(breez_server.lsp_id()).unwrap();
+        persister.set_lsp(breez_server.lsp_id(), None).unwrap();
         persister.set_node_state(&dummy_node_state).unwrap();
 
         let receiver: Arc<dyn Receiver> = Arc::new(PaymentReceiver {
@@ -3340,7 +3338,7 @@ pub(crate) mod tests {
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
         persister.insert_or_update_payments(&known_payments, false)?;
-        persister.set_lsp_id(MockBreezServer {}.lsp_id())?;
+        persister.set_lsp(MockBreezServer {}.lsp_id(), None)?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
         let breez_services = builder

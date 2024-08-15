@@ -51,19 +51,33 @@ impl SqliteStorage {
         Ok(vec)
     }
 
-    pub fn set_lsp_id(&self, lsp_id: String) -> PersistResult<()> {
-        self.update_setting("lsp".to_string(), lsp_id)
+    pub fn set_lsp(&self, lsp_id: String, pubkey: Option<String>) -> PersistResult<()> {
+        if let Some(pubkey) = pubkey {
+            self.update_setting("lsp".to_string(), lsp_id)?;
+            self.update_setting("lsp-pubkey".to_string(), pubkey)?;
+            return Ok(());
+        }
+
+        match self.get_setting("lsp".to_string())? {
+            Some(old_lsp_id) => {
+                if old_lsp_id != lsp_id {
+                    self.update_setting("lsp".to_string(), lsp_id)?;
+                    self.delete_setting("lsp-pubkey".to_string())?;
+                }
+            }
+            None => {
+                self.update_setting("lsp".to_string(), lsp_id)?;
+                self.delete_setting("lsp-pubkey".to_string())?;
+            }
+        };
+
+        Ok(())
     }
 
     pub fn get_lsp_id(&self) -> PersistResult<Option<String>> {
         self.get_setting("lsp".to_string())
     }
 
-    pub fn set_lsp_pubkey(&self, pubkey: String) -> PersistResult<()> {
-        self.update_setting("lsp-pubkey".to_string(), pubkey)
-    }
-
-    #[allow(dead_code)]
     pub fn get_lsp_pubkey(&self) -> PersistResult<Option<String>> {
         self.get_setting("lsp-pubkey".to_string())
     }
