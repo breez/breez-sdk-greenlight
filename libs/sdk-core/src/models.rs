@@ -1590,14 +1590,14 @@ pub(crate) mod sanitize {
 
     use crate::{FullReverseSwapInfo, SwapInfo};
 
-    pub(crate) trait Sanitize<T> {
-        /// Sanitizes a raw struct [T] to a clone of itself where sensitive fields are blanked
-        fn sanitize(self) -> T;
+    pub(crate) trait Sanitize {
+        /// Sanitizes a raw struct to a clone of itself where sensitive fields are blanked
+        fn sanitize(self) -> Self;
     }
 
     pub(crate) fn sanitize_vec<T>(vals: Vec<T>) -> Vec<T>
     where
-        T: Sanitize<T>,
+        T: Sanitize,
     {
         vals.into_iter()
             .map(|val| val.sanitize())
@@ -1606,12 +1606,12 @@ pub(crate) mod sanitize {
 
     pub(crate) fn sanitize_vec_pretty_print<T>(vals: Vec<T>) -> Result<String>
     where
-        T: Sanitize<T> + Serialize,
+        T: Sanitize + Serialize,
     {
         serde_json::to_string_pretty(&sanitize_vec(vals)).map_err(anyhow::Error::new)
     }
 
-    impl Sanitize<FullReverseSwapInfo> for FullReverseSwapInfo {
+    impl Sanitize for FullReverseSwapInfo {
         fn sanitize(self) -> FullReverseSwapInfo {
             FullReverseSwapInfo {
                 preimage: vec![],
@@ -1621,7 +1621,7 @@ pub(crate) mod sanitize {
         }
     }
 
-    impl Sanitize<SwapInfo> for SwapInfo {
+    impl Sanitize for SwapInfo {
         fn sanitize(self) -> SwapInfo {
             SwapInfo {
                 preimage: vec![],
