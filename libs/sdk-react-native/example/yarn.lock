@@ -964,6 +964,11 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@breeztech/react-native-breez-sdk@0.5.1-rc6":
+  version "0.5.1-rc6"
+  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.5.1-rc6.tgz#0b950f0725c60eab75036aceb1563c7960169c48"
+  integrity sha512-R6W1vsjH3MsjfxCU/pDL1C14JFAr4/1QWvsTpWoG1RyqggxCOpfNAulzZSKiinc1rqz2wSzqJ9MTUfQACBqk2w==
+
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
@@ -2875,9 +2880,9 @@ electron-to-chromium@^1.4.118:
   integrity sha512-0Rcpald12O11BUogJagX3HsCN3FE83DSqWjgXoHo5a72KUKMSfI39XBgJpgNNxS9fuGzytaFjE06kZkiVFy2qA==
 
 elliptic@^6.5.3, elliptic@^6.5.4:
-  version "6.5.4"
-  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.4.tgz#da37cebd31e79a1367e941b592ed1fbebd58abbb"
-  integrity sha512-iLhC6ULemrljPZb+QutR5TQGB+pdW6KGD5RSegS+8sorOZT+rdQFbsQFJgvN3eRqNALqJer4oQ16YvJHlU8hzQ==
+  version "6.5.7"
+  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.7.tgz#8ec4da2cb2939926a1b9a73619d768207e647c8b"
+  integrity sha512-ESVCtTwiA+XhY3wyh24QqRGBoP3rEdDUl3EDUUo9tft074fi19IrdpH7hLCMMP3CIj7jb3W96rn8lt/BqIlt5Q==
   dependencies:
     bn.js "^4.11.9"
     brorand "^1.1.0"
