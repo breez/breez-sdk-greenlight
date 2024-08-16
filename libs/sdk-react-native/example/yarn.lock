@@ -964,11 +964,6 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@breeztech/react-native-breez-sdk@0.5.1-rc6":
-  version "0.5.1-rc6"
-  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.5.1-rc6.tgz#0b950f0725c60eab75036aceb1563c7960169c48"
-  integrity sha512-R6W1vsjH3MsjfxCU/pDL1C14JFAr4/1QWvsTpWoG1RyqggxCOpfNAulzZSKiinc1rqz2wSzqJ9MTUfQACBqk2w==
-
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/@cnakazawa/watch/-/watch-1.0.4.tgz#f864ae85004d0fcab6f50be9141c4da368d1656a"
