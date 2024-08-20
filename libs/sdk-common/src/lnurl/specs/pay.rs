@@ -132,6 +132,7 @@ pub mod model {
         pub data: LnUrlPayRequestData,
         /// The amount in millisatoshis for this payment
         pub amount_msat: u64,
+        #[cfg(not(feature = "liquid"))] // Only available for the Greenlight SDK
         /// Trampoline payments outsource pathfinding to the LSP. Trampoline payments can improve
         /// payment performance, but are generally more expensive in terms of fees and they
         /// compromise on privacy.
