@@ -11,9 +11,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::prelude::*;
 
-#[cfg(feature = "liquid")]
-use crate::liquid::{bip21::DeserializeError, LiquidAddressData};
-
 pub type InvoiceResult<T, E = InvoiceError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]

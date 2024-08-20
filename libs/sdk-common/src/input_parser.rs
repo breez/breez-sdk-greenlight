@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
+use ::bip21::Uri;
 use anyhow::{anyhow, Result};
-use bip21::Uri;
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use serde::{Deserialize, Serialize};
@@ -9,9 +9,6 @@ use std::collections::HashMap;
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
-
-#[cfg(feature = "liquid")]
-use self::liquid::bip21::LiquidAddressData;
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///

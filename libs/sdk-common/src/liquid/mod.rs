@@ -7,8 +7,7 @@ mod tests {
     use elements::AssetId;
 
     use crate::input_parser::tests::get_bip21_rounding_test_vectors;
-    use crate::input_parser::*;
-    use crate::liquid::LiquidAddressData;
+    use crate::prelude::*;
 
     #[tokio::test]
     async fn test_liquid_address_bip21_rounding() -> Result<()> {
