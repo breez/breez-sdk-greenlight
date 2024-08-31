@@ -86,6 +86,12 @@ jobs:
           zip -9 -r breez_sdkFFI.xcframework.zip breez_sdkFFI.xcframework
           echo "XCF_CHECKSUM=`swift package compute-checksum breez_sdkFFI.xcframework.zip`" >> $GITHUB_ENV
 
+      - name: Archive xcframework
+        uses: actions/upload-artifact@v4
+        with:
+          name: breez_sdkFFI-${{ inputs.package-version || intouts.ref }}.xcframework
+          path: breez-sdk/libs/sdk-bindings/bindings-swift/breez_sdkFFI.xcframework
+
       - name: Update swift package
         working-directory: breez-sdk/libs/sdk-bindings/bindings-swift
         run: |
