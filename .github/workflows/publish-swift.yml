@@ -125,7 +125,7 @@ jobs:
         with:
           repo: breez/breez-sdk-swift
           tag: ${{ inputs.package-version }}
-          token: ${{ secrets.GITHUB_TOKEN_BREEZ_SDK_SWIFT }}
+          token: ${{ secrets.SWIFT_RELEASE_TOKEN }}
           name: ${{ inputs.package-version }}
           artifacts: "breez-sdk/libs/sdk-bindings/bindings-swift/breez_sdkFFI.xcframework.zip"
           prerelease: true
