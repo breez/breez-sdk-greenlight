@@ -121,13 +121,14 @@ jobs:
 
       - name: Release and attach XCFramework binary artifact
         if: ${{ inputs.publish }}
-        uses: ncipollo/release-action@v1
+        uses: softprops/action-gh-release@v2
         with:
-          repo: breez/breez-sdk-swift
-          tag: ${{ inputs.package-version }}
+          repository: breez/breez-sdk-swift
+          files: |
+            breez-sdk/libs/sdk-bindings/bindings-swift/breez_sdkFFI.xcframework.zip
+          tag_name: ${{ inputs.package-version }}
+          generate_release_notes: false
           token: ${{ secrets.SWIFT_RELEASE_TOKEN }}
-          name: ${{ inputs.package-version }}
-          artifacts: "breez-sdk/libs/sdk-bindings/bindings-swift/breez_sdkFFI.xcframework.zip"
           prerelease: true
 
       - name: Push update to Cocoapods trunk
