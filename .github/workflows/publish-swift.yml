@@ -89,7 +89,7 @@ jobs:
       - name: Archive xcframework
         uses: actions/upload-artifact@v4
         with:
-          name: breez_sdkFFI-${{ inputs.package-version || intputs.ref }}.xcframework
+          name: breez_sdkFFI-${{ inputs.package-version || inputs.ref }}.xcframework
           path: breez-sdk/libs/sdk-bindings/bindings-swift/breez_sdkFFI.xcframework
 
       - name: Update swift package
