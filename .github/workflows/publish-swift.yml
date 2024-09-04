@@ -23,7 +23,7 @@ on:
       REPO_SSH_KEY:
         description: 'ssh key to commit to the breez-sdk-swift repository'
         required: true
-      GITHUB_TOKEN_BREEZ_SDK_SWIFT:
+      SWIFT_RELEASE_TOKEN:
         description: 'token to create a release to the breez-sdk-swift repository'
         required: true
       COCOAPODS_TRUNK_TOKEN:
