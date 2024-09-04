@@ -315,5 +315,5 @@ jobs:
       publish: ${{ needs.setup.outputs.publish == 'true' }}
     secrets:
       REPO_SSH_KEY: ${{ secrets.REPO_SSH_KEY }}
-      GITHUB_TOKEN_BREEZ_SDK_SWIFT: ${{ secrets.GITHUB_TOKEN_BREEZ_SDK_SWIFT }} # todo: create token
-      COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }} # todo: create token
+      SWIFT_RELEASE_TOKEN: ${{ secrets. SWIFT_RELEASE_TOKEN }}
+      COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
