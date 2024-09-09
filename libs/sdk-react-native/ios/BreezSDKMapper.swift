@@ -3455,7 +3455,7 @@ enum BreezSDKMapper {
         guard let srcNodeId = routeHintHop["srcNodeId"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "srcNodeId", typeName: "RouteHintHop"))
         }
-        guard let shortChannelId = routeHintHop["shortChannelId"] as? UInt64 else {
+        guard let shortChannelId = routeHintHop["shortChannelId"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "shortChannelId", typeName: "RouteHintHop"))
         }
         guard let feesBaseMsat = routeHintHop["feesBaseMsat"] as? UInt32 else {

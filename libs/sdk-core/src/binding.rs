@@ -111,7 +111,7 @@ pub struct _RouteHint {
 #[frb(mirror(RouteHintHop))]
 pub struct _RouteHintHop {
     pub src_node_id: String,
-    pub short_channel_id: u64,
+    pub short_channel_id: String,
     pub fees_base_msat: u32,
     pub fees_proportional_millionths: u32,
     pub cltv_expiry_delta: u64,

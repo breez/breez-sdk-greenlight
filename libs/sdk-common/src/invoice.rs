@@ -1,3 +1,4 @@
+use std::num::ParseIntError;
 use std::str::FromStr;
 use std::time::{SystemTimeError, UNIX_EPOCH};
 
@@ -57,6 +58,12 @@ impl From<Bolt11SemanticError> for InvoiceError {
     }
 }
 
+impl From<ParseIntError> for InvoiceError {
+    fn from(err: ParseIntError) -> Self {
+        Self::Generic(err.to_string())
+    }
+}
+
 impl From<regex::Error> for InvoiceError {
     fn from(err: regex::Error) -> Self {
         Self::Generic(err.to_string())
@@ -73,6 +80,25 @@ impl From<SystemTimeError> for InvoiceError {
     fn from(err: SystemTimeError) -> Self {
         Self::Generic(err.to_string())
     }
+}
+
+fn parse_short_channel_id(id_str: &str) -> InvoiceResult<u64> {
+    let parts: Vec<&str> = id_str.split('x').collect();
+    if parts.len() != 3 {
+        return Ok(0);
+    }
+    let block_num = parts[0].parse::<u64>()?;
+    let tx_num = parts[1].parse::<u64>()?;
+    let tx_out = parts[2].parse::<u64>()?;
+
+    Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
+}
+
+fn format_short_channel_id(id: u64) -> String {
+    let block_num = (id >> 40) as u32;
+    let tx_num = ((id >> 16) & 0xFFFFFF) as u32;
+    let tx_out = (id & 0xFFFF) as u16;
+    format!("{block_num}x{tx_num}x{tx_out}")
 }
 
 /// Wrapper for a BOLT11 LN invoice
@@ -106,7 +132,7 @@ pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
     pub src_node_id: String,
     /// The short_channel_id of this channel
-    pub short_channel_id: u64,
+    pub short_channel_id: String,
     /// The fees which must be paid to use this channel
     pub fees_base_msat: u32,
     pub fees_proportional_millionths: u32,
@@ -133,7 +159,7 @@ impl RouteHint {
 
             let router_hop = router::RouteHintHop {
                 src_node_id: pubkey_res,
-                short_channel_id: hop.short_channel_id,
+                short_channel_id: parse_short_channel_id(&hop.short_channel_id)?,
                 fees: RoutingFees {
                     base_msat: hop.fees_base_msat,
                     proportional_millionths: hop.fees_proportional_millionths,
@@ -154,7 +180,7 @@ impl RouteHint {
 
             let router_hop = RouteHintHop {
                 src_node_id: pubkey_res,
-                short_channel_id: hop.short_channel_id,
+                short_channel_id: format_short_channel_id(hop.short_channel_id),
                 fees_base_msat: hop.fees.base_msat,
                 fees_proportional_millionths: hop.fees.proportional_millionths,
                 cltv_expiry_delta: u64::from(hop.cltv_expiry_delta),
@@ -315,7 +341,7 @@ mod tests {
         private_key.copy_from_slice(&private_key_vec[0..32]);
         let hint_hop = self::RouteHintHop {
             src_node_id: res.payee_pubkey,
-            short_channel_id: 1234,
+            short_channel_id: format_short_channel_id(1234),
             cltv_expiry_delta: 2000,
             htlc_minimum_msat: Some(3000),
             htlc_maximum_msat: Some(4000),
@@ -342,7 +368,7 @@ mod tests {
         private_key.copy_from_slice(&private_key_vec[0..32]);
         let hint_hop = self::RouteHintHop {
             src_node_id: res.payee_pubkey,
-            short_channel_id: 1234,
+            short_channel_id: format_short_channel_id(1234),
             fees_base_msat: 1000,
             fees_proportional_millionths: 100,
             cltv_expiry_delta: 2000,

@@ -742,7 +742,7 @@ impl Greenlight {
                     base_fee_msat: hint.fees_base_msat as u64,
                     fee_per_millionth: hint.fees_proportional_millionths as u64,
                     node_id: payee_node_id.clone().unwrap_or_default(),
-                    short_channel_id: format_short_channel_id(hint.short_channel_id),
+                    short_channel_id: hint.short_channel_id.clone(),
                     channel_delay: hint.cltv_expiry_delta,
                 }])
             }
@@ -1790,11 +1790,10 @@ impl NodeAPI for Greenlight {
                             "For peer {}: remote base {} proportional {} cltv_delta {}",
                             peer_id_str, fees_base_msat, fees_proportional_millionths, cltv_delta,
                         );
-                        let scid = parse_short_channel_id(&channel_id)?;
                         let hint = RouteHint {
                             hops: vec![RouteHintHop {
                                 src_node_id: peer_id_str,
-                                short_channel_id: scid,
+                                short_channel_id: channel_id,
                                 fees_base_msat,
                                 fees_proportional_millionths,
                                 cltv_expiry_delta: cltv_delta as u64,

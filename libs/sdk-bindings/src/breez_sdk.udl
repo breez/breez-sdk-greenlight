@@ -1,6 +1,6 @@
 dictionary RouteHintHop {
      string src_node_id;
-     u64 short_channel_id;
+     string short_channel_id;
      u32 fees_base_msat;
      u32 fees_proportional_millionths;
      u64 cltv_expiry_delta;
