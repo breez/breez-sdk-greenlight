@@ -10,7 +10,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use anyhow::{anyhow, Result};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::{Future, Stream};
-use gl_client::credentials::{Device, Nobody, TlsConfigProvider};
+use gl_client::credentials::{Device, Nobody};
+use gl_client::node;
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
@@ -20,21 +21,17 @@ use gl_client::pb::cln::{
     ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels,
     PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
-use gl_client::pb::scheduler::scheduler_client::SchedulerClient;
-use gl_client::pb::scheduler::{NodeInfoRequest, UpgradeRequest};
 use gl_client::pb::{OffChainPayment, PayStatus, TrampolinePayRequest};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
-use gl_client::signer::{Error, Signer};
-use gl_client::{node, utils};
+use gl_client::signer::Signer;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
 use tokio_stream::StreamExt;
-use tonic::transport::{Endpoint, Uri};
-use tonic::{Code, Streaming};
+use tonic::Streaming;
 
 use crate::bitcoin::bech32::{u5, ToBase32};
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -176,112 +173,6 @@ impl Greenlight {
             persister,
             inprogress_payments: AtomicU16::new(0),
         })
-    }
-
-    /// Create and, if necessary, upgrade the scheduler
-    async fn init_scheduler(&self) -> Result<SchedulerClient<tonic::transport::channel::Channel>> {
-        let channel = Endpoint::from_shared(utils::scheduler_uri())?
-            .tls_config(self.device.tls_config().client_tls_config())?
-            .tcp_keepalive(Some(Duration::from_secs(5)))
-            .http2_keep_alive_interval(Duration::from_secs(5))
-            .keep_alive_timeout(Duration::from_secs(90))
-            .keep_alive_while_idle(true)
-            .connect_lazy();
-        let mut scheduler = SchedulerClient::new(channel);
-
-        // Upgrade node if necessary.
-        // If it fails due to connection error, sleep and retry. Re-throw all other errors.
-        info!("Entering the upgrade loop");
-        loop {
-            #[allow(deprecated)]
-            let maybe_upgrade_res = scheduler
-                .maybe_upgrade(UpgradeRequest {
-                    initmsg: self.signer.get_init(),
-                    signer_version: self.signer.version().to_owned(),
-                    startupmsgs: self
-                        .signer
-                        .get_startup_messages()
-                        .into_iter()
-                        .map(|s| s.into())
-                        .collect(),
-                })
-                .await;
-
-            if let Err(err_status) = maybe_upgrade_res {
-                match err_status.code() {
-                    Code::Unavailable => {
-                        debug!("Cannot connect to scheduler, sleeping and retrying");
-                        sleep(Duration::from_secs(3)).await;
-                        continue;
-                    }
-                    _ => {
-                        return Err(Error::Upgrade(err_status))?;
-                    }
-                }
-            }
-
-            break;
-        }
-
-        Ok(scheduler)
-    }
-
-    /// The core signer loop. Connects to the signer and keeps the connection alive.
-    ///
-    /// Used as inner loop for `run_forever`.
-    async fn run_forever_inner(
-        &self,
-        mut scheduler: SchedulerClient<tonic::transport::channel::Channel>,
-    ) -> Result<(), anyhow::Error> {
-        loop {
-            debug!("Start of the signer loop, getting node_info from scheduler");
-            let node_info_res = scheduler
-                .get_node_info(NodeInfoRequest {
-                    node_id: self.signer.node_id(),
-                    // Purposely not using the `wait` parameter
-                    wait: false,
-                })
-                .await;
-
-            let node_info = match node_info_res.map(|v| v.into_inner()) {
-                Ok(v) => {
-                    debug!("Got node_info from scheduler: {:?}", v);
-                    v
-                }
-                Err(e) => {
-                    trace!("Got an error from the scheduler: {e}. Sleeping before retrying");
-                    sleep(Duration::from_millis(1000)).await;
-                    continue;
-                }
-            };
-
-            if node_info.grpc_uri.is_empty() {
-                trace!("Got an empty GRPC URI, node is not scheduled, sleeping and retrying");
-                sleep(Duration::from_millis(1000)).await;
-                continue;
-            }
-
-            if let Err(e) = self
-                .signer
-                .run_once(Uri::from_maybe_shared(node_info.grpc_uri)?)
-                .await
-            {
-                warn!("Error running against node: {e}");
-            }
-        }
-    }
-
-    async fn run_forever(&self, mut shutdown: mpsc::Receiver<()>) -> Result<(), anyhow::Error> {
-        let scheduler = self.init_scheduler().await?;
-        tokio::select! {
-            run_forever_inner_res = self.run_forever_inner(scheduler) => {
-                error!("Inner signer loop exited unexpectedly: {run_forever_inner_res:?}");
-            },
-            _ = shutdown.recv() => debug!("Received the signal to exit the signer loop")
-        };
-
-        info!("Exiting the signer loop");
-        Ok(())
     }
 
     fn derive_bip32_key(
@@ -1325,7 +1216,7 @@ impl NodeAPI for Greenlight {
 
     /// Starts the signer that listens in a loop until the shutdown signal is received
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
-        match self.run_forever(shutdown).await {
+        match self.signer.run_forever(shutdown).await {
             Ok(_) => info!("signer exited gracefully"),
             Err(e) => error!("signer exited with error: {e}"),
         }

@@ -12,11 +12,9 @@ flutter_rust_bridge = "=1.82.6"
 aes = { workspace = true }
 anyhow = { workspace = true }
 hex = { workspace = true }
-# The last commit on gl-client 0.1. Development will continue on 0.2.
-# The switch to 0.2 will happen with https://github.com/breez/breez-sdk/pull/724
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "43f02207182e28a4d62e7aa1c79cd098f9b300ba" }
+], rev = "7540980dd8f1630b1b148a9eb8b44e2b05ca7e6d" }
 zbase32 = "0.1.2"
 base64 = { workspace = true }
 chrono = "0.4"
