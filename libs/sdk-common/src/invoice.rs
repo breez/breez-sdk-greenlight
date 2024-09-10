@@ -85,7 +85,7 @@ impl From<SystemTimeError> for InvoiceError {
 fn parse_short_channel_id(id_str: &str) -> InvoiceResult<u64> {
     let parts: Vec<&str> = id_str.split('x').collect();
     if parts.len() != 3 {
-        return Ok(0);
+        return Err(InvoiceError::generic("Invalid short channel id"));
     }
     let block_num = parts[0].parse::<u64>()?;
     let tx_num = parts[1].parse::<u64>()?;
@@ -398,5 +398,45 @@ mod tests {
 
         assert!(res.is_ok());
         assert!(validate_network(res.unwrap(), Network::Bitcoin).is_err());
+    }
+
+    #[test]
+    fn test_format_short_channel_id() {
+        let valid_short_channel_ids = vec![
+            (0, "0x0x0"),
+            (936_502_917_475_117, "851x12489658x11053"),
+            (455_944_619_913_684, "414x11395355x29140"),
+            (u64::MAX, "16777215x16777215x65535"),
+        ];
+        for (scid, scid_str) in valid_short_channel_ids {
+            let res = format_short_channel_id(scid);
+            assert_eq!(res, scid_str);
+        }
+    }
+
+    #[test]
+    fn test_parse_short_channel_id() {
+        let valid_short_channel_ids = vec![
+            ("0x0x0", 0),
+            ("16000000x0x3965", 17_592_186_044_416_003_965),
+            ("94838x10x3", 104_275_483_755_675_651),
+            ("16777215x16777215x65535", u64::MAX),
+        ];
+        for (scid_str, scid) in valid_short_channel_ids {
+            let res = parse_short_channel_id(scid_str);
+            assert!(res.is_ok());
+            assert_eq!(res.unwrap(), scid);
+        }
+
+        let invalid_short_channel_ids = vec![
+            "0",
+            "16000000x0x-3965",
+            "18446744073709551615",
+            "16777215x65535",
+        ];
+        for scid_str in invalid_short_channel_ids {
+            let res = parse_short_channel_id(scid_str);
+            assert!(res.is_err());
+        }
     }
 }
