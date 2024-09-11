@@ -4,7 +4,7 @@
 
 ## **What Is the Breez SDK?**
 
-The Breez SDK provides developers with a end-to-end solution for integrating self-custodial Lightning payments into their apps and services. It eliminates the need for third-parties, simplifies the complexities of Bitcoin and Lightning, and enables seamless onboarding for billions of users to the future of peer-to-peer payments.
+The Breez SDK provides developers with a end-to-end solution for integrating self-custodial Lightning payments into their apps and services. It eliminates the need for third parties, simplifies the complexities of Bitcoin and Lightning, and enables seamless onboarding for billions of users to the future of peer-to-peer payments.
 
 To provide the best experience for their end-users, developers can choose between the following implementations:
 
@@ -13,7 +13,7 @@ To provide the best experience for their end-users, developers can choose betwee
 
 **The Breez SDK is free for developers.** 
 
-Learn more about the Breez SDK—download our one pager [here](https://drive.google.com/file/d/1MBINTyEXX9tFLVXd3QoTUKLNWgjgWN2I/view?usp=drivesdk).
+Learn more about the Breez SDK—download our one pager [here](https://drive.google.com/file/d/1TDspNJOvrX_lZUxipeBzitPIWXIdSsLy/view?usp=sharing).
 
 ## **What Is the *Greenlight* Implementation?**
 
