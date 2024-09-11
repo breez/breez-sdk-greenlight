@@ -61,7 +61,7 @@ impl From<BoltzRouteHintHop> for RouteHintHop {
     fn from(value: BoltzRouteHintHop) -> Self {
         RouteHintHop {
             src_node_id: value.node_id,
-            short_channel_id: 0_u64,
+            short_channel_id: "0x0x0".to_string(),
             fees_base_msat: value.fee_base_msat,
             fees_proportional_millionths: value.fee_proportional_millionths,
             cltv_expiry_delta: value.cltv_expiry_delta,

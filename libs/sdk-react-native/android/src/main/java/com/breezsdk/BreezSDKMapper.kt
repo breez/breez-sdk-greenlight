@@ -3083,7 +3083,7 @@ fun asRouteHintHop(routeHintHop: ReadableMap): RouteHintHop? {
         return null
     }
     val srcNodeId = routeHintHop.getString("srcNodeId")!!
-    val shortChannelId = routeHintHop.getDouble("shortChannelId").toULong()
+    val shortChannelId = routeHintHop.getString("shortChannelId")!!
     val feesBaseMsat = routeHintHop.getInt("feesBaseMsat").toUInt()
     val feesProportionalMillionths = routeHintHop.getInt("feesProportionalMillionths").toUInt()
     val cltvExpiryDelta = routeHintHop.getDouble("cltvExpiryDelta").toULong()

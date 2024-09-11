@@ -36,9 +36,9 @@ use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
-    parse_short_channel_id, sanitize::*, ChannelState, ClosedChannelPaymentDetails, Config,
-    EnvironmentType, LspAPI, NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo,
-    ReverseSwapServiceAPI, SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
+    sanitize::*, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType, LspAPI,
+    NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo, ReverseSwapServiceAPI,
+    SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
@@ -2714,7 +2714,7 @@ impl PaymentReceiver {
         let open_channel_hint = RouteHint {
             hops: vec![RouteHintHop {
                 src_node_id: lsp_info.pubkey.clone(),
-                short_channel_id: parse_short_channel_id("1x0x0")?,
+                short_channel_id: "1x0x0".to_string(),
                 fees_base_msat: lsp_info.base_fee_msat as u32,
                 fees_proportional_millionths: (lsp_info.fee_rate * 1000000.0) as u32,
                 cltv_expiry_delta: lsp_info.time_lock_delta as u64,
@@ -3252,10 +3252,7 @@ pub(crate) mod tests {
         assert_eq!(ln_invoice.routing_hints[0].hops.len(), 1);
         let lsp_hop = &ln_invoice.routing_hints[0].hops[0];
         assert_eq!(lsp_hop.src_node_id, breez_server.clone().lsp_pub_key());
-        assert_eq!(
-            lsp_hop.short_channel_id,
-            parse_short_channel_id("1x0x0").unwrap()
-        );
+        assert_eq!(lsp_hop.short_channel_id, "1x0x0");
         Ok(())
     }
 

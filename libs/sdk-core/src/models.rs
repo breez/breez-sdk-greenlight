@@ -1472,25 +1472,6 @@ impl SwapInfo {
     }
 }
 
-pub(crate) fn parse_short_channel_id(id_str: &str) -> Result<u64> {
-    let parts: Vec<&str> = id_str.split('x').collect();
-    if parts.len() != 3 {
-        return Ok(0);
-    }
-    let block_num = parts[0].parse::<u64>()?;
-    let tx_num = parts[1].parse::<u64>()?;
-    let tx_out = parts[2].parse::<u64>()?;
-
-    Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
-}
-
-pub(crate) fn format_short_channel_id(id: u64) -> String {
-    let block_num = (id >> 40) as u32;
-    let tx_num = ((id >> 16) & 0xFFFFFF) as u32;
-    let tx_out = (id & 0xFFFF) as u16;
-    format!("{block_num}x{tx_num}x{tx_out}")
-}
-
 /// UTXO known to the LN node
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct UnspentTransactionOutput {

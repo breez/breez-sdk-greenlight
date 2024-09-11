@@ -1661,7 +1661,7 @@ class RouteHint {
 
 class RouteHintHop {
   final String srcNodeId;
-  final int shortChannelId;
+  final String shortChannelId;
   final int feesBaseMsat;
   final int feesProportionalMillionths;
   final int cltvExpiryDelta;
@@ -4063,7 +4063,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return RouteHintHop(
       srcNodeId: _wire2api_String(arr[0]),
-      shortChannelId: _wire2api_u64(arr[1]),
+      shortChannelId: _wire2api_String(arr[1]),
       feesBaseMsat: _wire2api_u32(arr[2]),
       feesProportionalMillionths: _wire2api_u32(arr[3]),
       cltvExpiryDelta: _wire2api_u64(arr[4]),

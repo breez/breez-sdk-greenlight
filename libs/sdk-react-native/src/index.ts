@@ -478,7 +478,7 @@ export interface RouteHint {
 
 export interface RouteHintHop {
     srcNodeId: string
-    shortChannelId: number
+    shortChannelId: string
     feesBaseMsat: number
     feesProportionalMillionths: number
     cltvExpiryDelta: number

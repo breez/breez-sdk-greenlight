@@ -1149,7 +1149,7 @@ const _: fn() = || {
     {
         let RouteHintHop = None::<RouteHintHop>.unwrap();
         let _: String = RouteHintHop.src_node_id;
-        let _: u64 = RouteHintHop.short_channel_id;
+        let _: String = RouteHintHop.short_channel_id;
         let _: u32 = RouteHintHop.fees_base_msat;
         let _: u32 = RouteHintHop.fees_proportional_millionths;
         let _: u64 = RouteHintHop.cltv_expiry_delta;
