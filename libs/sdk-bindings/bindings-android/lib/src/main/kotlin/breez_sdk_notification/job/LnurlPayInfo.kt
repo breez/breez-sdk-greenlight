@@ -71,12 +71,12 @@ class LnurlPayInfoJob(
             }
             // Calculate the maximum sendable amount (in millisatoshis)
             val maxSendable = maxOf(
-                nodeInfo.inboundLiquidityMsats,
+                nodeInfo.maxReceivableSinglePaymentAmountMsat,
                 maxReceivableMsatFeeLimit,
             )
             // Get the minimum sendable amount (in millisatoshis), can not be less than 1 or more than maxSendable
             val minSendable: ULong =
-                if (nodeInfo.inboundLiquidityMsats < 1000UL) ofp.minMsat else 1000UL
+                if (nodeInfo.maxReceivableSinglePaymentAmountMsat < 1000UL) ofp.minMsat else 1000UL
             if (minSendable > maxSendable) {
                 throw InvalidMinSendableException("Minimum sendable amount can't be greater than maximum sendable amount.")
             }
