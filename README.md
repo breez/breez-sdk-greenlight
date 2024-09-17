@@ -50,7 +50,7 @@ API documentation is [here](https://breez.github.io/breez-sdk-greenlight/breez_
 
 ## **Command line**
 
-[Breez sdk-cli](https://github.com/breez/breez-sdk/tree/main/tools/sdk-cli) is a command line client that allows you to interact with and test the functionality of the Breez SDK.
+[Breez sdk-cli](https://github.com/breez/breez-sdk-greenlight/tree/main/tools/sdk-cli) is a command line client that allows you to interact with and test the functionality of the Breez SDK.
 
 ## **Support**
 

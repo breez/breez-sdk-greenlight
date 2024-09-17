@@ -13,7 +13,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://breez.technology/sdk/</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/breez/breez-sdk</RepositoryUrl>
+    <RepositoryUrl>https://github.com/breez/breez-sdk-greenlight</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>bitcoin lightning breez sdk non-custodial</PackageTags>
     <Copyright>2023 Breez</Copyright>

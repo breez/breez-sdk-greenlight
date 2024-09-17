@@ -361,7 +361,7 @@ jobs:
   # Since this is the situation new projects are faced with when adding the SDK as a Rust dependency, we simulate it here
   # to get an early warning signal, should any newer dependency cause it to fail to compile.
   #
-  # See discussion at https://github.com/breez/breez-sdk/issues/969#issuecomment-2104700522
+  # See discussion at https://github.com/breez/breez-sdk-greenlight/issues/969#issuecomment-2104700522
   check-sdk-as-dependency:
     name: Check SDK as Rust dependency in fresh project
     runs-on: ubuntu-latest
@@ -392,7 +392,7 @@ jobs:
           cargo init --name test_project --vcs none
           
           # A project might reference our SDK as a git repository
-          # cargo add --git https://github.com/breez/breez-sdk breez-sdk-core
+          # cargo add --git https://github.com/breez/breez-sdk-greenlight breez-sdk-core
           
           # In this test, we reference the checked out repo (e.g. this PR branch)
           cargo add --path ../libs/sdk-core breez-sdk-core
