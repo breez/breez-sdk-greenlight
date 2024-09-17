@@ -11,9 +11,8 @@ use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::TryFutureExt;
-use gl_client::bitcoin::secp256k1::Secp256k1;
 use log::{LevelFilter, Metadata, Record};
-use reqwest::{header::CONTENT_TYPE, Body, Url};
+use reqwest::{header::CONTENT_TYPE, Body};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde::Serialize;
@@ -33,6 +32,7 @@ use crate::error::{
     RedeemOnchainResult, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::greenlight::{GLBackupTransport, Greenlight};
+use crate::lnurl::auth::SDKLnurlAuthSigner;
 use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
@@ -573,20 +573,7 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
-        // m/138'/0
-        let hashing_key = self.node_api.derive_bip32_key(vec![
-            ChildNumber::from_hardened_idx(138).map_err(Into::<LnUrlError>::into)?,
-            ChildNumber::from(0),
-        ])?;
-
-        let url =
-            Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
-
-        let derivation_path = get_derivation_path(hashing_key, url)?;
-        let linking_key = self.node_api.derive_bip32_key(derivation_path)?;
-        let linking_keys = linking_key.to_keypair(&Secp256k1::new());
-
-        Ok(perform_lnurl_auth(linking_keys, req_data).await?)
+        Ok(perform_lnurl_auth(&req_data, &SDKLnurlAuthSigner::new(self.node_api.clone())).await?)
     }
 
     /// Creates an bolt11 payment request.

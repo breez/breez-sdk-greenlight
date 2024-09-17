@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod pay;
 
 #[cfg(test)]
