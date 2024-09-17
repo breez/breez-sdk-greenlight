@@ -1,12 +1,20 @@
 use std::str::FromStr;
 
-use bitcoin::hashes::{hex::ToHex, sha256, Hash, HashEngine, Hmac, HmacEngine};
-use bitcoin::secp256k1::{Message, Secp256k1};
-use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use bitcoin::KeyPair;
+use bitcoin::hashes::hex::ToHex;
+use bitcoin::util::bip32::ChildNumber;
 use reqwest::Url;
 
 use crate::prelude::*;
+
+pub trait LnurAuthSigner {
+    fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
+    fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
+    fn hmac_sha256(
+        &self,
+        key_derivation_path: &[ChildNumber],
+        input: &[u8],
+    ) -> LnUrlResult<Vec<u8>>;
+}
 
 /// Performs the third and last step of LNURL-auth, as per
 /// <https://github.com/lnurl/luds/blob/luds/04.md>
@@ -15,25 +23,24 @@ use crate::prelude::*;
 /// https://github.com/lnurl/luds/blob/luds/05.md
 ///
 /// See the [parse] docs for more detail on the full workflow.
-pub async fn perform_lnurl_auth(
-    linking_keys: KeyPair,
-    req_data: LnUrlAuthRequestData,
+pub async fn perform_lnurl_auth<S: LnurAuthSigner>(
+    req_data: &LnUrlAuthRequestData,
+    signer: &S,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
-    let k1_to_sign = Message::from_slice(
-        &hex::decode(req_data.k1)
-            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
-    )?;
-    let sig = Secp256k1::new().sign_ecdsa(&k1_to_sign, &linking_keys.secret_key());
+    let url = Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
+    let derivation_path = get_derivation_path(signer, url)?;
+    let sig = signer.sign_ecdsa(req_data.k1.as_bytes(), &derivation_path)?;
+    let xpub = signer.derive_bip32_pub_key(&derivation_path)?;
 
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
     let mut callback_url =
         Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     callback_url
         .query_pairs_mut()
-        .append_pair("sig", &sig.serialize_der().to_hex());
+        .append_pair("sig", &sig.to_hex());
     callback_url
         .query_pairs_mut()
-        .append_pair("key", &linking_keys.public_key().to_hex());
+        .append_pair("key", xpub.to_hex().as_str());
 
     get_parse_and_log_response(callback_url.as_ref(), false)
         .await
@@ -81,21 +88,15 @@ pub fn validate_request(
     })
 }
 
-fn hmac_sha256(key: &[u8], input: &[u8]) -> Hmac<sha256::Hash> {
-    let mut engine = HmacEngine::<sha256::Hash>::new(key);
-    engine.input(input);
-    Hmac::<sha256::Hash>::from_engine(engine)
-}
-
-pub fn get_derivation_path(
-    hashing_key: ExtendedPrivKey,
+pub fn get_derivation_path<S: LnurAuthSigner>(
+    signer: &S,
     url: Url,
 ) -> LnUrlResult<Vec<ChildNumber>> {
     let domain = url
         .domain()
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
-    let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
+    let hmac = signer.hmac_sha256(&[ChildNumber::from_hardened_idx(138)?], domain.as_bytes())?;
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
     Ok(vec![
