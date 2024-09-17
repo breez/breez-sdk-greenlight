@@ -57,9 +57,9 @@ class LnurlPayInfoTask : LnurlPayTask {
                 UInt64(Double(feeLimitMsat) / proportionalPercent)
             ) : nodeInfo.maxReceivableMsat
             // Calculate the maximum sendable amount (in millisatoshis)
-            let maxSendable = max(nodeInfo.inboundLiquidityMsats, maxReceivableMsatFeeLimit)
+            let maxSendable = max(nodeInfo.maxReceivableSinglePaymentAmountMsat, maxReceivableMsatFeeLimit)
             // Get the minimum sendable amount (in millisatoshis), can not be less than 1 or more than maxSendable
-            let minSendable: UInt64 = nodeInfo.inboundLiquidityMsats < UInt64(1000) ? ofp.minMsat :  UInt64(1000)
+            let minSendable: UInt64 = nodeInfo.maxReceivableSinglePaymentAmountMsat < UInt64(1000) ? ofp.minMsat :  UInt64(1000)
             if minSendable > maxSendable {
                 throw InvalidMinSendable.largerThanMaxSendable
             }
