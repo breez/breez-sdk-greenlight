@@ -32,7 +32,7 @@ use crate::error::{
     RedeemOnchainResult, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::greenlight::{GLBackupTransport, Greenlight};
-use crate::lnurl::auth::SDKLnurlAuthSigner;
+use crate::lnurl::auth::SdkLnurlAuthSigner;
 use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
 use crate::models::{
@@ -577,7 +577,7 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
-        Ok(perform_lnurl_auth(&req_data, &SDKLnurlAuthSigner::new(self.node_api.clone())).await?)
+        Ok(perform_lnurl_auth(&req_data, &SdkLnurlAuthSigner::new(self.node_api.clone())).await?)
     }
 
     /// Creates an bolt11 payment request.
