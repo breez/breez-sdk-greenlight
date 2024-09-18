@@ -6,7 +6,7 @@ use reqwest::Url;
 
 use crate::prelude::*;
 
-pub trait LnurAuthSigner {
+pub trait LnurlAuthSigner {
     fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
     fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
     fn hmac_sha256(
@@ -23,7 +23,7 @@ pub trait LnurAuthSigner {
 /// https://github.com/lnurl/luds/blob/luds/05.md
 ///
 /// See the [parse] docs for more detail on the full workflow.
-pub async fn perform_lnurl_auth<S: LnurAuthSigner>(
+pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
     req_data: &LnUrlAuthRequestData,
     signer: &S,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
@@ -92,7 +92,7 @@ pub fn validate_request(
     })
 }
 
-pub fn get_derivation_path<S: LnurAuthSigner>(
+pub fn get_derivation_path<S: LnurlAuthSigner>(
     signer: &S,
     url: Url,
 ) -> LnUrlResult<Vec<ChildNumber>> {

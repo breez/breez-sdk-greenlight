@@ -8,7 +8,7 @@ use gl_client::{
     },
     lightning::util::ser::Writeable,
 };
-use sdk_common::prelude::{LnUrlError, LnUrlResult, LnurAuthSigner};
+use sdk_common::prelude::{LnUrlError, LnUrlResult, LnurlAuthSigner};
 
 use crate::node_api::NodeAPI;
 
@@ -22,7 +22,7 @@ impl SdkLnurlAuthSigner {
     }
 }
 
-impl LnurAuthSigner for SdkLnurlAuthSigner {
+impl LnurlAuthSigner for SdkLnurlAuthSigner {
     fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>> {
         Ok(self
             .node_api
