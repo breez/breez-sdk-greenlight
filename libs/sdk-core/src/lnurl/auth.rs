@@ -38,7 +38,7 @@ impl LnurAuthSigner for SDKLnurlAuthSigner {
             &Message::from_slice(msg).map_err(|_| LnUrlError::generic("failed to sign"))?,
             &xpriv.private_key,
         );
-        Ok(sig.encode())
+        Ok(sig.serialize_der().to_vec())
     }
 
     fn hmac_sha256(
