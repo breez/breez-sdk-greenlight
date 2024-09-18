@@ -29,7 +29,11 @@ pub async fn perform_lnurl_auth<S: LnurAuthSigner>(
 ) -> LnUrlResult<LnUrlCallbackStatus> {
     let url = Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     let derivation_path = get_derivation_path(signer, url)?;
-    let sig = signer.sign_ecdsa(req_data.k1.as_bytes(), &derivation_path)?;
+    let sig = signer.sign_ecdsa(
+        &hex::decode(&req_data.k1)
+            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
+        &derivation_path,
+    )?;
     let xpub = signer.derive_bip32_pub_key(&derivation_path)?;
 
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
