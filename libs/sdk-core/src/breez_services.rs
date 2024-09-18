@@ -578,12 +578,18 @@ impl BreezServices {
             ChildNumber::from_hardened_idx(138).map_err(Into::<LnUrlError>::into)?,
             ChildNumber::from(0),
         ])?;
+        println!(
+            "hashing priv_key: {:?}",
+            hashing_key.to_priv().to_bytes().to_hex()
+        );
 
         let url =
             Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
 
         let derivation_path = get_derivation_path(hashing_key, url)?;
+        println!("derivation_path: {:?}", derivation_path);
         let linking_key = self.node_api.derive_bip32_key(derivation_path)?;
+        println!("linking_key: {:?}", linking_key);
         let linking_keys = linking_key.to_keypair(&Secp256k1::new());
 
         Ok(perform_lnurl_auth(linking_keys, req_data).await?)

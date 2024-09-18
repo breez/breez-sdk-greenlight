@@ -25,6 +25,7 @@ pub async fn perform_lnurl_auth(
     )?;
     let sig = Secp256k1::new().sign_ecdsa(&k1_to_sign, &linking_keys.secret_key());
 
+    println!("xpub: {:?}", &linking_keys.public_key().to_hex());
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
     let mut callback_url =
         Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
@@ -35,6 +36,7 @@ pub async fn perform_lnurl_auth(
         .query_pairs_mut()
         .append_pair("key", &linking_keys.public_key().to_hex());
 
+    println!("callback_url: {:?}", callback_url.as_str());
     get_parse_and_log_response(callback_url.as_ref(), false)
         .await
         .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
@@ -96,7 +98,7 @@ pub fn get_derivation_path(
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
     let hmac = hmac_sha256(&hashing_key.to_priv().to_bytes(), domain.as_bytes());
-
+    println!("hmac: {:?}", hmac.to_hex());
     // m/138'/<long1>/<long2>/<long3>/<long4>
     Ok(vec![
         ChildNumber::from_hardened_idx(138)?,
