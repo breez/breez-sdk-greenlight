@@ -1,4 +1,4 @@
-# **Breez SDK - *Greenlight***
+# **Breez SDK - Native *(Greenlight Implementation)***
 
 ## **Overview**
 
@@ -8,16 +8,16 @@ The Breez SDK provides developers with a end-to-end solution for integrating sel
 
 To provide the best experience for their end-users, developers can choose between the following implementations:
 
-- [Breez SDK - Greenlight](https://sdk-doc.breez.technology/)
-- [Breez SDK - Liquid](https://sdk-doc-liquid.breez.technology/)
+- [Breez SDK - Native *(Greenlight Implementation)*](https://sdk-doc.breez.technology/)
+- [Breez SDK - Nodeless *(Liquid Implementation)*](https://sdk-doc-liquid.breez.technology/)
 
 **The Breez SDK is free for developers.** 
 
-Learn more about the Breez SDK—download our one pager [here](https://drive.google.com/file/d/1TDspNJOvrX_lZUxipeBzitPIWXIdSsLy/view?usp=sharing).
+Learn more about the Breez SDK — download our one pager [here](https://drive.google.com/file/d/1TDspNJOvrX_lZUxipeBzitPIWXIdSsLy/view?usp=sharing).
 
-## **What Is the *Greenlight* Implementation?**
+## **What Is the Breez SDK - Native *(Greenlight Implementation)*?**
 
-The *Greenlight* implementation is a cloud-based Lightning integration. It offers a self-custodial, end-to-end solution for integrating Lightning payments, utilizing nodes-on-demand provided by Blockstream’s Greenlight, with built-in Lightning Service Providers (LSP), on-chain interoperability, and third-party fiat on-ramps.
+It's a cloud-based Lightning integration that offers a self-custodial, end-to-end solution for integrating Lightning payments, utilizing nodes-on-demand provided by Blockstream’s Greenlight, with built-in Lightning Service Providers (LSP), on-chain interoperability, and third-party fiat on-ramps.
 
 **Core Functions**
 
@@ -40,7 +40,7 @@ The *Greenlight* implementation is a cloud-based Lightning integration. It offer
 
 ## Getting Started
 
-Head over to the [Breez SDK - *Greenlight* documentation](https://sdk-doc.breez.technology/) to start implementing Lightning into your app.
+Head over to the [Breez SDK - Native *(Greenlight Implementation)* documentation](https://sdk-doc.breez.technology/) to start implementing Lightning into your app.
 
 Note: You'll need an API key to use the *Greenlight* implementation. For more info, email us at contact@breez.technology.
 
@@ -56,9 +56,9 @@ API documentation is [here](https://breez.github.io/breez-sdk-greenlight/breez_
 
 Have a question for the team? Join our [Telegram channel](https://t.me/breezsdk) or email us at [contact@breez.technology](mailto:contact@breez.technology) 
 
-## How Does the Greenlight Implementation Work?
+## How Does Native *(Greenlight Implementation)* Work?
 
-The *Greenlight* implementation allows end-users to send and receive payments using the Breez SDK through several key components:
+The Breez SDK - Native *(Greenlight implementation)* allows end-users to send and receive payments using the Breez SDK through several key components:
 
 - **Signer**: The app integrating the Breez SDK runs a validating signer that interacts with the end-user node.
 - **Node**: End-user nodes are hosted on Blockstream’s Greenlight cloud infrastructure. The SDK creates a node when an end-user needs to send or receive a payment via the Lightning Network. Each end-user has their own node.
