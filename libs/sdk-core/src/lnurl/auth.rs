@@ -1,12 +1,9 @@
 use std::sync::Arc;
 
-use gl_client::{
-    bitcoin::{
-        hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine},
-        secp256k1::{Message, Secp256k1},
-        util::bip32::ChildNumber,
-    },
-    lightning::util::ser::Writeable,
+use gl_client::bitcoin::{
+    hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine},
+    secp256k1::{Message, Secp256k1},
+    util::bip32::{ChildNumber, ExtendedPubKey},
 };
 use sdk_common::prelude::{LnUrlError, LnUrlResult, LnurlAuthSigner};
 
@@ -24,12 +21,10 @@ impl SdkLnurlAuthSigner {
 
 impl LnurlAuthSigner for SdkLnurlAuthSigner {
     fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>> {
-        Ok(self
-            .node_api
-            .derive_bip32_key(derivation_path.to_vec())?
-            .to_keypair(&Secp256k1::new())
-            .public_key()
-            .encode())
+        let xpriv = self.node_api.derive_bip32_key(derivation_path.to_vec())?;
+        Ok(ExtendedPubKey::from_priv(&Secp256k1::new(), &xpriv)
+            .encode()
+            .to_vec())
     }
 
     fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>> {
