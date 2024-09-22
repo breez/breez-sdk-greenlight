@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use bitcoin::hashes::hex::ToHex;
-use bitcoin::util::bip32::ChildNumber;
+use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
 use reqwest::Url;
 
 use crate::prelude::*;
@@ -34,7 +34,8 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
             .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
         &derivation_path,
     )?;
-    let xpub = signer.derive_bip32_pub_key(&derivation_path)?;
+    let xpub_bytes = signer.derive_bip32_pub_key(&derivation_path)?;
+    let xpub = ExtendedPubKey::decode(xpub_bytes.as_slice())?;
 
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
     let mut callback_url =
@@ -44,7 +45,7 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
         .append_pair("sig", &sig.to_hex());
     callback_url
         .query_pairs_mut()
-        .append_pair("key", xpub.to_hex().as_str());
+        .append_pair("key", &xpub.public_key.to_hex());
 
     get_parse_and_log_response(callback_url.as_ref(), false)
         .await
@@ -100,7 +101,10 @@ pub fn get_derivation_path<S: LnurlAuthSigner>(
         .domain()
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
-    let hmac = signer.hmac_sha256(&[ChildNumber::from_hardened_idx(138)?], domain.as_bytes())?;
+    let hmac = signer.hmac_sha256(
+        &[ChildNumber::from_hardened_idx(138)?, ChildNumber::from(0)],
+        domain.as_bytes(),
+    )?;
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
     Ok(vec![
