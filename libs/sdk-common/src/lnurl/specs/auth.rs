@@ -100,7 +100,10 @@ pub fn get_derivation_path<S: LnurlAuthSigner>(
         .domain()
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
-    let hmac = signer.hmac_sha256(&[ChildNumber::from_hardened_idx(138)?], domain.as_bytes())?;
+    let hmac = signer.hmac_sha256(
+        &[ChildNumber::from_hardened_idx(138)?, ChildNumber::from(0)],
+        domain.as_bytes(),
+    )?;
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
     Ok(vec![
