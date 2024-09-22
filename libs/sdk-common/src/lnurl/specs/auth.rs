@@ -47,6 +47,7 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
         .query_pairs_mut()
         .append_pair("key", &xpub.public_key.to_hex());
 
+    println!("callback_url: {}", callback_url);
     get_parse_and_log_response(callback_url.as_ref(), false)
         .await
         .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
