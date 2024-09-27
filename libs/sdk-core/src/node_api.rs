@@ -180,8 +180,8 @@ pub trait NodeAPI: Send + Sync {
         &self,
     ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>>;
     async fn static_backup(&self) -> NodeResult<Vec<String>>;
-    async fn execute_command(&self, command: String) -> NodeResult<String>;
-    async fn generate_diagnostic_data(&self) -> NodeResult<String>;
+    async fn execute_command(&self, command: String) -> NodeResult<Value>;
+    async fn generate_diagnostic_data(&self) -> NodeResult<Value>;
     async fn sign_message(&self, message: &str) -> NodeResult<String>;
     async fn check_message(&self, message: &str, pubkey: &str, signature: &str)
         -> NodeResult<bool>;

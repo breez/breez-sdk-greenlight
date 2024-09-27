@@ -17,7 +17,7 @@ use reqwest::{header::CONTENT_TYPE, Body, Url};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde::Serialize;
-use serde_json::json;
+use serde_json::{json, Value};
 use strum_macros::EnumString;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
@@ -1149,7 +1149,9 @@ impl BreezServices {
             Ok(dev_cmd) => match dev_cmd {
                 DevCommand::GenerateDiagnosticData => self.generate_diagnostic_data().await,
             },
-            Err(_) => Ok(self.node_api.execute_command(command).await?),
+            Err(_) => Ok(serde_json::to_string_pretty(
+                &self.node_api.execute_command(command).await?,
+            )?),
         }
     }
 
@@ -1164,14 +1166,17 @@ impl BreezServices {
             .node_api
             .generate_diagnostic_data()
             .await
-            .unwrap_or_else(|e| e.to_string());
+            .unwrap_or_else(|e| json!({"error": e.to_string()}));
         let sdk_data = self
             .generate_sdk_diagnostic_data()
             .await
-            .unwrap_or_else(|e| e.to_string());
-        Ok(format!(
-            "Diagnostic Timestamp: {now_sec}\nNode Data\n{node_data}\n\nSDK Data\n{sdk_data}"
-        ))
+            .unwrap_or_else(|e| json!({"error": e.to_string()}));
+        let result = json!({
+            "timestamp": now_sec,
+            "node": node_data,
+            "sdk": sdk_data
+        });
+        Ok(serde_json::to_string_pretty(&result)?)
     }
 
     /// This method sync the local state with the remote node state.
@@ -2165,35 +2170,29 @@ impl BreezServices {
             })
     }
 
-    async fn generate_sdk_diagnostic_data(&self) -> SdkResult<String> {
-        let state: String = serde_json::to_string_pretty(&self.persister.get_node_state()?)?;
-        let payments = serde_json::to_string_pretty(
+    async fn generate_sdk_diagnostic_data(&self) -> SdkResult<Value> {
+        let state = serde_json::to_value(&self.persister.get_node_state()?)?;
+        let payments = serde_json::to_value(
             &self
                 .persister
                 .list_payments(ListPaymentsRequest::default())?,
         )?;
-        let channels = serde_json::to_string_pretty(&self.persister.list_channels()?)?;
-        let settings = serde_json::to_string_pretty(&self.persister.list_settings()?)?;
-        let reverse_swaps = self
-            .persister
-            .list_reverse_swaps()
-            .map(sanitize_vec_pretty_print)??;
-        let swaps = self
-            .persister
-            .list_swaps()
-            .map(sanitize_vec_pretty_print)??;
-        let lsp_id = serde_json::to_string_pretty(&self.persister.get_lsp_id()?)?;
+        let channels = serde_json::to_value(&self.persister.list_channels()?)?;
+        let settings = serde_json::to_value(&self.persister.list_settings()?)?;
+        let reverse_swaps =
+            serde_json::to_value(self.persister.list_reverse_swaps().map(sanitize_vec)?)?;
+        let swaps = serde_json::to_value(self.persister.list_swaps().map(sanitize_vec)?)?;
+        let lsp_id = serde_json::to_value(&self.persister.get_lsp_id()?)?;
 
-        let res = format!(
-            "\
-          ***Node State***\n{state}\n\n \
-          ***Payments***\n{payments}\n\n \
-          ***Channels***\n{channels}\n\n \
-          ***Settings***\n{settings}\n\n \
-          ***Reverse Swaps***\n{reverse_swaps}\n\n \
-          ***LSP ID***\n{lsp_id}\n\n \
-          ***Swaps***\n{swaps}\n\n"
-        );
+        let res = json!({
+            "node_state": state,
+            "payments": payments,
+            "channels": channels,
+            "settings": settings,
+            "reverse_swaps": reverse_swaps,
+            "swaps": swaps,
+            "lsp_id": lsp_id,
+        });
         Ok(res)
     }
 }
