@@ -13,6 +13,7 @@ use rand::rngs::OsRng;
 use rand::{random, Rng};
 use sdk_common::grpc;
 use sdk_common::prelude::{FiatAPI, FiatCurrency, Rate};
+use serde_json::{json, Value};
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
@@ -465,12 +466,12 @@ impl NodeAPI for MockNodeAPI {
         Ok(Vec::new())
     }
 
-    async fn execute_command(&self, _command: String) -> NodeResult<String> {
+    async fn execute_command(&self, _command: String) -> NodeResult<Value> {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
-    async fn generate_diagnostic_data(&self) -> NodeResult<String> {
-        Ok("".to_string())
+    async fn generate_diagnostic_data(&self) -> NodeResult<Value> {
+        Ok(json!({}))
     }
 
     async fn max_sendable_amount(

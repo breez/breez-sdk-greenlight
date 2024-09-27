@@ -27,6 +27,7 @@ use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::Signer;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Map, Value};
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
@@ -1406,7 +1407,7 @@ impl NodeAPI for Greenlight {
         Ok(hex_vec)
     }
 
-    async fn generate_diagnostic_data(&self) -> NodeResult<String> {
+    async fn generate_diagnostic_data(&self) -> NodeResult<Value> {
         let all_commands = vec![
             NodeCommand::GetInfo.to_string(),
             NodeCommand::ListPeerChannels.to_string(),
@@ -1415,19 +1416,19 @@ impl NodeAPI for Greenlight {
             NodeCommand::ListInvoices.to_string(),
         ];
 
-        let mut result = String::new();
+        let mut result = Map::new();
         for command in all_commands {
             let command_name = command.clone();
             let res = self
                 .execute_command(command)
                 .await
-                .unwrap_or_else(|e| e.to_string());
-            result += &format!("***{command_name}:***\n\n {res}\n\n");
+                .unwrap_or_else(|e| json!({ "error": e.to_string() }));
+            result.insert(command_name, res);
         }
-        Ok(result)
+        Ok(Value::Object(result))
     }
 
-    async fn execute_command(&self, command: String) -> NodeResult<String> {
+    async fn execute_command(&self, command: String) -> NodeResult<Value> {
         let node_cmd =
             NodeCommand::from_str(&command).map_err(|_| anyhow!("Command not found: {command}"))?;
         match node_cmd {
@@ -1439,7 +1440,7 @@ impl NodeAPI for Greenlight {
                     .await?
                     .into_inner();
 
-                Ok(serde_json::to_string_pretty(&resp)?)
+                Ok(serde_json::to_value(&resp)?)
             }
             NodeCommand::ListPeerChannels => {
                 let resp = self
@@ -1448,7 +1449,7 @@ impl NodeAPI for Greenlight {
                     .list_peer_channels(cln::ListpeerchannelsRequest::default())
                     .await?
                     .into_inner();
-                Ok(serde_json::to_string_pretty(&resp)?)
+                Ok(serde_json::to_value(&resp)?)
             }
             NodeCommand::ListFunds => {
                 let resp = self
@@ -1457,7 +1458,7 @@ impl NodeAPI for Greenlight {
                     .list_funds(cln::ListfundsRequest::default())
                     .await?
                     .into_inner();
-                Ok(serde_json::to_string_pretty(&resp)?)
+                Ok(serde_json::to_value(&resp)?)
             }
             NodeCommand::ListPayments => {
                 let resp = self
@@ -1466,7 +1467,7 @@ impl NodeAPI for Greenlight {
                     .list_pays(cln::ListpaysRequest::default())
                     .await?
                     .into_inner();
-                Ok(serde_json::to_string_pretty(&resp)?)
+                Ok(serde_json::to_value(&resp)?)
             }
             NodeCommand::ListInvoices => {
                 let resp = self
@@ -1475,7 +1476,7 @@ impl NodeAPI for Greenlight {
                     .list_invoices(cln::ListinvoicesRequest::default())
                     .await?
                     .into_inner();
-                Ok(serde_json::to_string_pretty(&resp)?)
+                Ok(serde_json::to_value(&resp)?)
             }
             NodeCommand::CloseAllChannels => {
                 let peers_res = self
@@ -1488,7 +1489,7 @@ impl NodeAPI for Greenlight {
                     self.close_peer_channels(hex::encode(p.id)).await?;
                 }
 
-                Ok("All channels were closed".to_string())
+                Ok(Value::String("All channels were closed".to_string()))
             }
             NodeCommand::GetInfo => {
                 let resp = self
@@ -1497,7 +1498,7 @@ impl NodeAPI for Greenlight {
                     .getinfo(cln::GetinfoRequest::default())
                     .await?
                     .into_inner();
-                Ok(serde_json::to_string_pretty(&resp)?)
+                Ok(serde_json::to_value(&resp)?)
             }
             NodeCommand::Stop => {
                 let resp = self
@@ -1506,7 +1507,7 @@ impl NodeAPI for Greenlight {
                     .stop(cln::StopRequest::default())
                     .await?
                     .into_inner();
-                Ok(serde_json::to_string_pretty(&resp)?)
+                Ok(serde_json::to_value(&resp)?)
             }
         }
     }
