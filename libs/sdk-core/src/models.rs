@@ -1577,9 +1577,6 @@ impl PaymentPathEdge {
 }
 
 pub(crate) mod sanitize {
-    use anyhow::Result;
-    use serde::Serialize;
-
     use crate::{FullReverseSwapInfo, SwapInfo};
 
     pub(crate) trait Sanitize {
@@ -1594,13 +1591,6 @@ pub(crate) mod sanitize {
         vals.into_iter()
             .map(|val| val.sanitize())
             .collect::<Vec<T>>()
-    }
-
-    pub(crate) fn sanitize_vec_pretty_print<T>(vals: Vec<T>) -> Result<String>
-    where
-        T: Sanitize + Serialize,
-    {
-        serde_json::to_string_pretty(&sanitize_vec(vals)).map_err(anyhow::Error::new)
     }
 
     impl Sanitize for FullReverseSwapInfo {
