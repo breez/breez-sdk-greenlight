@@ -178,6 +178,7 @@ mod lsps0;
 mod lsps2;
 mod models;
 mod persist;
+mod serializer;
 mod support;
 mod swap_in;
 mod swap_out;
