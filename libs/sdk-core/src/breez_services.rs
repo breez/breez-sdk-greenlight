@@ -1149,7 +1149,7 @@ impl BreezServices {
             Ok(dev_cmd) => match dev_cmd {
                 DevCommand::GenerateDiagnosticData => self.generate_diagnostic_data().await,
             },
-            Err(_) => Ok(serde_json::to_string_pretty(
+            Err(_) => Ok(crate::serializer::to_string_pretty(
                 &self.node_api.execute_command(command).await?,
             )?),
         }
@@ -1176,7 +1176,7 @@ impl BreezServices {
             "node": node_data,
             "sdk": sdk_data
         });
-        Ok(serde_json::to_string_pretty(&result)?)
+        Ok(crate::serializer::to_string_pretty(&result)?)
     }
 
     /// This method sync the local state with the remote node state.
@@ -2174,18 +2174,20 @@ impl BreezServices {
     }
 
     async fn generate_sdk_diagnostic_data(&self) -> SdkResult<Value> {
-        let state = serde_json::to_value(&self.persister.get_node_state()?)?;
-        let payments = serde_json::to_value(
+        let state = crate::serializer::value::to_value(&self.persister.get_node_state()?)?;
+        let payments = crate::serializer::value::to_value(
             &self
                 .persister
                 .list_payments(ListPaymentsRequest::default())?,
         )?;
-        let channels = serde_json::to_value(&self.persister.list_channels()?)?;
-        let settings = serde_json::to_value(&self.persister.list_settings()?)?;
-        let reverse_swaps =
-            serde_json::to_value(self.persister.list_reverse_swaps().map(sanitize_vec)?)?;
-        let swaps = serde_json::to_value(self.persister.list_swaps().map(sanitize_vec)?)?;
-        let lsp_id = serde_json::to_value(&self.persister.get_lsp_id()?)?;
+        let channels = crate::serializer::value::to_value(&self.persister.list_channels()?)?;
+        let settings = crate::serializer::value::to_value(&self.persister.list_settings()?)?;
+        let reverse_swaps = crate::serializer::value::to_value(
+            self.persister.list_reverse_swaps().map(sanitize_vec)?,
+        )?;
+        let swaps =
+            crate::serializer::value::to_value(self.persister.list_swaps().map(sanitize_vec)?)?;
+        let lsp_id = crate::serializer::value::to_value(&self.persister.get_lsp_id()?)?;
 
         let res = json!({
             "node_state": state,
