@@ -556,6 +556,7 @@ dependencies = [
  "ripemd",
  "rusqlite",
  "rusqlite_migration",
+ "ryu",
  "sdk-common",
  "serde",
  "serde_json",
@@ -2944,9 +2945,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.13"
+version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
+checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
 
 [[package]]
 name = "schannel"
