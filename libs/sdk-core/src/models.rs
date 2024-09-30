@@ -12,6 +12,7 @@ use sdk_common::grpc;
 use sdk_common::prelude::Network::*;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_with::{hex::Hex, serde_as};
 use strum_macros::{Display, EnumString};
 
 use crate::bitcoin::blockdata::opcodes;
@@ -1318,8 +1319,7 @@ impl TryFrom<i32> for SwapStatus {
 /// saved to the persistent storage.
 ///
 /// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
-///
-
+#[serde_as]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SwapInfo {
     /// Bitcoin address for this swap. Sats sent to this address will be swapped.
@@ -1328,17 +1328,29 @@ pub struct SwapInfo {
     pub created_at: i64,
     /// Relative time lock for the timeout for the script to be redeemed before swap fails.
     pub lock_height: i64,
+
     /// sha256 hash of preimage to used in the claim sript.
+    #[serde_as(as = "Hex")]
     pub payment_hash: Vec<u8>,
+
     /// Secret to claim the swap.
+    #[serde_as(as = "Hex")]
     pub preimage: Vec<u8>,
+
     /// Secret claim key for the bitcoin address.
+    #[serde_as(as = "Hex")]
     pub private_key: Vec<u8>,
+
     /// Public key in binary format of the private claim private key.
+    #[serde_as(as = "Hex")]
     pub public_key: Vec<u8>,
+
     /// The public key in binary format from the swapping service. Received from [SwapperAPI::create_swap].
+    #[serde_as(as = "Hex")]
     pub swapper_public_key: Vec<u8>,
+
     /// The locking script for the generated bitcoin address. Received from [SwapperAPI::create_swap].
+    #[serde_as(as = "Hex")]
     pub script: Vec<u8>,
 
     /// bolt11 invoice to claim the sent funds.
