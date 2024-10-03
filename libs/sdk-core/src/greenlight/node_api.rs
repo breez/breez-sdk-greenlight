@@ -33,7 +33,7 @@ use serde_json::{json, Map, Value};
 use strum_macros::{Display, EnumString};
 use tokio::join;
 use tokio::sync::{mpsc, watch, Mutex};
-use tokio::time::{sleep, MissedTickBehavior};
+use tokio::time::{sleep, Instant, MissedTickBehavior};
 use tokio_stream::StreamExt;
 use tonic::Streaming;
 
@@ -888,6 +888,67 @@ impl Greenlight {
         let outbound_payments = update_payment_expirations(outbound_payments, htlc_list)?;
         Ok((outbound_payments, new_state))
     }
+
+    async fn wait_channel_reestablished(&self, path: &PaymentPath) -> NodeResult<()> {
+        let deadline =
+            Instant::now()
+                .checked_add(Duration::from_secs(20))
+                .ok_or(NodeError::generic(
+                    "Failed to set channel establishment deadline",
+                ))?;
+
+        while Instant::now().le(&deadline) && !self.poll_channel_reestablished(path).await? {
+            tokio::time::sleep(Duration::from_millis(50)).await
+        }
+
+        Ok(())
+    }
+
+    async fn poll_channel_reestablished(&self, path: &PaymentPath) -> NodeResult<bool> {
+        let edge = match path.edges.first() {
+            Some(edge) => edge,
+            None => return Err(NodeError::generic("Channel not found")),
+        };
+        let mut client = self.get_node_client().await?;
+        let res = client
+            .list_peer_channels(cln::ListpeerchannelsRequest {
+                id: Some(edge.node_id.clone()),
+            })
+            .await?
+            .into_inner();
+        let channel = match res.channels.iter().find(|c| {
+            match (
+                c.alias.as_ref().and_then(|a| a.local.as_ref()),
+                c.short_channel_id.as_ref(),
+            ) {
+                (Some(alias), Some(short_channel_id)) => {
+                    *alias == edge.short_channel_id || *short_channel_id == edge.short_channel_id
+                }
+                (Some(alias), None) => *alias == edge.short_channel_id,
+                (None, Some(short_channel_id)) => *short_channel_id == edge.short_channel_id,
+                (None, None) => false,
+            }
+        }) {
+            Some(channel) => channel,
+            None => return Err(NodeError::generic("Channel not found")),
+        };
+
+        if let Some(peer_connected) = channel.peer_connected {
+            if !peer_connected {
+                return Ok(false);
+            }
+        }
+
+        if !channel
+            .status
+            .iter()
+            .any(|s| s.contains("Channel ready") || s.contains("Reconnected, and reestablished"))
+        {
+            return Ok(false);
+        }
+
+        Ok(true)
+    }
 }
 
 fn add_amount_sent(
@@ -1205,7 +1266,7 @@ impl NodeAPI for Greenlight {
                 "send_pay route to pay: {:?}, received_amount = {}",
                 route, to_pay_msat
             );
-
+            self.wait_channel_reestablished(&max.path).await?;
             // We send the part using the node API
             client
                 .send_pay(SendpayRequest {
