@@ -434,7 +434,27 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ",
        "DELETE FROM cached_items WHERE key = 'gl_credentials'",
        "DELETE FROM cached_items WHERE key = 'last_sync_time'",
-       "DELETE FROM cached_items WHERE key = 'node_state'"
+       "DELETE FROM cached_items WHERE key = 'node_state'",
+       "
+       CREATE TABLE IF NOT EXISTS send_pays (
+        created_index INTEGER PRIMARY KEY NOT NULL,
+        updated_index INTEGER,
+        groupid INTEGER NOT NULL,
+        partid INTEGER,
+        payment_hash BLOB NOT NULL,
+        status INTEGER NOT NULL,
+        amount_msat INTEGER,
+        destination BLOB,
+        created_at INTEGER NOT NULL,
+        amount_sent_msat INTEGER,
+        label TEXT,
+        bolt11 TEXT,
+        description TEXT,
+        bolt12 TEXT,
+        payment_preimage BLOB,
+        erroronion BLOB
+       ) STRICT;
+       "
     ]
 }
 

@@ -13,6 +13,7 @@ use rand::rngs::OsRng;
 use rand::{random, Rng};
 use sdk_common::grpc;
 use sdk_common::prelude::{FiatAPI, FiatCurrency, Rate};
+use serde_json::Value;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
@@ -349,10 +350,11 @@ impl NodeAPI for MockNodeAPI {
 
     async fn pull_changed(
         &self,
-        _since_timestamp: u64,
-        _balance_changed: bool,
+        _sync_state: Option<Value>,
+        _match_local_balance: bool,
     ) -> NodeResult<SyncResponse> {
         Ok(SyncResponse {
+            sync_state: Value::Null,
             node_state: self.node_state.clone(),
             payments: self
                 .cloud_payments

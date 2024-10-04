@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::pin::Pin;
 
 use anyhow::Result;
+use serde_json::Value;
 use tokio::sync::{mpsc, watch};
 use tokio_stream::Stream;
 use tonic::Streaming;
@@ -120,7 +121,7 @@ pub trait NodeAPI: Send + Sync {
     async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>>;
     async fn pull_changed(
         &self,
-        since_timestamp: u64,
+        sync_state: Option<Value>,
         match_local_balance: bool,
     ) -> NodeResult<SyncResponse>;
     /// As per the `pb::PayRequest` docs, `amount_msat` is only needed when the invoice doesn't specify an amount

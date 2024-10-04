@@ -1,10 +1,12 @@
+use serde_json::Value;
+
 use crate::models::NodeState;
 
 use super::{db::SqliteStorage, error::PersistResult};
 
 const KEY_GL_CREDENTIALS: &str = "gl_credentials";
 const KEY_LAST_BACKUP_TIME: &str = "last_backup_time";
-const KEY_LAST_SYNC_TIME: &str = "last_sync_time";
+const KEY_SYNC_STATE: &str = "sync_state";
 const KEY_NODE_STATE: &str = "node_state";
 const KEY_STATIC_BACKUP: &str = "static_backup";
 const KEY_WEBHOOK_URL: &str = "webhook_url";
@@ -60,14 +62,14 @@ impl SqliteStorage {
         })
     }
 
-    pub fn set_last_sync_time(&self, t: u64) -> PersistResult<()> {
-        self.update_cached_item(KEY_LAST_SYNC_TIME, t.to_string())
+    pub fn set_sync_state(&self, t: &Value) -> PersistResult<()> {
+        self.update_cached_item(KEY_SYNC_STATE, t.to_string())
     }
 
-    pub fn get_last_sync_time(&self) -> PersistResult<Option<u64>> {
-        let state_str = self.get_cached_item(KEY_LAST_SYNC_TIME)?;
+    pub fn get_sync_state(&self) -> PersistResult<Option<Value>> {
+        let state_str = self.get_cached_item(KEY_SYNC_STATE)?;
         Ok(match state_str {
-            Some(str) => str.as_str().parse::<u64>().ok(),
+            Some(str) => serde_json::from_str(&str)?,
             None => None,
         })
     }

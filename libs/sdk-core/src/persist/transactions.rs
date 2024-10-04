@@ -194,14 +194,6 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub fn last_payment_timestamp(&self) -> PersistResult<u64> {
-        Ok(self.get_connection()?.query_row(
-            "SELECT max(payment_time) FROM payments where status != ?1",
-            params![PaymentStatus::Pending],
-            |row| row.get(0),
-        )?)
-    }
-
     /// Constructs [Payment] by joining data in the `payment` and `payments_external_info` tables
     ///
     /// This queries all payments. To query a single payment, see [Self::get_payment_by_hash]
@@ -875,9 +867,6 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     assert!(
         matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}} if swap == &Some(swap_info))
     );
-
-    let max_ts = storage.last_payment_timestamp()?;
-    assert_eq!(max_ts, 2000);
 
     storage.insert_or_update_payments(&txs, false)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;

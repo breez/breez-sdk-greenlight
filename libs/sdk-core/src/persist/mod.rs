@@ -4,6 +4,7 @@ pub(crate) mod db;
 pub(crate) mod error;
 pub(crate) mod migrations;
 pub(crate) mod reverseswap;
+pub(crate) mod send_pays;
 pub(crate) mod settings;
 pub(crate) mod swap;
 pub(crate) mod sync;

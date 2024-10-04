@@ -14,11 +14,13 @@ use gl_client::credentials::{Device, Nobody};
 use gl_client::node;
 use gl_client::node::ClnClient;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
+use gl_client::pb::cln::listinvoices_request::ListinvoicesIndex;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::listpeerchannels_channels::ListpeerchannelsChannelsState::*;
+use gl_client::pb::cln::listsendpays_request::ListsendpaysIndex;
 use gl_client::pb::cln::{
     self, Amount, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
-    ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels,
+    ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels, ListsendpaysPayments,
     PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
 use gl_client::pb::{OffChainPayment, PayStatus, TrampolinePayRequest};
@@ -27,6 +29,7 @@ use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::Signer;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use strum_macros::{Display, EnumString};
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
@@ -47,6 +50,7 @@ use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
+use crate::persist::send_pays::{SendPay, SendPayStatus};
 use crate::{models::*, LspInformation};
 use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
 
@@ -684,6 +688,321 @@ impl Greenlight {
         _ = self.inprogress_payments.fetch_sub(1, Ordering::Relaxed);
         res
     }
+
+    // pulls transactions from greenlight based on last sync timestamp.
+    // greenlight gives us the payments via API and for received payments we are looking for settled invoices.
+    async fn pull_transactions(
+        &self,
+        sync_state: &SyncState,
+        htlc_list: Vec<Htlc>,
+    ) -> NodeResult<(SyncState, Vec<Payment>)> {
+        let mut node_client = self.get_node_client().await?;
+        let mut new_sync_state = sync_state.clone();
+
+        // list invoices
+        let created_invoices = node_client
+            .list_invoices(cln::ListinvoicesRequest {
+                index: Some(ListinvoicesIndex::Created.into()),
+                start: Some(sync_state.list_invoices_index.created),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+        if let Some(last) = created_invoices.invoices.last() {
+            new_sync_state.list_invoices_index.created = last.created_index()
+        }
+        let updated_invoices = node_client
+            .list_invoices(cln::ListinvoicesRequest {
+                index: Some(ListinvoicesIndex::Updated.into()),
+                start: Some(sync_state.list_invoices_index.updated),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+        if let Some(last) = updated_invoices.invoices.last() {
+            new_sync_state.list_invoices_index.updated = last.created_index()
+        }
+        // construct the received transactions by filtering the invoices to those paid and beyond the filter timestamp
+        let received_transactions: NodeResult<Vec<Payment>> = created_invoices
+            .invoices
+            .into_iter()
+            .chain(updated_invoices.invoices.into_iter())
+            .filter(|i| i.status() == ListinvoicesInvoicesStatus::Paid)
+            .map(TryInto::try_into)
+            .collect();
+
+        // fetch payments from greenlight
+        let created_send_pays = node_client
+            .list_send_pays(cln::ListsendpaysRequest {
+                index: Some(ListsendpaysIndex::Created.into()),
+                start: Some(sync_state.send_pays_index.created),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+        if let Some(last) = created_send_pays.payments.last() {
+            new_sync_state.send_pays_index.created = last.created_index()
+        }
+        let updated_send_pays = node_client
+            .list_send_pays(cln::ListsendpaysRequest {
+                index: Some(ListsendpaysIndex::Updated.into()),
+                start: Some(sync_state.send_pays_index.updated),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+        if let Some(last) = updated_send_pays.payments.last() {
+            new_sync_state.send_pays_index.updated = last.created_index()
+        }
+        let mut hashes: Vec<_> = created_send_pays
+            .payments
+            .iter()
+            .chain(updated_send_pays.payments.iter())
+            .map(|p| p.payment_hash.clone())
+            .collect();
+        hashes.dedup();
+        let hash_groups: HashSet<_> = created_send_pays
+            .payments
+            .iter()
+            .chain(updated_send_pays.payments.iter())
+            .map(|p| {
+                let mut key = hex::encode(&p.payment_hash);
+                key.push('|');
+                key.push_str(&p.groupid.to_string());
+                key
+            })
+            .collect();
+        trace!(
+            "list sendpays: created: {:?}, updated: {:?}",
+            created_send_pays,
+            updated_send_pays
+        );
+        self.persister.insert_send_pays(
+            &created_send_pays
+                .payments
+                .into_iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<_>, _>>()?,
+        )?;
+        self.persister.insert_send_pays(
+            &updated_send_pays
+                .payments
+                .into_iter()
+                .map(TryInto::try_into)
+                .collect::<Result<Vec<_>, _>>()?,
+        )?;
+
+        // Now all new send_pays are persisted. Retrieve the send_pays for the
+        // payment hashes, to ensure any send_pays belonging to the same payment
+        // that were not fetched in this round are also included.
+        let send_pays = self.persister.list_send_pays(&hashes)?;
+
+        // Now that all send_pays belonging to all payments are here, aggregate
+        // the send_pays into payments. This is a copy of what core lightning's
+        // listpays function does under the hood.
+        let mut outbound_payments: HashMap<String, SendPayAgg> = HashMap::new();
+        for send_pay in send_pays {
+            let mut key = hex::encode(&send_pay.payment_hash);
+            key.push('|');
+            key.push_str(&send_pay.groupid.to_string());
+            if !hash_groups.contains(&key) {
+                continue;
+            }
+            let payment = outbound_payments.entry(key).or_insert(SendPayAgg {
+                state: 0,
+                created_at: send_pay.created_at,
+                payment_hash: send_pay.payment_hash,
+                bolt11: None,
+                destination: None,
+                label: None,
+                description: None,
+                preimage: None,
+                amount_sent: 0,
+                amount: None,
+                num_nonfailed_parts: 0,
+            });
+            if payment.bolt11.is_none() {
+                payment.bolt11 = send_pay.bolt11;
+            }
+            if payment.destination.is_none() {
+                payment.destination = send_pay.destination;
+            }
+            if payment.description.is_none() {
+                payment.description = send_pay.description;
+            }
+            if payment.label.is_none() {
+                payment.label = send_pay.label;
+            }
+            if payment.preimage.is_none() {
+                payment.preimage = send_pay.payment_preimage;
+            }
+            if send_pay.created_at < payment.created_at {
+                payment.created_at = send_pay.created_at;
+            }
+
+            match send_pay.status {
+                SendPayStatus::Pending => {
+                    add_amount_sent(payment, send_pay.amount_sent_msat, send_pay.amount_msat);
+                    payment.num_nonfailed_parts += 1;
+                    payment.state |= 1;
+                }
+                SendPayStatus::Failed => {
+                    payment.state |= 4;
+                }
+                SendPayStatus::Complete => {
+                    add_amount_sent(payment, send_pay.amount_sent_msat, send_pay.amount_msat);
+                    payment.num_nonfailed_parts += 1;
+                    payment.state |= 2;
+                }
+            }
+        }
+
+        let outbound_payments: Vec<Payment> = outbound_payments
+            .into_values()
+            .map(TryInto::try_into)
+            .collect::<Result<Vec<_>, _>>()?;
+        let outbound_payments = update_payment_expirations(outbound_payments, htlc_list)?;
+
+        let mut transactions: Vec<Payment> = Vec::new();
+        transactions.extend(received_transactions?);
+        transactions.extend(outbound_payments);
+
+        Ok((new_sync_state, transactions))
+    }
+}
+
+fn add_amount_sent(
+    agg: &mut SendPayAgg,
+    send_pay_amount_sent_msat: Option<u64>,
+    send_pay_amount_msat: Option<u64>,
+) {
+    if let Some(amount_sent_msat) = send_pay_amount_sent_msat {
+        agg.amount_sent += amount_sent_msat;
+    }
+
+    let amount_msat = match send_pay_amount_msat {
+        Some(amount_msat) => amount_msat,
+        None => {
+            agg.amount = None;
+            return;
+        }
+    };
+
+    if let Some(amount) = agg.amount {
+        agg.amount = Some(amount + amount_msat);
+    }
+}
+
+impl TryFrom<ListsendpaysPayments> for SendPay {
+    type Error = NodeError;
+
+    fn try_from(value: ListsendpaysPayments) -> std::result::Result<Self, Self::Error> {
+        Ok(SendPay {
+            created_index: value
+                .created_index
+                .ok_or(NodeError::generic("missing created index"))?,
+            updated_index: value.updated_index,
+            groupid: value.groupid,
+            partid: value.partid,
+            payment_hash: value.payment_hash,
+            status: value.status.try_into()?,
+            amount_msat: value.amount_msat.map(|a| a.msat),
+            destination: value.destination,
+            created_at: value.created_at,
+            amount_sent_msat: value.amount_sent_msat.map(|a| a.msat),
+            label: value.label,
+            bolt11: value.bolt11,
+            description: value.description,
+            bolt12: value.bolt12,
+            payment_preimage: value.payment_preimage,
+            erroronion: value.erroronion,
+        })
+    }
+}
+
+impl TryFrom<i32> for SendPayStatus {
+    type Error = NodeError;
+
+    fn try_from(value: i32) -> std::result::Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Pending),
+            1 => Ok(Self::Failed),
+            2 => Ok(Self::Complete),
+            _ => Err(NodeError::generic("invalid send_pay status")),
+        }
+    }
+}
+
+impl TryFrom<SendPayAgg> for Payment {
+    type Error = NodeError;
+
+    fn try_from(value: SendPayAgg) -> std::result::Result<Self, Self::Error> {
+        // For trampoline payments the amount_msat doesn't match the actual
+        // amount. If it's a trampoline payment, take the amount from the label.
+        let (payment_amount, client_label) =
+            serde_json::from_str::<PaymentLabel>(&value.label.clone().unwrap_or_default())
+                .ok()
+                .and_then(|label| {
+                    label
+                        .trampoline
+                        .then_some((label.amount_msat, label.client_label))
+                })
+                .unwrap_or((value.amount.unwrap_or_default(), value.label.clone()));
+        let fee_msat = match value.amount {
+            Some(amount) => value.amount_sent.saturating_sub(amount),
+            None => 0,
+        };
+        let status = if value.state & 2 > 0 {
+            PaymentStatus::Complete
+        } else if value.state & 1 > 0 {
+            PaymentStatus::Pending
+        } else {
+            PaymentStatus::Failed
+        };
+        Ok(Self {
+            id: hex::encode(&value.payment_hash),
+            payment_type: PaymentType::Sent,
+            payment_time: value.created_at as i64,
+            amount_msat: payment_amount,
+            fee_msat,
+            status,
+            error: None,
+            description: value.description,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(&value.payment_hash),
+                    label: client_label.unwrap_or_default(),
+                    destination_pubkey: value.destination.map(hex::encode).unwrap_or_default(),
+                    payment_preimage: value.preimage.map(hex::encode).unwrap_or_default(),
+                    keysend: value.bolt11.is_none(),
+                    bolt11: value.bolt11.unwrap_or_default(),
+                    open_channel_bolt11: None,
+                    lnurl_success_action: None,
+                    lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
+                    ln_address: None,
+                    lnurl_metadata: None,
+                    lnurl_withdraw_endpoint: None,
+                    swap_info: None,
+                    reverse_swap_info: None,
+                    pending_expiration_block: None,
+                },
+            },
+            metadata: None,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+struct SyncIndex {
+    pub created: u64,
+    pub updated: u64,
+}
+
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+struct SyncState {
+    pub send_pays_index: SyncIndex,
+    pub list_invoices_index: SyncIndex,
 }
 
 #[tonic::async_trait]
@@ -782,10 +1101,14 @@ impl NodeAPI for Greenlight {
     // implement pull changes from greenlight
     async fn pull_changed(
         &self,
-        since_timestamp: u64,
+        sync_state: Option<Value>,
         match_local_balance: bool,
     ) -> NodeResult<SyncResponse> {
-        info!("pull changed since {}", since_timestamp);
+        let sync_state: SyncState = match sync_state {
+            Some(sync_state) => serde_json::from_value(sync_state)?,
+            None => SyncState::default(),
+        };
+
         let node_client = self.get_node_client().await?;
 
         // get node info
@@ -885,9 +1208,12 @@ impl NodeAPI for Greenlight {
             htlc_list.extend(channel.htlcs);
         }
 
+        let (new_sync_state, payments) = self.pull_transactions(&sync_state, htlc_list).await?;
+
         Ok(SyncResponse {
+            sync_state: serde_json::to_value(new_sync_state)?,
             node_state,
-            payments: pull_transactions(since_timestamp, node_client.clone(), htlc_list).await?,
+            payments,
             channels: all_channel_models,
         })
     }
@@ -1754,59 +2080,18 @@ enum NodeCommand {
     Stop,
 }
 
-// pulls transactions from greenlight based on last sync timestamp.
-// greenlight gives us the payments via API and for received payments we are looking for settled invoices.
-async fn pull_transactions(
-    since_timestamp: u64,
-    client: node::ClnClient,
-    htlc_list: Vec<Htlc>,
-) -> NodeResult<Vec<Payment>> {
-    let mut c = client.clone();
-
-    // list invoices
-    let invoices = c
-        .list_invoices(cln::ListinvoicesRequest::default())
-        .await?
-        .into_inner();
-    // construct the received transactions by filtering the invoices to those paid and beyond the filter timestamp
-    let received_transactions: NodeResult<Vec<Payment>> = invoices
-        .invoices
-        .into_iter()
-        .filter(|i| {
-            i.paid_at.unwrap_or_default() > since_timestamp
-                && i.status() == ListinvoicesInvoicesStatus::Paid
-        })
-        .map(TryInto::try_into)
-        .collect();
-
-    // fetch payments from greenlight
-    let payments = c
-        .list_pays(cln::ListpaysRequest::default())
-        .await?
-        .into_inner();
-    trace!("list payments (unfiltered): {:?}", payments);
-    // construct the payment transactions (pending and complete)
-    let outbound_transactions: NodeResult<Vec<Payment>> = payments
-        .pays
-        .into_iter()
-        .filter(|p| {
-            p.created_at > since_timestamp
-                || match p.completed_at {
-                    None => true,
-                    Some(completed_at) => completed_at > since_timestamp,
-                }
-        })
-        .map(TryInto::try_into)
-        .collect();
-
-    let outbound_transactions: NodeResult<Vec<Payment>> =
-        update_payment_expirations(outbound_transactions?, htlc_list);
-
-    let mut transactions: Vec<Payment> = Vec::new();
-    transactions.extend(received_transactions?);
-    transactions.extend(outbound_transactions?);
-
-    Ok(transactions)
+struct SendPayAgg {
+    state: i32,
+    created_at: u64,
+    payment_hash: Vec<u8>,
+    bolt11: Option<String>,
+    destination: Option<Vec<u8>>,
+    label: Option<String>,
+    description: Option<String>,
+    preimage: Option<Vec<u8>>,
+    amount_sent: u64,
+    amount: Option<u64>,
+    num_nonfailed_parts: u64,
 }
 
 fn update_payment_expirations(

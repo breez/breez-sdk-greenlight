@@ -12,6 +12,7 @@ use sdk_common::grpc;
 use sdk_common::prelude::Network::*;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use strum_macros::{Display, EnumString};
 
 use crate::bitcoin::blockdata::opcodes;
@@ -639,6 +640,7 @@ pub struct NodeState {
 
 /// Internal response to a [crate::node_api::NodeAPI::pull_changed] call
 pub struct SyncResponse {
+    pub sync_state: Value,
     pub node_state: NodeState,
     pub payments: Vec<crate::models::Payment>,
     pub channels: Vec<crate::models::Channel>,

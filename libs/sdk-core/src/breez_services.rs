@@ -1188,16 +1188,16 @@ impl BreezServices {
         let node_pubkey = self.node_api.start().await?;
         self.connect_lsp_peer(node_pubkey).await?;
 
-        // First query the changes since last sync time.
-        let since_timestamp = self.persister.get_last_sync_time()?.unwrap_or(0);
+        // First query the changes since last sync state.
+        let sync_state = self.persister.get_sync_state()?;
         let new_data = &self
             .node_api
-            .pull_changed(since_timestamp, match_local_balance)
+            .pull_changed(sync_state.clone(), match_local_balance)
             .await?;
 
         debug!(
-            "pull changed time={:?} {:?}",
-            since_timestamp, new_data.payments
+            "pull changed old state={:?} new state={:?}",
+            sync_state, new_data.sync_state
         );
 
         // update node state and channels state
@@ -1232,11 +1232,8 @@ impl BreezServices {
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
 
-        // update the cached last sync time
-        if let Ok(last_payment_timestamp) = self.persister.last_payment_timestamp() {
-            self.persister.set_last_sync_time(last_payment_timestamp)?;
-        }
-
+        // update the cached sync state
+        self.persister.set_sync_state(&new_data.sync_state)?;
         self.notify_event_listeners(BreezEvent::Synced).await?;
         Ok(())
     }
