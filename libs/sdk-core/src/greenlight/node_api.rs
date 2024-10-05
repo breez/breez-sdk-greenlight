@@ -1892,56 +1892,6 @@ impl From<PayStatus> for PaymentStatus {
 }
 
 /// Construct a lightning transaction from an invoice
-impl TryFrom<gl_client::signer::model::greenlight::Payment> for Payment {
-    type Error = NodeError;
-
-    fn try_from(
-        payment: gl_client::signer::model::greenlight::Payment,
-    ) -> std::result::Result<Self, Self::Error> {
-        let mut description = None;
-        if !payment.bolt11.is_empty() {
-            description = parse_invoice(&payment.bolt11)?.description;
-        }
-
-        let payment_amount = amount_to_msat(&payment.amount.clone().unwrap_or_default());
-        let payment_amount_sent = amount_to_msat(&payment.amount_sent.clone().unwrap_or_default());
-        let status = payment.status().into();
-
-        Ok(Payment {
-            id: hex::encode(payment.payment_hash.clone()),
-            payment_type: PaymentType::Sent,
-            payment_time: payment.created_at as i64,
-            amount_msat: payment_amount,
-            fee_msat: payment_amount_sent - payment_amount,
-            status,
-            error: None,
-            description,
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: hex::encode(payment.payment_hash),
-                    label: "".to_string(),
-                    destination_pubkey: hex::encode(payment.destination),
-                    payment_preimage: hex::encode(payment.payment_preimage),
-                    keysend: payment.bolt11.is_empty(),
-                    bolt11: payment.bolt11,
-                    lnurl_success_action: None,
-                    lnurl_pay_domain: None,
-                    lnurl_pay_comment: None,
-                    lnurl_metadata: None,
-                    ln_address: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
-                },
-            },
-            metadata: None,
-        })
-    }
-}
-
-/// Construct a lightning transaction from an invoice
 impl TryFrom<cln::ListinvoicesInvoices> for Payment {
     type Error = NodeError;
 

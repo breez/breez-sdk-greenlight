@@ -5,8 +5,7 @@ use std::{mem, vec};
 
 use anyhow::{Error, Result};
 use chrono::{SecondsFormat, Utc};
-use gl_client::signer::model::greenlight::amount::Unit;
-use gl_client::signer::model::greenlight::Amount;
+use gl_client::pb::cln::Amount;
 use gl_client::signer::model::greenlight::PayStatus;
 use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
@@ -322,7 +321,7 @@ pub struct MockNodeAPI {
     /// Each call to [MockNodeAPI::add_dummy_payment_for] will add the new payment here such that
     /// [NodeAPI::pull_changed], which is called in [BreezServices::sync], always retrieves the newly
     /// added test payments
-    cloud_payments: Mutex<Vec<gl_client::signer::model::greenlight::Payment>>,
+    cloud_payments: Mutex<Vec<gl_client::pb::cln::ListpaysPays>>,
     node_state: NodeState,
     on_send_custom_message: Box<dyn Fn(CustomMessage) -> NodeResult<()> + Sync + Send>,
     on_stream_custom_messages: Mutex<mpsc::Receiver<CustomMessage>>,
@@ -568,27 +567,24 @@ impl MockNodeAPI {
         preimage: Option<sha256::Hash>,
         status: Option<PayStatus>,
     ) -> NodeResult<Payment> {
-        let gl_payment = gl_client::signer::model::greenlight::Payment {
+        let gl_payment = gl_client::pb::cln::ListpaysPays {
             payment_hash: hex::decode(inv.payment_hash().to_hex())?,
-            bolt11: inv.to_string(),
-            amount: inv
-                .amount_milli_satoshis()
-                .map(Unit::Millisatoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            amount_sent: inv
-                .amount_milli_satoshis()
-                .map(Unit::Millisatoshi)
-                .map(Some)
-                .map(|amt| Amount { unit: amt }),
-            payment_preimage: match preimage {
-                Some(preimage) => hex::decode(preimage.to_hex())?,
-                None => rand_vec_u8(32),
+            bolt11: Some(inv.to_string()),
+            amount_msat: inv.amount_milli_satoshis().map(|msat| Amount { msat }),
+            amount_sent_msat: inv.amount_milli_satoshis().map(|msat| Amount { msat }),
+            preimage: match preimage {
+                Some(preimage) => Some(hex::decode(preimage.to_hex())?),
+                None => Some(rand_vec_u8(32)),
             },
             status: status.unwrap_or(PayStatus::Complete).into(),
             created_at: random(),
-            destination: rand_vec_u8(32),
+            destination: Some(rand_vec_u8(32)),
             completed_at: random(),
+            label: None,
+            description: None,
+            bolt12: None,
+            erroronion: None,
+            number_of_parts: None,
         };
 
         self.save_payment_for_future_sync_updates(gl_payment.clone())
@@ -598,7 +594,7 @@ impl MockNodeAPI {
     /// Include payment in the result of [MockNodeAPI::pull_changed].
     async fn save_payment_for_future_sync_updates(
         &self,
-        gl_payment: gl_client::signer::model::greenlight::Payment,
+        gl_payment: gl_client::pb::cln::ListpaysPays,
     ) -> NodeResult<Payment> {
         let mut cloud_payments = self.cloud_payments.lock().await;
 
