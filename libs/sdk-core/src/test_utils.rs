@@ -5,8 +5,8 @@ use std::{mem, vec};
 
 use anyhow::{Error, Result};
 use chrono::{SecondsFormat, Utc};
+use gl_client::pb::cln::pay_response::PayStatus;
 use gl_client::pb::cln::Amount;
-use gl_client::signer::model::greenlight::PayStatus;
 use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;

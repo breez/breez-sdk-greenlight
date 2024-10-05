@@ -34,7 +34,7 @@ pub(crate) mod tests {
 
     use anyhow::{anyhow, Result};
     use gl_client::bitcoin::hashes::hex::ToHex;
-    use gl_client::signer::model::greenlight::PayStatus;
+    use gl_client::pb::cln::pay_response::PayStatus;
     use mockito::Mock;
     use rand::random;
 
