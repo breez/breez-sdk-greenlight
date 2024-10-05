@@ -1881,48 +1881,6 @@ impl TryFrom<OffChainPayment> for Payment {
     //}
 }
 
-/// Construct a lightning transaction from an invoice
-impl TryFrom<gl_client::signer::model::greenlight::Invoice> for Payment {
-    type Error = NodeError;
-
-    fn try_from(
-        invoice: gl_client::signer::model::greenlight::Invoice,
-    ) -> std::result::Result<Self, Self::Error> {
-        let ln_invoice = parse_invoice(&invoice.bolt11)?;
-        Ok(Payment {
-            id: hex::encode(invoice.payment_hash.clone()),
-            payment_type: PaymentType::Received,
-            payment_time: invoice.payment_time as i64,
-            amount_msat: amount_to_msat(&invoice.received.or(invoice.amount).unwrap_or_default()),
-            fee_msat: 0,
-            status: PaymentStatus::Complete,
-            error: None,
-            description: ln_invoice.description,
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: hex::encode(invoice.payment_hash),
-                    label: invoice.label,
-                    destination_pubkey: ln_invoice.payee_pubkey,
-                    payment_preimage: hex::encode(invoice.payment_preimage),
-                    keysend: false,
-                    bolt11: invoice.bolt11,
-                    lnurl_success_action: None, // For received payments, this is None
-                    lnurl_pay_domain: None,     // For received payments, this is None
-                    lnurl_pay_comment: None,    // For received payments, this is None
-                    lnurl_metadata: None,       // For received payments, this is None
-                    ln_address: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
-                },
-            },
-            metadata: None,
-        })
-    }
-}
-
 impl From<PayStatus> for PaymentStatus {
     fn from(value: PayStatus) -> Self {
         match value {
