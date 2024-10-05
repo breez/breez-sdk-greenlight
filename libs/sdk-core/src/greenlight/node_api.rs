@@ -1876,9 +1876,6 @@ impl TryFrom<OffChainPayment> for Payment {
             metadata: None,
         })
     }
-    // fn from(p: OffChainPayment) -> Self {
-
-    //}
 }
 
 impl From<PayStatus> for PaymentStatus {
