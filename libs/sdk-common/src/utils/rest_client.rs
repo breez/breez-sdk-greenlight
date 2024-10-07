@@ -23,7 +23,7 @@ pub async fn post_and_log_response(
         req = req.body(body);
     }
     let raw_body = req.send().await?.text().await?;
-    debug!("Received raw response body: {raw_body}");
+    trace!("Received raw response body: {raw_body}");
 
     Ok(raw_body)
 }
@@ -40,7 +40,7 @@ pub async fn get_and_log_response(
     let response = get_reqwest_client()?.get(url).send().await?;
     let status = response.status();
     let raw_body = response.text().await?;
-    debug!("Received response, status: {status}, raw response body: {raw_body}");
+    trace!("Received response, status: {status}, raw response body: {raw_body}");
 
     Ok((raw_body, status))
 }
