@@ -31,6 +31,7 @@ use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
 use strum_macros::{Display, EnumString};
+use tokio::join;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
 use tokio_stream::StreamExt;
@@ -698,33 +699,68 @@ impl Greenlight {
         sync_state: &SyncState,
         htlc_list: Vec<Htlc>,
     ) -> NodeResult<(SyncState, Vec<Payment>)> {
-        let mut node_client = self.get_node_client().await?;
+        let mut node_client1 = self.get_node_client().await?;
+        let mut node_client2 = node_client1.clone();
+        let mut node_client3 = node_client1.clone();
+        let mut node_client4 = node_client1.clone();
         let mut new_sync_state = sync_state.clone();
 
-        // list invoices
-        let created_invoices = node_client
-            .list_invoices(cln::ListinvoicesRequest {
-                index: Some(ListinvoicesIndex::Created.into()),
-                start: Some(sync_state.list_invoices_index.created),
-                ..Default::default()
-            })
-            .await?
-            .into_inner();
+        let created_invoices_fut = node_client1.list_invoices(cln::ListinvoicesRequest {
+            index: Some(ListinvoicesIndex::Created.into()),
+            start: Some(sync_state.list_invoices_index.created),
+            ..Default::default()
+        });
+        let updated_invoices_fut = node_client2.list_invoices(cln::ListinvoicesRequest {
+            index: Some(ListinvoicesIndex::Updated.into()),
+            start: Some(sync_state.list_invoices_index.updated),
+            ..Default::default()
+        });
+        let created_send_pays_fut = node_client3.list_send_pays(cln::ListsendpaysRequest {
+            index: Some(ListsendpaysIndex::Created.into()),
+            start: Some(sync_state.send_pays_index.created),
+            ..Default::default()
+        });
+        let updated_send_pays_fut = node_client4.list_send_pays(cln::ListsendpaysRequest {
+            index: Some(ListsendpaysIndex::Updated.into()),
+            start: Some(sync_state.send_pays_index.updated),
+            ..Default::default()
+        });
+
+        let (
+            created_invoices_res,
+            updated_invoices_res,
+            created_send_pays_res,
+            updated_send_pays_res,
+        ) = join!(
+            created_invoices_fut,
+            updated_invoices_fut,
+            created_send_pays_fut,
+            updated_send_pays_fut,
+        );
+
+        let created_invoices = created_invoices_res?.into_inner();
         if let Some(last) = created_invoices.invoices.last() {
             new_sync_state.list_invoices_index.created = last.created_index()
         }
-        let updated_invoices = node_client
-            .list_invoices(cln::ListinvoicesRequest {
-                index: Some(ListinvoicesIndex::Updated.into()),
-                start: Some(sync_state.list_invoices_index.updated),
-                ..Default::default()
-            })
-            .await?
-            .into_inner();
+        let updated_invoices = updated_invoices_res?.into_inner();
         if let Some(last) = updated_invoices.invoices.last() {
             new_sync_state.list_invoices_index.updated = last.created_index()
         }
-        // construct the received transactions by filtering the invoices to those paid and beyond the filter timestamp
+        let created_send_pays = created_send_pays_res?.into_inner();
+        if let Some(last) = created_send_pays.payments.last() {
+            new_sync_state.send_pays_index.created = last.created_index()
+        }
+        let updated_send_pays = updated_send_pays_res?.into_inner();
+        if let Some(last) = updated_send_pays.payments.last() {
+            new_sync_state.send_pays_index.updated = last.created_index()
+        }
+        trace!(
+            "list sendpays: created: {:?}, updated: {:?}",
+            created_send_pays,
+            updated_send_pays
+        );
+
+        // construct the received transactions by filtering the invoices to those paid
         let received_transactions: NodeResult<Vec<Payment>> = created_invoices
             .invoices
             .into_iter()
@@ -733,37 +769,7 @@ impl Greenlight {
             .map(TryInto::try_into)
             .collect();
 
-        // fetch payments from greenlight
-        let created_send_pays = node_client
-            .list_send_pays(cln::ListsendpaysRequest {
-                index: Some(ListsendpaysIndex::Created.into()),
-                start: Some(sync_state.send_pays_index.created),
-                ..Default::default()
-            })
-            .await?
-            .into_inner();
-        if let Some(last) = created_send_pays.payments.last() {
-            new_sync_state.send_pays_index.created = last.created_index()
-        }
-        let updated_send_pays = node_client
-            .list_send_pays(cln::ListsendpaysRequest {
-                index: Some(ListsendpaysIndex::Updated.into()),
-                start: Some(sync_state.send_pays_index.updated),
-                ..Default::default()
-            })
-            .await?
-            .into_inner();
-        if let Some(last) = updated_send_pays.payments.last() {
-            new_sync_state.send_pays_index.updated = last.created_index()
-        }
-        let mut hashes: Vec<_> = created_send_pays
-            .payments
-            .iter()
-            .chain(updated_send_pays.payments.iter())
-            .map(|p| p.payment_hash.clone())
-            .collect();
-        hashes.dedup();
-        let hash_groups: HashSet<_> = created_send_pays
+        let hash_groups: HashMap<_, _> = created_send_pays
             .payments
             .iter()
             .chain(updated_send_pays.payments.iter())
@@ -771,14 +777,11 @@ impl Greenlight {
                 let mut key = hex::encode(&p.payment_hash);
                 key.push('|');
                 key.push_str(&p.groupid.to_string());
-                key
+                (key, (p.payment_hash.clone(), p.groupid))
             })
             .collect();
-        trace!(
-            "list sendpays: created: {:?}, updated: {:?}",
-            created_send_pays,
-            updated_send_pays
-        );
+        let hash_group_values: Vec<_> = hash_groups.values().cloned().collect();
+
         self.persister.insert_send_pays(
             &created_send_pays
                 .payments
@@ -797,7 +800,7 @@ impl Greenlight {
         // Now all new send_pays are persisted. Retrieve the send_pays for the
         // payment hashes, to ensure any send_pays belonging to the same payment
         // that were not fetched in this round are also included.
-        let send_pays = self.persister.list_send_pays(&hashes)?;
+        let send_pays = self.persister.list_send_pays(&hash_group_values)?;
 
         // Now that all send_pays belonging to all payments are here, aggregate
         // the send_pays into payments. This is a copy of what core lightning's
@@ -807,7 +810,7 @@ impl Greenlight {
             let mut key = hex::encode(&send_pay.payment_hash);
             key.push('|');
             key.push_str(&send_pay.groupid.to_string());
-            if !hash_groups.contains(&key) {
+            if !hash_groups.contains_key(&key) {
                 continue;
             }
             let payment = outbound_payments.entry(key).or_insert(SendPayAgg {

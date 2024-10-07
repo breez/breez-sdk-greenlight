@@ -72,7 +72,10 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn list_send_pays(&self, hashes: &[Vec<u8>]) -> PersistResult<Vec<SendPay>> {
+    pub(crate) fn list_send_pays(
+        &self,
+        hash_groups: &[(Vec<u8>, u64)],
+    ) -> PersistResult<Vec<SendPay>> {
         let conn = self.get_connection()?;
         let mut stmt = conn.prepare(
             r#"SELECT created_index, updated_index, groupid, partid, 
@@ -80,14 +83,15 @@ impl SqliteStorage {
                amount_sent_msat, label, bolt11, description, bolt12, 
                payment_preimage, erroronion
                FROM send_pays
-               WHERE payment_hash = :payment_hash"#,
+               WHERE payment_hash = :payment_hash AND groupid = :groupid"#,
         )?;
         let mut send_pays = Vec::new();
-        for hash in hashes {
+        for hash_group in hash_groups {
             let rows: Vec<_> = stmt
                 .query_map(
                     named_params! {
-                        ":payment_hash": hash
+                        ":payment_hash": hash_group.0,
+                        ":groupid": hash_group.1,
                     },
                     |row| {
                         let status: i32 = row.get("status")?;
