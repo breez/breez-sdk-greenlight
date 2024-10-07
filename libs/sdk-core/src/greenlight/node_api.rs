@@ -810,9 +810,6 @@ impl Greenlight {
             let mut key = hex::encode(&send_pay.payment_hash);
             key.push('|');
             key.push_str(&send_pay.groupid.to_string());
-            if !hash_groups.contains_key(&key) {
-                continue;
-            }
             let payment = outbound_payments.entry(key).or_insert(SendPayAgg {
                 state: 0,
                 created_at: send_pay.created_at,
