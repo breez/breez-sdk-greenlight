@@ -248,6 +248,13 @@ fn ln_address_decode(ln_address: &str) -> Result<(String, String, String)> {
     if ln_address.contains('@') {
         let split = ln_address.split('@').collect::<Vec<&str>>();
         let user = split[0].to_lowercase();
+
+        // BIP-353 addresses have a ₿ prefix. Some users will want to use it as
+        // lnurl, so strip the prefix if it's there.
+        let user = user
+            .strip_prefix('₿')
+            .map(|p| p.to_string())
+            .unwrap_or(user);
         // It is safe to downcase the domains since they are case-insensitive.
         // https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2
         let domain = split[1].to_lowercase();
@@ -1406,6 +1413,29 @@ pub(crate) mod tests {
                 pd.metadata_vec()?.get(2).ok_or("Key not found")?.key,
                 "image/png;base64"
             );
+        }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_lnurl_pay_lud_16_ln_address_with_prefix() -> Result<(), Box<dyn std::error::Error>>
+    {
+        // Covers cases in LUD-16, with BIP-353 prefix.
+
+        let ln_address = "₿user@domain.net";
+        let server_ln_address = "user@domain.net";
+        let _m = mock_lnurl_ln_address_endpoint(server_ln_address, None)?;
+
+        if let InputType::LnUrlPay { data: pd } = parse(ln_address).await? {
+            assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
+            assert_eq!(pd.max_sendable, 16000);
+            assert_eq!(pd.min_sendable, 4000);
+            assert_eq!(pd.comment_allowed, 0);
+            assert_eq!(pd.domain, "domain.net");
+            assert_eq!(pd.ln_address, Some(server_ln_address.to_string()));
+        } else {
+            panic!("input was not ln address")
         }
 
         Ok(())
