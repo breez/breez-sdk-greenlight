@@ -83,7 +83,8 @@ impl SqliteStorage {
                amount_sent_msat, label, bolt11, description, bolt12, 
                payment_preimage, erroronion
                FROM send_pays
-               WHERE payment_hash = :payment_hash AND groupid = :groupid"#,
+               WHERE payment_hash = :payment_hash AND groupid = :groupid
+               ORDER BY created_index"#,
         )?;
         let mut send_pays = Vec::new();
         for hash_group in hash_groups {
