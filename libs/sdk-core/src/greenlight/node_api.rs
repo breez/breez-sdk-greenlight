@@ -895,106 +895,6 @@ fn add_amount_sent(
     }
 }
 
-impl TryFrom<ListsendpaysPayments> for SendPay {
-    type Error = NodeError;
-
-    fn try_from(value: ListsendpaysPayments) -> std::result::Result<Self, Self::Error> {
-        Ok(SendPay {
-            created_index: value
-                .created_index
-                .ok_or(NodeError::generic("missing created index"))?,
-            updated_index: value.updated_index,
-            groupid: value.groupid,
-            partid: value.partid,
-            payment_hash: value.payment_hash,
-            status: value.status.try_into()?,
-            amount_msat: value.amount_msat.map(|a| a.msat),
-            destination: value.destination,
-            created_at: value.created_at,
-            amount_sent_msat: value.amount_sent_msat.map(|a| a.msat),
-            label: value.label,
-            bolt11: value.bolt11,
-            description: value.description,
-            bolt12: value.bolt12,
-            payment_preimage: value.payment_preimage,
-            erroronion: value.erroronion,
-        })
-    }
-}
-
-impl TryFrom<i32> for SendPayStatus {
-    type Error = NodeError;
-
-    fn try_from(value: i32) -> std::result::Result<Self, Self::Error> {
-        match value {
-            0 => Ok(Self::Pending),
-            1 => Ok(Self::Failed),
-            2 => Ok(Self::Complete),
-            _ => Err(NodeError::generic("invalid send_pay status")),
-        }
-    }
-}
-
-impl TryFrom<SendPayAgg> for Payment {
-    type Error = NodeError;
-
-    fn try_from(value: SendPayAgg) -> std::result::Result<Self, Self::Error> {
-        // For trampoline payments the amount_msat doesn't match the actual
-        // amount. If it's a trampoline payment, take the amount from the label.
-        let (payment_amount, client_label) =
-            serde_json::from_str::<PaymentLabel>(&value.label.clone().unwrap_or_default())
-                .ok()
-                .and_then(|label| {
-                    label
-                        .trampoline
-                        .then_some((label.amount_msat, label.client_label))
-                })
-                .unwrap_or((value.amount.unwrap_or_default(), value.label.clone()));
-        let fee_msat = match value.amount {
-            Some(amount) => value.amount_sent.saturating_sub(amount),
-            None => 0,
-        };
-        let status = if value.state & 2 > 0 {
-            PaymentStatus::Complete
-        } else if value.state & 1 > 0 {
-            PaymentStatus::Pending
-        } else {
-            PaymentStatus::Failed
-        };
-        Ok(Self {
-            id: hex::encode(&value.payment_hash),
-            payment_type: PaymentType::Sent,
-            payment_time: value.created_at as i64,
-            amount_msat: payment_amount,
-            fee_msat,
-            status,
-            error: None,
-            description: value.description,
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: hex::encode(&value.payment_hash),
-                    label: client_label.unwrap_or_default(),
-                    destination_pubkey: value.destination.map(hex::encode).unwrap_or_default(),
-                    payment_preimage: value.preimage.map(hex::encode).unwrap_or_default(),
-                    keysend: value.bolt11.is_none(),
-                    bolt11: value.bolt11.unwrap_or_default(),
-                    open_channel_bolt11: None,
-                    lnurl_success_action: None,
-                    lnurl_pay_domain: None,
-                    lnurl_pay_comment: None,
-                    ln_address: None,
-                    lnurl_metadata: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                },
-            },
-            metadata: None,
-        })
-    }
-}
-
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 struct SyncIndex {
     pub created: u64,
@@ -2127,6 +2027,117 @@ fn update_payment_expirations(
     }
     info!("pending htlc payments {:?}", payments_res);
     Ok(payments_res)
+}
+
+impl TryFrom<ListsendpaysPayments> for SendPay {
+    type Error = NodeError;
+
+    fn try_from(value: ListsendpaysPayments) -> std::result::Result<Self, Self::Error> {
+        Ok(SendPay {
+            created_index: value
+                .created_index
+                .ok_or(NodeError::generic("missing created index"))?,
+            updated_index: value.updated_index,
+            groupid: value.groupid,
+            partid: value.partid,
+            payment_hash: value.payment_hash,
+            status: value.status.try_into()?,
+            amount_msat: value.amount_msat.map(|a| a.msat),
+            destination: value.destination,
+            created_at: value.created_at,
+            amount_sent_msat: value.amount_sent_msat.map(|a| a.msat),
+            label: value.label,
+            bolt11: value.bolt11,
+            description: value.description,
+            bolt12: value.bolt12,
+            payment_preimage: value.payment_preimage,
+            erroronion: value.erroronion,
+        })
+    }
+}
+
+impl TryFrom<i32> for SendPayStatus {
+    type Error = NodeError;
+
+    fn try_from(value: i32) -> std::result::Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Self::Pending),
+            1 => Ok(Self::Failed),
+            2 => Ok(Self::Complete),
+            _ => Err(NodeError::generic("invalid send_pay status")),
+        }
+    }
+}
+
+impl TryFrom<SendPayAgg> for Payment {
+    type Error = NodeError;
+
+    fn try_from(value: SendPayAgg) -> std::result::Result<Self, Self::Error> {
+        let ln_invoice = value
+            .bolt11
+            .as_ref()
+            .ok_or(InvoiceError::generic("No bolt11 invoice"))
+            .and_then(|b| parse_invoice(b));
+
+        // For trampoline payments the amount_msat doesn't match the actual
+        // amount. If it's a trampoline payment, take the amount from the label.
+        let (payment_amount, client_label) =
+            serde_json::from_str::<PaymentLabel>(&value.label.clone().unwrap_or_default())
+                .ok()
+                .and_then(|label| {
+                    label
+                        .trampoline
+                        .then_some((label.amount_msat, label.client_label))
+                })
+                .unwrap_or((value.amount.unwrap_or_default(), value.label));
+        let fee_msat = match value.amount {
+            Some(amount) => value.amount_sent.saturating_sub(amount),
+            None => 0,
+        };
+        let status = if value.state & 2 > 0 {
+            PaymentStatus::Complete
+        } else if value.state & 1 > 0 {
+            PaymentStatus::Pending
+        } else {
+            PaymentStatus::Failed
+        };
+        Ok(Self {
+            id: hex::encode(&value.payment_hash),
+            payment_type: PaymentType::Sent,
+            payment_time: value.created_at as i64,
+            amount_msat: match status {
+                PaymentStatus::Complete => payment_amount,
+                _ => ln_invoice
+                    .as_ref()
+                    .map_or(0, |i| i.amount_msat.unwrap_or_default()),
+            },
+            fee_msat,
+            status,
+            error: None,
+            description: ln_invoice.map(|i| i.description).unwrap_or_default(),
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(&value.payment_hash),
+                    label: client_label.unwrap_or_default(),
+                    destination_pubkey: value.destination.map(hex::encode).unwrap_or_default(),
+                    payment_preimage: value.preimage.map(hex::encode).unwrap_or_default(),
+                    keysend: value.bolt11.is_none(),
+                    bolt11: value.bolt11.unwrap_or_default(),
+                    open_channel_bolt11: None,
+                    lnurl_success_action: None,
+                    lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
+                    ln_address: None,
+                    lnurl_metadata: None,
+                    lnurl_withdraw_endpoint: None,
+                    swap_info: None,
+                    reverse_swap_info: None,
+                    pending_expiration_block: None,
+                },
+            },
+            metadata: None,
+        })
+    }
 }
 
 //pub(crate) fn offchain_payment_to_transaction
