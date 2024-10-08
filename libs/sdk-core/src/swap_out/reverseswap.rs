@@ -533,13 +533,17 @@ impl BTCSendSwap {
         let lockup_addr = rsi.get_lockup_address(self.config.network)?;
         Ok(self
             .chain_service
-            .address_transactions(rsi.claim_pubkey.clone())
+            .address_transactions(lockup_addr.to_string())
             .await?
             .into_iter()
             .find(|tx| {
                 tx.vin
                     .iter()
                     .any(|vin| vin.prevout.scriptpubkey_address == lockup_addr.to_string())
+                    && tx
+                        .vout
+                        .iter()
+                        .any(|vout| vout.scriptpubkey_address == rsi.claim_pubkey.clone())
             }))
     }
 
@@ -646,6 +650,12 @@ impl BTCSendSwap {
             let claim_tx = self.get_claim_tx(&rsi).await?;
             let claim_tx_status = TxStatus::from(&claim_tx);
 
+            if let Some(tx) = &claim_tx {
+                info!(
+                    "Cound claim tx for reverse swap {:?}: {:?}, status: {:?}",
+                    rsi.id, tx.txid, claim_tx_status
+                );
+            }
             // Update cached state when new state is detected
             if let Some(new_status) = self
                 .get_status_update_for_monitored(&rsi, claim_tx_status)
