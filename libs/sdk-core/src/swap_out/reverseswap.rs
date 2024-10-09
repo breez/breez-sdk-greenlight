@@ -652,7 +652,7 @@ impl BTCSendSwap {
 
             if let Some(tx) = &claim_tx {
                 info!(
-                    "Cound claim tx for reverse swap {:?}: {:?}, status: {:?}",
+                    "Found claim tx for reverse swap {:?}: {:?}, status: {:?}",
                     rsi.id, tx.txid, claim_tx_status
                 );
             }
