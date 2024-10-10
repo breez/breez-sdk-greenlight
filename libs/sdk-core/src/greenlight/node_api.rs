@@ -880,16 +880,8 @@ fn add_amount_sent(
         agg.amount_sent += amount_sent_msat;
     }
 
-    let amount_msat = match send_pay_amount_msat {
-        Some(amount_msat) => amount_msat,
-        None => {
-            agg.amount = None;
-            return;
-        }
-    };
-
-    if let Some(amount) = agg.amount {
-        agg.amount = Some(amount + amount_msat);
+    if let Some(send_pay_amount_msat) = send_pay_amount_msat {
+        agg.amount = Some(agg.amount.unwrap_or(0) + send_pay_amount_msat);
     }
 }
 
