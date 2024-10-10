@@ -20,16 +20,7 @@ impl SqliteStorage {
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
     /// then the [LnPaymentDetails] will NOT be persisted. In that case, the [SuccessActionProcessed]
     /// can be inserted separately via [SqliteStorage::insert_payment_external_info].
-    pub fn insert_or_update_payments(
-        &self,
-        transactions: &[Payment],
-        delete_pending: bool,
-    ) -> PersistResult<()> {
-        if delete_pending {
-            let deleted = self.delete_pending_lightning_payments()?;
-            debug!("Deleted {deleted} pending payments");
-        }
-
+    pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> PersistResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
@@ -60,14 +51,6 @@ impl SqliteStorage {
             ))?;
         }
         Ok(())
-    }
-
-    /// Deletes any pending sent payments and returns the deleted count
-    fn delete_pending_lightning_payments(&self) -> PersistResult<usize> {
-        Ok(self.get_connection()?.execute(
-            "DELETE FROM payments WHERE payment_type = ?1 AND status = ?2",
-            params![PaymentType::Sent.to_string(), PaymentStatus::Pending],
-        )?)
     }
 
     /// Inserts metadata associated with this payment
@@ -776,8 +759,8 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
-    storage.insert_or_update_payments(&txs, false)?;
-    storage.insert_or_update_payments(&failed_txs, false)?;
+    storage.insert_or_update_payments(&txs)?;
+    storage.insert_or_update_payments(&failed_txs)?;
     storage.insert_payment_external_info(
         payment_hash_with_lnurl_success_action,
         PaymentExternalInfo {
@@ -868,7 +851,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}} if swap == &Some(swap_info))
     );
 
-    storage.insert_or_update_payments(&txs, false)?;
+    storage.insert_or_update_payments(&txs)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
     assert_eq!(retrieve_txs.len(), 5);
     assert_eq!(retrieve_txs, txs);
