@@ -59,6 +59,9 @@ const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
 const TRAMPOLINE_BASE_FEE_MSAT: u64 = 4000;
 const TRAMPOLINE_FEE_PPM: u64 = 5000;
+const PAYMENT_STATE_PENDING: u8 = 1;
+const PAYMENT_STATE_COMPLETE: u8 = 2;
+const PAYMENT_STATE_FAILED: u8 = 4;
 
 pub(crate) struct Greenlight {
     sdk_config: Config,
@@ -846,15 +849,15 @@ impl Greenlight {
                 SendPayStatus::Pending => {
                     add_amount_sent(payment, send_pay.amount_sent_msat, send_pay.amount_msat);
                     payment.num_nonfailed_parts += 1;
-                    payment.state |= 1;
+                    payment.state |= PAYMENT_STATE_PENDING;
                 }
                 SendPayStatus::Failed => {
-                    payment.state |= 4;
+                    payment.state |= PAYMENT_STATE_FAILED;
                 }
                 SendPayStatus::Complete => {
                     add_amount_sent(payment, send_pay.amount_sent_msat, send_pay.amount_msat);
                     payment.num_nonfailed_parts += 1;
-                    payment.state |= 2;
+                    payment.state |= PAYMENT_STATE_COMPLETE;
                 }
             }
         }
@@ -1987,7 +1990,7 @@ enum NodeCommand {
 }
 
 struct SendPayAgg {
-    state: i32,
+    state: u8,
     created_at: u64,
     payment_hash: Vec<u8>,
     bolt11: Option<String>,
@@ -2094,9 +2097,9 @@ impl TryFrom<SendPayAgg> for Payment {
             Some(amount) => value.amount_sent.saturating_sub(amount),
             None => 0,
         };
-        let status = if value.state & 2 > 0 {
+        let status = if value.state & PAYMENT_STATE_COMPLETE > 0 {
             PaymentStatus::Complete
-        } else if value.state & 1 > 0 {
+        } else if value.state & PAYMENT_STATE_PENDING > 0 {
             PaymentStatus::Pending
         } else {
             PaymentStatus::Failed
