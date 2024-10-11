@@ -2107,10 +2107,7 @@ impl TryFrom<SendPayAgg> for Payment {
                         .then_some((label.amount_msat, label.client_label))
                 })
                 .unwrap_or((value.amount.unwrap_or_default(), value.label));
-        let fee_msat = match value.amount {
-            Some(amount) => value.amount_sent.saturating_sub(amount),
-            None => 0,
-        };
+        let fee_msat = value.amount_sent.saturating_sub(payment_amount);
         let status = if value.state & PAYMENT_STATE_COMPLETE > 0 {
             PaymentStatus::Complete
         } else if value.state & PAYMENT_STATE_PENDING > 0 {
