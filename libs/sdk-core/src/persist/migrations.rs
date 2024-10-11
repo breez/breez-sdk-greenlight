@@ -454,7 +454,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         payment_preimage BLOB,
         erroronion BLOB
        ) STRICT;
-       "
+       ",
+       "DELETE FROM payments"
     ]
 }
 
