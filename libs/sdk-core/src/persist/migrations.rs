@@ -455,7 +455,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         erroronion BLOB
        ) STRICT;
        ",
-       "DELETE FROM payments"
+       "DELETE FROM payments",
+       "DELETE FROM cached_items WHERE key = 'sync_state'",
     ]
 }
 
