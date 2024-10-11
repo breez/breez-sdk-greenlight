@@ -471,7 +471,7 @@ impl BreezServices {
                     Some(sa) => {
                         let processed_sa = match sa {
                             // For AES, we decrypt the contents on the fly
-                            SuccessAction::Aes(data) => {
+                            SuccessAction::Aes { data } => {
                                 let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
                                 let preimage_arr: [u8; 32] = preimage.into_inner();
                                 let result = match (data, &preimage_arr).try_into() {
@@ -482,10 +482,10 @@ impl BreezServices {
                                 };
                                 SuccessActionProcessed::Aes { result }
                             }
-                            SuccessAction::Message(data) => {
+                            SuccessAction::Message { data } => {
                                 SuccessActionProcessed::Message { data }
                             }
-                            SuccessAction::Url(data) => SuccessActionProcessed::Url { data },
+                            SuccessAction::Url { data } => SuccessActionProcessed::Url { data },
                         };
                         Some(processed_sa)
                     }

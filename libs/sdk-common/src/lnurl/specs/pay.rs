@@ -35,12 +35,13 @@ pub async fn validate_lnurl_pay(
         let mut callback_resp: CallbackResponse = serde_json::from_str(&callback_resp_text)?;
         if let Some(ref sa) = callback_resp.success_action {
             match sa {
-                SuccessAction::Aes(data) => data.validate()?,
-                SuccessAction::Message(data) => data.validate()?,
-                SuccessAction::Url(data) => {
-                    callback_resp.success_action = Some(SuccessAction::Url(
-                        data.validate(req_data, validate_success_action_url.unwrap_or(true))?,
-                    ));
+                SuccessAction::Aes { data } => data.validate()?,
+                SuccessAction::Message { data } => data.validate()?,
+                SuccessAction::Url { data } => {
+                    callback_resp.success_action = Some(SuccessAction::Url {
+                        data: data
+                            .validate(req_data, validate_success_action_url.unwrap_or(true))?,
+                    });
                 }
             }
         }
@@ -172,7 +173,7 @@ pub mod model {
     /// Payload of the AES success action, as received from the LNURL endpoint
     ///
     /// See [AesSuccessActionDataDecrypted] for a similar wrapper containing the decrypted payload
-    #[derive(Deserialize, Debug)]
+    #[derive(Debug, Deserialize, Serialize)]
     pub struct AesSuccessActionData {
         /// Contents description, up to 144 characters
         pub description: String,
@@ -242,18 +243,27 @@ pub mod model {
     ///
     /// Receiving any other (unsupported) success action type will result in a failed parsing,
     /// which will abort the LNURL-pay workflow, as per LUD-09.
-    #[derive(Deserialize, Debug)]
+    #[derive(Debug, Deserialize, Serialize)]
     #[serde(rename_all = "camelCase")]
     #[serde(tag = "tag")]
     pub enum SuccessAction {
         /// AES type, described in LUD-10
-        Aes(AesSuccessActionData),
+        Aes {
+            #[serde(flatten)]
+            data: AesSuccessActionData,
+        },
 
         /// Message type, described in LUD-09
-        Message(MessageSuccessActionData),
+        Message {
+            #[serde(flatten)]
+            data: MessageSuccessActionData,
+        },
 
         /// URL type, described in LUD-09
-        Url(UrlSuccessActionData),
+        Url {
+            #[serde(flatten)]
+            data: UrlSuccessActionData,
+        },
     }
 
     impl AesSuccessActionData {
@@ -498,6 +508,26 @@ pub(crate) mod tests {
         assert!(validate_user_input(5000, &None, 10_000, 100_000, 5).is_err());
         assert!(validate_user_input(200_000, &None, 10_000, 100_000, 5).is_err());
         assert!(validate_user_input(100_000, &Some("test".into()), 10_000, 100_000, 0).is_err());
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_lnurl_pay_success_action_deserialize() -> Result<()> {
+        let aes_json_str = r#"{"tag":"aes","description":"short msg","ciphertext":"kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK","iv":"1234567890abcdef"}"#;
+        let aes_deserialized_sa: SuccessAction = serde_json::from_str(aes_json_str)?;
+        let aes_serialized_sa = serde_json::to_string(&aes_deserialized_sa)?;
+        assert_eq!(aes_json_str, aes_serialized_sa);
+
+        let message_json_str = r#"{"tag":"message","message":"Test message"}"#;
+        let message_deserialized_sa: SuccessAction = serde_json::from_str(message_json_str)?;
+        let message_serialized_sa = serde_json::to_string(&message_deserialized_sa)?;
+        assert_eq!(message_json_str, message_serialized_sa);
+
+        let url_json_str = r#"{"tag":"url","description":"short msg","url":"https://new-domain.com/test-url","matches_callback_domain":true}"#;
+        let url_deserialized_sa: SuccessAction = serde_json::from_str(url_json_str)?;
+        let url_serialized_sa = serde_json::to_string(&url_deserialized_sa)?;
+        assert_eq!(url_json_str, url_serialized_sa);
 
         Ok(())
     }
