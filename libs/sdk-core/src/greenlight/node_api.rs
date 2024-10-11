@@ -56,6 +56,8 @@ use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFu
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
+const TRAMPOLINE_BASE_FEE_MSAT: u64 = 4000;
+const TRAMPOLINE_FEE_PPM: u64 = 5000;
 
 pub(crate) struct Greenlight {
     sdk_config: Config,
@@ -1387,6 +1389,10 @@ impl NodeAPI for Greenlight {
             unix_nano: SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos(),
             amount_msat,
         })?;
+        let fee_msat =
+            (amount_msat.saturating_mul(TRAMPOLINE_FEE_PPM) / 1_000_000) + TRAMPOLINE_BASE_FEE_MSAT;
+        let fee_percent = ((fee_msat as f64 / amount_msat as f64) * 100.) as f32;
+        debug!("using fee msat {} fee percent {}", fee_msat, fee_percent);
         let mut client = self.get_client().await?;
         let request = TrampolinePayRequest {
             bolt11,
@@ -1395,7 +1401,7 @@ impl NodeAPI for Greenlight {
             label,
             maxdelay: u32::default(),
             description: String::default(),
-            maxfeepercent: f32::default(),
+            maxfeepercent: fee_percent,
         };
         let result = self
             .with_keep_alive(client.trampoline_pay(request))
