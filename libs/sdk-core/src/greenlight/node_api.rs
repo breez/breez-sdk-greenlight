@@ -702,75 +702,94 @@ impl Greenlight {
         sync_state: &SyncState,
         htlc_list: Vec<Htlc>,
     ) -> NodeResult<(SyncState, Vec<Payment>)> {
-        let mut node_client1 = self.get_node_client().await?;
-        let mut node_client2 = node_client1.clone();
-        let mut node_client3 = node_client1.clone();
-        let mut node_client4 = node_client1.clone();
-        let mut new_sync_state = sync_state.clone();
-
-        let created_invoices_fut = node_client1.list_invoices(cln::ListinvoicesRequest {
-            index: Some(ListinvoicesIndex::Created.into()),
-            start: Some(sync_state.list_invoices_index.created),
-            ..Default::default()
-        });
-        let updated_invoices_fut = node_client2.list_invoices(cln::ListinvoicesRequest {
-            index: Some(ListinvoicesIndex::Updated.into()),
-            start: Some(sync_state.list_invoices_index.updated),
-            ..Default::default()
-        });
-        let created_send_pays_fut = node_client3.list_send_pays(cln::ListsendpaysRequest {
-            index: Some(ListsendpaysIndex::Created.into()),
-            start: Some(sync_state.send_pays_index.created),
-            ..Default::default()
-        });
-        let updated_send_pays_fut = node_client4.list_send_pays(cln::ListsendpaysRequest {
-            index: Some(ListsendpaysIndex::Updated.into()),
-            start: Some(sync_state.send_pays_index.updated),
-            ..Default::default()
-        });
-
-        let (
-            created_invoices_res,
-            updated_invoices_res,
-            created_send_pays_res,
-            updated_send_pays_res,
-        ) = join!(
-            created_invoices_fut,
-            updated_invoices_fut,
-            created_send_pays_fut,
-            updated_send_pays_fut,
+        let (receive_payments_res, send_payments_res) = join!(
+            self.pull_receive_payments(&sync_state.list_invoices_index),
+            self.pull_send_payments(&sync_state.send_pays_index, htlc_list),
         );
 
-        let created_invoices = created_invoices_res?.into_inner();
+        let (receive_payments, list_invoices_index) = receive_payments_res?;
+        let (send_payments, send_pays_index) = send_payments_res?;
+        let mut new_state = sync_state.clone();
+        new_state.list_invoices_index = list_invoices_index;
+        new_state.send_pays_index = send_pays_index;
+
+        let mut payments: Vec<Payment> = Vec::new();
+        payments.extend(receive_payments);
+        payments.extend(send_payments);
+
+        Ok((new_state, payments))
+    }
+
+    async fn pull_receive_payments(
+        &self,
+        state: &SyncIndex,
+    ) -> NodeResult<(Vec<Payment>, SyncIndex)> {
+        let mut client = self.get_node_client().await?;
+        let created_invoices = client
+            .list_invoices(cln::ListinvoicesRequest {
+                index: Some(ListinvoicesIndex::Created.into()),
+                start: Some(state.created),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+        let updated_invoices = client
+            .list_invoices(cln::ListinvoicesRequest {
+                index: Some(ListinvoicesIndex::Updated.into()),
+                start: Some(state.updated),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+        let mut new_state = state.clone();
         if let Some(last) = created_invoices.invoices.last() {
-            new_sync_state.list_invoices_index.created = last.created_index()
+            new_state.created = last.created_index()
         }
-        let updated_invoices = updated_invoices_res?.into_inner();
         if let Some(last) = updated_invoices.invoices.last() {
-            new_sync_state.list_invoices_index.updated = last.created_index()
+            new_state.updated = last.updated_index()
         }
-        let created_send_pays = created_send_pays_res?.into_inner();
-        if let Some(last) = created_send_pays.payments.last() {
-            new_sync_state.send_pays_index.created = last.created_index()
-        }
-        let updated_send_pays = updated_send_pays_res?.into_inner();
-        if let Some(last) = updated_send_pays.payments.last() {
-            new_sync_state.send_pays_index.updated = last.created_index()
-        }
-        trace!(
-            "list sendpays: created: {:?}, updated: {:?}",
-            created_send_pays,
-            updated_send_pays
-        );
 
-        // construct the received transactions by filtering the invoices to those paid
-        let received_transactions: NodeResult<Vec<Payment>> = created_invoices
+        let received_payments: NodeResult<Vec<Payment>> = created_invoices
             .invoices
             .into_iter()
             .chain(updated_invoices.invoices.into_iter())
             .filter(|i| i.status() == ListinvoicesInvoicesStatus::Paid)
             .map(TryInto::try_into)
             .collect();
+
+        Ok((received_payments?, new_state))
+    }
+
+    async fn pull_send_payments(
+        &self,
+        state: &SyncIndex,
+        htlc_list: Vec<Htlc>,
+    ) -> NodeResult<(Vec<Payment>, SyncIndex)> {
+        let mut client = self.get_node_client().await?;
+        let created_send_pays = client
+            .list_send_pays(cln::ListsendpaysRequest {
+                index: Some(ListsendpaysIndex::Created.into()),
+                start: Some(state.created),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+        let updated_send_pays = client
+            .list_send_pays(cln::ListsendpaysRequest {
+                index: Some(ListsendpaysIndex::Updated.into()),
+                start: Some(state.updated),
+                ..Default::default()
+            })
+            .await?
+            .into_inner();
+
+        let mut new_state = state.clone();
+        if let Some(last) = created_send_pays.payments.last() {
+            new_state.created = last.created_index()
+        }
+        if let Some(last) = updated_send_pays.payments.last() {
+            new_state.updated = last.updated_index()
+        }
 
         let hash_groups: HashMap<_, _> = created_send_pays
             .payments
@@ -867,12 +886,7 @@ impl Greenlight {
             .map(TryInto::try_into)
             .collect::<Result<Vec<_>, _>>()?;
         let outbound_payments = update_payment_expirations(outbound_payments, htlc_list)?;
-
-        let mut transactions: Vec<Payment> = Vec::new();
-        transactions.extend(received_transactions?);
-        transactions.extend(outbound_payments);
-
-        Ok((new_sync_state, transactions))
+        Ok((outbound_payments, new_state))
     }
 }
 
