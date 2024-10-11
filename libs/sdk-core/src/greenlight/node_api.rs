@@ -820,7 +820,7 @@ impl Greenlight {
                 description: None,
                 preimage: None,
                 amount_sent: 0,
-                amount: None,
+                amount: Some(0),
                 num_nonfailed_parts: 0,
             });
             if payment.bolt11.is_none() {
