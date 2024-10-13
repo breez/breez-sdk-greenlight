@@ -185,8 +185,7 @@ impl BreezServices {
         req: ConnectRequest,
         event_listener: Box<dyn EventListener>,
     ) -> BreezServicesResult<Arc<BreezServices>> {
-        let sdk_version = option_env!("CARGO_PKG_VERSION").unwrap_or_default();
-        let sdk_git_hash = option_env!("SDK_GIT_HASH").unwrap_or_default();
+        let (sdk_version, sdk_git_hash) = Self::get_sdk_version();
         info!("SDK v{sdk_version} ({sdk_git_hash})");
         let start = Instant::now();
         let services = BreezServicesBuilder::new(req.config)
@@ -197,6 +196,12 @@ impl BreezServices {
         let connect_duration = start.elapsed();
         info!("SDK connected in: {connect_duration:?}");
         Ok(services)
+    }
+
+    fn get_sdk_version() -> (&'static str, &'static str) {
+        let sdk_version = option_env!("CARGO_PKG_VERSION").unwrap_or_default();
+        let sdk_git_hash = option_env!("SDK_GIT_HASH").unwrap_or_default();
+        (sdk_version, sdk_git_hash)
     }
 
     /// Internal utility method that starts the BreezServices background tasks for this instance.
@@ -2174,6 +2179,8 @@ impl BreezServices {
     }
 
     async fn generate_sdk_diagnostic_data(&self) -> SdkResult<Value> {
+        let (sdk_version, sdk_git_hash) = Self::get_sdk_version();
+        let version = format!("SDK v{sdk_version} ({sdk_git_hash})");
         let state = crate::serializer::value::to_value(&self.persister.get_node_state()?)?;
         let payments = crate::serializer::value::to_value(
             &self
@@ -2190,6 +2197,7 @@ impl BreezServices {
         let lsp_id = crate::serializer::value::to_value(&self.persister.get_lsp_id()?)?;
 
         let res = json!({
+            "version": version,
             "node_state": state,
             "payments": payments,
             "channels": channels,
