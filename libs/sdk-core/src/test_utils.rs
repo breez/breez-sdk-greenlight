@@ -404,7 +404,7 @@ impl NodeAPI for MockNodeAPI {
         Ok(payment)
     }
 
-    async fn start(&self) -> NodeResult<String> {
+    async fn node_id(&self) -> NodeResult<String> {
         Ok("".to_string())
     }
 
