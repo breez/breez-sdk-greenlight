@@ -2128,12 +2128,18 @@ impl TryFrom<SendPayAgg> for Payment {
             fee_msat,
             status,
             error: None,
-            description: ln_invoice.map(|i| i.description).unwrap_or_default(),
+            description: ln_invoice
+                .as_ref()
+                .map(|i| i.description.clone())
+                .unwrap_or_default(),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(&value.payment_hash),
                     label: client_label.unwrap_or_default(),
-                    destination_pubkey: value.destination.map(hex::encode).unwrap_or_default(),
+                    destination_pubkey: ln_invoice.map_or(
+                        value.destination.map(hex::encode).unwrap_or_default(),
+                        |i| i.payee_pubkey,
+                    ),
                     payment_preimage: value.preimage.map(hex::encode).unwrap_or_default(),
                     keysend: value.bolt11.is_none(),
                     bolt11: value.bolt11.unwrap_or_default(),
@@ -2312,12 +2318,18 @@ impl TryFrom<cln::ListpaysPays> for Payment {
             fee_msat: payment_amount_sent.saturating_sub(payment_amount),
             status,
             error: None,
-            description: ln_invoice.map(|i| i.description).unwrap_or_default(),
+            description: ln_invoice
+                .as_ref()
+                .map(|i| i.description.clone())
+                .unwrap_or_default(),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
                     payment_hash: hex::encode(payment.payment_hash),
                     label: client_label.unwrap_or_default(),
-                    destination_pubkey: payment.destination.map(hex::encode).unwrap_or_default(),
+                    destination_pubkey: ln_invoice.map_or(
+                        payment.destination.map(hex::encode).unwrap_or_default(),
+                        |i| i.payee_pubkey,
+                    ),
                     payment_preimage: payment.preimage.map(hex::encode).unwrap_or_default(),
                     keysend: payment.bolt11.is_none(),
                     bolt11: payment.bolt11.unwrap_or_default(),
