@@ -2,7 +2,7 @@
 # Run `pod lib lint breez_sdk.podspec` to validate before publishing.
 Pod::Spec.new do |s|
   s.name             = 'breez_sdk'
-  s.version          = '0.5.2'
+  s.version          = '0.6.2'
   s.summary          = 'BreezSDK flutter plugin.'
   s.description      = <<-DESC
   BreezSDK flutter plugin.
