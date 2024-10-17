@@ -349,6 +349,7 @@ impl BreezServices {
             }
         };
 
+        debug!("payment returned {:?}", payment_res);
         let payment = self
             .on_payment_completed(
                 parsed_invoice.payee_pubkey.clone(),
