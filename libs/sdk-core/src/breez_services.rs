@@ -264,7 +264,6 @@ impl BreezServices {
         &self,
         req: SendPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
-        self.start_node().await?;
         let parsed_invoice = parse_invoice(req.bolt11.as_str())?;
         let invoice_expiration = parsed_invoice.timestamp + parsed_invoice.expiry;
         let current_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
@@ -401,7 +400,6 @@ impl BreezServices {
         &self,
         req: SendSpontaneousPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
-        self.start_node().await?;
         let payment_res = self
             .node_api
             .send_spontaneous_payment(
@@ -713,7 +711,6 @@ impl BreezServices {
         &self,
         req: RedeemOnchainFundsRequest,
     ) -> RedeemOnchainResult<RedeemOnchainFundsResponse> {
-        self.start_node().await?;
         let txid = self
             .node_api
             .redeem_onchain_funds(req.to_address, req.sat_per_vbyte)
@@ -726,7 +723,6 @@ impl BreezServices {
         &self,
         req: PrepareRedeemOnchainFundsRequest,
     ) -> RedeemOnchainResult<PrepareRedeemOnchainFundsResponse> {
-        self.start_node().await?;
         let response = self.node_api.prepare_redeem_onchain_funds(req).await?;
         Ok(response)
     }
@@ -810,7 +806,6 @@ impl BreezServices {
     ///
     /// Should be called  when the user wants to close all the channels.
     pub async fn close_lsp_channels(&self) -> SdkResult<Vec<String>> {
-        self.start_node().await?;
         let lsp = self.lsp_info().await?;
         let tx_ids = self.node_api.close_peer_channels(lsp.pubkey).await?;
         self.sync().await?;
@@ -1196,7 +1191,7 @@ impl BreezServices {
 
     async fn do_sync(&self, match_local_balance: bool) -> Result<()> {
         let start = Instant::now();
-        let node_pubkey = self.node_api.start().await?;
+        let node_pubkey = self.node_api.node_id().await?;
         self.connect_lsp_peer(node_pubkey).await?;
 
         // First query the changes since last sync state.
@@ -1409,11 +1404,6 @@ impl BreezServices {
     /// Convenience method to look up LSP info based on current LSP ID
     pub async fn lsp_info(&self) -> SdkResult<LspInformation> {
         get_lsp(self.persister.clone(), self.lsp_api.clone()).await
-    }
-
-    pub(crate) async fn start_node(&self) -> Result<()> {
-        self.node_api.start().await?;
-        Ok(())
     }
 
     /// Get the recommended fees for onchain transactions
@@ -2546,7 +2536,6 @@ impl Receiver for PaymentReceiver {
         &self,
         req: ReceivePaymentRequest,
     ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
-        self.node_api.start().await?;
         let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let node_state = self
             .persister

@@ -1438,15 +1438,8 @@ impl NodeAPI for Greenlight {
         payment.try_into()
     }
 
-    async fn start(&self) -> NodeResult<String> {
-        let node_info = self
-            .get_node_client()
-            .await?
-            .getinfo(cln::GetinfoRequest {})
-            .await
-            .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?
-            .into_inner();
-        Ok(hex::encode(node_info.id))
+    async fn node_id(&self) -> NodeResult<String> {
+        Ok(hex::encode(self.signer.node_id()))
     }
 
     async fn redeem_onchain_funds(
