@@ -1805,11 +1805,9 @@ impl BreezServices {
             .target(env_logger::Target::Pipe(target_log_file))
             .parse_filters(
                 r#"
-                debug,
-                breez_sdk_core::input_parser=warn,
-                breez_sdk_core::backup=info,
-                breez_sdk_core::persist::reverseswap=info,
-                breez_sdk_core::reverseswap=info,
+                info,
+                breez_sdk_core=debug,
+                sdk_common=debug,
                 gl_client=debug,
                 h2=warn,
                 hyper=warn,
