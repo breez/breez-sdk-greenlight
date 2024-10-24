@@ -1,5 +1,6 @@
 use std::fs;
 use std::sync::Arc;
+use std::time::SystemTime;
 
 use anyhow::{anyhow, Context, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
@@ -247,6 +248,7 @@ pub(crate) async fn handle_command(
             label,
             use_trampoline,
         } => {
+            let start = SystemTime::now();
             let payment = sdk()?
                 .send_payment(SendPaymentRequest {
                     bolt11,
@@ -255,6 +257,9 @@ pub(crate) async fn handle_command(
                     use_trampoline,
                 })
                 .await?;
+            let end = SystemTime::now();
+            let diff = end.duration_since(start)?;
+            println!("payment took {}s", diff.as_secs_f32());
             serde_json::to_string_pretty(&payment).map_err(|e| e.into())
         }
         Commands::SendSpontaneousPayment {
@@ -262,6 +267,7 @@ pub(crate) async fn handle_command(
             amount_msat,
             label,
         } => {
+            let start = SystemTime::now();
             let response = sdk()?
                 .send_spontaneous_payment(SendSpontaneousPaymentRequest {
                     node_id,
@@ -270,6 +276,9 @@ pub(crate) async fn handle_command(
                     label,
                 })
                 .await?;
+            let end = SystemTime::now();
+            let diff = end.duration_since(start)?;
+            println!("payment took {}s", diff.as_secs_f32());
             serde_json::to_string_pretty(&response.payment).map_err(|e| e.into())
         }
         Commands::ListPayments {
@@ -481,6 +490,7 @@ pub(crate) async fn handle_command(
                 );
 
                 let amount_msat = rl.readline(&prompt)?;
+                let start = SystemTime::now();
                 let pay_res = sdk()?
                     .lnurl_pay(LnUrlPayRequest {
                         data: pd,
@@ -491,6 +501,9 @@ pub(crate) async fn handle_command(
                         validate_success_action_url: validate_success_url,
                     })
                     .await?;
+                let end = SystemTime::now();
+                let diff = end.duration_since(start)?;
+                println!("payment took {}s", diff.as_secs_f32());
                 //show_results(pay_res);
                 serde_json::to_string_pretty(&pay_res).map_err(|e| e.into())
             }
