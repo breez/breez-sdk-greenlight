@@ -20,15 +20,15 @@ use std::sync::Arc;
 
 // Section: imports
 
-use crate::breez_services::BackupFailedData;
-use crate::breez_services::BreezEvent;
-use crate::breez_services::CheckMessageRequest;
-use crate::breez_services::CheckMessageResponse;
-use crate::breez_services::InvoicePaidDetails;
-use crate::breez_services::PaymentFailedData;
-use crate::breez_services::SignMessageRequest;
-use crate::breez_services::SignMessageResponse;
 use crate::chain::RecommendedFees;
+use crate::internal_breez_services::BackupFailedData;
+use crate::internal_breez_services::BreezEvent;
+use crate::internal_breez_services::CheckMessageRequest;
+use crate::internal_breez_services::CheckMessageResponse;
+use crate::internal_breez_services::InvoicePaidDetails;
+use crate::internal_breez_services::PaymentFailedData;
+use crate::internal_breez_services::SignMessageRequest;
+use crate::internal_breez_services::SignMessageResponse;
 use crate::lnurl::pay::LnUrlPayResult;
 use crate::lnurl::pay::LnUrlPaySuccessData;
 use crate::lsp::LspInformation;

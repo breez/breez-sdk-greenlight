@@ -152,11 +152,11 @@ impl BlockingBreezServices {
     }
 
     pub fn node_credentials(&self) -> SdkResult<Option<NodeCredentials>> {
-        self.breez_services.node_credentials()
+        rt().block_on(self.breez_services.node_credentials())
     }
 
     pub fn node_info(&self) -> SdkResult<NodeState> {
-        self.breez_services.node_info()
+        rt().block_on(self.breez_services.node_info())
     }
 
     pub fn sign_message(&self, req: SignMessageRequest) -> SdkResult<SignMessageResponse> {
@@ -168,7 +168,7 @@ impl BlockingBreezServices {
     }
 
     pub fn backup_status(&self) -> SdkResult<BackupStatus> {
-        self.breez_services.backup_status()
+        rt().block_on(self.breez_services.backup_status())
     }
 
     pub fn backup(&self) -> SdkResult<()> {

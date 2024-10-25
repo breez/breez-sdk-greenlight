@@ -28,12 +28,13 @@ pub use sdk_common::prelude::{
 };
 use tokio::sync::Mutex;
 
-use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
+use crate::breez_services::{self, BreezServices};
 use crate::chain::RecommendedFees;
 use crate::error::{
     ConnectError, ReceiveOnchainError, ReceivePaymentError, RedeemOnchainError, SdkError,
     SendOnchainError, SendPaymentError,
 };
+use crate::internal_breez_services::{BreezEvent, EventListener};
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
@@ -332,22 +333,14 @@ pub fn sync() -> Result<()> {
 
 /// See [BreezServices::node_credentials]
 pub fn node_credentials() -> Result<Option<NodeCredentials>> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .node_credentials()
-            .map_err(anyhow::Error::new::<SdkError>)
-    })
+    block_on(async { get_breez_services().await?.node_credentials().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::node_info]
 pub fn node_info() -> Result<NodeState> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .node_info()
-            .map_err(anyhow::Error::new::<SdkError>)
-    })
+    block_on(async { get_breez_services().await?.node_info().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::configure_node]
@@ -497,7 +490,7 @@ pub fn backup() -> Result<()> {
 
 /// See [BreezServices::backup_status]
 pub fn backup_status() -> Result<BackupStatus> {
-    block_on(async { get_breez_services().await?.backup_status() })
+    block_on(async { get_breez_services().await?.backup_status().await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 

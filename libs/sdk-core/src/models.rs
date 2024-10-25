@@ -557,6 +557,7 @@ pub struct ConfigureNodeRequest {
     pub close_to_address: Option<String>,
 }
 
+#[derive(Clone)]
 /// Represents a connect request.
 pub struct ConnectRequest {
     pub config: Config,

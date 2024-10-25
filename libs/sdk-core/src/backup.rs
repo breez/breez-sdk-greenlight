@@ -1,6 +1,6 @@
 use crate::{
-    breez_services::BackupFailedData,
     error::SdkResult,
+    internal_breez_services::BackupFailedData,
     persist::db::{HookEvent, SqliteStorage},
     BreezEvent, Config,
 };

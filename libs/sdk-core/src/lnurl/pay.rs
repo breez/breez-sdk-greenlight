@@ -39,7 +39,7 @@ pub(crate) mod tests {
     use rand::random;
 
     use crate::bitcoin::hashes::{sha256, Hash};
-    use crate::breez_services::tests::get_dummy_node_state;
+    use crate::internal_breez_services::tests::get_dummy_node_state;
     use crate::lnurl::pay::*;
     use crate::lnurl::tests::MOCK_HTTP_SERVER;
     use crate::{test_utils::*, LnUrlPayRequest};
@@ -397,7 +397,7 @@ pub(crate) mod tests {
             comment: comment.clone(),
         })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -443,7 +443,7 @@ pub(crate) mod tests {
                 comment: comment.clone(),
             })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         let r = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -475,7 +475,7 @@ pub(crate) mod tests {
             comment: comment.clone(),
         })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -510,7 +510,7 @@ pub(crate) mod tests {
             comment: comment.clone(),
         })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -560,7 +560,7 @@ pub(crate) mod tests {
             comment: comment.clone(),
         })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         assert!(mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -592,7 +592,7 @@ pub(crate) mod tests {
             comment: comment.clone(),
         })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         let res = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -634,7 +634,7 @@ pub(crate) mod tests {
             None,
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -692,7 +692,7 @@ pub(crate) mod tests {
             Some("http://different.localhost:8080/test-url"),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         let r = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -727,7 +727,7 @@ pub(crate) mod tests {
             Some("http://different.localhost:8080/test-url"),
         )?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services().await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -811,7 +811,7 @@ pub(crate) mod tests {
             .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];
-        let mock_breez_services = crate::breez_services::tests::breez_services_with(
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services_with(
             Some(Arc::new(mock_node_api)),
             known_payments,
         )
@@ -897,7 +897,7 @@ pub(crate) mod tests {
             .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];
-        let mock_breez_services = crate::breez_services::tests::breez_services_with(
+        let mock_breez_services = crate::internal_breez_services::tests::breez_services_with(
             Some(Arc::new(mock_node_api)),
             known_payments,
         )

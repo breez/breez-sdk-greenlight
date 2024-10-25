@@ -20,9 +20,9 @@ use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use crate::breez_services::{BreezEvent, OpenChannelParams, Receiver};
 use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
+use crate::internal_breez_services::{BreezEvent, OpenChannelParams, Receiver};
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
@@ -803,8 +803,8 @@ mod tests {
             secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
             OutPoint, Transaction, Txid,
         },
-        breez_services::tests::get_dummy_node_state,
         chain::{ChainService, OnchainTx},
+        internal_breez_services::tests::get_dummy_node_state,
         models::*,
         persist::db::SqliteStorage,
         test_utils::{

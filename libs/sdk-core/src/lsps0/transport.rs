@@ -313,7 +313,7 @@ mod tests {
     use tokio::sync::{mpsc, watch};
 
     use crate::{
-        breez_services::tests::get_dummy_node_state,
+        internal_breez_services::tests::get_dummy_node_state,
         lsps0::{
             error::Error,
             jsonrpc::{RpcError, RpcRequest, RpcServerMessage, RpcServerMessageBody},

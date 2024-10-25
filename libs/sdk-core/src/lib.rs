@@ -173,6 +173,7 @@ mod greenlight;
 #[rustfmt::skip]
 pub mod lnurl;
 mod buy;
+mod internal_breez_services;
 mod lsp;
 mod lsps0;
 mod lsps2;
@@ -188,12 +189,12 @@ mod swap_out;
 mod test_utils;
 mod tonic_wrap;
 
-pub use breez_services::{
-    mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
-    CheckMessageResponse, EventListener, InvoicePaidDetails, LogStream, PaymentFailedData,
-    SignMessageRequest, SignMessageResponse,
-};
+pub use breez_services::{mnemonic_to_seed, BreezServices};
 pub use chain::RecommendedFees;
+pub use internal_breez_services::{
+    BackupFailedData, BreezEvent, CheckMessageRequest, CheckMessageResponse, EventListener,
+    InvoicePaidDetails, LogStream, PaymentFailedData, SignMessageRequest, SignMessageResponse,
+};
 pub use lsp::LspInformation;
 pub use models::*;
 pub use sdk_common::prelude::*;

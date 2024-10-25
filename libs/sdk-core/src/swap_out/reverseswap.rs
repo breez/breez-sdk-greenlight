@@ -839,7 +839,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_prepare_onchain_payment_in_range() -> Result<()> {
-        let sdk = crate::breez_services::tests::breez_services().await?;
+        let sdk = crate::internal_breez_services::tests::breez_services().await?;
 
         // User-specified send amount is within range
         assert_in_range_prep_payment_response(
@@ -866,7 +866,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_prepare_onchain_payment_out_of_range() -> Result<()> {
-        let sdk = crate::breez_services::tests::breez_services().await?;
+        let sdk = crate::internal_breez_services::tests::breez_services().await?;
 
         // User-specified send amount is out of range (below min)
         assert!(sdk
