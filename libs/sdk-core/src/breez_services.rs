@@ -47,6 +47,8 @@ use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
 use crate::*;
 
+const DETECT_HIBERNATE_SLEEP_DURATION: Duration = Duration::from_secs(1);
+const DETECT_HIBERNATE_MAX_OFFSET: Duration = Duration::from_secs(2);
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
@@ -167,6 +169,7 @@ pub struct BreezServices {
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
+    hibernation_sender: watch::Sender<()>,
 }
 
 impl BreezServices {
@@ -1458,6 +1461,9 @@ impl BreezServices {
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
     async fn start_background_tasks(self: &Arc<BreezServices>) -> SdkResult<()> {
+        // Detect hibernation
+        self.detect_hibernation();
+
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
         self.start_signer(signer_signer_receiver).await;
@@ -1508,6 +1514,31 @@ impl BreezServices {
         self.init_chainservice_urls().await?;
 
         Ok(())
+    }
+
+    fn detect_hibernation(self: &Arc<BreezServices>) {
+        let cloned = Arc::clone(self);
+        tokio::spawn(async move {
+            loop {
+                let now = SystemTime::now();
+                tokio::time::sleep(DETECT_HIBERNATE_SLEEP_DURATION).await;
+                let elapsed = match now.elapsed() {
+                    Ok(elapsed) => elapsed,
+                    Err(e) => {
+                        error!("track_hibernation failed with: {:?}", e);
+                        continue;
+                    }
+                };
+
+                if elapsed
+                    .saturating_sub(DETECT_HIBERNATE_SLEEP_DURATION)
+                    .ge(&DETECT_HIBERNATE_MAX_OFFSET)
+                {
+                    debug!("Hibernation detected, notifying services.");
+                    let _ = cloned.hibernation_sender.send(());
+                }
+            }
+        });
     }
 
     async fn start_signer(self: &Arc<BreezServices>, shutdown_receiver: mpsc::Receiver<()>) {
@@ -2315,6 +2346,7 @@ impl BreezServicesBuilder {
             });
         }
 
+        let (hibernation_sender, hibernation_receiver) = watch::channel(());
         // The storage is implemented via sqlite.
         let persister = self
             .persister
@@ -2474,6 +2506,7 @@ impl BreezServicesBuilder {
             backup_watcher: Arc::new(backup_watcher),
             shutdown_sender,
             shutdown_receiver,
+            hibernation_sender,
         });
 
         Ok(breez_services)
