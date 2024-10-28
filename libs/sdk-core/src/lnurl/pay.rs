@@ -35,10 +35,10 @@ pub(crate) mod tests {
     use anyhow::{anyhow, Result};
     use gl_client::bitcoin::hashes::hex::ToHex;
     use gl_client::pb::cln::pay_response::PayStatus;
+    use lightning::bitcoin::hashes::{sha256, Hash};
     use mockito::Mock;
     use rand::random;
 
-    use crate::bitcoin::hashes::{sha256, Hash};
     use crate::breez_services::tests::get_dummy_node_state;
     use crate::lnurl::pay::*;
     use crate::lnurl::tests::MOCK_HTTP_SERVER;
@@ -801,7 +801,7 @@ pub(crate) mod tests {
             pr: Some(bolt11.clone()),
             sa_data: sa_data.clone(),
             iv_bytes: random::<[u8; 16]>(),
-            key_bytes: preimage.into_inner(),
+            key_bytes: preimage.to_byte_array(),
             comment: comment.clone(),
         })?;
 

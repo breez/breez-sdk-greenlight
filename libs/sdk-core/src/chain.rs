@@ -1,9 +1,9 @@
 use anyhow::Result;
+use gl_client::bitcoin::hashes::hex::FromHex;
+use gl_client::bitcoin::{OutPoint, Txid};
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::bitcoin::hashes::hex::FromHex;
-use crate::bitcoin::{OutPoint, Txid};
 use crate::error::{SdkError, SdkResult};
 
 pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";

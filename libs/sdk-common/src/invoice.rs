@@ -2,8 +2,9 @@ use std::num::ParseIntError;
 use std::str::FromStr;
 use std::time::{SystemTimeError, UNIX_EPOCH};
 
-use bitcoin::secp256k1::{self, PublicKey};
+use anyhow::Error;
 use hex::ToHex;
+use lightning::bitcoin::secp256k1::{self, PublicKey};
 use lightning::routing::gossip::RoutingFees;
 use lightning::routing::*;
 use lightning_invoice::*;
@@ -298,7 +299,10 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
     // return the parsed invoice
     let ln_invoice = LNInvoice {
         bolt11: bolt11.to_string(),
-        network: invoice.network().into(),
+        network: invoice
+            .network()
+            .try_into()
+            .map_err(|e: Error| InvoiceError::invalid_network(&e.to_string()))?,
         payee_pubkey,
         expiry: invoice.expiry_time().as_secs(),
         amount_msat: invoice.amount_milli_satoshis(),

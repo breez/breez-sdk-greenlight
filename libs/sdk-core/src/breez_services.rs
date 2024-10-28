@@ -6,11 +6,10 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use bip39::*;
-use bitcoin::hashes::hex::ToHex;
-use bitcoin::hashes::{sha256, Hash};
-use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::TryFutureExt;
+use gl_client::bitcoin::util::bip32::ChildNumber;
+use lightning::bitcoin::hashes::{sha256, Hash};
 use log::{LevelFilter, Metadata, Record};
 use reqwest::{header::CONTENT_TYPE, Body};
 use sdk_common::grpc;
@@ -477,7 +476,7 @@ impl BreezServices {
                             // For AES, we decrypt the contents on the fly
                             SuccessAction::Aes { data } => {
                                 let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
-                                let preimage_arr: [u8; 32] = preimage.into_inner();
+                                let preimage_arr: [u8; 32] = preimage.to_byte_array();
                                 let result = match (data, &preimage_arr).try_into() {
                                     Ok(data) => AesSuccessActionDataResult::Decrypted { data },
                                     Err(e) => AesSuccessActionDataResult::ErrorStatus {
@@ -1111,7 +1110,7 @@ impl BreezServices {
 
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
             let address = &full_rsi
-                .get_lockup_address(self.config.network)?
+                .get_lockup_address(self.config.bitcoin_network())?
                 .to_string();
             info!("Registering for onchain tx notification for address {address}");
             self.register_onchain_tx_notification(address, &webhook_url)
@@ -1980,7 +1979,7 @@ impl BreezServices {
                     .await?
                     .iter()
                 {
-                    let lockup_address = &rev_swap.get_lockup_address(self.config.network)?.to_string();
+                    let lockup_address = &rev_swap.get_lockup_address(self.config.bitcoin_network())?.to_string();
                     info!("Found monitored reverse swap with address {lockup_address}, registering for onchain tx notifications");
                     self.register_onchain_tx_notification(lockup_address, &webhook_url)
                         .await?;
@@ -2421,7 +2420,7 @@ impl BreezServicesBuilder {
         let chain_service = Arc::new(RedundantChainService::from_base_urls(mempoolspace_urls));
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
-            self.config.network.into(),
+            self.config.bitcoin_network(),
             unwrapped_node_api.clone(),
             self.swapper_api
                 .clone()
@@ -2713,7 +2712,7 @@ impl PaymentReceiver {
 
         info!("Registering payment with LSP");
         let api_key = self.config.api_key.clone().unwrap_or_default();
-        let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
+        let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_string();
 
         self.lsp
             .register_payment(

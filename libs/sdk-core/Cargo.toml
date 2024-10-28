@@ -12,6 +12,7 @@ flutter_rust_bridge = "=1.82.6"
 aes = { workspace = true }
 anyhow = { workspace = true }
 hex = { workspace = true }
+bitcoin = "=0.29.2" # Same version as used in gl-client
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
 ], rev = "c09c1be59994b35aadfe4747b78bcdc8fffbe45a" }
@@ -52,6 +53,7 @@ tokio-stream = "0.1.14"
 serde_with = "3.3.0"
 regex = { workspace = true }
 ryu = "1.0.18"
+bech32 = { workspace = true }
 
 [dev-dependencies]
 mockito = { workspace = true }

@@ -20,11 +20,11 @@ version = "0.5.2"
 aes = "0.8"
 anyhow = { version = "1.0.79", features = ["backtrace"] }
 base64 = "0.13.0"
-bitcoin = "=0.29.2" # Same version as used in gl-client
+bech32 = "0.9.1"
 # Pin the reqwest dependency until macOS linker issue is fixed: https://github.com/seanmonstar/reqwest/issues/2006
 hex = "0.4"
-lightning = "=0.0.118" # Same version as used in gl-client
-lightning-invoice = "=0.26.0" # Same version as used in gl-client
+lightning = { version = "0.0.125", features = ["std"] }
+lightning-invoice = { version = "0.32.0", features = ["std"] }
 log = "0.4"
 mockito = "1"
 once_cell = "1"

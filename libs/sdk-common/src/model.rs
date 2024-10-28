@@ -1,3 +1,5 @@
+use anyhow::anyhow;
+use lightning::bitcoin::{self, address::NetworkUnchecked};
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
@@ -11,24 +13,46 @@ pub enum Network {
     Regtest,
 }
 
-impl From<bitcoin::network::constants::Network> for Network {
-    fn from(network: bitcoin::network::constants::Network) -> Self {
+impl TryFrom<&bitcoin::Address<NetworkUnchecked>> for Network {
+    type Error = anyhow::Error;
+
+    fn try_from(address: &bitcoin::Address<NetworkUnchecked>) -> Result<Self, Self::Error> {
+        let networks = vec![
+            Network::Bitcoin,
+            Network::Testnet,
+            Network::Signet,
+            Network::Regtest,
+        ];
+        for network in networks {
+            if address.is_valid_for_network(network.into()) {
+                return Ok(network);
+            }
+        }
+        Err(anyhow!("Unknown network"))
+    }
+}
+
+impl TryFrom<bitcoin::Network> for Network {
+    type Error = anyhow::Error;
+
+    fn try_from(network: bitcoin::Network) -> Result<Self, Self::Error> {
         match network {
-            bitcoin::network::constants::Network::Bitcoin => Network::Bitcoin,
-            bitcoin::network::constants::Network::Testnet => Network::Testnet,
-            bitcoin::network::constants::Network::Signet => Network::Signet,
-            bitcoin::network::constants::Network::Regtest => Network::Regtest,
+            bitcoin::Network::Bitcoin => Ok(Network::Bitcoin),
+            bitcoin::Network::Testnet => Ok(Network::Testnet),
+            bitcoin::Network::Signet => Ok(Network::Signet),
+            bitcoin::Network::Regtest => Ok(Network::Regtest),
+            _ => Err(anyhow!("Unknown network")),
         }
     }
 }
 
-impl From<Network> for bitcoin::network::constants::Network {
+impl From<Network> for bitcoin::Network {
     fn from(network: Network) -> Self {
         match network {
-            Network::Bitcoin => bitcoin::network::constants::Network::Bitcoin,
-            Network::Testnet => bitcoin::network::constants::Network::Testnet,
-            Network::Signet => bitcoin::network::constants::Network::Signet,
-            Network::Regtest => bitcoin::network::constants::Network::Regtest,
+            Network::Bitcoin => bitcoin::Network::Bitcoin,
+            Network::Testnet => bitcoin::Network::Testnet,
+            Network::Signet => bitcoin::Network::Signet,
+            Network::Regtest => bitcoin::Network::Regtest,
         }
     }
 }

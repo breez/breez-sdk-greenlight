@@ -1,6 +1,6 @@
 use std::{array::TryFromSliceError, string::FromUtf8Error};
 
-use bitcoin::{bech32, secp256k1, util::bip32};
+use lightning::bitcoin::secp256k1;
 
 use crate::prelude::InvoiceError;
 
@@ -49,8 +49,8 @@ impl From<base64::DecodeError> for LnUrlError {
     }
 }
 
-impl From<bip32::Error> for LnUrlError {
-    fn from(err: bip32::Error) -> Self {
+impl From<lightning::bitcoin::bip32::Error> for LnUrlError {
+    fn from(err: lightning::bitcoin::bip32::Error) -> Self {
         Self::Generic(err.to_string())
     }
 }

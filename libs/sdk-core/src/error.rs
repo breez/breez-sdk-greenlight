@@ -1,12 +1,13 @@
 use std::time::SystemTimeError;
 
 use anyhow::Result;
+use gl_client::bitcoin::util::bip32;
 use sdk_common::prelude::*;
 use thiserror::Error;
 
 use crate::{
-    bitcoin::util::bip32, node_api::NodeError, persist::error::PersistError,
-    swap_in::error::SwapError, swap_out::error::ReverseSwapError,
+    node_api::NodeError, persist::error::PersistError, swap_in::error::SwapError,
+    swap_out::error::ReverseSwapError,
 };
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
@@ -381,8 +382,8 @@ impl From<anyhow::Error> for SdkError {
     }
 }
 
-impl From<crate::bitcoin::hashes::hex::Error> for SdkError {
-    fn from(err: crate::bitcoin::hashes::hex::Error) -> Self {
+impl From<gl_client::bitcoin::hashes::hex::Error> for SdkError {
+    fn from(err: gl_client::bitcoin::hashes::hex::Error) -> Self {
         Self::Generic {
             err: err.to_string(),
         }

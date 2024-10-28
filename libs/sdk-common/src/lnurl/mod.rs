@@ -37,8 +37,7 @@ pub(crate) fn maybe_replace_host_with_mockito_test_host(
 
 #[cfg(test)]
 mod tests {
-    use bitcoin::secp256k1::rand;
-    use bitcoin::secp256k1::rand::distributions::{Alphanumeric, DistString};
+    use rand::distributions::{Alphanumeric, DistString};
 
     pub fn rand_string(len: usize) -> String {
         Alphanumeric.sample_string(&mut rand::thread_rng(), len)

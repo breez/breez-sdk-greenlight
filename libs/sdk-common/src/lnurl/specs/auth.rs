@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
-use bitcoin::hashes::hex::ToHex;
-use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
+use lightning::bitcoin::bip32::{ChildNumber, Xpub};
 use reqwest::Url;
 
 use crate::prelude::*;
@@ -35,17 +34,17 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
         &derivation_path,
     )?;
     let xpub_bytes = signer.derive_bip32_pub_key(&derivation_path)?;
-    let xpub = ExtendedPubKey::decode(xpub_bytes.as_slice())?;
+    let xpub = Xpub::decode(xpub_bytes.as_slice())?;
 
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
     let mut callback_url =
         Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     callback_url
         .query_pairs_mut()
-        .append_pair("sig", &sig.to_hex());
+        .append_pair("sig", &hex::encode(&sig));
     callback_url
         .query_pairs_mut()
-        .append_pair("key", &xpub.public_key.to_hex());
+        .append_pair("key", &xpub.public_key.to_string());
 
     get_parse_and_log_response(callback_url.as_ref(), false)
         .await

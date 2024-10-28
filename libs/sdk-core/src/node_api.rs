@@ -2,6 +2,7 @@ use std::collections::HashSet;
 use std::pin::Pin;
 
 use anyhow::Result;
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use serde_json::Value;
 use tokio::sync::{mpsc, watch};
 use tokio_stream::Stream;
@@ -10,12 +11,10 @@ use tonic::Streaming;
 use sdk_common::prelude::*;
 
 use crate::{
-    bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
-    lightning_invoice::RawBolt11Invoice,
-    persist::error::PersistError,
-    CustomMessage, LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment,
-    PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHint, RouteHintHop, SyncResponse, TlvEntry,
+    lightning_invoice::RawBolt11Invoice, persist::error::PersistError, CustomMessage,
+    LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
+    SyncResponse, TlvEntry,
 };
 
 pub type NodeResult<T, E = NodeError> = Result<T, E>;

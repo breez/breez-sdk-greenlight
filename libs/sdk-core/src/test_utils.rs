@@ -4,14 +4,20 @@ use std::time::{Duration, SystemTime};
 use std::{mem, vec};
 
 use anyhow::{Error, Result};
+use bitcoin::hashes::hex::ToHex;
+use bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use bitcoin::Network;
 use chrono::{SecondsFormat, Utc};
 use gl_client::pb::cln::pay_response::PayStatus;
 use gl_client::pb::cln::Amount;
 use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
-use rand::rngs::OsRng;
 use rand::{random, Rng};
 use sdk_common::grpc;
+use sdk_common::lightning::bitcoin::hashes::{sha256, Hash};
+use sdk_common::lightning::bitcoin::key::Secp256k1;
+use sdk_common::lightning::bitcoin::secp256k1::ecdsa::RecoverableSignature;
+use sdk_common::lightning::bitcoin::secp256k1::{Message, PublicKey, SecretKey};
 use sdk_common::prelude::{FiatAPI, FiatCurrency, Rate};
 use serde_json::{json, Value};
 use tokio::sync::{mpsc, watch, Mutex};
@@ -21,12 +27,6 @@ use tokio_stream::StreamExt;
 use tonic::Streaming;
 
 use crate::backup::{BackupState, BackupTransport};
-use crate::bitcoin::hashes::hex::ToHex;
-use crate::bitcoin::hashes::{sha256, Hash};
-use crate::bitcoin::secp256k1::ecdsa::RecoverableSignature;
-use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
-use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use crate::bitcoin::Network;
 use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::buy::BuyBitcoinApi;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
@@ -135,7 +135,7 @@ impl SwapperAPI for MockSwapperAPI {
 
         let script =
             create_submarine_swap_script(hash, swapper_pub_key.clone(), payer_pubkey, 144).unwrap();
-        let address = crate::bitcoin::Address::p2wsh(&script, crate::bitcoin::Network::Bitcoin);
+        let address = bitcoin::Address::p2wsh(&script, bitcoin::Network::Bitcoin);
 
         Ok(Swap {
             bitcoin_address: address.to_string(),
@@ -750,14 +750,15 @@ pub(crate) fn rand_invoice_with_description_hash_and_preimage(
 ) -> InvoiceResult<crate::lightning_invoice::Bolt11Invoice> {
     let expected_desc_hash = Hash::hash(expected_desc.as_bytes());
 
-    let hashed_preimage = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
+    let hashed_preimage = Message::from_digest_slice(&preimage[..])?;
     let payment_hash = hashed_preimage.as_ref();
 
     let payment_secret = PaymentSecret([42u8; 32]);
 
     let secp = Secp256k1::new();
-    let key_pair = KeyPair::new(&secp, &mut rand::thread_rng());
-    let private_key = key_pair.secret_key();
+    let mut priv_key_raw = [2; 32];
+    rand::thread_rng().fill(&mut priv_key_raw);
+    let secret_key = SecretKey::from_slice(&priv_key_raw).unwrap();
 
     Ok(InvoiceBuilder::new(Currency::Bitcoin)
         .description_hash(expected_desc_hash)
@@ -768,7 +769,7 @@ pub(crate) fn rand_invoice_with_description_hash_and_preimage(
         .payment_secret(payment_secret)
         .current_timestamp()
         .min_final_cltv_expiry_delta(144)
-        .build_signed(|hash| Secp256k1::new().sign_ecdsa_recoverable(hash, &private_key))?)
+        .build_signed(|hash| secp.sign_ecdsa_recoverable(hash, &secret_key))?)
 }
 
 pub fn rand_string(len: usize) -> String {
@@ -827,7 +828,7 @@ pub fn create_invoice(
     invoice_preimage: Option<Vec<u8>>,
 ) -> LNInvoice {
     let preimage = invoice_preimage.unwrap_or(rand::thread_rng().gen::<[u8; 32]>().to_vec());
-    let hashed = Message::from_hashed_data::<sha256::Hash>(&preimage[..]);
+    let hashed = Message::from_digest_slice(&preimage[..]).unwrap();
     let hash = hashed.as_ref();
 
     let mut invoice_builder = InvoiceBuilder::new(Currency::Bitcoin)
@@ -849,7 +850,9 @@ pub fn create_invoice(
 
 fn sign_invoice(invoice: RawBolt11Invoice) -> String {
     let secp = Secp256k1::new();
-    let (secret_key, _) = secp.generate_keypair(&mut OsRng);
+    let mut priv_key_raw = [2; 32];
+    rand::thread_rng().fill(&mut priv_key_raw);
+    let secret_key = SecretKey::from_slice(&priv_key_raw).unwrap();
     invoice
         .sign(|m| -> Result<RecoverableSignature, anyhow::Error> {
             Ok(secp.sign_ecdsa_recoverable(m, &secret_key))

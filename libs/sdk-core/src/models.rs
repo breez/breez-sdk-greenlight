@@ -4,6 +4,12 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
 use chrono::{DateTime, Duration, Utc};
+use gl_client::bitcoin::blockdata::opcodes;
+use gl_client::bitcoin::blockdata::script::Builder;
+use gl_client::bitcoin::hashes::hex::{FromHex, ToHex};
+use gl_client::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
+use gl_client::bitcoin::{Address, Script};
+use lightning::bitcoin::hashes::{sha256, Hash};
 use ripemd::Digest;
 use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
@@ -15,12 +21,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use strum_macros::{Display, EnumString};
 
-use crate::bitcoin::blockdata::opcodes;
-use crate::bitcoin::blockdata::script::Builder;
-use crate::bitcoin::hashes::hex::{FromHex, ToHex};
-use crate::bitcoin::hashes::{sha256, Hash};
-use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-use crate::bitcoin::{Address, Script};
 use crate::error::SdkResult;
 use crate::lsp::LspInformation;
 use crate::persist::swap::SwapChainInfo;
@@ -223,7 +223,7 @@ impl FullReverseSwapInfo {
     pub(crate) fn validate_redeem_script(
         &self,
         received_lockup_address: String,
-        network: Network,
+        network: bitcoin::Network,
     ) -> ReverseSwapResult<()> {
         let redeem_script_received = Script::from_hex(&self.redeem_script)?;
         let asm = redeem_script_received.asm();
@@ -238,8 +238,8 @@ impl FullReverseSwapInfo {
         let refund_address_bytes = hex::decode(refund_address)?;
 
         let redeem_script_expected = Self::build_expected_reverse_swap_script(
-            self.get_preimage_hash().to_vec(), // Preimage hash
-            pk.serialize().to_vec(),           // Compressed pubkey
+            self.get_preimage_hash().to_byte_array().to_vec(), // Preimage hash
+            pk.serialize().to_vec(),                           // Compressed pubkey
             refund_address_bytes,
             self.timeout_block_height,
         )?;
@@ -249,7 +249,7 @@ impl FullReverseSwapInfo {
             true => {
                 let lockup_addr_expected = &received_lockup_address;
                 let lockup_addr_from_script =
-                    &Address::p2wsh(&redeem_script_received, network.into()).to_string();
+                    &Address::p2wsh(&redeem_script_received, network).to_string();
 
                 match lockup_addr_from_script == lockup_addr_expected {
                     true => Ok(()),
@@ -297,9 +297,12 @@ impl FullReverseSwapInfo {
     }
 
     /// Derives the lockup address from the redeem script
-    pub(crate) fn get_lockup_address(&self, network: Network) -> ReverseSwapResult<Address> {
+    pub(crate) fn get_lockup_address(
+        &self,
+        network: bitcoin::Network,
+    ) -> ReverseSwapResult<Address> {
         let redeem_script = Script::from_hex(&self.redeem_script)?;
-        Ok(Address::p2wsh(&redeem_script, network.into()))
+        Ok(Address::p2wsh(&redeem_script, network))
     }
 
     /// Get the preimage hash sent in the create request
@@ -507,6 +510,15 @@ impl Config {
             maxfee_percent: 0.5,
             exemptfee_msat: 20000,
             node_config,
+        }
+    }
+
+    pub(crate) fn bitcoin_network(&self) -> bitcoin::Network {
+        match self.network {
+            Network::Bitcoin => bitcoin::Network::Bitcoin,
+            Network::Testnet => bitcoin::Network::Testnet,
+            Network::Regtest => bitcoin::Network::Regtest,
+            Network::Signet => bitcoin::Network::Signet,
         }
     }
 }

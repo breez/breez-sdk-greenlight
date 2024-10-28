@@ -2,6 +2,17 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, ensure, Result};
+use bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
+use bitcoin::consensus::serialize;
+use bitcoin::hashes::hex::{FromHex, ToHex};
+use bitcoin::hashes::{sha256, Hash};
+use bitcoin::psbt::serialize::Serialize as PsbtSerialize;
+use bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
+use bitcoin::util::sighash::SighashCache;
+use bitcoin::{
+    Address, AddressType, EcdsaSighashType, KeyPair, Network, OutPoint, Script, Sequence,
+    Transaction, TxIn, TxOut, Txid, Witness,
+};
 use rand::thread_rng;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
@@ -9,17 +20,6 @@ use tokio::time::{sleep, Duration};
 
 use super::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use super::error::{ReverseSwapError, ReverseSwapResult};
-use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
-use crate::bitcoin::consensus::serialize;
-use crate::bitcoin::hashes::hex::{FromHex, ToHex};
-use crate::bitcoin::hashes::{sha256, Hash};
-use crate::bitcoin::psbt::serialize::Serialize as PsbtSerialize;
-use crate::bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
-use crate::bitcoin::util::sighash::SighashCache;
-use crate::bitcoin::{
-    Address, AddressType, EcdsaSighashType, KeyPair, Network, OutPoint, Script, Sequence,
-    Transaction, TxIn, TxOut, Txid, Witness,
-};
 use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx, Utxo};
 use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
@@ -384,7 +384,7 @@ impl BTCSendSwap {
                 };
 
                 res.validate_invoice(req.send_amount_sat() * 1_000)?;
-                res.validate_redeem_script(response.lockup_address, self.config.network)?;
+                res.validate_redeem_script(response.lockup_address, self.config.bitcoin_network())?;
                 Ok(res)
             }
             BoltzApiCreateReverseSwapResponse::BoltzApiError { error } => {
@@ -397,7 +397,7 @@ impl BTCSendSwap {
 
     /// Builds and signs claim tx
     async fn create_claim_tx(&self, rs: &FullReverseSwapInfo) -> Result<Transaction> {
-        let lockup_addr = rs.get_lockup_address(self.config.network)?;
+        let lockup_addr = rs.get_lockup_address(self.config.bitcoin_network())?;
         let claim_addr = Address::from_str(&rs.claim_pubkey)?;
         let redeem_script = Script::from_hex(&rs.redeem_script)?;
 
@@ -481,7 +481,7 @@ impl BTCSendSwap {
         // construct the transaction
         let mut tx = Transaction {
             version: 2,
-            lock_time: crate::bitcoin::PackedLockTime(0),
+            lock_time: bitcoin::PackedLockTime(0),
             input: txins.clone(),
             output: tx_out,
         };
@@ -530,7 +530,7 @@ impl BTCSendSwap {
     }
 
     async fn get_claim_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {
-        let lockup_addr = rsi.get_lockup_address(self.config.network)?;
+        let lockup_addr = rsi.get_lockup_address(self.config.bitcoin_network())?;
         Ok(self
             .chain_service
             .address_transactions(lockup_addr.to_string())
@@ -548,7 +548,7 @@ impl BTCSendSwap {
     }
 
     async fn get_lockup_tx(&self, rsi: &FullReverseSwapInfo) -> Result<Option<OnchainTx>> {
-        let lockup_addr = rsi.get_lockup_address(self.config.network)?;
+        let lockup_addr = rsi.get_lockup_address(self.config.bitcoin_network())?;
         let maybe_lockup_tx = self
             .chain_service
             .address_transactions(lockup_addr.to_string())
@@ -711,7 +711,7 @@ impl BTCSendSwap {
             .filter(|rev_swap| {
                 lockup_address
                     == rev_swap
-                        .get_lockup_address(self.config.network)
+                        .get_lockup_address(self.config.bitcoin_network())
                         .map(|a| a.to_string())
                         .unwrap_or_default()
             })

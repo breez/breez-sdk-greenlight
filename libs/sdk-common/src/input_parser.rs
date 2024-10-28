@@ -2,8 +2,8 @@ use std::str::FromStr;
 
 use ::bip21::Uri;
 use anyhow::{anyhow, Result};
-use bitcoin::bech32;
-use bitcoin::bech32::FromBase32;
+use bech32::FromBase32;
+use lightning::bitcoin::{self, address::NetworkUnchecked};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use LnUrlRequestData::*;
@@ -154,8 +154,10 @@ pub async fn parse(input: &str) -> Result<InputType> {
     let input = input.trim();
 
     // Covers BIP 21 URIs and simple onchain BTC addresses (which are valid BIP 21 with the 'bitcoin:' prefix)
-    if let Ok(bip21_uri) = prepend_if_missing("bitcoin:", input).parse::<Uri<'_>>() {
-        let bitcoin_addr_data = bip21_uri.into();
+    if let Ok(bip21_uri) =
+        prepend_if_missing("bitcoin:", input).parse::<Uri<'_, NetworkUnchecked>>()
+    {
+        let bitcoin_addr_data = bip21_uri.assume_checked().into();
 
         // Special case of LN BOLT11 with onchain fallback
         // Search for the `lightning=bolt11` param in the BIP21 URI and, if found, extract the bolt11
@@ -611,7 +613,7 @@ impl BitcoinAddressData {
     /// ensuring that all the fields are valid
     pub fn to_uri(&self) -> Result<String, URISerializationError> {
         self.address
-            .parse::<bitcoin::Address>()
+            .parse::<lightning::bitcoin::Address<NetworkUnchecked>>()
             .map_err(|_| URISerializationError::InvalidAddress)?;
 
         let mut optional_keys = HashMap::new();
@@ -648,7 +650,7 @@ impl From<Uri<'_>> for BitcoinAddressData {
     fn from(uri: Uri) -> Self {
         BitcoinAddressData {
             address: uri.address.to_string(),
-            network: uri.address.network.into(),
+            network: uri.address.as_unchecked().try_into().unwrap(),
             amount_sat: uri.amount.map(|a| a.to_sat()),
             label: uri.label.map(|label| label.try_into().unwrap()),
             message: uri.message.map(|msg| msg.try_into().unwrap()),
@@ -661,9 +663,8 @@ pub(crate) mod tests {
     use std::sync::Mutex;
 
     use anyhow::{anyhow, Result};
-    use bitcoin::bech32;
-    use bitcoin::bech32::{ToBase32, Variant};
-    use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
+    use bech32::{ToBase32, Variant};
+    use lightning::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
     use mockito::{Mock, Server};
     use once_cell::sync::Lazy;
 
@@ -956,7 +957,7 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn test_node_id() -> Result<()> {
         let secp = Secp256k1::new();
-        let secret_key = SecretKey::from_slice(&[0xab; 32])?;
+        let secret_key = SecretKey::from_slice(&[0xab; 32]).unwrap();
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
         match parse(&public_key.to_string()).await? {

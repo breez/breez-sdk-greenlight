@@ -1,7 +1,6 @@
-use bitcoin::util::amount::ParseAmountError;
-use bitcoin::Denomination;
 use elements::{
     address::{Address, AddressError, AddressParams},
+    bitcoin::{amount::ParseAmountError, Denomination},
     hashes::hex::HexToArrayError,
     issuance::AssetId,
 };
@@ -119,9 +118,10 @@ impl LiquidAddressData {
                 if let Some((key, val)) = pair.split_once('=') {
                     match key {
                         "amount" => {
-                            amount_sat = bitcoin::Amount::from_str_in(val, Denomination::Bitcoin)
-                                .map(|amt| Some(amt.to_sat()))
-                                .map_err(DeserializeError::InvalidAmount)?;
+                            amount_sat =
+                                elements::bitcoin::Amount::from_str_in(val, Denomination::Bitcoin)
+                                    .map(|amt| Some(amt.to_sat()))
+                                    .map_err(DeserializeError::InvalidAmount)?;
                         }
                         "assetid" => {
                             val.parse::<AssetId>()

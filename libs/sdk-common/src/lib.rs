@@ -12,11 +12,6 @@ mod model;
 mod utils;
 
 // Re-export commonly used crates, to make it easy for callers to use the specific versions we're using.
-// For example, for the bitcoin crate, this is important because certain error conversions defined in
-// sdk-common map to or from structs from this specific bitcoin crate version. If the caller would
-// use a different version, the Into traits defined here would not be usable by them
-// (e.g. impl From<bip32::Error> for LnUrlError)
-pub use bitcoin;
 pub use lightning;
 pub use lightning_invoice;
 

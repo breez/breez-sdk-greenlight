@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
+use bech32::{u5, ToBase32};
 use ecies::symmetric::{sym_decrypt, sym_encrypt};
 use futures::{Future, Stream};
 use gl_client::credentials::{Device, Nobody};
@@ -27,6 +28,8 @@ use gl_client::pb::{OffChainPayment, PayStatus, TrampolinePayRequest};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::Signer;
+use lightning::bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
+use lightning::bitcoin::secp256k1::PublicKey;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Map, Value};
@@ -37,16 +40,6 @@ use tokio::time::{sleep, Instant, MissedTickBehavior};
 use tokio_stream::StreamExt;
 use tonic::Streaming;
 
-use crate::bitcoin::bech32::{u5, ToBase32};
-use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
-use crate::bitcoin::hashes::Hash;
-use crate::bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
-use crate::bitcoin::secp256k1::PublicKey;
-use crate::bitcoin::secp256k1::Secp256k1;
-use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use crate::bitcoin::{
-    Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
-};
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
@@ -54,6 +47,13 @@ use crate::persist::db::SqliteStorage;
 use crate::persist::send_pays::{SendPay, SendPayStatus};
 use crate::{models::*, LspInformation};
 use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
+use gl_client::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
+use gl_client::bitcoin::hashes::Hash;
+use gl_client::bitcoin::secp256k1::Secp256k1;
+use gl_client::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use gl_client::bitcoin::{
+    Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+};
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
@@ -101,9 +101,9 @@ impl Greenlight {
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Self> {
         // Derive the encryption key from the seed
-        let temp_signer = Signer::new(seed.clone(), config.network.into(), Nobody::new())?;
+        let temp_signer = Signer::new(seed.clone(), config.bitcoin_network(), Nobody::new())?;
         let encryption_key = Self::derive_bip32_key(
-            config.network,
+            config.bitcoin_network(),
             &temp_signer,
             vec![ChildNumber::from_hardened_idx(140)?, ChildNumber::from(0)],
         )?
@@ -117,11 +117,11 @@ impl Greenlight {
 
         // Query for the existing credentials
         let mut parsed_credentials =
-            Self::get_node_credentials(config.network, &temp_signer, persister.clone())?
+            Self::get_node_credentials(config.bitcoin_network(), &temp_signer, persister.clone())?
                 .ok_or(NodeError::credentials("No credentials found"));
         if parsed_credentials.is_err() {
             info!("No credentials found, trying to recover existing node");
-            parsed_credentials = match Self::recover(config.network, seed.clone()).await {
+            parsed_credentials = match Self::recover(config.bitcoin_network(), seed.clone()).await {
                 Ok(creds) => Ok(creds),
                 Err(_) => {
                     match restore_only.unwrap_or(false) {
@@ -129,7 +129,7 @@ impl Greenlight {
                             // If we got here it means we failed to recover so we need to register a new node
                             info!("Failed to recover node, registering new one");
                             let credentials = Self::register(
-                                config.clone().network,
+                                config.bitcoin_network(),
                                 seed.clone(),
                                 register_credentials.partner_credentials,
                                 register_credentials.invite_code,
@@ -148,7 +148,8 @@ impl Greenlight {
         // Persist the connection credentials for future use and return the node instance
         match parsed_credentials {
             Ok(creds) => {
-                let temp_scheduler = Scheduler::new(config.network.into(), creds.clone()).await?;
+                let temp_scheduler =
+                    Scheduler::new(config.bitcoin_network(), creds.clone()).await?;
                 debug!("upgrading credentials");
                 let creds = creds.upgrade(&temp_scheduler, &temp_signer).await?;
                 debug!("upgrading credentials succeeded");
@@ -171,7 +172,7 @@ impl Greenlight {
         device: Device,
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Greenlight> {
-        let greenlight_network = sdk_config.network.into();
+        let greenlight_network = sdk_config.bitcoin_network();
         let signer = Signer::new(seed, greenlight_network, device.clone())?;
 
         Ok(Greenlight {
@@ -186,29 +187,29 @@ impl Greenlight {
     }
 
     fn derive_bip32_key(
-        network: Network,
+        network: bitcoin::Network,
         signer: &Signer,
         path: Vec<ChildNumber>,
     ) -> NodeResult<ExtendedPrivKey> {
         Ok(
-            ExtendedPrivKey::new_master(network.into(), &signer.bip32_ext_key())?
+            ExtendedPrivKey::new_master(network, &signer.bip32_ext_key())?
                 .derive_priv(&Secp256k1::new(), &path)?,
         )
     }
 
     fn legacy_derive_bip32_key(
-        network: Network,
+        network: bitcoin::Network,
         signer: &Signer,
         path: Vec<ChildNumber>,
     ) -> NodeResult<ExtendedPrivKey> {
         Ok(
-            ExtendedPrivKey::new_master(network.into(), &signer.legacy_bip32_ext_key())?
+            ExtendedPrivKey::new_master(network, &signer.legacy_bip32_ext_key())?
                 .derive_priv(&Secp256k1::new(), &path)?,
         )
     }
 
     async fn register(
-        network: Network,
+        network: bitcoin::Network,
         seed: Vec<u8>,
         register_credentials: Option<GreenlightCredentials>,
         invite_code: Option<String>,
@@ -216,7 +217,6 @@ impl Greenlight {
         if invite_code.is_some() && register_credentials.is_some() {
             return Err(anyhow!("Cannot specify both invite code and credentials"));
         }
-        let greenlight_network = network.into();
         let creds = match register_credentials {
             Some(creds) => {
                 debug!("registering with credentials");
@@ -229,8 +229,8 @@ impl Greenlight {
             None => Nobody::new(),
         };
 
-        let signer = Signer::new(seed, greenlight_network, creds.clone())?;
-        let scheduler = Scheduler::new(greenlight_network, creds).await?;
+        let signer = Signer::new(seed, network, creds.clone())?;
+        let scheduler = Scheduler::new(network, creds).await?;
 
         let register_res: scheduler::RegistrationResponse =
             scheduler.register(&signer, invite_code).await?;
@@ -238,11 +238,10 @@ impl Greenlight {
         Ok(Device::from_bytes(register_res.creds))
     }
 
-    async fn recover(network: Network, seed: Vec<u8>) -> Result<Device> {
-        let greenlight_network = network.into();
+    async fn recover(network: bitcoin::Network, seed: Vec<u8>) -> Result<Device> {
         let credentials = Nobody::new();
-        let signer = Signer::new(seed, greenlight_network, credentials.clone())?;
-        let scheduler = Scheduler::new(greenlight_network, credentials).await?;
+        let signer = Signer::new(seed, network, credentials.clone())?;
+        let scheduler = Scheduler::new(network, credentials).await?;
         let recover_res: scheduler::RecoveryResponse = scheduler.recover(&signer).await?;
 
         Ok(Device::from_bytes(recover_res.creds))
@@ -251,7 +250,7 @@ impl Greenlight {
     async fn get_client(&self) -> NodeResult<node::Client> {
         let mut gl_client = self.gl_client.lock().await;
         if gl_client.is_none() {
-            let scheduler = Scheduler::new(self.sdk_config.network.into(), self.device.clone())
+            let scheduler = Scheduler::new(self.sdk_config.bitcoin_network(), self.device.clone())
                 .await
                 .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
             *gl_client = Some(scheduler.node().await?);
@@ -262,7 +261,7 @@ impl Greenlight {
     pub(crate) async fn get_node_client(&self) -> NodeResult<node::ClnClient> {
         let mut node_client = self.node_client.lock().await;
         if node_client.is_none() {
-            let scheduler = Scheduler::new(self.sdk_config.network.into(), self.device.clone())
+            let scheduler = Scheduler::new(self.sdk_config.bitcoin_network(), self.device.clone())
                 .await
                 .map_err(|e| NodeError::ServiceConnectivity(e.to_string()))?;
             *node_client = Some(scheduler.node().await?);
@@ -271,7 +270,7 @@ impl Greenlight {
     }
 
     fn get_node_credentials(
-        network: Network,
+        network: bitcoin::Network,
         signer: &Signer,
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Option<Device>> {
@@ -989,7 +988,7 @@ struct SyncState {
 impl NodeAPI for Greenlight {
     fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
         Ok(Self::get_node_credentials(
-            self.sdk_config.network,
+            self.sdk_config.bitcoin_network(),
             &self.signer,
             self.persister.clone(),
         )?
@@ -1496,7 +1495,7 @@ impl NodeAPI for Greenlight {
         }];
         let tx = Transaction {
             version: 2,
-            lock_time: crate::bitcoin::PackedLockTime(0),
+            lock_time: gl_client::bitcoin::PackedLockTime(0),
             input: txins.clone(),
             output: tx_out,
         };
@@ -1853,11 +1852,11 @@ impl NodeAPI for Greenlight {
     }
 
     fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
-        Self::derive_bip32_key(self.sdk_config.network, &self.signer, path)
+        Self::derive_bip32_key(self.sdk_config.bitcoin_network(), &self.signer, path)
     }
 
     fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
-        Self::legacy_derive_bip32_key(self.sdk_config.network, &self.signer, path)
+        Self::legacy_derive_bip32_key(self.sdk_config.bitcoin_network(), &self.signer, path)
     }
 
     async fn stream_custom_messages(

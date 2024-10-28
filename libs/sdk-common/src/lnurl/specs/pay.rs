@@ -119,6 +119,7 @@ pub fn validate_invoice(user_amount_msat: u64, bolt11: &str, network: Network) -
 pub mod model {
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::Result;
+    use lightning::bitcoin::hex::HexToArrayError;
     use serde::{Deserialize, Serialize};
     use thiserror::Error;
     use utils::default_true;
@@ -441,8 +442,8 @@ pub mod model {
         }
     }
 
-    impl From<bitcoin::hashes::hex::Error> for LnUrlPayError {
-        fn from(err: bitcoin::hashes::hex::Error) -> Self {
+    impl From<HexToArrayError> for LnUrlPayError {
+        fn from(err: HexToArrayError) -> Self {
             Self::Generic {
                 err: err.to_string(),
             }
@@ -477,7 +478,7 @@ pub mod model {
 pub(crate) mod tests {
     use aes::cipher::{block_padding::Pkcs7, BlockDecryptMut, BlockEncryptMut, KeyIvInit};
     use anyhow::Result;
-    use bitcoin::hashes::{sha256, Hash};
+    use lightning::bitcoin::hashes::{sha256, Hash};
 
     use crate::lnurl::specs::pay::*;
     use crate::lnurl::tests::rand_string;
@@ -536,7 +537,7 @@ pub(crate) mod tests {
     fn test_lnurl_pay_validate_success_action_encrypt_decrypt() -> Result<()> {
         // Simulate a preimage, which will be the AES key
         let key = sha256::Hash::hash(&[0x42; 16]);
-        let key_bytes = key.as_inner();
+        let key_bytes = key.as_byte_array();
 
         let iv_bytes = [0x24; 16]; // 16 bytes = 24 chars
         let iv_base64 = base64::encode(iv_bytes); // JCQkJCQkJCQkJCQkJCQkJA==
