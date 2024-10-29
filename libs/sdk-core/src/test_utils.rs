@@ -330,7 +330,7 @@ pub struct MockNodeAPI {
 
 #[tonic::async_trait]
 impl NodeAPI for MockNodeAPI {
-    fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
+    async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
@@ -444,7 +444,7 @@ impl NodeAPI for MockNodeAPI {
         Ok(true)
     }
 
-    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String> {
+    async fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String> {
         Ok(sign_invoice(invoice))
     }
 
@@ -484,11 +484,14 @@ impl NodeAPI for MockNodeAPI {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
-    fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
+    async fn derive_bip32_key(&self, _path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
 
-    fn legacy_derive_bip32_key(&self, _path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
+    async fn legacy_derive_bip32_key(
+        &self,
+        _path: Vec<ChildNumber>,
+    ) -> NodeResult<ExtendedPrivKey> {
         Ok(ExtendedPrivKey::new_master(Network::Bitcoin, &[])?)
     }
 

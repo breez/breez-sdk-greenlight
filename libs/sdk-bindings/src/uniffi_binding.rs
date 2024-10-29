@@ -152,7 +152,7 @@ impl BlockingBreezServices {
     }
 
     pub fn node_credentials(&self) -> SdkResult<Option<NodeCredentials>> {
-        self.breez_services.node_credentials()
+        rt().block_on(self.breez_services.node_credentials())
     }
 
     pub fn node_info(&self) -> SdkResult<NodeState> {

@@ -381,7 +381,7 @@ pub(crate) async fn handle_command(
                 .await?;
             serde_json::to_string_pretty(&res).map_err(|e| e.into())
         }
-        Commands::NodeCredentials {} => match sdk()?.node_credentials()? {
+        Commands::NodeCredentials {} => match sdk()?.node_credentials().await? {
             Some(credentials) => serde_json::to_string_pretty(&credentials).map_err(|e| e.into()),
             None => Ok("No credentials".into()),
         },

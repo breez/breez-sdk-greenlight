@@ -6,10 +6,12 @@ use reqwest::Url;
 
 use crate::prelude::*;
 
+#[tonic::async_trait]
 pub trait LnurlAuthSigner {
-    fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
-    fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
-    fn hmac_sha256(
+    async fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
+    async fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber])
+        -> LnUrlResult<Vec<u8>>;
+    async fn hmac_sha256(
         &self,
         key_derivation_path: &[ChildNumber],
         input: &[u8],
@@ -28,13 +30,15 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
     signer: &S,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
     let url = Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
-    let derivation_path = get_derivation_path(signer, url)?;
-    let sig = signer.sign_ecdsa(
-        &hex::decode(&req_data.k1)
-            .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
-        &derivation_path,
-    )?;
-    let xpub_bytes = signer.derive_bip32_pub_key(&derivation_path)?;
+    let derivation_path = get_derivation_path(signer, url).await?;
+    let sig = signer
+        .sign_ecdsa(
+            &hex::decode(&req_data.k1)
+                .map_err(|e| LnUrlError::Generic(format!("Error decoding k1: {e}")))?,
+            &derivation_path,
+        )
+        .await?;
+    let xpub_bytes = signer.derive_bip32_pub_key(&derivation_path).await?;
     let xpub = ExtendedPubKey::decode(xpub_bytes.as_slice())?;
 
     // <LNURL_hostname_and_path>?<LNURL_existing_query_parameters>&sig=<hex(sign(utf8ToBytes(k1), linkingPrivKey))>&key=<hex(linkingKey)>
@@ -93,7 +97,7 @@ pub fn validate_request(
     })
 }
 
-pub fn get_derivation_path<S: LnurlAuthSigner>(
+pub async fn get_derivation_path<S: LnurlAuthSigner>(
     signer: &S,
     url: Url,
 ) -> LnUrlResult<Vec<ChildNumber>> {
@@ -101,10 +105,12 @@ pub fn get_derivation_path<S: LnurlAuthSigner>(
         .domain()
         .ok_or(LnUrlError::invalid_uri("Could not determine domain"))?;
 
-    let hmac = signer.hmac_sha256(
-        &[ChildNumber::from_hardened_idx(138)?, ChildNumber::from(0)],
-        domain.as_bytes(),
-    )?;
+    let hmac = signer
+        .hmac_sha256(
+            &[ChildNumber::from_hardened_idx(138)?, ChildNumber::from(0)],
+            domain.as_bytes(),
+        )
+        .await?;
 
     // m/138'/<long1>/<long2>/<long3>/<long4>
     Ok(vec![

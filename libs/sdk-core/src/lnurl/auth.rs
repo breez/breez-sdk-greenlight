@@ -19,16 +19,17 @@ impl SdkLnurlAuthSigner {
     }
 }
 
+#[tonic::async_trait]
 impl LnurlAuthSigner for SdkLnurlAuthSigner {
-    fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>> {
-        let xpriv = self.node_api.derive_bip32_key(derivation_path.to_vec())?;
+    async fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>> {
+        let xpriv = self.node_api.derive_bip32_key(derivation_path.to_vec()).await?;
         Ok(ExtendedPubKey::from_priv(&Secp256k1::new(), &xpriv)
             .encode()
             .to_vec())
     }
 
-    fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>> {
-        let xpriv = self.node_api.derive_bip32_key(derivation_path.to_vec())?;
+    async fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>> {
+        let xpriv = self.node_api.derive_bip32_key(derivation_path.to_vec()).await?;
         let sig = Secp256k1::new().sign_ecdsa(
             &Message::from_slice(msg).map_err(|_| LnUrlError::generic("Failed to sign"))?,
             &xpriv.private_key,
@@ -36,14 +37,14 @@ impl LnurlAuthSigner for SdkLnurlAuthSigner {
         Ok(sig.serialize_der().to_vec())
     }
 
-    fn hmac_sha256(
+    async fn hmac_sha256(
         &self,
         key_derivation_path: &[ChildNumber],
         input: &[u8],
     ) -> LnUrlResult<Vec<u8>> {
         let priv_key = self
             .node_api
-            .derive_bip32_key(key_derivation_path.to_vec())?;
+            .derive_bip32_key(key_derivation_path.to_vec()).await?;
         let mut engine = HmacEngine::<sha256::Hash>::new(priv_key.encode().as_slice());
         engine.input(input);
         Ok(Hmac::<sha256::Hash>::from_engine(engine)

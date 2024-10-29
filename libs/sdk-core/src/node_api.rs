@@ -114,7 +114,7 @@ pub struct FetchBolt11Result {
 /// Trait covering functions affecting the LN node
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
-    fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
+    async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
     async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()>;
     async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String>;
     /// Fetches an existing BOLT11 invoice from the node
@@ -171,7 +171,7 @@ pub trait NodeAPI: Send + Sync {
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
     async fn start_keep_alive(&self, shutdown: watch::Receiver<()>);
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;
-    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String>;
+    async fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String>;
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
     async fn stream_incoming_payments(
         &self,
@@ -191,8 +191,8 @@ pub trait NodeAPI: Send + Sync {
     ) -> NodeResult<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>>;
 
     /// Gets the private key at the path specified
-    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
-    fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
+    async fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
+    async fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey>;
 
     /// Gets the routing hints related to all private channels that the node has.
     /// Also returns a boolean indicating if the node has a public channel or not.

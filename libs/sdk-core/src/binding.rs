@@ -332,12 +332,8 @@ pub fn sync() -> Result<()> {
 
 /// See [BreezServices::node_credentials]
 pub fn node_credentials() -> Result<Option<NodeCredentials>> {
-    block_on(async {
-        get_breez_services()
-            .await?
-            .node_credentials()
-            .map_err(anyhow::Error::new::<SdkError>)
-    })
+    block_on(async { get_breez_services().await?.node_credentials().await })
+        .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::node_info]

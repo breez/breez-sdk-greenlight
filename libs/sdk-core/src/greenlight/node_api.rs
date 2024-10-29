@@ -65,7 +65,7 @@ const PAYMENT_STATE_FAILED: u8 = 4;
 
 pub(crate) struct Greenlight {
     sdk_config: Config,
-    signer: Signer,
+    signer: Mutex<Arc<Signer>>,
     device: Device,
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
@@ -101,7 +101,11 @@ impl Greenlight {
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Self> {
         // Derive the encryption key from the seed
-        let temp_signer = Signer::new(seed.clone(), config.network.into(), Nobody::new())?;
+        let temp_signer = Arc::new(Signer::new(
+            seed.clone(),
+            config.network.into(),
+            Nobody::new(),
+        )?);
         let encryption_key = Self::derive_bip32_key(
             config.network,
             &temp_signer,
@@ -176,7 +180,7 @@ impl Greenlight {
 
         Ok(Greenlight {
             sdk_config,
-            signer,
+            signer: Mutex::new(Arc::new(signer)),
             device,
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
@@ -185,9 +189,13 @@ impl Greenlight {
         })
     }
 
+    async fn get_signer(&self) -> Arc<Signer> {
+        Arc::clone(&*self.signer.lock().await)
+    }
+
     fn derive_bip32_key(
         network: Network,
-        signer: &Signer,
+        signer: &Arc<Signer>,
         path: Vec<ChildNumber>,
     ) -> NodeResult<ExtendedPrivKey> {
         Ok(
@@ -198,7 +206,7 @@ impl Greenlight {
 
     fn legacy_derive_bip32_key(
         network: Network,
-        signer: &Signer,
+        signer: &Arc<Signer>,
         path: Vec<ChildNumber>,
     ) -> NodeResult<ExtendedPrivKey> {
         Ok(
@@ -272,7 +280,7 @@ impl Greenlight {
 
     fn get_node_credentials(
         network: Network,
-        signer: &Signer,
+        signer: &Arc<Signer>,
         persister: Arc<SqliteStorage>,
     ) -> NodeResult<Option<Device>> {
         // Derive the encryption key from the seed
@@ -987,10 +995,10 @@ struct SyncState {
 
 #[tonic::async_trait]
 impl NodeAPI for Greenlight {
-    fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
+    async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
         Ok(Self::get_node_credentials(
             self.sdk_config.network,
-            &self.signer,
+            &self.get_signer().await,
             self.persister.clone(),
         )?
         .map(|credentials| NodeCredentials::Greenlight {
@@ -1439,7 +1447,7 @@ impl NodeAPI for Greenlight {
     }
 
     async fn node_id(&self) -> NodeResult<String> {
-        Ok(hex::encode(self.signer.node_id()))
+        Ok(hex::encode(self.get_signer().await.node_id()))
     }
 
     async fn redeem_onchain_funds(
@@ -1519,7 +1527,7 @@ impl NodeAPI for Greenlight {
 
     /// Starts the signer that listens in a loop until the shutdown signal is received
     async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
-        match self.signer.run_forever(shutdown).await {
+        match self.get_signer().await.run_forever(shutdown).await {
             Ok(_) => info!("signer exited gracefully"),
             Err(e) => error!("signer exited with error: {e}"),
         }
@@ -1574,7 +1582,10 @@ impl NodeAPI for Greenlight {
     }
 
     async fn sign_message(&self, message: &str) -> NodeResult<String> {
-        let (sig, recovery_id) = self.signer.sign_message(message.as_bytes().to_vec())?;
+        let (sig, recovery_id) = self
+            .get_signer()
+            .await
+            .sign_message(message.as_bytes().to_vec())?;
         let mut complete_signature = vec![31 + recovery_id];
         complete_signature.extend_from_slice(&sig);
         Ok(zbase32::encode_full_bytes(&complete_signature))
@@ -1590,7 +1601,7 @@ impl NodeAPI for Greenlight {
         Ok(verify(message.as_bytes(), signature, &pk))
     }
 
-    fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String> {
+    async fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String> {
         let hrp_bytes = invoice.hrp.to_string().as_bytes().to_vec();
         let data_bytes = invoice.data.to_base32();
 
@@ -1610,7 +1621,7 @@ impl NodeAPI for Greenlight {
         buf.append(&mut hrp_len_bytes);
         buf.append(&mut hrp_buf);
         // Sign the invoice using the signer
-        let raw_result = self.signer.sign_invoice(buf)?;
+        let raw_result = self.get_signer().await.sign_invoice(buf)?;
         info!(
             "recover id: {:?} raw = {:?}",
             raw_result, raw_result[64] as i32
@@ -1852,12 +1863,12 @@ impl NodeAPI for Greenlight {
         Ok(max_channel_amounts)
     }
 
-    fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
-        Self::derive_bip32_key(self.sdk_config.network, &self.signer, path)
+    async fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
+        Self::derive_bip32_key(self.sdk_config.network, &self.get_signer().await, path)
     }
 
-    fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
-        Self::legacy_derive_bip32_key(self.sdk_config.network, &self.signer, path)
+    async fn legacy_derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
+        Self::legacy_derive_bip32_key(self.sdk_config.network, &self.get_signer().await, path)
     }
 
     async fn stream_custom_messages(

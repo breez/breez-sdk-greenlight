@@ -623,8 +623,8 @@ impl BreezServices {
     }
 
     /// Retrieve the decrypted credentials from the node.
-    pub fn node_credentials(&self) -> SdkResult<Option<NodeCredentials>> {
-        Ok(self.node_api.node_credentials()?)
+    pub async fn node_credentials(&self) -> SdkResult<Option<NodeCredentials>> {
+        Ok(self.node_api.node_credentials().await?)
     }
 
     /// Retrieve the node state from the persistent storage.
@@ -2381,17 +2381,21 @@ impl BreezServicesBuilder {
         let unwrapped_backup_transport = backup_transport.unwrap();
 
         // create the backup encryption key and then the backup watcher
-        let backup_encryption_key = unwrapped_node_api.derive_bip32_key(vec![
-            ChildNumber::from_hardened_idx(139)?,
-            ChildNumber::from(0),
-        ])?;
+        let backup_encryption_key = unwrapped_node_api
+            .derive_bip32_key(vec![
+                ChildNumber::from_hardened_idx(139)?,
+                ChildNumber::from(0),
+            ])
+            .await?;
 
         // We calculate the legacy key as a fallback for the case where the backup is still
         // encrypted with the old key.
-        let legacy_backup_encryption_key = unwrapped_node_api.legacy_derive_bip32_key(vec![
-            ChildNumber::from_hardened_idx(139)?,
-            ChildNumber::from(0),
-        ])?;
+        let legacy_backup_encryption_key = unwrapped_node_api
+            .legacy_derive_bip32_key(vec![
+                ChildNumber::from_hardened_idx(139)?,
+                ChildNumber::from(0),
+            ])
+            .await?;
         let backup_watcher = BackupWatcher::new(
             self.config.clone(),
             unwrapped_backup_transport.clone(),
@@ -2699,7 +2703,7 @@ impl PaymentReceiver {
             let modified =
                 add_routing_hints(invoice, true, &vec![lsp_hint], parsed_invoice.amount_msat)?;
 
-            let invoice = self.node_api.sign_invoice(modified)?;
+            let invoice = self.node_api.sign_invoice(modified).await?;
             info!("Signed invoice with hint = {}", invoice);
             return Ok(invoice);
         }
@@ -2707,7 +2711,7 @@ impl PaymentReceiver {
         if parsed_invoice.routing_hints.is_empty() {
             info!("Adding custom hints: {:?}", hints);
             let modified = add_routing_hints(invoice, false, &hints, parsed_invoice.amount_msat)?;
-            let invoice = self.node_api.sign_invoice(modified)?;
+            let invoice = self.node_api.sign_invoice(modified).await?;
             info!("Signed invoice with hints = {}", invoice);
             return Ok(invoice);
         }
@@ -2740,7 +2744,7 @@ impl PaymentReceiver {
             &vec![open_channel_hint],
             Some(params.payer_amount_msat),
         )?;
-        let signed_invoice = self.node_api.sign_invoice(invoice_with_hint)?;
+        let signed_invoice = self.node_api.sign_invoice(invoice_with_hint).await?;
 
         info!("Registering payment with LSP");
         let api_key = self.config.api_key.clone().unwrap_or_default();
