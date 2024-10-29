@@ -2468,6 +2468,20 @@ impl BreezServicesBuilder {
             }
         });
 
+        // Reconnect breez server on hibernation.
+        let cloned_breez_server = breez_server.clone();
+        let mut cloned_hibernation_receiver = hibernation_receiver.clone();
+        tokio::spawn(async move {
+            loop {
+                if cloned_hibernation_receiver.changed().await.is_err() {
+                    return;
+                }
+
+                debug!("Reconnect hibernation: reconnecting breez server");
+                let _ = cloned_breez_server.reconnect().await;
+            }
+        });
+
         let current_lsp_id = persister.get_lsp_id()?;
         if current_lsp_id.is_none() && self.config.default_lsp_id.is_some() {
             persister.set_lsp(self.config.default_lsp_id.clone().unwrap(), None)?;

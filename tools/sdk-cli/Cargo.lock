@@ -2996,6 +2996,7 @@ dependencies = [
  "serde_json",
  "strum_macros",
  "thiserror",
+ "tokio",
  "tonic",
  "tonic-build",
  "url",
