@@ -170,6 +170,7 @@ pub struct BreezServices {
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
     hibernation_sender: watch::Sender<()>,
+    hibernation_receiver: watch::Receiver<()>,
 }
 
 impl BreezServices {
@@ -1465,7 +1466,7 @@ impl BreezServices {
         self.detect_hibernation();
 
         // start the signer
-        let (shutdown_signer_sender, signer_signer_receiver) = mpsc::channel(1);
+        let (shutdown_signer_sender, signer_signer_receiver) = watch::channel(());
         self.start_signer(signer_signer_receiver).await;
         self.start_node_keep_alive(self.shutdown_receiver.clone())
             .await;
@@ -1505,10 +1506,9 @@ impl BreezServices {
         // Stop signer on shutdown
         let mut shutdown_receiver = self.shutdown_receiver.clone();
         tokio::spawn(async move {
-            // start the backup watcher
             _ = shutdown_receiver.changed().await;
-            _ = shutdown_signer_sender.send(()).await;
-            debug!("Received the signal to exit event polling loop");
+            _ = shutdown_signer_sender.send(());
+            debug!("Received the signal to exit signer");
         });
 
         self.init_chainservice_urls().await?;
@@ -1534,6 +1534,16 @@ impl BreezServices {
                     .saturating_sub(DETECT_HIBERNATE_SLEEP_DURATION)
                     .ge(&DETECT_HIBERNATE_MAX_OFFSET)
                 {
+                    // Reconnect node api before notifying anything else, to
+                    // ensure there are no races reconnecting dependant
+                    // services.
+                    debug!(
+                        "Hibernation detected, time diff {}s, reconnecting node api.",
+                        elapsed.as_secs_f32()
+                    );
+                    cloned.node_api.reconnect().await;
+
+                    // Now notify dependant services.
                     debug!("Hibernation detected, notifying services.");
                     let _ = cloned.hibernation_sender.send(());
                 }
@@ -1541,11 +1551,37 @@ impl BreezServices {
         });
     }
 
-    async fn start_signer(self: &Arc<BreezServices>, shutdown_receiver: mpsc::Receiver<()>) {
-        let signer_api = self.clone();
+    async fn start_signer(self: &Arc<BreezServices>, mut shutdown_receiver: watch::Receiver<()>) {
+        let mut hibernation_receiver = self.hibernation_receiver.clone();
+        let node_api = self.node_api.clone();
+
         tokio::spawn(async move {
-            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
-            signer_api.node_api.start_signer(shutdown_receiver).await;
+            loop {
+                let (tx, rx) = mpsc::channel(1);
+                let is_shutdown = tokio::select! {
+                    _ = node_api.start_signer(rx) => {
+                        tokio::time::sleep(Duration::from_secs(1)).await;
+                        false
+                    }
+
+                    _ = shutdown_receiver.changed() => {
+                        true
+                    }
+
+                    _ = hibernation_receiver.changed() => {
+                        // NOTE: The node api is reconnected already inside the
+                        //       detect_hibernation function, to avoid races.
+                        false
+                    }
+                };
+
+                debug!("shutting down signer");
+                _ = tx.send(());
+
+                if is_shutdown {
+                    return;
+                }
+            }
         });
     }
 
@@ -2511,6 +2547,7 @@ impl BreezServicesBuilder {
             shutdown_sender,
             shutdown_receiver,
             hibernation_sender,
+            hibernation_receiver,
         });
 
         Ok(breez_services)

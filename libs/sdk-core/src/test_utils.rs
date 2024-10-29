@@ -330,6 +330,7 @@ pub struct MockNodeAPI {
 
 #[tonic::async_trait]
 impl NodeAPI for MockNodeAPI {
+    async fn reconnect(&self) {}
     async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
         Err(NodeError::Generic("Not implemented".to_string()))
     }

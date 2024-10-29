@@ -114,6 +114,7 @@ pub struct FetchBolt11Result {
 /// Trait covering functions affecting the LN node
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
+    async fn reconnect(&self);
     async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
     async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()>;
     async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String>;
