@@ -1673,6 +1673,7 @@ impl BreezServices {
         let cloned = self.clone();
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            let mut reconnect_receiver = cloned.hibernation_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
@@ -1726,6 +1727,11 @@ impl BreezServices {
                               debug!("Invoice tracking task has completed");
                               return;
                              }
+
+                             _ = reconnect_receiver.changed() => {
+                                debug!("Reconnect hibernation: track invoices");
+                                break;
+                             }
                         }
                     }
                 }
@@ -1738,6 +1744,7 @@ impl BreezServices {
         let cloned = self.clone();
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
+            let mut reconnect_receiver = cloned.hibernation_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
@@ -1765,6 +1772,11 @@ impl BreezServices {
                          _ = shutdown_receiver.changed() => {
                           debug!("Track logs task has completed");
                           return;
+                         }
+
+                         _ = reconnect_receiver.changed() => {
+                            debug!("Reconnect hibernation: track logs");
+                            break;
                          }
                         }
                     }
