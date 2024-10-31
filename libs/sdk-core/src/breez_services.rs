@@ -1620,19 +1620,19 @@ impl BreezServices {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
                 tokio::select! {
-                  backup_event = events_stream.recv() => {
-                   if let Ok(e) = backup_event {
-                    if let Err(err) = cloned.notify_event_listeners(e).await {
-                        error!("error handling backup event: {:?}", err);
+                    backup_event = events_stream.recv() => {
+                        if let Ok(e) = backup_event {
+                            if let Err(err) = cloned.notify_event_listeners(e).await {
+                                error!("error handling backup event: {:?}", err);
+                            }
+                        }
+                        let backup_status = cloned.backup_status();
+                        info!("backup status: {:?}", backup_status);
+                    },
+                    _ = shutdown_receiver.changed() => {
+                        debug!("Backup watcher task completed");
+                        break;
                     }
-                   }
-                   let backup_status = cloned.backup_status();
-                   info!("backup status: {:?}", backup_status);
-                  },
-                  _ = shutdown_receiver.changed() => {
-                   debug!("Backup watcher task completed");
-                   break;
-                 }
                 }
             }
         });
