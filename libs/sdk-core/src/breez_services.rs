@@ -11,6 +11,7 @@ use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::TryFutureExt;
+use gl_client::pb::incoming_payment;
 use log::{LevelFilter, Metadata, Record};
 use reqwest::{header::CONTENT_TYPE, Body};
 use sdk_common::grpc;
@@ -1678,61 +1679,75 @@ impl BreezServices {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
                 }
-                let invoice_stream_res = cloned.node_api.stream_incoming_payments().await;
-                if let Ok(mut invoice_stream) = invoice_stream_res {
-                    loop {
-                        tokio::select! {
-                                paid_invoice_res = invoice_stream.message() => {
-                                      match paid_invoice_res {
-                                          Ok(Some(i)) => {
-                                              debug!("invoice stream got new invoice");
-                                              if let Some(gl_client::signer::model::greenlight::incoming_payment::Details::Offchain(p)) = i.details {
-                                                  let mut payment: Option<crate::models::Payment> = p.clone().try_into().ok();
-                                                  if let Some(ref p) = payment {
-                                                      let res = cloned
-                                                          .persister
-                                                          .insert_or_update_payments(&vec![p.clone()]);
-                                                      debug!("paid invoice was added to payments list {res:?}");
-                                                      if let Ok(Some(mut node_info)) = cloned.persister.get_node_state() {
-                                                          node_info.channels_balance_msat += p.amount_msat;
-                                                          let res = cloned.persister.set_node_state(&node_info);
-                                                          debug!("channel balance was updated {res:?}");
-                                                      }
-                                                      payment = cloned.persister.get_payment_by_hash(&p.id).unwrap_or(payment);
-                                                  }
-                                                  _ = cloned.on_event(BreezEvent::InvoicePaid {
-                                                      details: InvoicePaidDetails {
-                                                          payment_hash: hex::encode(p.payment_hash),
-                                                          bolt11: p.bolt11,
-                                                          payment,
-                                                      },
-                                                  }).await;
-                                                  if let Err(e) = cloned.do_sync(true).await {
-                                                      error!("failed to sync after paid invoice: {:?}", e);
-                                                  }
-                                              }
-                                          }
-                                          Ok(None) => {
-                                              debug!("invoice stream got None");
-                                              break;
-                                          }
-                                          Err(err) => {
-                                              debug!("invoice stream got error: {:?}", err);
-                                              break;
-                                          }
-                                      }
-                             }
+                let mut invoice_stream = match cloned.node_api.stream_incoming_payments().await {
+                    Ok(invoice_stream) => invoice_stream,
+                    Err(e) => {
+                        warn!("stream incoming payments returned error: {:?}", e);
+                        sleep(Duration::from_secs(1)).await;
+                        continue;
+                    }
+                };
 
-                             _ = shutdown_receiver.changed() => {
-                              debug!("Invoice tracking task has completed");
-                              return;
-                             }
-
-                             _ = reconnect_receiver.changed() => {
-                                debug!("Reconnect hibernation: track invoices");
-                                break;
-                             }
+                loop {
+                    let paid_invoice_res = tokio::select! {
+                        paid_invoice_res = invoice_stream.message() => {
+                            paid_invoice_res
                         }
+
+                        _ = shutdown_receiver.changed() => {
+                            debug!("Invoice tracking task has completed");
+                            return;
+                        }
+
+                        _ = reconnect_receiver.changed() => {
+                            debug!("Reconnect hibernation: track invoices");
+                            break;
+                        }
+                    };
+
+                    let i = match paid_invoice_res {
+                        Ok(Some(i)) => i,
+                        Ok(None) => {
+                            debug!("invoice stream got None");
+                            break;
+                        }
+                        Err(err) => {
+                            debug!("invoice stream got error: {:?}", err);
+                            break;
+                        }
+                    };
+
+                    debug!("invoice stream got new invoice");
+                    let p = match i.details {
+                        Some(incoming_payment::Details::Offchain(p)) => p,
+                        _ => continue,
+                    };
+
+                    let mut payment: Option<crate::models::Payment> = p.clone().try_into().ok();
+                    if let Some(ref p) = payment {
+                        let res = cloned.persister.insert_or_update_payments(&vec![p.clone()]);
+                        debug!("paid invoice was added to payments list {res:?}");
+                        if let Ok(Some(mut node_info)) = cloned.persister.get_node_state() {
+                            node_info.channels_balance_msat += p.amount_msat;
+                            let res = cloned.persister.set_node_state(&node_info);
+                            debug!("channel balance was updated {res:?}");
+                        }
+                        payment = cloned
+                            .persister
+                            .get_payment_by_hash(&p.id)
+                            .unwrap_or(payment);
+                    }
+                    _ = cloned
+                        .on_event(BreezEvent::InvoicePaid {
+                            details: InvoicePaidDetails {
+                                payment_hash: hex::encode(p.payment_hash),
+                                bolt11: p.bolt11,
+                                payment,
+                            },
+                        })
+                        .await;
+                    if let Err(e) = cloned.do_sync(true).await {
+                        error!("failed to sync after paid invoice: {:?}", e);
                     }
                 }
                 sleep(Duration::from_secs(1)).await;
