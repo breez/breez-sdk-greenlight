@@ -1764,38 +1764,45 @@ impl BreezServices {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
                 }
-                let log_stream_res = cloned.node_api.stream_log_messages().await;
-                if let Ok(mut log_stream) = log_stream_res {
-                    loop {
-                        tokio::select! {
-                         log_message_res = log_stream.message() => {
-                          match log_message_res {
-                           Ok(Some(l)) => {
-                            info!("node-logs: {}", l.line);
-                           },
-                           // stream is closed, renew it
-                           Ok(None) => {
-                            break;
-                           }
-                           Err(err) => {
-                            debug!("failed to process log entry {:?}", err);
-                            break;
-                           }
-                          };
-                         }
+                let mut log_stream = match cloned.node_api.stream_log_messages().await {
+                    Ok(log_stream) => log_stream,
+                    Err(e) => {
+                        warn!("stream log messages returned error: {:?}", e);
+                        sleep(Duration::from_secs(1)).await;
+                        continue;
+                    }
+                };
 
-                         _ = shutdown_receiver.changed() => {
-                          debug!("Track logs task has completed");
-                          return;
-                         }
+                loop {
+                    let log_message_res = tokio::select! {
+                        log_message_res = log_stream.message() => {
+                            log_message_res
+                        }
 
-                         _ = reconnect_receiver.changed() => {
+                        _ = shutdown_receiver.changed() => {
+                            debug!("Track logs task has completed");
+                            return;
+                        }
+
+                        _ = reconnect_receiver.changed() => {
                             debug!("Reconnect hibernation: track logs");
                             break;
-                         }
                         }
-                    }
+                    };
+
+                    match log_message_res {
+                        Ok(Some(l)) => info!("node-logs: {}", l.line),
+                        Ok(None) => {
+                            // stream is closed, renew it
+                            break;
+                        }
+                        Err(err) => {
+                            debug!("failed to process log entry {:?}", err);
+                            break;
+                        }
+                    };
                 }
+
                 sleep(Duration::from_secs(1)).await;
             }
         });
