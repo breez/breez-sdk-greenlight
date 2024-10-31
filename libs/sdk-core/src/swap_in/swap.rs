@@ -6,7 +6,7 @@ use anyhow::{anyhow, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 use sdk_common::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
-use sdk_common::prelude::BreezServer;
+use sdk_common::prelude::{get_utxos, AddressUtxos, BreezServer};
 use tokio::sync::broadcast;
 
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -21,7 +21,7 @@ use crate::bitcoin::{
     Address, EcdsaSighashType, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::breez_services::{BreezEvent, OpenChannelParams, Receiver};
-use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
+use crate::chain::{get_total_incoming_txs, ChainService};
 use crate::error::ReceivePaymentError;
 use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
@@ -792,7 +792,6 @@ mod tests {
 
     use anyhow::Result;
 
-    use crate::chain::{AddressUtxos, Utxo};
     use crate::persist::swap::SwapChainInfo;
     use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
     use crate::test_utils::{get_test_ofp, MockNodeAPI};
@@ -804,7 +803,7 @@ mod tests {
             OutPoint, Transaction, Txid,
         },
         breez_services::tests::get_dummy_node_state,
-        chain::{ChainService, OnchainTx},
+        chain::ChainService,
         models::*,
         persist::db::SqliteStorage,
         test_utils::{
@@ -815,6 +814,8 @@ mod tests {
     };
 
     use super::{create_refund_tx, create_submarine_swap_script, get_utxos, BTCReceiveSwap};
+
+    use sdk_common::prelude::*;
 
     #[test]
     fn test_build_swap_script() -> Result<()> {

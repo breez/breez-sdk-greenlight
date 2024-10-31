@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use anyhow::{anyhow, ensure, Result};
 use rand::thread_rng;
+use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 use tokio::time::{sleep, Duration};
@@ -20,7 +21,7 @@ use crate::bitcoin::{
     Address, AddressType, EcdsaSighashType, KeyPair, Network, OutPoint, Script, Sequence,
     Transaction, TxIn, TxOut, Txid, Witness,
 };
-use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx, Utxo};
+use crate::chain::ChainService;
 use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};

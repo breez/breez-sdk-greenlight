@@ -43,5 +43,6 @@ pub mod prelude {
     pub use crate::lnurl::specs::withdraw::*;
     pub use crate::lnurl::*;
     pub use crate::model::*;
+    pub use crate::utils::chain::*;
     pub use crate::utils::rest_client::*;
 }

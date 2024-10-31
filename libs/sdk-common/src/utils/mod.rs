@@ -1,3 +1,4 @@
+pub(crate) mod chain;
 pub(crate) mod rest_client;
 
 #[macro_export]
