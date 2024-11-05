@@ -4506,7 +4506,7 @@ enum BreezSDKMapper {
     }
 
     static func arrayOf(levelFilterList: [LevelFilter]) -> [String] {
-        return levelFilterList.map { v -> String in valueOf(levelFilter: v) }
+        return levelFilterList.map { v -> String in return valueOf(levelFilter: v) }
     }
 
     static func asLevelFilterList(arr: [Any]) throws -> [LevelFilter] {
