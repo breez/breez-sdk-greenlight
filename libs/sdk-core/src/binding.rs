@@ -209,6 +209,7 @@ pub struct _MessageSuccessActionData {
 pub struct _UrlSuccessActionData {
     pub description: String,
     pub url: String,
+    pub matches_callback_domain: bool,
 }
 
 #[frb(mirror(LnUrlPayErrorData))]
