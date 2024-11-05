@@ -3913,7 +3913,7 @@ fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
     return list
 }
 
-fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider = BuyBitcoinProvider.valueOf(camelToUpperSnakeCase(type))
+fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider = BuyBitcoinProvider.valueOf(type.uppercase())
 
 fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
     val list = ArrayList<BuyBitcoinProvider>()
@@ -3926,7 +3926,7 @@ fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
     return list
 }
 
-fun asChannelState(type: String): ChannelState = ChannelState.valueOf(camelToUpperSnakeCase(type))
+fun asChannelState(type: String): ChannelState = ChannelState.valueOf(type.uppercase())
 
 fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
     val list = ArrayList<ChannelState>()
@@ -3939,7 +3939,7 @@ fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
     return list
 }
 
-fun asEnvironmentType(type: String): EnvironmentType = EnvironmentType.valueOf(camelToUpperSnakeCase(type))
+fun asEnvironmentType(type: String): EnvironmentType = EnvironmentType.valueOf(type.uppercase())
 
 fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
     val list = ArrayList<EnvironmentType>()
@@ -3952,7 +3952,7 @@ fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
     return list
 }
 
-fun asFeeratePreset(type: String): FeeratePreset = FeeratePreset.valueOf(camelToUpperSnakeCase(type))
+fun asFeeratePreset(type: String): FeeratePreset = FeeratePreset.valueOf(type.uppercase())
 
 fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
     val list = ArrayList<FeeratePreset>()
@@ -3965,7 +3965,7 @@ fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
     return list
 }
 
-fun asHealthCheckStatus(type: String): HealthCheckStatus = HealthCheckStatus.valueOf(camelToUpperSnakeCase(type))
+fun asHealthCheckStatus(type: String): HealthCheckStatus = HealthCheckStatus.valueOf(type.uppercase())
 
 fun asHealthCheckStatusList(arr: ReadableArray): List<HealthCheckStatus> {
     val list = ArrayList<HealthCheckStatus>()
@@ -4058,9 +4058,7 @@ fun asInputTypeList(arr: ReadableArray): List<InputType> {
     return list
 }
 
-fun asLevelFilter(type: String): LevelFilter {
-    return LevelFilter.valueOf(type.uppercase())
-}
+fun asLevelFilter(type: String): LevelFilter = LevelFilter.valueOf(type.uppercase())
 
 fun asLevelFilterList(arr: ReadableArray): List<LevelFilter> {
     val list = ArrayList<LevelFilter>()
@@ -4200,7 +4198,7 @@ fun asLnUrlWithdrawResultList(arr: ReadableArray): List<LnUrlWithdrawResult> {
     return list
 }
 
-fun asNetwork(type: String): Network = Network.valueOf(camelToUpperSnakeCase(type))
+fun asNetwork(type: String): Network = Network.valueOf(type.uppercase())
 
 fun asNetworkList(arr: ReadableArray): List<Network> {
     val list = ArrayList<Network>()
@@ -4313,7 +4311,7 @@ fun asPaymentDetailsList(arr: ReadableArray): List<PaymentDetails> {
     return list
 }
 
-fun asPaymentStatus(type: String): PaymentStatus = PaymentStatus.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentStatus(type: String): PaymentStatus = PaymentStatus.valueOf(type.uppercase())
 
 fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
     val list = ArrayList<PaymentStatus>()
@@ -4326,7 +4324,7 @@ fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
     return list
 }
 
-fun asPaymentType(type: String): PaymentType = PaymentType.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentType(type: String): PaymentType = PaymentType.valueOf(type.uppercase())
 
 fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
     val list = ArrayList<PaymentType>()
@@ -4339,7 +4337,7 @@ fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
     return list
 }
 
-fun asPaymentTypeFilter(type: String): PaymentTypeFilter = PaymentTypeFilter.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentTypeFilter(type: String): PaymentTypeFilter = PaymentTypeFilter.valueOf(type.uppercase())
 
 fun asPaymentTypeFilterList(arr: ReadableArray): List<PaymentTypeFilter> {
     val list = ArrayList<PaymentTypeFilter>()
@@ -4383,7 +4381,7 @@ fun asReportIssueRequestList(arr: ReadableArray): List<ReportIssueRequest> {
     return list
 }
 
-fun asReverseSwapStatus(type: String): ReverseSwapStatus = ReverseSwapStatus.valueOf(camelToUpperSnakeCase(type))
+fun asReverseSwapStatus(type: String): ReverseSwapStatus = ReverseSwapStatus.valueOf(type.uppercase())
 
 fun asReverseSwapStatusList(arr: ReadableArray): List<ReverseSwapStatus> {
     val list = ArrayList<ReverseSwapStatus>()
@@ -4441,7 +4439,7 @@ fun asSuccessActionProcessedList(arr: ReadableArray): List<SuccessActionProcesse
     return list
 }
 
-fun asSwapAmountType(type: String): SwapAmountType = SwapAmountType.valueOf(camelToUpperSnakeCase(type))
+fun asSwapAmountType(type: String): SwapAmountType = SwapAmountType.valueOf(type.uppercase())
 
 fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
     val list = ArrayList<SwapAmountType>()
@@ -4454,7 +4452,7 @@ fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
     return list
 }
 
-fun asSwapStatus(type: String): SwapStatus = SwapStatus.valueOf(camelToUpperSnakeCase(type))
+fun asSwapStatus(type: String): SwapStatus = SwapStatus.valueOf(type.uppercase())
 
 fun asSwapStatusList(arr: ReadableArray): List<SwapStatus> {
     val list = ArrayList<SwapStatus>()
@@ -4530,7 +4528,6 @@ fun pushToMap(
         is Boolean -> map.putBoolean(key, value)
         is Byte -> map.putInt(key, value.toInt())
         is Double -> map.putDouble(key, value)
-        is Float -> map.putDouble(key, value.toDouble())
         is Int -> map.putInt(key, value)
         is Long -> map.putDouble(key, value.toDouble())
         is ReadableArray -> map.putArray(key, value)
@@ -4586,8 +4583,3 @@ fun errMissingMandatoryField(
 fun errUnexpectedType(typeName: String): String = "Unexpected type $typeName"
 
 fun errUnexpectedValue(fieldName: String): String = "Unexpected value for optional field $fieldName"
-
-fun camelToUpperSnakeCase(str: String): String {
-    val pattern = "(?<=.)[A-Z]".toRegex()
-    return str.replace(pattern, "_$0").uppercase()
-}
