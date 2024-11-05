@@ -77,6 +77,7 @@ typedef struct wire_cst_SuccessActionProcessed_Message {
 typedef struct wire_cst_url_success_action_data {
   struct wire_cst_list_prim_u_8_strict *description;
   struct wire_cst_list_prim_u_8_strict *url;
+  bool matches_callback_domain;
 } wire_cst_url_success_action_data;
 
 typedef struct wire_cst_SuccessActionProcessed_Url {
@@ -217,7 +218,7 @@ typedef struct wire_cst_BreezEvent_PaymentSucceed {
 
 typedef struct wire_cst_route_hint_hop {
   struct wire_cst_list_prim_u_8_strict *src_node_id;
-  uint64_t short_channel_id;
+  struct wire_cst_list_prim_u_8_strict *short_channel_id;
   uint32_t fees_base_msat;
   uint32_t fees_proportional_millionths;
   uint64_t cltv_expiry_delta;
@@ -273,6 +274,10 @@ typedef struct wire_cst_BreezEvent_BackupFailed {
   struct wire_cst_backup_failed_data *details;
 } wire_cst_BreezEvent_BackupFailed;
 
+typedef struct wire_cst_BreezEvent_ReverseSwapUpdated {
+  struct wire_cst_reverse_swap_info *details;
+} wire_cst_BreezEvent_ReverseSwapUpdated;
+
 typedef struct wire_cst_BreezEvent_SwapUpdated {
   struct wire_cst_swap_info *details;
 } wire_cst_BreezEvent_SwapUpdated;
@@ -283,6 +288,7 @@ typedef union BreezEventKind {
   struct wire_cst_BreezEvent_PaymentSucceed PaymentSucceed;
   struct wire_cst_BreezEvent_PaymentFailed PaymentFailed;
   struct wire_cst_BreezEvent_BackupFailed BackupFailed;
+  struct wire_cst_BreezEvent_ReverseSwapUpdated ReverseSwapUpdated;
   struct wire_cst_BreezEvent_SwapUpdated SwapUpdated;
 } BreezEventKind;
 
@@ -294,6 +300,7 @@ typedef struct wire_cst_breez_event {
 typedef struct wire_cst_buy_bitcoin_request {
   int32_t provider;
   struct wire_cst_opening_fee_params *opening_fee_params;
+  struct wire_cst_list_prim_u_8_strict *redirect_url;
 } wire_cst_buy_bitcoin_request;
 
 typedef struct wire_cst_check_message_request {
@@ -401,8 +408,10 @@ typedef struct wire_cst_ln_url_pay_request_data {
 typedef struct wire_cst_ln_url_pay_request {
   struct wire_cst_ln_url_pay_request_data data;
   uint64_t amount_msat;
+  bool use_trampoline;
   struct wire_cst_list_prim_u_8_strict *comment;
   struct wire_cst_list_prim_u_8_strict *payment_label;
+  bool *validate_success_action_url;
 } wire_cst_ln_url_pay_request;
 
 typedef struct wire_cst_ln_url_withdraw_request_data {
@@ -508,6 +517,7 @@ typedef struct wire_cst_send_onchain_request {
 
 typedef struct wire_cst_send_payment_request {
   struct wire_cst_list_prim_u_8_strict *bolt11;
+  bool use_trampoline;
   uint64_t *amount_msat;
   struct wire_cst_list_prim_u_8_strict *label;
 } wire_cst_send_payment_request;
@@ -796,12 +806,17 @@ typedef struct wire_cst_LnUrlWithdrawResult_Ok {
   struct wire_cst_ln_url_withdraw_success_data *data;
 } wire_cst_LnUrlWithdrawResult_Ok;
 
+typedef struct wire_cst_LnUrlWithdrawResult_Timeout {
+  struct wire_cst_ln_url_withdraw_success_data *data;
+} wire_cst_LnUrlWithdrawResult_Timeout;
+
 typedef struct wire_cst_LnUrlWithdrawResult_ErrorStatus {
   struct wire_cst_ln_url_error_data *data;
 } wire_cst_LnUrlWithdrawResult_ErrorStatus;
 
 typedef union LnUrlWithdrawResultKind {
   struct wire_cst_LnUrlWithdrawResult_Ok Ok;
+  struct wire_cst_LnUrlWithdrawResult_Timeout Timeout;
   struct wire_cst_LnUrlWithdrawResult_ErrorStatus ErrorStatus;
 } LnUrlWithdrawResultKind;
 
@@ -831,12 +846,14 @@ typedef struct wire_cst_node_state {
   uint64_t max_single_payment_amount_msat;
   uint64_t max_chan_reserve_msats;
   struct wire_cst_list_String *connected_peers;
-  uint64_t inbound_liquidity_msats;
+  uint64_t max_receivable_single_payment_amount_msat;
+  uint64_t total_inbound_liquidity_msats;
 } wire_cst_node_state;
 
 typedef struct wire_cst_onchain_payment_limits_response {
   uint64_t min_sat;
   uint64_t max_sat;
+  uint64_t max_payable_sat;
 } wire_cst_onchain_payment_limits_response;
 
 typedef struct wire_cst_open_channel_fee_response {
@@ -929,6 +946,9 @@ void frbgen_breez_sdk_wire__crate__binding__buy_bitcoin(int64_t port_,
 
 void frbgen_breez_sdk_wire__crate__binding__check_message(int64_t port_,
                                                           struct wire_cst_check_message_request *req);
+
+void frbgen_breez_sdk_wire__crate__binding__claim_reverse_swap(int64_t port_,
+                                                               struct wire_cst_list_prim_u_8_strict *lockup_address);
 
 void frbgen_breez_sdk_wire__crate__binding__close_lsp_channels(int64_t port_);
 
@@ -1317,6 +1337,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__breez_log_stream);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__buy_bitcoin);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__check_message);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__claim_reverse_swap);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__close_lsp_channels);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__configure_node);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__connect);
