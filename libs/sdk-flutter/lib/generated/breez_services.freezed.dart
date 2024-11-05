@@ -26,6 +26,7 @@ mixin _$BreezEvent {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) =>
       throw _privateConstructorUsedError;
@@ -39,6 +40,7 @@ mixin _$BreezEvent {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) =>
       throw _privateConstructorUsedError;
@@ -52,6 +54,7 @@ mixin _$BreezEvent {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) =>
@@ -66,6 +69,7 @@ mixin _$BreezEvent {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) =>
       throw _privateConstructorUsedError;
@@ -79,6 +83,7 @@ mixin _$BreezEvent {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) =>
       throw _privateConstructorUsedError;
@@ -92,6 +97,7 @@ mixin _$BreezEvent {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) =>
@@ -186,6 +192,7 @@ class _$BreezEvent_NewBlockImpl extends BreezEvent_NewBlock {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return newBlock(block);
@@ -202,6 +209,7 @@ class _$BreezEvent_NewBlockImpl extends BreezEvent_NewBlock {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return newBlock?.call(block);
@@ -218,6 +226,7 @@ class _$BreezEvent_NewBlockImpl extends BreezEvent_NewBlock {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -238,6 +247,7 @@ class _$BreezEvent_NewBlockImpl extends BreezEvent_NewBlock {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return newBlock(this);
@@ -254,6 +264,7 @@ class _$BreezEvent_NewBlockImpl extends BreezEvent_NewBlock {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return newBlock?.call(this);
@@ -270,6 +281,7 @@ class _$BreezEvent_NewBlockImpl extends BreezEvent_NewBlock {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -362,6 +374,7 @@ class _$BreezEvent_InvoicePaidImpl extends BreezEvent_InvoicePaid {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return invoicePaid(details);
@@ -378,6 +391,7 @@ class _$BreezEvent_InvoicePaidImpl extends BreezEvent_InvoicePaid {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return invoicePaid?.call(details);
@@ -394,6 +408,7 @@ class _$BreezEvent_InvoicePaidImpl extends BreezEvent_InvoicePaid {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -414,6 +429,7 @@ class _$BreezEvent_InvoicePaidImpl extends BreezEvent_InvoicePaid {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return invoicePaid(this);
@@ -430,6 +446,7 @@ class _$BreezEvent_InvoicePaidImpl extends BreezEvent_InvoicePaid {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return invoicePaid?.call(this);
@@ -446,6 +463,7 @@ class _$BreezEvent_InvoicePaidImpl extends BreezEvent_InvoicePaid {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -512,6 +530,7 @@ class _$BreezEvent_SyncedImpl extends BreezEvent_Synced {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return synced();
@@ -528,6 +547,7 @@ class _$BreezEvent_SyncedImpl extends BreezEvent_Synced {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return synced?.call();
@@ -544,6 +564,7 @@ class _$BreezEvent_SyncedImpl extends BreezEvent_Synced {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -564,6 +585,7 @@ class _$BreezEvent_SyncedImpl extends BreezEvent_Synced {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return synced(this);
@@ -580,6 +602,7 @@ class _$BreezEvent_SyncedImpl extends BreezEvent_Synced {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return synced?.call(this);
@@ -596,6 +619,7 @@ class _$BreezEvent_SyncedImpl extends BreezEvent_Synced {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -683,6 +707,7 @@ class _$BreezEvent_PaymentSucceedImpl extends BreezEvent_PaymentSucceed {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return paymentSucceed(details);
@@ -699,6 +724,7 @@ class _$BreezEvent_PaymentSucceedImpl extends BreezEvent_PaymentSucceed {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return paymentSucceed?.call(details);
@@ -715,6 +741,7 @@ class _$BreezEvent_PaymentSucceedImpl extends BreezEvent_PaymentSucceed {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -735,6 +762,7 @@ class _$BreezEvent_PaymentSucceedImpl extends BreezEvent_PaymentSucceed {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return paymentSucceed(this);
@@ -751,6 +779,7 @@ class _$BreezEvent_PaymentSucceedImpl extends BreezEvent_PaymentSucceed {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return paymentSucceed?.call(this);
@@ -767,6 +796,7 @@ class _$BreezEvent_PaymentSucceedImpl extends BreezEvent_PaymentSucceed {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -859,6 +889,7 @@ class _$BreezEvent_PaymentFailedImpl extends BreezEvent_PaymentFailed {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return paymentFailed(details);
@@ -875,6 +906,7 @@ class _$BreezEvent_PaymentFailedImpl extends BreezEvent_PaymentFailed {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return paymentFailed?.call(details);
@@ -891,6 +923,7 @@ class _$BreezEvent_PaymentFailedImpl extends BreezEvent_PaymentFailed {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -911,6 +944,7 @@ class _$BreezEvent_PaymentFailedImpl extends BreezEvent_PaymentFailed {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return paymentFailed(this);
@@ -927,6 +961,7 @@ class _$BreezEvent_PaymentFailedImpl extends BreezEvent_PaymentFailed {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return paymentFailed?.call(this);
@@ -943,6 +978,7 @@ class _$BreezEvent_PaymentFailedImpl extends BreezEvent_PaymentFailed {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1010,6 +1046,7 @@ class _$BreezEvent_BackupStartedImpl extends BreezEvent_BackupStarted {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return backupStarted();
@@ -1026,6 +1063,7 @@ class _$BreezEvent_BackupStartedImpl extends BreezEvent_BackupStarted {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return backupStarted?.call();
@@ -1042,6 +1080,7 @@ class _$BreezEvent_BackupStartedImpl extends BreezEvent_BackupStarted {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1062,6 +1101,7 @@ class _$BreezEvent_BackupStartedImpl extends BreezEvent_BackupStarted {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return backupStarted(this);
@@ -1078,6 +1118,7 @@ class _$BreezEvent_BackupStartedImpl extends BreezEvent_BackupStarted {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return backupStarted?.call(this);
@@ -1094,6 +1135,7 @@ class _$BreezEvent_BackupStartedImpl extends BreezEvent_BackupStarted {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1155,6 +1197,7 @@ class _$BreezEvent_BackupSucceededImpl extends BreezEvent_BackupSucceeded {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return backupSucceeded();
@@ -1171,6 +1214,7 @@ class _$BreezEvent_BackupSucceededImpl extends BreezEvent_BackupSucceeded {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return backupSucceeded?.call();
@@ -1187,6 +1231,7 @@ class _$BreezEvent_BackupSucceededImpl extends BreezEvent_BackupSucceeded {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1207,6 +1252,7 @@ class _$BreezEvent_BackupSucceededImpl extends BreezEvent_BackupSucceeded {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return backupSucceeded(this);
@@ -1223,6 +1269,7 @@ class _$BreezEvent_BackupSucceededImpl extends BreezEvent_BackupSucceeded {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return backupSucceeded?.call(this);
@@ -1239,6 +1286,7 @@ class _$BreezEvent_BackupSucceededImpl extends BreezEvent_BackupSucceeded {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1326,6 +1374,7 @@ class _$BreezEvent_BackupFailedImpl extends BreezEvent_BackupFailed {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return backupFailed(details);
@@ -1342,6 +1391,7 @@ class _$BreezEvent_BackupFailedImpl extends BreezEvent_BackupFailed {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return backupFailed?.call(details);
@@ -1358,6 +1408,7 @@ class _$BreezEvent_BackupFailedImpl extends BreezEvent_BackupFailed {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1378,6 +1429,7 @@ class _$BreezEvent_BackupFailedImpl extends BreezEvent_BackupFailed {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return backupFailed(this);
@@ -1394,6 +1446,7 @@ class _$BreezEvent_BackupFailedImpl extends BreezEvent_BackupFailed {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return backupFailed?.call(this);
@@ -1410,6 +1463,7 @@ class _$BreezEvent_BackupFailedImpl extends BreezEvent_BackupFailed {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1428,6 +1482,190 @@ abstract class BreezEvent_BackupFailed extends BreezEvent {
   BackupFailedData get details;
   @JsonKey(ignore: true)
   _$$BreezEvent_BackupFailedImplCopyWith<_$BreezEvent_BackupFailedImpl> get copyWith =>
+      throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$BreezEvent_ReverseSwapUpdatedImplCopyWith<$Res> {
+  factory _$$BreezEvent_ReverseSwapUpdatedImplCopyWith(_$BreezEvent_ReverseSwapUpdatedImpl value,
+          $Res Function(_$BreezEvent_ReverseSwapUpdatedImpl) then) =
+      __$$BreezEvent_ReverseSwapUpdatedImplCopyWithImpl<$Res>;
+  @useResult
+  $Res call({ReverseSwapInfo details});
+}
+
+/// @nodoc
+class __$$BreezEvent_ReverseSwapUpdatedImplCopyWithImpl<$Res>
+    extends _$BreezEventCopyWithImpl<$Res, _$BreezEvent_ReverseSwapUpdatedImpl>
+    implements _$$BreezEvent_ReverseSwapUpdatedImplCopyWith<$Res> {
+  __$$BreezEvent_ReverseSwapUpdatedImplCopyWithImpl(
+      _$BreezEvent_ReverseSwapUpdatedImpl _value, $Res Function(_$BreezEvent_ReverseSwapUpdatedImpl) _then)
+      : super(_value, _then);
+
+  @pragma('vm:prefer-inline')
+  @override
+  $Res call({
+    Object? details = null,
+  }) {
+    return _then(_$BreezEvent_ReverseSwapUpdatedImpl(
+      details: null == details
+          ? _value.details
+          : details // ignore: cast_nullable_to_non_nullable
+              as ReverseSwapInfo,
+    ));
+  }
+}
+
+/// @nodoc
+
+class _$BreezEvent_ReverseSwapUpdatedImpl extends BreezEvent_ReverseSwapUpdated {
+  const _$BreezEvent_ReverseSwapUpdatedImpl({required this.details}) : super._();
+
+  @override
+  final ReverseSwapInfo details;
+
+  @override
+  String toString() {
+    return 'BreezEvent.reverseSwapUpdated(details: $details)';
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType &&
+            other is _$BreezEvent_ReverseSwapUpdatedImpl &&
+            (identical(other.details, details) || other.details == details));
+  }
+
+  @override
+  int get hashCode => Object.hash(runtimeType, details);
+
+  @JsonKey(ignore: true)
+  @override
+  @pragma('vm:prefer-inline')
+  _$$BreezEvent_ReverseSwapUpdatedImplCopyWith<_$BreezEvent_ReverseSwapUpdatedImpl> get copyWith =>
+      __$$BreezEvent_ReverseSwapUpdatedImplCopyWithImpl<_$BreezEvent_ReverseSwapUpdatedImpl>(
+          this, _$identity);
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function(int block) newBlock,
+    required TResult Function(InvoicePaidDetails details) invoicePaid,
+    required TResult Function() synced,
+    required TResult Function(Payment details) paymentSucceed,
+    required TResult Function(PaymentFailedData details) paymentFailed,
+    required TResult Function() backupStarted,
+    required TResult Function() backupSucceeded,
+    required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
+    required TResult Function(SwapInfo details) swapUpdated,
+  }) {
+    return reverseSwapUpdated(details);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function(int block)? newBlock,
+    TResult? Function(InvoicePaidDetails details)? invoicePaid,
+    TResult? Function()? synced,
+    TResult? Function(Payment details)? paymentSucceed,
+    TResult? Function(PaymentFailedData details)? paymentFailed,
+    TResult? Function()? backupStarted,
+    TResult? Function()? backupSucceeded,
+    TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
+    TResult? Function(SwapInfo details)? swapUpdated,
+  }) {
+    return reverseSwapUpdated?.call(details);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function(int block)? newBlock,
+    TResult Function(InvoicePaidDetails details)? invoicePaid,
+    TResult Function()? synced,
+    TResult Function(Payment details)? paymentSucceed,
+    TResult Function(PaymentFailedData details)? paymentFailed,
+    TResult Function()? backupStarted,
+    TResult Function()? backupSucceeded,
+    TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
+    TResult Function(SwapInfo details)? swapUpdated,
+    required TResult orElse(),
+  }) {
+    if (reverseSwapUpdated != null) {
+      return reverseSwapUpdated(details);
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(BreezEvent_NewBlock value) newBlock,
+    required TResult Function(BreezEvent_InvoicePaid value) invoicePaid,
+    required TResult Function(BreezEvent_Synced value) synced,
+    required TResult Function(BreezEvent_PaymentSucceed value) paymentSucceed,
+    required TResult Function(BreezEvent_PaymentFailed value) paymentFailed,
+    required TResult Function(BreezEvent_BackupStarted value) backupStarted,
+    required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
+    required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
+    required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
+  }) {
+    return reverseSwapUpdated(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(BreezEvent_NewBlock value)? newBlock,
+    TResult? Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult? Function(BreezEvent_Synced value)? synced,
+    TResult? Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult? Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
+    TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
+  }) {
+    return reverseSwapUpdated?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(BreezEvent_NewBlock value)? newBlock,
+    TResult Function(BreezEvent_InvoicePaid value)? invoicePaid,
+    TResult Function(BreezEvent_Synced value)? synced,
+    TResult Function(BreezEvent_PaymentSucceed value)? paymentSucceed,
+    TResult Function(BreezEvent_PaymentFailed value)? paymentFailed,
+    TResult Function(BreezEvent_BackupStarted value)? backupStarted,
+    TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
+    TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
+    TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
+    required TResult orElse(),
+  }) {
+    if (reverseSwapUpdated != null) {
+      return reverseSwapUpdated(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class BreezEvent_ReverseSwapUpdated extends BreezEvent {
+  const factory BreezEvent_ReverseSwapUpdated({required final ReverseSwapInfo details}) =
+      _$BreezEvent_ReverseSwapUpdatedImpl;
+  const BreezEvent_ReverseSwapUpdated._() : super._();
+
+  ReverseSwapInfo get details;
+  @JsonKey(ignore: true)
+  _$$BreezEvent_ReverseSwapUpdatedImplCopyWith<_$BreezEvent_ReverseSwapUpdatedImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
 
@@ -1503,6 +1741,7 @@ class _$BreezEvent_SwapUpdatedImpl extends BreezEvent_SwapUpdated {
     required TResult Function() backupStarted,
     required TResult Function() backupSucceeded,
     required TResult Function(BackupFailedData details) backupFailed,
+    required TResult Function(ReverseSwapInfo details) reverseSwapUpdated,
     required TResult Function(SwapInfo details) swapUpdated,
   }) {
     return swapUpdated(details);
@@ -1519,6 +1758,7 @@ class _$BreezEvent_SwapUpdatedImpl extends BreezEvent_SwapUpdated {
     TResult? Function()? backupStarted,
     TResult? Function()? backupSucceeded,
     TResult? Function(BackupFailedData details)? backupFailed,
+    TResult? Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult? Function(SwapInfo details)? swapUpdated,
   }) {
     return swapUpdated?.call(details);
@@ -1535,6 +1775,7 @@ class _$BreezEvent_SwapUpdatedImpl extends BreezEvent_SwapUpdated {
     TResult Function()? backupStarted,
     TResult Function()? backupSucceeded,
     TResult Function(BackupFailedData details)? backupFailed,
+    TResult Function(ReverseSwapInfo details)? reverseSwapUpdated,
     TResult Function(SwapInfo details)? swapUpdated,
     required TResult orElse(),
   }) {
@@ -1555,6 +1796,7 @@ class _$BreezEvent_SwapUpdatedImpl extends BreezEvent_SwapUpdated {
     required TResult Function(BreezEvent_BackupStarted value) backupStarted,
     required TResult Function(BreezEvent_BackupSucceeded value) backupSucceeded,
     required TResult Function(BreezEvent_BackupFailed value) backupFailed,
+    required TResult Function(BreezEvent_ReverseSwapUpdated value) reverseSwapUpdated,
     required TResult Function(BreezEvent_SwapUpdated value) swapUpdated,
   }) {
     return swapUpdated(this);
@@ -1571,6 +1813,7 @@ class _$BreezEvent_SwapUpdatedImpl extends BreezEvent_SwapUpdated {
     TResult? Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult? Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult? Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult? Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult? Function(BreezEvent_SwapUpdated value)? swapUpdated,
   }) {
     return swapUpdated?.call(this);
@@ -1587,6 +1830,7 @@ class _$BreezEvent_SwapUpdatedImpl extends BreezEvent_SwapUpdated {
     TResult Function(BreezEvent_BackupStarted value)? backupStarted,
     TResult Function(BreezEvent_BackupSucceeded value)? backupSucceeded,
     TResult Function(BreezEvent_BackupFailed value)? backupFailed,
+    TResult Function(BreezEvent_ReverseSwapUpdated value)? reverseSwapUpdated,
     TResult Function(BreezEvent_SwapUpdated value)? swapUpdated,
     required TResult orElse(),
   }) {
