@@ -671,6 +671,7 @@ dependencies = [
  "anyhow",
  "breez-sdk-core",
  "camino",
+ "env_logger 0.10.1",
  "flutter_rust_bridge",
  "glob",
  "log",
