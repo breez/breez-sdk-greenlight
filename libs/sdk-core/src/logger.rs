@@ -1,7 +1,6 @@
 use crate::models::LevelFilter as BindingLevelFilter;
 use crate::{LogEntry, LogStream};
 use anyhow::{anyhow, Result};
-use chrono::Local;
 use env_logger::{Builder, Logger, Target};
 use flutter_rust_bridge::StreamSink;
 use lazy_static::lazy_static;
@@ -13,6 +12,7 @@ use parking_lot::RwLock;
 use std::fs::OpenOptions;
 use std::io::Write;
 
+use chrono::Utc;
 use std::sync::Once;
 
 /* env_logger */
@@ -65,7 +65,7 @@ fn init_env_logger(target: Option<Target>, filter_level: Option<LevelFilter>) ->
             writeln!(
                 buf,
                 "[{} {} {}:{}] {}",
-                Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
+                Utc::now().to_rfc3339(),
                 record.level(),
                 record.module_path().unwrap_or("unknown"),
                 record.line().unwrap_or(0),
