@@ -33,23 +33,102 @@ use crate::error::{
     ConnectError, ReceiveOnchainError, ReceivePaymentError, RedeemOnchainError, SdkError,
     SendOnchainError, SendPaymentError,
 };
-use crate::logger::{init_dart_logger, DartLogger};
+use crate::logger::{get_filter_level, init_env_logger};
 use crate::lsp::LspInformation;
-use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
+use crate::models::{Config, LevelFilter, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, ConnectRequest, EnvironmentType, LevelFilter, ListPaymentsRequest,
-    LnUrlAuthError, MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials,
-    OnchainPaymentLimitsResponse, OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest,
-    PayOnchainResponse, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
-    PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, LnUrlAuthError,
+    MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
+    OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
+    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
     ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
     SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
     SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
 };
+
+use lazy_static::lazy_static;
+use log::{
+    max_level, set_boxed_logger, set_max_level, warn, Log, Metadata, Record, STATIC_MAX_LEVEL,
+};
+use parking_lot::RwLock;
+use std::sync::Once;
+
+use env_logger::{Logger, Target};
+
+/* Dart Logger */
+
+static INIT_DART_LOGGER: Once = Once::new();
+
+fn init_dart_logger(filter_level: Option<LevelFilter>) {
+    INIT_DART_LOGGER.call_once(|| {
+        let filter_level = get_filter_level(filter_level);
+
+        assert!(
+            filter_level <= STATIC_MAX_LEVEL,
+            "Should respect STATIC_MAX_LEVEL={:?}, which is done in compile time. level{:?}",
+            STATIC_MAX_LEVEL,
+            filter_level
+        );
+
+        let env_logger = init_env_logger(Some(Target::Stdout), Some(filter_level));
+
+        let dart_logger = DartLogger { env_logger };
+        set_boxed_logger(Box::new(dart_logger))
+            .unwrap_or_else(|_| error!("Log stream already created."));
+        set_max_level(filter_level);
+    });
+}
+
+lazy_static! {
+    static ref DART_LOGGER_STREAM_SINK: RwLock<Option<StreamSink<LogEntry>>> = RwLock::new(None);
+}
+
+struct DartLogger {
+    env_logger: Logger,
+}
+
+impl DartLogger {
+    fn set_stream_sink(stream_sink: StreamSink<LogEntry>) {
+        let mut guard = DART_LOGGER_STREAM_SINK.write();
+        if guard.is_some() {
+            warn!(
+                "BindingLogger::set_stream_sink but already exist a sink, thus overriding. \
+                (This may or may not be a problem. It will happen normally if hot-reload Flutter app.)"
+            );
+        }
+        *guard = Some(stream_sink);
+        drop(guard)
+    }
+
+    fn record_to_entry(record: &Record) -> LogEntry {
+        LogEntry {
+            line: format!("{}", record.args()),
+            level: format!("{}", record.level()),
+        }
+    }
+}
+
+impl Log for DartLogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.level() <= max_level()
+    }
+
+    fn log(&self, record: &Record) {
+        if self.env_logger.enabled(record.metadata()) {
+            let entry = Self::record_to_entry(record);
+            if let Some(sink) = &*DART_LOGGER_STREAM_SINK.read() {
+                sink.add(entry);
+            }
+        }
+    }
+
+    fn flush(&self) {}
+}
 
 // === FRB mirroring
 //

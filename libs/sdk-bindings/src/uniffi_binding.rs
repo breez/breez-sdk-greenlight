@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use breez_sdk_core::lnurl::pay::{LnUrlPayResult, LnUrlPaySuccessData};
-use breez_sdk_core::logger::init_uniffi_logger;
+use breez_sdk_core::logger::{get_filter_level, init_env_logger};
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, AesSuccessActionDataResult,
@@ -32,9 +32,75 @@ use breez_sdk_core::{
     SwapAmountType, SwapInfo, SwapStatus, Symbol, TlvEntry, UnspentTransactionOutput,
     UrlSuccessActionData,
 };
+use env_logger::{Logger, Target};
+use log::{
+    error, max_level, set_boxed_logger, set_max_level, Log, Metadata, Record, STATIC_MAX_LEVEL,
+};
 use once_cell::sync::Lazy;
+use std::sync::Once;
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
+
+/* UniFFI Logger */
+
+static INIT_UNIFFI_LOGGER: Once = Once::new();
+
+fn init_uniffi_logger(log_stream: Box<dyn LogStream>, filter_level: Option<LevelFilter>) {
+    INIT_UNIFFI_LOGGER.call_once(|| {
+        UniFFILogger::set_log_stream(log_stream, filter_level);
+    });
+}
+
+struct UniFFILogger {
+    env_logger: Logger,
+    log_stream: Box<dyn LogStream>,
+}
+
+impl UniFFILogger {
+    fn set_log_stream(log_stream: Box<dyn LogStream>, filter_level: Option<LevelFilter>) {
+        let filter_level = get_filter_level(filter_level);
+        assert!(
+            filter_level <= STATIC_MAX_LEVEL,
+            "Should respect STATIC_MAX_LEVEL={:?}, which is done in compile time. level{:?}",
+            STATIC_MAX_LEVEL,
+            filter_level
+        );
+
+        let env_logger = init_env_logger(Some(Target::Stdout), Some(filter_level));
+
+        let uniffi_logger = UniFFILogger {
+            env_logger,
+            log_stream,
+        };
+        set_boxed_logger(Box::new(uniffi_logger))
+            .unwrap_or_else(|_| error!("Log stream already created."));
+        set_max_level(filter_level);
+    }
+
+    fn record_to_entry(record: &Record) -> LogEntry {
+        LogEntry {
+            line: format!("{}", record.args()),
+            level: format!("{}", record.level()),
+        }
+    }
+}
+
+impl Log for UniFFILogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        // ignore the internal uniffi log to prevent infinite loop.
+        return metadata.level() <= max_level()
+            && *metadata.target() != *"breez_sdk_bindings::uniffi_binding";
+    }
+
+    fn log(&self, record: &Record) {
+        let metadata = record.metadata();
+        if self.enabled(metadata) && self.env_logger.enabled(metadata) {
+            let entry = Self::record_to_entry(record);
+            self.log_stream.log(entry);
+        }
+    }
+    fn flush(&self) {}
+}
 
 /// Create a new SDK config with default values
 pub fn default_config(
