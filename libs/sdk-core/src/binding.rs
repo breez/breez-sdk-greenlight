@@ -327,6 +327,7 @@ pub fn is_initialized() -> bool {
     block_on(async { get_breez_services().await.is_ok() })
 }
 
+#[frb(name = "sync")]
 /// See [BreezServices::sync]
 pub fn sync() -> Result<()> {
     block_on(async { get_breez_services().await?.sync().await })
