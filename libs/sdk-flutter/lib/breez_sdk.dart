@@ -35,22 +35,27 @@ class BreezSDK {
   /// Initializes SDK events & log streams.
   ///
   /// Call once on your Dart entrypoint file, e.g.; `lib/main.dart`.
-  void initialize() {
+  void initialize({LevelFilter? filterLevel}) {
     _initializeEventsStream();
-    _initializeLogStream();
+    _initializeLogStream(filterLevel: filterLevel);
   }
 
   void _initializeEventsStream() {
     _breezEventsStream ??= _lnToolkit.breezEventsStream().asBroadcastStream();
   }
 
-  void _initializeLogStream() {
+  /// Listen to node logs
+  void _initializeLogStream({LevelFilter? filterLevel}) {
     if (defaultTargetPlatform == TargetPlatform.android) {
       _breezLogStream ??= const EventChannel('breez_sdk_node_logs')
           .receiveBroadcastStream()
           .map((log) => LogEntry(line: log["line"], level: log["level"]));
     } else {
-      _breezLogStream ??= _lnToolkit.breezLogStream().asBroadcastStream();
+      _lnToolkit.breezLogStream(filterLevel: filterLevel).listen((logEntry) {
+        _logStreamController.add(logEntry);
+      }, onError: (e) {
+        _logStreamController.addError(e);
+      });
     }
   }
 
