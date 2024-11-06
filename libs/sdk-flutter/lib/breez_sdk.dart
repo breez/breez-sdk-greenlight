@@ -419,7 +419,7 @@ class BreezSDK {
   Future<void> claimReverseSwap({
     required String lockupAddress,
   }) async {
-    return await _lnToolkit.claimReverseSwap(lockupAddress: lockupAddress);
+    return await binding.claimReverseSwap(lockupAddress: lockupAddress);
   }
 
   /* Swap Fee API's */
