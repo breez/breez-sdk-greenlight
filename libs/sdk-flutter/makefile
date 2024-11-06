@@ -12,7 +12,7 @@ init:
 all: ios android
 
 flutter_rust_bridge:
-	cargo install flutter_rust_bridge_codegen --version 2.5.1
+	cargo install flutter_rust_bridge_codegen --version 2.6.0
 	mkdir -p ./lib/generated
 	flutter_rust_bridge_codegen generate
 
