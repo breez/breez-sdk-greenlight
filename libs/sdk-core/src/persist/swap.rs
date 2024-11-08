@@ -1,11 +1,13 @@
 use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
 
-use crate::models::{OpeningFeeParams, SwapInfo, SwapStatus};
+use crate::{
+    models::{OpeningFeeParams, SwapInfo, SwapStatus},
+    ListSwapsRequest,
+};
 
 use super::{
     db::{SqliteStorage, StringArray},
-    error::PersistError,
-    error::PersistResult,
+    error::{PersistError, PersistResult},
 };
 
 #[derive(Debug, Clone)]
@@ -329,24 +331,49 @@ impl SqliteStorage {
         self.select_single_swap("swaps.bitcoin_address = ?1", [address])
     }
 
-    pub(crate) fn list_swaps_with_status(
-        &self,
-        status: SwapStatus,
-    ) -> PersistResult<Vec<SwapInfo>> {
+    pub(crate) fn list_swaps(&self, req: ListSwapsRequest) -> PersistResult<Vec<SwapInfo>> {
         let con = self.get_connection()?;
-        let mut stmt = con.prepare(&self.select_swap_query("status = ?1", ""))?;
+        let mut where_clauses = Vec::new();
+        if let Some(status) = req.status {
+            if status.is_empty() {
+                return Ok(Vec::new());
+            }
 
-        let vec: Vec<SwapInfo> = stmt
-            .query_map([status as u32], |row| self.sql_row_to_swap(row, ""))?
-            .map(|i| i.unwrap())
-            .collect();
+            where_clauses.push(format!(
+                "status in ({})",
+                status
+                    .into_iter()
+                    .map(|s| (s as u32).to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            ));
+        }
 
-        Ok(vec)
-    }
+        if let Some(from_timestamp) = req.from_timestamp {
+            where_clauses.push(format!("created_at >= {}", from_timestamp));
+        }
 
-    pub(crate) fn list_swaps(&self) -> PersistResult<Vec<SwapInfo>> {
-        let con = self.get_connection()?;
-        let mut stmt = con.prepare(&self.select_swap_query("true", ""))?;
+        if let Some(to_timestamp) = req.to_timestamp {
+            where_clauses.push(format!("created_at < {}", to_timestamp));
+        }
+
+        let where_clause = match where_clauses.is_empty() {
+            true => String::from("true"),
+            false => where_clauses.join(" AND "),
+        };
+
+        let mut query = self.select_swap_query(&where_clause, "");
+
+        match req.limit {
+            Some(limit) => query.push_str(&format!("LIMIT {}\n", limit)),
+            None => query.push_str("LIMIT -1\n"),
+        }
+
+        if let Some(offset) = req.offset {
+            query.push_str(&format!("OFFSET {}\n", offset));
+        }
+
+        let mut stmt = con.prepare(&query)?;
 
         let vec: Vec<SwapInfo> = stmt
             .query_map([], |row| self.sql_row_to_swap(row, ""))?
@@ -422,18 +449,17 @@ mod tests {
     use crate::persist::error::PersistResult;
     use crate::persist::swap::SwapChainInfo;
     use crate::test_utils::get_test_ofp_48h;
-    use crate::{OpeningFeeParams, SwapInfo, SwapStatus};
+    use crate::{ListSwapsRequest, OpeningFeeParams, SwapInfo, SwapStatus};
     use rusqlite::{named_params, Connection};
 
     #[test]
     fn test_swaps() -> PersistResult<(), Box<dyn std::error::Error>> {
         use crate::persist::test_utils;
         fn list_in_progress_swaps(storage: &SqliteStorage) -> PersistResult<Vec<SwapInfo>> {
-            Ok(storage
-                .list_swaps()?
-                .into_iter()
-                .filter(SwapInfo::in_progress)
-                .collect())
+            storage.list_swaps(ListSwapsRequest {
+                status: Some(SwapStatus::in_progress()),
+                ..Default::default()
+            })
         }
 
         let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
@@ -475,10 +501,16 @@ mod tests {
         let non_existent_swap = storage.get_swap_info_by_address("non-existent".to_string())?;
         assert!(non_existent_swap.is_none());
 
-        let empty_swaps = storage.list_swaps_with_status(SwapStatus::Refundable)?;
+        let empty_swaps = storage.list_swaps(ListSwapsRequest {
+            status: Some(vec![SwapStatus::Refundable]),
+            ..Default::default()
+        })?;
         assert_eq!(empty_swaps.len(), 0);
 
-        let swaps = storage.list_swaps_with_status(SwapStatus::Initial)?;
+        let swaps = storage.list_swaps(ListSwapsRequest {
+            status: Some(vec![SwapStatus::Initial]),
+            ..Default::default()
+        })?;
         assert_eq!(swaps.len(), 1);
 
         let err = storage.insert_swap(tested_swap_info.clone());

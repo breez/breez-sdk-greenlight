@@ -2063,11 +2063,10 @@ impl BreezServices {
         match is_new_webhook_url {
             false => debug!("Webhook URL not changed, no need to (re-)register for monitored swap tx notifications"),
             true => {
-                for swap in self
-                    .btc_receive_swapper
-                    .list_monitored()?
-                    .iter()
-                    .filter(|swap| !swap.refundable())
+                for swap in self.persister.list_swaps(ListSwapsRequest {
+                    status: Some(SwapStatus::unexpired()),
+                    ..Default::default()
+                })?
                 {
                     let swap_address = &swap.bitcoin_address;
                     info!("Found non-refundable monitored swap with address {swap_address}, registering for onchain tx notifications");
@@ -2265,8 +2264,11 @@ impl BreezServices {
         let reverse_swaps = crate::serializer::value::to_value(
             self.persister.list_reverse_swaps().map(sanitize_vec)?,
         )?;
-        let swaps =
-            crate::serializer::value::to_value(self.persister.list_swaps().map(sanitize_vec)?)?;
+        let swaps = crate::serializer::value::to_value(
+            self.persister
+                .list_swaps(ListSwapsRequest::default())
+                .map(sanitize_vec)?,
+        )?;
         let lsp_id = crate::serializer::value::to_value(&self.persister.get_lsp_id()?)?;
 
         let res = json!({

@@ -28,6 +28,7 @@ use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapError;
+use crate::ListSwapsRequest;
 use crate::{
     models::OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
     RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
@@ -280,49 +281,39 @@ impl BTCReceiveSwap {
     }
 
     fn list_unused(&self) -> Result<Vec<SwapInfo>> {
-        Ok(self
-            .persister
-            .list_swaps()?
-            .into_iter()
-            .filter(SwapInfo::unused)
-            .collect())
+        Ok(self.persister.list_swaps(ListSwapsRequest {
+            status: Some(SwapStatus::unused()),
+            ..Default::default()
+        })?)
     }
 
     pub(crate) fn list_in_progress(&self) -> Result<Vec<SwapInfo>> {
-        Ok(self
-            .persister
-            .list_swaps()?
-            .into_iter()
-            .filter(SwapInfo::in_progress)
-            .collect())
+        Ok(self.persister.list_swaps(ListSwapsRequest {
+            status: Some(SwapStatus::in_progress()),
+            ..Default::default()
+        })?)
     }
 
     pub fn list_monitored(&self) -> Result<Vec<SwapInfo>> {
-        Ok(self
-            .persister
-            .list_swaps()?
-            .into_iter()
-            .filter(SwapInfo::monitored)
-            .collect())
+        Ok(self.persister.list_swaps(ListSwapsRequest {
+            status: Some(SwapStatus::monitored()),
+            ..Default::default()
+        })?)
     }
 
     pub(crate) fn list_refundables(&self) -> Result<Vec<SwapInfo>> {
-        Ok(self
-            .persister
-            .list_swaps_with_status(SwapStatus::Refundable)?
-            .into_iter()
-            .filter(SwapInfo::refundable)
-            .collect())
+        Ok(self.persister.list_swaps(ListSwapsRequest {
+            status: Some(SwapStatus::refundable()),
+            ..Default::default()
+        })?)
     }
 
     #[allow(dead_code)]
     pub(crate) fn list_redeemables(&self) -> Result<Vec<SwapInfo>> {
-        Ok(self
-            .persister
-            .list_swaps()?
-            .into_iter()
-            .filter(SwapInfo::redeemable)
-            .collect())
+        Ok(self.persister.list_swaps(ListSwapsRequest {
+            status: Some(SwapStatus::redeemable()),
+            ..Default::default()
+        })?)
     }
 
     pub(crate) fn get_swap_info(&self, address: String) -> Result<Option<SwapInfo>> {
@@ -335,7 +326,8 @@ impl BTCReceiveSwap {
     }
 
     pub(crate) async fn rescan_swaps(&self, tip: u32) -> Result<()> {
-        self.refresh_swaps(self.persister.list_swaps()?, tip).await
+        self.refresh_swaps(self.persister.list_swaps(ListSwapsRequest::default())?, tip)
+            .await
     }
 
     pub(crate) async fn rescan_monitored_swaps(&self, tip: u32) -> Result<()> {

@@ -275,7 +275,7 @@ mod tests {
     use crate::persist::error::PersistResult;
     use crate::persist::test_utils;
     use crate::test_utils::{get_test_ofp_48h, rand_string, rand_vec_u8};
-    use crate::SwapInfo;
+    use crate::{ListSwapsRequest, SwapInfo};
 
     #[test]
     fn test_sync() -> PersistResult<()> {
@@ -303,10 +303,10 @@ mod tests {
         remote_storage.import_remote_changes(&local_storage, false)?;
         local_storage.import_remote_changes(&remote_storage, true)?;
 
-        let mut local_swaps = local_storage.list_swaps()?;
+        let mut local_swaps = local_storage.list_swaps(ListSwapsRequest::default())?;
         local_swaps.sort_by(|s1, s2| s1.bitcoin_address.cmp(&s2.bitcoin_address));
 
-        let mut remote_swaps = local_storage.list_swaps()?;
+        let mut remote_swaps = local_storage.list_swaps(ListSwapsRequest::default())?;
         remote_swaps.sort_by(|s1, s2| s1.bitcoin_address.cmp(&s2.bitcoin_address));
 
         assert_eq!(local_swaps, remote_swaps);
@@ -335,7 +335,7 @@ mod tests {
         let new_fees: crate::OpeningFeeParams = get_test_ofp_48h(10, 10).into();
         local_storage.update_swap_fees(local_swap_info.bitcoin_address, new_fees.clone())?;
 
-        let local_swaps = local_storage.list_swaps()?;
+        let local_swaps = local_storage.list_swaps(ListSwapsRequest::default())?;
         assert_eq!(local_swaps.len(), 1);
         assert_eq!(
             local_swaps
@@ -391,8 +391,8 @@ mod tests {
         // - R2 fee created_at > L2 fee created_at => sync should replace the local version
         // - R3 should be created (mirror of L3) because it doesn't exist on remote
 
-        let local_swaps = local_storage.list_swaps()?;
-        let remote_swaps = remote_storage.list_swaps()?;
+        let local_swaps = local_storage.list_swaps(ListSwapsRequest::default())?;
+        let remote_swaps = remote_storage.list_swaps(ListSwapsRequest::default())?;
         assert_eq!(local_swaps.len(), 3);
         assert_eq!(remote_swaps.len(), 2); // Before the sync, only 2 swaps in remote
 
@@ -400,8 +400,8 @@ mod tests {
         remote_storage.import_remote_changes(&local_storage, false)?;
         local_storage.import_remote_changes(&remote_storage, true)?;
 
-        let local_swaps = local_storage.list_swaps()?;
-        let remote_swaps = remote_storage.list_swaps()?;
+        let local_swaps = local_storage.list_swaps(ListSwapsRequest::default())?;
+        let remote_swaps = remote_storage.list_swaps(ListSwapsRequest::default())?;
         assert_eq!(local_swaps.len(), 3);
         assert_eq!(remote_swaps.len(), 3); // After the sync, all 3 swaps in remote
 

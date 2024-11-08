@@ -445,6 +445,7 @@ impl BackupWorker {
 #[cfg(test)]
 mod tests {
     use crate::test_utils::get_test_ofp_48h;
+    use crate::ListSwapsRequest;
     use crate::{
         backup::BackupRequest,
         persist::db::SqliteStorage,
@@ -752,7 +753,9 @@ mod tests {
             wait_for_backup_success(task_subscription2).await;
         });
         test_expected_backup_events(main_subscription, transport, expected_events, 3, 1).await;
-        let swaps = cloned_persister.list_swaps().unwrap();
+        let swaps = cloned_persister
+            .list_swaps(ListSwapsRequest::default())
+            .unwrap();
         assert!(swaps.len() == 1);
         _ = quit_sender.send(());
         quit_sender.closed().await;

@@ -959,6 +959,17 @@ pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+pub struct ListSwapsRequest {
+    pub status: Option<Vec<SwapStatus>>,
+    /// Epoch time, in seconds. If set, acts as filter for minimum swap creation time, inclusive.
+    pub from_timestamp: Option<i64>,
+    /// Epoch time, in seconds. If set, acts as filter for maximum swap creation time, exclusive.
+    pub to_timestamp: Option<i64>,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BuyBitcoinRequest {
     pub provider: BuyBitcoinProvider,
@@ -1298,6 +1309,43 @@ pub enum SwapStatus {
     Completed = 5,
 }
 
+impl SwapStatus {
+    pub(crate) fn unused() -> Vec<SwapStatus> {
+        vec![SwapStatus::Initial]
+    }
+
+    pub(crate) fn in_progress() -> Vec<SwapStatus> {
+        vec![SwapStatus::Redeemable, SwapStatus::WaitingConfirmation]
+    }
+
+    pub(crate) fn redeemable() -> Vec<SwapStatus> {
+        vec![SwapStatus::Redeemable]
+    }
+
+    pub(crate) fn refundable() -> Vec<SwapStatus> {
+        vec![SwapStatus::Refundable]
+    }
+
+    pub(crate) fn monitored() -> Vec<SwapStatus> {
+        vec![
+            SwapStatus::Initial,
+            SwapStatus::WaitingConfirmation,
+            SwapStatus::Redeemable,
+            SwapStatus::Redeemed,
+            SwapStatus::Refundable,
+        ]
+    }
+
+    pub(crate) fn unexpired() -> Vec<SwapStatus> {
+        vec![
+            SwapStatus::Initial,
+            SwapStatus::WaitingConfirmation,
+            SwapStatus::Redeemable,
+            SwapStatus::Redeemed,
+        ]
+    }
+}
+
 impl TryFrom<i32> for SwapStatus {
     type Error = anyhow::Error;
 
@@ -1406,26 +1454,6 @@ impl SwapInfo {
             status: new_info.calculate_status(tip),
             ..new_info
         }
-    }
-
-    pub(crate) fn unused(&self) -> bool {
-        self.status == SwapStatus::Initial
-    }
-
-    pub(crate) fn in_progress(&self) -> bool {
-        [SwapStatus::Redeemable, SwapStatus::WaitingConfirmation].contains(&self.status)
-    }
-
-    pub(crate) fn redeemable(&self) -> bool {
-        self.status == SwapStatus::Redeemable
-    }
-
-    pub(crate) fn refundable(&self) -> bool {
-        self.status == SwapStatus::Refundable
-    }
-
-    pub(crate) fn monitored(&self) -> bool {
-        self.status != SwapStatus::Completed
     }
 
     fn calculate_status(&self, tip: u32) -> SwapStatus {
