@@ -277,6 +277,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kInProgressSwapConstMeta;
 
+  /// See [BreezServices::list_swaps]
+  Future<List<SwapInfo>> listSwaps({required ListSwapsRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kListSwapsConstMeta;
+
   /// See [BreezServices::in_progress_reverse_swaps]
   Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint});
 
@@ -723,6 +728,26 @@ class ListPaymentsRequest {
     this.fromTimestamp,
     this.toTimestamp,
     this.includeFailures,
+    this.offset,
+    this.limit,
+  });
+}
+
+class ListSwapsRequest {
+  final List<SwapStatus>? status;
+
+  /// Epoch time, in seconds. If set, acts as filter for minimum swap creation time, inclusive.
+  final int? fromTimestamp;
+
+  /// Epoch time, in seconds. If set, acts as filter for maximum swap creation time, exclusive.
+  final int? toTimestamp;
+  final int? offset;
+  final int? limit;
+
+  const ListSwapsRequest({
+    this.status,
+    this.fromTimestamp,
+    this.toTimestamp,
     this.offset,
     this.limit,
   });
@@ -2885,6 +2910,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: [],
       );
 
+  Future<List<SwapInfo>> listSwaps({required ListSwapsRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_list_swaps_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_list_swaps(port_, arg0),
+      parseSuccessData: _wire2api_list_swap_info,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kListSwapsConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kListSwapsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "list_swaps",
+        argNames: ["req"],
+      );
+
   Future<List<ReverseSwapInfo>> inProgressReverseSwaps({dynamic hint}) {
     return _platform.executeNormal(FlutterRustBridgeTask(
       callFfi: (port_) => _platform.inner.wire_in_progress_reverse_swaps(port_),
@@ -4266,6 +4308,11 @@ int api2wire_swap_amount_type(SwapAmountType raw) {
 }
 
 @protected
+int api2wire_swap_status(SwapStatus raw) {
+  return api2wire_i32(raw.index);
+}
+
+@protected
 int api2wire_u16(int raw) {
   return raw;
 }
@@ -4351,6 +4398,13 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   ffi.Pointer<wire_ListPaymentsRequest> api2wire_box_autoadd_list_payments_request(ListPaymentsRequest raw) {
     final ptr = inner.new_box_autoadd_list_payments_request_0();
     _api_fill_to_wire_list_payments_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_ListSwapsRequest> api2wire_box_autoadd_list_swaps_request(ListSwapsRequest raw) {
+    final ptr = inner.new_box_autoadd_list_swaps_request_0();
+    _api_fill_to_wire_list_swaps_request(raw, ptr.ref);
     return ptr;
   }
 
@@ -4554,6 +4608,15 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_list_swap_status> api2wire_list_swap_status(List<SwapStatus> raw) {
+    final ans = inner.new_list_swap_status_0(raw.length);
+    for (var i = 0; i < raw.length; ++i) {
+      ans.ref.ptr[i] = api2wire_swap_status(raw[i]);
+    }
+    return ans;
+  }
+
+  @protected
   ffi.Pointer<wire_list_tlv_entry> api2wire_list_tlv_entry(List<TlvEntry> raw) {
     final ans = inner.new_list_tlv_entry_0(raw.length);
     for (var i = 0; i < raw.length; ++i) {
@@ -4607,6 +4670,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   ffi.Pointer<wire_list_payment_type_filter> api2wire_opt_list_payment_type_filter(
       List<PaymentTypeFilter>? raw) {
     return raw == null ? ffi.nullptr : api2wire_list_payment_type_filter(raw);
+  }
+
+  @protected
+  ffi.Pointer<wire_list_swap_status> api2wire_opt_list_swap_status(List<SwapStatus>? raw) {
+    return raw == null ? ffi.nullptr : api2wire_list_swap_status(raw);
   }
 
   @protected
@@ -4667,6 +4735,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_box_autoadd_list_payments_request(
       ListPaymentsRequest apiObj, ffi.Pointer<wire_ListPaymentsRequest> wireObj) {
     _api_fill_to_wire_list_payments_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_box_autoadd_list_swaps_request(
+      ListSwapsRequest apiObj, ffi.Pointer<wire_ListSwapsRequest> wireObj) {
+    _api_fill_to_wire_list_swaps_request(apiObj, wireObj.ref);
   }
 
   void _api_fill_to_wire_box_autoadd_ln_url_auth_request_data(
@@ -4833,6 +4906,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
     wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
     wireObj.include_failures = api2wire_opt_box_autoadd_bool(apiObj.includeFailures);
+    wireObj.offset = api2wire_opt_box_autoadd_u32(apiObj.offset);
+    wireObj.limit = api2wire_opt_box_autoadd_u32(apiObj.limit);
+  }
+
+  void _api_fill_to_wire_list_swaps_request(ListSwapsRequest apiObj, wire_ListSwapsRequest wireObj) {
+    wireObj.status = api2wire_opt_list_swap_status(apiObj.status);
+    wireObj.from_timestamp = api2wire_opt_box_autoadd_i64(apiObj.fromTimestamp);
+    wireObj.to_timestamp = api2wire_opt_box_autoadd_i64(apiObj.toTimestamp);
     wireObj.offset = api2wire_opt_box_autoadd_u32(apiObj.offset);
     wireObj.limit = api2wire_opt_box_autoadd_u32(apiObj.limit);
   }
@@ -5878,6 +5959,22 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
       _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_swap');
   late final _wire_in_progress_swap = _wire_in_progress_swapPtr.asFunction<void Function(int)>();
 
+  void wire_list_swaps(
+    int port_,
+    ffi.Pointer<wire_ListSwapsRequest> req,
+  ) {
+    return _wire_list_swaps(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire_list_swapsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_ListSwapsRequest>)>>(
+          'wire_list_swaps');
+  late final _wire_list_swaps =
+      _wire_list_swapsPtr.asFunction<void Function(int, ffi.Pointer<wire_ListSwapsRequest>)>();
+
   void wire_in_progress_reverse_swaps(
     int port_,
   ) {
@@ -6116,6 +6213,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_box_autoadd_list_payments_request_0');
   late final _new_box_autoadd_list_payments_request_0 = _new_box_autoadd_list_payments_request_0Ptr
       .asFunction<ffi.Pointer<wire_ListPaymentsRequest> Function()>();
+
+  ffi.Pointer<wire_ListSwapsRequest> new_box_autoadd_list_swaps_request_0() {
+    return _new_box_autoadd_list_swaps_request_0();
+  }
+
+  late final _new_box_autoadd_list_swaps_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_ListSwapsRequest> Function()>>(
+          'new_box_autoadd_list_swaps_request_0');
+  late final _new_box_autoadd_list_swaps_request_0 =
+      _new_box_autoadd_list_swaps_request_0Ptr.asFunction<ffi.Pointer<wire_ListSwapsRequest> Function()>();
 
   ffi.Pointer<wire_LnUrlAuthRequestData> new_box_autoadd_ln_url_auth_request_data_0() {
     return _new_box_autoadd_ln_url_auth_request_data_0();
@@ -6395,6 +6502,20 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'new_list_payment_type_filter_0');
   late final _new_list_payment_type_filter_0 = _new_list_payment_type_filter_0Ptr
       .asFunction<ffi.Pointer<wire_list_payment_type_filter> Function(int)>();
+
+  ffi.Pointer<wire_list_swap_status> new_list_swap_status_0(
+    int len,
+  ) {
+    return _new_list_swap_status_0(
+      len,
+    );
+  }
+
+  late final _new_list_swap_status_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_list_swap_status> Function(ffi.Int32)>>(
+          'new_list_swap_status_0');
+  late final _new_list_swap_status_0 =
+      _new_list_swap_status_0Ptr.asFunction<ffi.Pointer<wire_list_swap_status> Function(int)>();
 
   ffi.Pointer<wire_list_tlv_entry> new_list_tlv_entry_0(
     int len,
@@ -6831,6 +6952,25 @@ final class wire_RefundRequest extends ffi.Struct {
 
   @ffi.Uint32()
   external int sat_per_vbyte;
+}
+
+final class wire_list_swap_status extends ffi.Struct {
+  external ffi.Pointer<ffi.Int32> ptr;
+
+  @ffi.Int32()
+  external int len;
+}
+
+final class wire_ListSwapsRequest extends ffi.Struct {
+  external ffi.Pointer<wire_list_swap_status> status;
+
+  external ffi.Pointer<ffi.Int64> from_timestamp;
+
+  external ffi.Pointer<ffi.Int64> to_timestamp;
+
+  external ffi.Pointer<ffi.Uint32> offset;
+
+  external ffi.Pointer<ffi.Uint32> limit;
 }
 
 final class wire_OpenChannelFeeRequest extends ffi.Struct {

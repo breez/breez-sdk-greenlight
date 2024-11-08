@@ -880,6 +880,13 @@ impl BreezServices {
         Ok(())
     }
 
+    /// Lists current and historical swaps.
+    ///
+    /// Swaps can be filtered based on creation time and status.
+    pub async fn list_swaps(&self, req: ListSwapsRequest) -> SdkResult<Vec<SwapInfo>> {
+        Ok(self.persister.list_swaps(req)?)
+    }
+
     /// Claims an individual reverse swap.
     ///
     /// To be used only in the context of mobile notifications, where the notification triggers

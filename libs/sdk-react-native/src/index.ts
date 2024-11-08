@@ -153,6 +153,14 @@ export interface ListPaymentsRequest {
     limit?: number
 }
 
+export interface ListSwapsRequest {
+    status?: SwapStatus[]
+    fromTimestamp?: number
+    toTimestamp?: number
+    offset?: number
+    limit?: number
+}
+
 export interface LnPaymentDetails {
     paymentHash: string
     label: string
@@ -1081,6 +1089,11 @@ export const prepareRefund = async (req: PrepareRefundRequest): Promise<PrepareR
 
 export const refund = async (req: RefundRequest): Promise<RefundResponse> => {
     const response = await BreezSDK.refund(req)
+    return response
+}
+
+export const listSwaps = async (req: ListSwapsRequest): Promise<SwapInfo[]> => {
+    const response = await BreezSDK.listSwaps(req)
     return response
 }
 

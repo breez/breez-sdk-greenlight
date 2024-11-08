@@ -753,6 +753,23 @@ class BreezSDKModule(
     }
 
     @ReactMethod
+    fun listSwaps(
+        req: ReadableMap,
+        promise: Promise,
+    ) {
+        executor.execute {
+            try {
+                val listSwapsRequest =
+                    asListSwapsRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "ListSwapsRequest")) }
+                val res = getBreezServices().listSwaps(listSwapsRequest)
+                promise.resolve(readableArrayOf(res))
+            } catch (e: Exception) {
+                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
+            }
+        }
+    }
+
+    @ReactMethod
     fun fetchReverseSwapFees(
         req: ReadableMap,
         promise: Promise,

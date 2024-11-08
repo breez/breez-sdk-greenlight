@@ -10,9 +10,9 @@ use breez_sdk_core::{
     CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
     ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
     GreenlightCredentials, GreenlightDeviceCredentials, GreenlightNodeConfig, HealthCheckStatus,
-    InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, LnPaymentDetails,
-    LnUrlAuthError, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayError,
-    LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
+    InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, ListSwapsRequest,
+    LnPaymentDetails, LnUrlAuthError, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
+    LnUrlPayError, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
     LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
     LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
     MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
@@ -303,6 +303,11 @@ impl BlockingBreezServices {
     // construct and broadcast a refund transaction for a faile/expired swap
     pub fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
         rt().block_on(self.breez_services.refund(req))
+    }
+
+    // list current and historical swaps
+    pub fn list_swaps(&self, req: ListSwapsRequest) -> SdkResult<Vec<SwapInfo>> {
+        rt().block_on(self.breez_services.list_swaps(req))
     }
 
     pub fn fetch_reverse_swap_fees(

@@ -277,6 +277,11 @@ pub extern "C" fn wire_in_progress_swap(port_: i64) {
 }
 
 #[no_mangle]
+pub extern "C" fn wire_list_swaps(port_: i64, req: *mut wire_ListSwapsRequest) {
+    wire_list_swaps_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
     wire_in_progress_reverse_swaps_impl(port_)
 }
@@ -374,6 +379,11 @@ pub extern "C" fn new_box_autoadd_i64_0(value: i64) -> *mut i64 {
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_list_payments_request_0() -> *mut wire_ListPaymentsRequest {
     support::new_leak_box_ptr(wire_ListPaymentsRequest::new_with_null_ptr())
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_list_swaps_request_0() -> *mut wire_ListSwapsRequest {
+    support::new_leak_box_ptr(wire_ListSwapsRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -521,6 +531,15 @@ pub extern "C" fn new_list_payment_type_filter_0(len: i32) -> *mut wire_list_pay
 }
 
 #[no_mangle]
+pub extern "C" fn new_list_swap_status_0(len: i32) -> *mut wire_list_swap_status {
+    let wrap = wire_list_swap_status {
+        ptr: support::new_leak_vec_ptr(Default::default(), len),
+        len,
+    };
+    support::new_leak_box_ptr(wrap)
+}
+
+#[no_mangle]
 pub extern "C" fn new_list_tlv_entry_0(len: i32) -> *mut wire_list_tlv_entry {
     let wrap = wire_list_tlv_entry {
         ptr: support::new_leak_vec_ptr(<wire_TlvEntry>::new_with_null_ptr(), len),
@@ -599,6 +618,12 @@ impl Wire2Api<ListPaymentsRequest> for *mut wire_ListPaymentsRequest {
     fn wire2api(self) -> ListPaymentsRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<ListPaymentsRequest>::wire2api(*wrap).into()
+    }
+}
+impl Wire2Api<ListSwapsRequest> for *mut wire_ListSwapsRequest {
+    fn wire2api(self) -> ListSwapsRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<ListSwapsRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<LnUrlAuthRequestData> for *mut wire_LnUrlAuthRequestData {
@@ -839,6 +864,26 @@ impl Wire2Api<ListPaymentsRequest> for wire_ListPaymentsRequest {
             from_timestamp: self.from_timestamp.wire2api(),
             to_timestamp: self.to_timestamp.wire2api(),
             include_failures: self.include_failures.wire2api(),
+            offset: self.offset.wire2api(),
+            limit: self.limit.wire2api(),
+        }
+    }
+}
+impl Wire2Api<Vec<SwapStatus>> for *mut wire_list_swap_status {
+    fn wire2api(self) -> Vec<SwapStatus> {
+        let vec = unsafe {
+            let wrap = support::box_from_leak_ptr(self);
+            support::vec_from_leak_ptr(wrap.ptr, wrap.len)
+        };
+        vec.into_iter().map(Wire2Api::wire2api).collect()
+    }
+}
+impl Wire2Api<ListSwapsRequest> for wire_ListSwapsRequest {
+    fn wire2api(self) -> ListSwapsRequest {
+        ListSwapsRequest {
+            status: self.status.wire2api(),
+            from_timestamp: self.from_timestamp.wire2api(),
+            to_timestamp: self.to_timestamp.wire2api(),
             offset: self.offset.wire2api(),
             limit: self.limit.wire2api(),
         }
@@ -1215,6 +1260,23 @@ pub struct wire_ListPaymentsRequest {
     from_timestamp: *mut i64,
     to_timestamp: *mut i64,
     include_failures: *mut bool,
+    offset: *mut u32,
+    limit: *mut u32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_list_swap_status {
+    ptr: *mut i32,
+    len: i32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+pub struct wire_ListSwapsRequest {
+    status: *mut wire_list_swap_status,
+    from_timestamp: *mut i64,
+    to_timestamp: *mut i64,
     offset: *mut u32,
     limit: *mut u32,
 }
@@ -1624,6 +1686,24 @@ impl NewWithNullPtr for wire_ListPaymentsRequest {
 }
 
 impl Default for wire_ListPaymentsRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
+    }
+}
+
+impl NewWithNullPtr for wire_ListSwapsRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            status: core::ptr::null_mut(),
+            from_timestamp: core::ptr::null_mut(),
+            to_timestamp: core::ptr::null_mut(),
+            offset: core::ptr::null_mut(),
+            limit: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_ListSwapsRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

@@ -579,6 +579,14 @@ dictionary SwapInfo {
     u32? confirmed_at;
 };
 
+dictionary ListSwapsRequest {
+    sequence<SwapStatus>? status = null;
+    i64? from_timestamp = null;
+    i64? to_timestamp = null;
+    u32? offset = null;
+    u32? limit = null;
+};
+
 dictionary ReverseSwapPairInfo {
     u64 min;
     u64 max;
@@ -940,6 +948,9 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    RefundResponse refund(RefundRequest req);
+
+   [Throws=SdkError]
+   sequence<SwapInfo> list_swaps(ListSwapsRequest req);
 
    [Throws=SdkError]
    ReverseSwapPairInfo fetch_reverse_swap_fees(ReverseSwapFeesRequest req);

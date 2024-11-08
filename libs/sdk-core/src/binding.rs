@@ -38,12 +38,12 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, LnUrlAuthError,
-    MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
-    OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
-    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
-    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
-    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, ListSwapsRequest,
+    LnUrlAuthError, MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials,
+    OnchainPaymentLimitsResponse, OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest,
+    PayOnchainResponse, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
+    PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
     ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
     SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
@@ -689,6 +689,12 @@ pub fn redeem_swap(swap_address: String) -> Result<()> {
 /// See [BreezServices::in_progress_swap]
 pub fn in_progress_swap() -> Result<Option<SwapInfo>> {
     block_on(async { get_breez_services().await?.in_progress_swap().await })
+        .map_err(anyhow::Error::new::<SdkError>)
+}
+
+/// See [BreezServices::list_swaps]
+pub fn list_swaps(req: ListSwapsRequest) -> Result<Vec<SwapInfo>> {
+    block_on(async { get_breez_services().await?.list_swaps(req).await })
         .map_err(anyhow::Error::new::<SdkError>)
 }
 

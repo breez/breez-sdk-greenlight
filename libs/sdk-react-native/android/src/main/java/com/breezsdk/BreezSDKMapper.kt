@@ -910,6 +910,48 @@ fun asListPaymentsRequestList(arr: ReadableArray): List<ListPaymentsRequest> {
     return list
 }
 
+fun asListSwapsRequest(listSwapsRequest: ReadableMap): ListSwapsRequest? {
+    if (!validateMandatoryFields(
+            listSwapsRequest,
+            arrayOf(),
+        )
+    ) {
+        return null
+    }
+    val status = if (hasNonNullKey(listSwapsRequest, "status")) listSwapsRequest.getArray("status")?.let { asSwapStatusList(it) } else null
+    val fromTimestamp = if (hasNonNullKey(listSwapsRequest, "fromTimestamp")) listSwapsRequest.getDouble("fromTimestamp").toLong() else null
+    val toTimestamp = if (hasNonNullKey(listSwapsRequest, "toTimestamp")) listSwapsRequest.getDouble("toTimestamp").toLong() else null
+    val offset = if (hasNonNullKey(listSwapsRequest, "offset")) listSwapsRequest.getInt("offset").toUInt() else null
+    val limit = if (hasNonNullKey(listSwapsRequest, "limit")) listSwapsRequest.getInt("limit").toUInt() else null
+    return ListSwapsRequest(
+        status,
+        fromTimestamp,
+        toTimestamp,
+        offset,
+        limit,
+    )
+}
+
+fun readableMapOf(listSwapsRequest: ListSwapsRequest): ReadableMap =
+    readableMapOf(
+        "status" to listSwapsRequest.status?.let { readableArrayOf(it) },
+        "fromTimestamp" to listSwapsRequest.fromTimestamp,
+        "toTimestamp" to listSwapsRequest.toTimestamp,
+        "offset" to listSwapsRequest.offset,
+        "limit" to listSwapsRequest.limit,
+    )
+
+fun asListSwapsRequestList(arr: ReadableArray): List<ListSwapsRequest> {
+    val list = ArrayList<ListSwapsRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asListSwapsRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asLnPaymentDetails(lnPaymentDetails: ReadableMap): LnPaymentDetails? {
     if (!validateMandatoryFields(
             lnPaymentDetails,
@@ -4496,6 +4538,7 @@ fun pushToArray(
         is RouteHintHop -> array.pushMap(readableMapOf(value))
         is String -> array.pushString(value)
         is SwapInfo -> array.pushMap(readableMapOf(value))
+        is SwapStatus -> array.pushString(value.name.lowercase())
         is TlvEntry -> array.pushMap(readableMapOf(value))
         is UByte -> array.pushInt(value.toInt())
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))

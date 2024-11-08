@@ -1049,6 +1049,77 @@ enum BreezSDKMapper {
         return listPaymentsRequestList.map { v -> [String: Any?] in return dictionaryOf(listPaymentsRequest: v) }
     }
 
+    static func asListSwapsRequest(listSwapsRequest: [String: Any?]) throws -> ListSwapsRequest {
+        var status: [SwapStatus]?
+        if let statusTmp = listSwapsRequest["status"] as? [String] {
+            status = try asSwapStatusList(arr: statusTmp)
+        }
+
+        var fromTimestamp: Int64?
+        if hasNonNilKey(data: listSwapsRequest, key: "fromTimestamp") {
+            guard let fromTimestampTmp = listSwapsRequest["fromTimestamp"] as? Int64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "fromTimestamp"))
+            }
+            fromTimestamp = fromTimestampTmp
+        }
+        var toTimestamp: Int64?
+        if hasNonNilKey(data: listSwapsRequest, key: "toTimestamp") {
+            guard let toTimestampTmp = listSwapsRequest["toTimestamp"] as? Int64 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "toTimestamp"))
+            }
+            toTimestamp = toTimestampTmp
+        }
+        var offset: UInt32?
+        if hasNonNilKey(data: listSwapsRequest, key: "offset") {
+            guard let offsetTmp = listSwapsRequest["offset"] as? UInt32 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "offset"))
+            }
+            offset = offsetTmp
+        }
+        var limit: UInt32?
+        if hasNonNilKey(data: listSwapsRequest, key: "limit") {
+            guard let limitTmp = listSwapsRequest["limit"] as? UInt32 else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "limit"))
+            }
+            limit = limitTmp
+        }
+
+        return ListSwapsRequest(
+            status: status,
+            fromTimestamp: fromTimestamp,
+            toTimestamp: toTimestamp,
+            offset: offset,
+            limit: limit
+        )
+    }
+
+    static func dictionaryOf(listSwapsRequest: ListSwapsRequest) -> [String: Any?] {
+        return [
+            "status": listSwapsRequest.status == nil ? nil : arrayOf(swapStatusList: listSwapsRequest.status!),
+            "fromTimestamp": listSwapsRequest.fromTimestamp == nil ? nil : listSwapsRequest.fromTimestamp,
+            "toTimestamp": listSwapsRequest.toTimestamp == nil ? nil : listSwapsRequest.toTimestamp,
+            "offset": listSwapsRequest.offset == nil ? nil : listSwapsRequest.offset,
+            "limit": listSwapsRequest.limit == nil ? nil : listSwapsRequest.limit,
+        ]
+    }
+
+    static func asListSwapsRequestList(arr: [Any]) throws -> [ListSwapsRequest] {
+        var list = [ListSwapsRequest]()
+        for value in arr {
+            if let val = value as? [String: Any?] {
+                var listSwapsRequest = try asListSwapsRequest(listSwapsRequest: val)
+                list.append(listSwapsRequest)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "ListSwapsRequest"))
+            }
+        }
+        return list
+    }
+
+    static func arrayOf(listSwapsRequestList: [ListSwapsRequest]) -> [Any] {
+        return listSwapsRequestList.map { v -> [String: Any?] in return dictionaryOf(listSwapsRequest: v) }
+    }
+
     static func asLnPaymentDetails(lnPaymentDetails: [String: Any?]) throws -> LnPaymentDetails {
         guard let paymentHash = lnPaymentDetails["paymentHash"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "paymentHash", typeName: "LnPaymentDetails"))

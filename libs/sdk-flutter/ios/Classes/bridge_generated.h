@@ -269,6 +269,19 @@ typedef struct wire_RefundRequest {
   uint32_t sat_per_vbyte;
 } wire_RefundRequest;
 
+typedef struct wire_list_swap_status {
+  int32_t *ptr;
+  int32_t len;
+} wire_list_swap_status;
+
+typedef struct wire_ListSwapsRequest {
+  struct wire_list_swap_status *status;
+  int64_t *from_timestamp;
+  int64_t *to_timestamp;
+  uint32_t *offset;
+  uint32_t *limit;
+} wire_ListSwapsRequest;
+
 typedef struct wire_OpenChannelFeeRequest {
   uint64_t *amount_msat;
   uint32_t *expiry;
@@ -407,6 +420,8 @@ void wire_redeem_swap(int64_t port_, struct wire_uint_8_list *swap_address);
 
 void wire_in_progress_swap(int64_t port_);
 
+void wire_list_swaps(int64_t port_, struct wire_ListSwapsRequest *req);
+
 void wire_in_progress_reverse_swaps(int64_t port_);
 
 void wire_claim_reverse_swap(int64_t port_, struct wire_uint_8_list *lockup_address);
@@ -444,6 +459,8 @@ struct wire_GreenlightNodeConfig *new_box_autoadd_greenlight_node_config_0(void)
 int64_t *new_box_autoadd_i64_0(int64_t value);
 
 struct wire_ListPaymentsRequest *new_box_autoadd_list_payments_request_0(void);
+
+struct wire_ListSwapsRequest *new_box_autoadd_list_swaps_request_0(void);
 
 struct wire_LnUrlAuthRequestData *new_box_autoadd_ln_url_auth_request_data_0(void);
 
@@ -496,6 +513,8 @@ uint64_t *new_box_autoadd_u64_0(uint64_t value);
 struct wire_list_metadata_filter *new_list_metadata_filter_0(int32_t len);
 
 struct wire_list_payment_type_filter *new_list_payment_type_filter_0(int32_t len);
+
+struct wire_list_swap_status *new_list_swap_status_0(int32_t len);
 
 struct wire_list_tlv_entry *new_list_tlv_entry_0(int32_t len);
 
@@ -561,6 +580,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_rescan_swaps);
     dummy_var ^= ((int64_t) (void*) wire_redeem_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
+    dummy_var ^= ((int64_t) (void*) wire_list_swaps);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
     dummy_var ^= ((int64_t) (void*) wire_claim_reverse_swap);
     dummy_var ^= ((int64_t) (void*) wire_open_channel_fee);
@@ -580,6 +600,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_greenlight_node_config_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_i64_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_list_payments_request_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_list_swaps_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_auth_request_data_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_pay_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_ln_url_withdraw_request_0);
@@ -606,6 +627,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_u64_0);
     dummy_var ^= ((int64_t) (void*) new_list_metadata_filter_0);
     dummy_var ^= ((int64_t) (void*) new_list_payment_type_filter_0);
+    dummy_var ^= ((int64_t) (void*) new_list_swap_status_0);
     dummy_var ^= ((int64_t) (void*) new_list_tlv_entry_0);
     dummy_var ^= ((int64_t) (void*) new_uint_8_list_0);
     dummy_var ^= ((int64_t) (void*) inflate_NodeConfig_Greenlight);

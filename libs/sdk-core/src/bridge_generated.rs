@@ -47,6 +47,7 @@ use crate::models::GreenlightDeviceCredentials;
 use crate::models::GreenlightNodeConfig;
 use crate::models::HealthCheckStatus;
 use crate::models::ListPaymentsRequest;
+use crate::models::ListSwapsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LogEntry;
 use crate::models::MaxReverseSwapAmountResponse;
@@ -775,6 +776,19 @@ fn wire_in_progress_swap_impl(port_: MessagePort) {
         move || move |task_callback| in_progress_swap(),
     )
 }
+fn wire_list_swaps_impl(port_: MessagePort, req: impl Wire2Api<ListSwapsRequest> + UnwindSafe) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<SwapInfo>, _>(
+        WrapInfo {
+            debug_name: "list_swaps",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| list_swaps(api_req)
+        },
+    )
+}
 fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<ReverseSwapInfo>, _>(
         WrapInfo {
@@ -1269,6 +1283,19 @@ impl Wire2Api<SwapAmountType> for i32 {
             0 => SwapAmountType::Send,
             1 => SwapAmountType::Receive,
             _ => unreachable!("Invalid variant for SwapAmountType: {}", self),
+        }
+    }
+}
+impl Wire2Api<SwapStatus> for i32 {
+    fn wire2api(self) -> SwapStatus {
+        match self {
+            0 => SwapStatus::Initial,
+            1 => SwapStatus::WaitingConfirmation,
+            2 => SwapStatus::Redeemable,
+            3 => SwapStatus::Redeemed,
+            4 => SwapStatus::Refundable,
+            5 => SwapStatus::Completed,
+            _ => unreachable!("Invalid variant for SwapStatus: {}", self),
         }
     }
 }
