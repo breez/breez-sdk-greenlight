@@ -139,6 +139,14 @@ pub(crate) enum Commands {
         sat_per_vbyte: u32,
     },
 
+    ListSwaps {
+        #[clap(short = 'o', long = "offset")]
+        offset: Option<u32>,
+
+        #[clap(short = 'l', long = "limit")]
+        limit: Option<u32>,
+    },
+
     /// [swap-out] Send on-chain using a reverse swap
     SendOnchain {
         amount_sat: u64,

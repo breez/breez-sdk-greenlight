@@ -6,7 +6,7 @@ use anyhow::{anyhow, Context, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
     parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, ConnectRequest,
-    EventListener, GreenlightCredentials, ListPaymentsRequest, LnUrlPayRequest,
+    EventListener, GreenlightCredentials, ListPaymentsRequest, ListSwapsRequest, LnUrlPayRequest,
     LnUrlWithdrawRequest, MetadataFilter, PayOnchainRequest, PrepareOnchainPaymentRequest,
     PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
     ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
@@ -458,6 +458,16 @@ pub(crate) async fn handle_command(
                 })
                 .await?;
             Ok(format!("Refund tx: {}", res.refund_tx_id))
+        }
+        Commands::ListSwaps { offset, limit } => {
+            let res = sdk()?
+                .list_swaps(ListSwapsRequest {
+                    offset,
+                    limit,
+                    ..Default::default()
+                })
+                .await?;
+            Ok(serde_json::to_string_pretty(&res)?)
         }
         Commands::SignMessage { message } => {
             let req = SignMessageRequest { message };
