@@ -734,6 +734,7 @@ dictionary RecommendedFees {
 interface InputType {
     BitcoinAddress(BitcoinAddressData address);
     Bolt11(LNInvoice invoice);
+    Bolt12(string offer);
     NodeId(string node_id);
     Url(string url);
     LnUrlPay(LnUrlPayRequestData data);

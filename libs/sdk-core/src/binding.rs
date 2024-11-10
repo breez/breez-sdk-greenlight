@@ -162,6 +162,7 @@ pub struct _LnUrlWithdrawRequestData {
 pub enum _InputType {
     BitcoinAddress { address: BitcoinAddressData },
     Bolt11 { invoice: LNInvoice },
+    Bolt12 { offer: String },
     NodeId { node_id: String },
     Url { url: String },
     LnUrlPay { data: LnUrlPayRequestData },

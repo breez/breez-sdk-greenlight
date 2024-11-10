@@ -4722,6 +4722,12 @@ enum BreezSDKMapper {
 
             return InputType.bolt11(invoice: _invoice)
         }
+        if type == "bolt12" {
+            guard let _offer = inputType["offer"] as? String else {
+                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "offer", typeName: "InputType"))
+            }
+            return InputType.bolt12(offer: _offer)
+        }
         if type == "nodeId" {
             guard let _nodeId = inputType["nodeId"] as? String else {
                 throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "nodeId", typeName: "InputType"))
@@ -4786,6 +4792,14 @@ enum BreezSDKMapper {
             return [
                 "type": "bolt11",
                 "invoice": dictionaryOf(lnInvoice: invoice),
+            ]
+
+        case let .bolt12(
+            offer
+        ):
+            return [
+                "type": "bolt12",
+                "offer": offer,
             ]
 
         case let .nodeId(

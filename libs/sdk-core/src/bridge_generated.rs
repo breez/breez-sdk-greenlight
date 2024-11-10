@@ -1025,6 +1025,9 @@ const _: fn() = || {
         InputType::Bolt11 { invoice } => {
             let _: LNInvoice = invoice;
         }
+        InputType::Bolt12 { offer } => {
+            let _: String = offer;
+        }
         InputType::NodeId { node_id } => {
             let _: String = node_id;
         }
@@ -1613,17 +1616,18 @@ impl support::IntoDart for mirror_InputType {
             InputType::Bolt11 { invoice } => {
                 vec![1.into_dart(), invoice.into_into_dart().into_dart()]
             }
+            InputType::Bolt12 { offer } => vec![2.into_dart(), offer.into_into_dart().into_dart()],
             InputType::NodeId { node_id } => {
-                vec![2.into_dart(), node_id.into_into_dart().into_dart()]
+                vec![3.into_dart(), node_id.into_into_dart().into_dart()]
             }
-            InputType::Url { url } => vec![3.into_dart(), url.into_into_dart().into_dart()],
-            InputType::LnUrlPay { data } => vec![4.into_dart(), data.into_into_dart().into_dart()],
+            InputType::Url { url } => vec![4.into_dart(), url.into_into_dart().into_dart()],
+            InputType::LnUrlPay { data } => vec![5.into_dart(), data.into_into_dart().into_dart()],
             InputType::LnUrlWithdraw { data } => {
-                vec![5.into_dart(), data.into_into_dart().into_dart()]
+                vec![6.into_dart(), data.into_into_dart().into_dart()]
             }
-            InputType::LnUrlAuth { data } => vec![6.into_dart(), data.into_into_dart().into_dart()],
+            InputType::LnUrlAuth { data } => vec![7.into_dart(), data.into_into_dart().into_dart()],
             InputType::LnUrlError { data } => {
-                vec![7.into_dart(), data.into_into_dart().into_dart()]
+                vec![8.into_dart(), data.into_into_dart().into_dart()]
             }
         }
         .into_dart()

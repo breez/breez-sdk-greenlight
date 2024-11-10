@@ -3987,6 +3987,9 @@ fun asInputType(inputType: ReadableMap): InputType? {
     if (type == "bolt11") {
         return InputType.Bolt11(inputType.getMap("invoice")?.let { asLnInvoice(it) }!!)
     }
+    if (type == "bolt12") {
+        return InputType.Bolt12(inputType.getString("offer")!!)
+    }
     if (type == "nodeId") {
         return InputType.NodeId(inputType.getString("nodeId")!!)
     }
@@ -4018,6 +4021,10 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
         is InputType.Bolt11 -> {
             pushToMap(map, "type", "bolt11")
             pushToMap(map, "invoice", readableMapOf(inputType.invoice))
+        }
+        is InputType.Bolt12 -> {
+            pushToMap(map, "type", "bolt12")
+            pushToMap(map, "offer", inputType.offer)
         }
         is InputType.NodeId -> {
             pushToMap(map, "type", "nodeId")

@@ -670,6 +670,9 @@ sealed class InputType with _$InputType {
   const factory InputType.bolt11({
     required LNInvoice invoice,
   }) = InputType_Bolt11;
+  const factory InputType.bolt12({
+    required String offer,
+  }) = InputType_Bolt12;
   const factory InputType.nodeId({
     required String nodeId,
   }) = InputType_NodeId;
@@ -3421,26 +3424,30 @@ class BreezSdkCoreImpl implements BreezSdkCore {
           invoice: _wire2api_box_autoadd_ln_invoice(raw[1]),
         );
       case 2:
+        return InputType_Bolt12(
+          offer: _wire2api_String(raw[1]),
+        );
+      case 3:
         return InputType_NodeId(
           nodeId: _wire2api_String(raw[1]),
         );
-      case 3:
+      case 4:
         return InputType_Url(
           url: _wire2api_String(raw[1]),
         );
-      case 4:
+      case 5:
         return InputType_LnUrlPay(
           data: _wire2api_box_autoadd_ln_url_pay_request_data(raw[1]),
         );
-      case 5:
+      case 6:
         return InputType_LnUrlWithdraw(
           data: _wire2api_box_autoadd_ln_url_withdraw_request_data(raw[1]),
         );
-      case 6:
+      case 7:
         return InputType_LnUrlAuth(
           data: _wire2api_box_autoadd_ln_url_auth_request_data(raw[1]),
         );
-      case 7:
+      case 8:
         return InputType_LnUrlError(
           data: _wire2api_box_autoadd_ln_url_error_data(raw[1]),
         );

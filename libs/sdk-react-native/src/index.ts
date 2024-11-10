@@ -674,6 +674,7 @@ export enum HealthCheckStatus {
 export enum InputTypeVariant {
     BITCOIN_ADDRESS = "bitcoinAddress",
     BOLT11 = "bolt11",
+    BOLT12 = "bolt12",
     NODE_ID = "nodeId",
     URL = "url",
     LN_URL_PAY = "lnUrlPay",
@@ -688,6 +689,9 @@ export type InputType = {
 } | {
     type: InputTypeVariant.BOLT11,
     invoice: LnInvoice
+} | {
+    type: InputTypeVariant.BOLT12,
+    offer: string
 } | {
     type: InputTypeVariant.NODE_ID,
     nodeId: string
