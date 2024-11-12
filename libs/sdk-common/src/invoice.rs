@@ -101,6 +101,48 @@ fn format_short_channel_id(id: u64) -> String {
     format!("{block_num}x{tx_num}x{tx_out}")
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum Amount {
+    Bitcoin {
+        amount_msat: u64,
+    },
+    Currency {
+        // Reference to [FiatCurrency.id]
+        iso4217_code: String,
+        fractional_amount: u64,
+    },
+}
+
+impl From<lightning::offers::offer::Amount> for Amount {
+    fn from(amount: lightning::offers::offer::Amount) -> Self {
+        match amount {
+            lightning::offers::offer::Amount::Bitcoin { amount_msats } => Amount::Bitcoin {
+                amount_msat: amount_msats,
+            },
+            lightning::offers::offer::Amount::Currency {
+                iso4217_code,
+                amount,
+            } => Amount::Currency {
+                iso4217_code: String::from_utf8(iso4217_code.to_vec())
+                    .expect("Expecting a valid ISO 4217 character sequence"),
+                fractional_amount: amount,
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct LNOffer {
+    pub bolt12: String,
+    pub chains: Vec<String>,
+    pub amount: Option<Amount>,
+    pub description: String,
+    pub absolute_expiry: Option<u64>,
+    pub issuer: Option<String>,
+    pub signing_pubkey: String,
+    // pub paths: Vec<BlindedPath>,
+}
+
 /// Wrapper for a BOLT11 LN invoice
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {

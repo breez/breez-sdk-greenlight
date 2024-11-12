@@ -349,6 +349,17 @@ sealed class AesSuccessActionDataResult with _$AesSuccessActionDataResult {
   }) = AesSuccessActionDataResult_ErrorStatus;
 }
 
+@freezed
+sealed class Amount with _$Amount {
+  const factory Amount.bitcoin({
+    required int amountMsat,
+  }) = Amount_Bitcoin;
+  const factory Amount.currency({
+    required String iso4217Code,
+    required int fractionalAmount,
+  }) = Amount_Currency;
+}
+
 class BackupFailedData {
   final String error;
 
@@ -671,7 +682,7 @@ sealed class InputType with _$InputType {
     required LNInvoice invoice,
   }) = InputType_Bolt11;
   const factory InputType.bolt12({
-    required String offer,
+    required LNOffer offer,
   }) = InputType_Bolt12;
   const factory InputType.nodeId({
     required String nodeId,
@@ -758,6 +769,26 @@ class LNInvoice {
     required this.routingHints,
     required this.paymentSecret,
     required this.minFinalCltvExpiryDelta,
+  });
+}
+
+class LNOffer {
+  final String bolt12;
+  final List<String> chains;
+  final Amount? amount;
+  final String description;
+  final int? absoluteExpiry;
+  final String? issuer;
+  final String signingPubkey;
+
+  const LNOffer({
+    required this.bolt12,
+    required this.chains,
+    this.amount,
+    required this.description,
+    this.absoluteExpiry,
+    this.issuer,
+    required this.signingPubkey,
   });
 }
 
@@ -3096,6 +3127,22 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     }
   }
 
+  Amount _wire2api_amount(dynamic raw) {
+    switch (raw[0]) {
+      case 0:
+        return Amount_Bitcoin(
+          amountMsat: _wire2api_u64(raw[1]),
+        );
+      case 1:
+        return Amount_Currency(
+          iso4217Code: _wire2api_String(raw[1]),
+          fractionalAmount: _wire2api_u64(raw[2]),
+        );
+      default:
+        throw Exception("unreachable");
+    }
+  }
+
   BackupFailedData _wire2api_backup_failed_data(dynamic raw) {
     final arr = raw as List<dynamic>;
     if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
@@ -3137,6 +3184,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
     return _wire2api_aes_success_action_data_result(raw);
   }
 
+  Amount _wire2api_box_autoadd_amount(dynamic raw) {
+    return _wire2api_amount(raw);
+  }
+
   BackupFailedData _wire2api_box_autoadd_backup_failed_data(dynamic raw) {
     return _wire2api_backup_failed_data(raw);
   }
@@ -3171,6 +3222,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   LNInvoice _wire2api_box_autoadd_ln_invoice(dynamic raw) {
     return _wire2api_ln_invoice(raw);
+  }
+
+  LNOffer _wire2api_box_autoadd_ln_offer(dynamic raw) {
+    return _wire2api_ln_offer(raw);
   }
 
   LnPaymentDetails _wire2api_box_autoadd_ln_payment_details(dynamic raw) {
@@ -3425,7 +3480,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         );
       case 2:
         return InputType_Bolt12(
-          offer: _wire2api_String(raw[1]),
+          offer: _wire2api_box_autoadd_ln_offer(raw[1]),
         );
       case 3:
         return InputType_NodeId(
@@ -3530,6 +3585,20 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       routingHints: _wire2api_list_route_hint(arr[9]),
       paymentSecret: _wire2api_uint_8_list(arr[10]),
       minFinalCltvExpiryDelta: _wire2api_u64(arr[11]),
+    );
+  }
+
+  LNOffer _wire2api_ln_offer(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return LNOffer(
+      bolt12: _wire2api_String(arr[0]),
+      chains: _wire2api_StringList(arr[1]),
+      amount: _wire2api_opt_box_autoadd_amount(arr[2]),
+      description: _wire2api_String(arr[3]),
+      absoluteExpiry: _wire2api_opt_box_autoadd_u64(arr[4]),
+      issuer: _wire2api_opt_String(arr[5]),
+      signingPubkey: _wire2api_String(arr[6]),
     );
   }
 
@@ -3834,6 +3903,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   List<String>? _wire2api_opt_StringList(dynamic raw) {
     return raw == null ? null : _wire2api_StringList(raw);
+  }
+
+  Amount? _wire2api_opt_box_autoadd_amount(dynamic raw) {
+    return raw == null ? null : _wire2api_box_autoadd_amount(raw);
   }
 
   bool? _wire2api_opt_box_autoadd_bool(dynamic raw) {

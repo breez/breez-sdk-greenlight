@@ -19,12 +19,12 @@ use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use sdk_common::invoice;
 pub use sdk_common::prelude::{
-    parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, BitcoinAddressData,
-    CurrencyInfo, FiatCurrency, InputType, LNInvoice, LnUrlAuthRequestData, LnUrlCallbackStatus,
-    LnUrlError, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData,
-    LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-    LocaleOverrides, LocalizedName, MessageSuccessActionData, Network, Rate, RouteHint,
-    RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
+    parse, AesSuccessActionDataDecrypted, AesSuccessActionDataResult, Amount, BitcoinAddressData,
+    CurrencyInfo, FiatCurrency, InputType, LNInvoice, LNOffer, LnUrlAuthRequestData,
+    LnUrlCallbackStatus, LnUrlError, LnUrlErrorData, LnUrlPayErrorData, LnUrlPayRequest,
+    LnUrlPayRequestData, LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult,
+    LnUrlWithdrawSuccessData, LocaleOverrides, LocalizedName, MessageSuccessActionData, Network,
+    Rate, RouteHint, RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
 };
 use tokio::sync::Mutex;
 
@@ -158,11 +158,33 @@ pub struct _LnUrlWithdrawRequestData {
     pub max_withdrawable: u64,
 }
 
+#[frb(mirror(Amount))]
+pub enum _Amount {
+    Bitcoin {
+        amount_msat: u64,
+    },
+    Currency {
+        iso4217_code: String,
+        fractional_amount: u64,
+    },
+}
+
+#[frb(mirror(LNOffer))]
+pub struct _LNOffer {
+    pub bolt12: String,
+    pub chains: Vec<String>,
+    pub amount: Option<Amount>,
+    pub description: String,
+    pub absolute_expiry: Option<u64>,
+    pub issuer: Option<String>,
+    pub signing_pubkey: String,
+}
+
 #[frb(mirror(InputType))]
 pub enum _InputType {
     BitcoinAddress { address: BitcoinAddressData },
     Bolt11 { invoice: LNInvoice },
-    Bolt12 { offer: String },
+    Bolt12 { offer: LNOffer },
     NodeId { node_id: String },
     Url { url: String },
     LnUrlPay { data: LnUrlPayRequestData },

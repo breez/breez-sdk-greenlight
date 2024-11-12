@@ -188,7 +188,19 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     if let Ok(offer) = input.parse::<Offer>() {
         return Ok(InputType::Bolt12 {
-            offer: offer.to_string(),
+            offer: LNOffer {
+                bolt12: input.to_string(),
+                chains: offer
+                    .chains()
+                    .iter()
+                    .map(|chain| chain.to_string())
+                    .collect(),
+                amount: offer.amount().map(|amount| amount.clone().into()),
+                description: offer.description().to_string(),
+                absolute_expiry: offer.absolute_expiry().map(|expiry| expiry.as_secs()),
+                issuer: offer.issuer().map(|s| s.to_string()),
+                signing_pubkey: offer.signing_pubkey().to_string(),
+            },
         });
     }
 
@@ -426,7 +438,7 @@ pub enum InputType {
         invoice: LNInvoice,
     },
     Bolt12 {
-        offer: String,
+        offer: LNOffer,
     },
     NodeId {
         node_id: String,

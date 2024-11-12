@@ -911,6 +911,9 @@ pub struct mirror_AesSuccessActionDataDecrypted(AesSuccessActionDataDecrypted);
 pub struct mirror_AesSuccessActionDataResult(AesSuccessActionDataResult);
 
 #[derive(Clone)]
+pub struct mirror_Amount(Amount);
+
+#[derive(Clone)]
 pub struct mirror_BitcoinAddressData(BitcoinAddressData);
 
 #[derive(Clone)]
@@ -924,6 +927,9 @@ pub struct mirror_InputType(InputType);
 
 #[derive(Clone)]
 pub struct mirror_LNInvoice(LNInvoice);
+
+#[derive(Clone)]
+pub struct mirror_LNOffer(LNOffer);
 
 #[derive(Clone)]
 pub struct mirror_LnUrlAuthRequestData(LnUrlAuthRequestData);
@@ -995,6 +1001,18 @@ const _: fn() = || {
             let _: String = reason;
         }
     }
+    match None::<Amount>.unwrap() {
+        Amount::Bitcoin { amount_msat } => {
+            let _: u64 = amount_msat;
+        }
+        Amount::Currency {
+            iso4217_code,
+            fractional_amount,
+        } => {
+            let _: String = iso4217_code;
+            let _: u64 = fractional_amount;
+        }
+    }
     {
         let BitcoinAddressData = None::<BitcoinAddressData>.unwrap();
         let _: String = BitcoinAddressData.address;
@@ -1026,7 +1044,7 @@ const _: fn() = || {
             let _: LNInvoice = invoice;
         }
         InputType::Bolt12 { offer } => {
-            let _: String = offer;
+            let _: LNOffer = offer;
         }
         InputType::NodeId { node_id } => {
             let _: String = node_id;
@@ -1061,6 +1079,16 @@ const _: fn() = || {
         let _: Vec<RouteHint> = LNInvoice.routing_hints;
         let _: Vec<u8> = LNInvoice.payment_secret;
         let _: u64 = LNInvoice.min_final_cltv_expiry_delta;
+    }
+    {
+        let LNOffer = None::<LNOffer>.unwrap();
+        let _: String = LNOffer.bolt12;
+        let _: Vec<String> = LNOffer.chains;
+        let _: Option<Amount> = LNOffer.amount;
+        let _: String = LNOffer.description;
+        let _: Option<u64> = LNOffer.absolute_expiry;
+        let _: Option<String> = LNOffer.issuer;
+        let _: String = LNOffer.signing_pubkey;
     }
     {
         let LnUrlAuthRequestData = None::<LnUrlAuthRequestData>.unwrap();
@@ -1334,6 +1362,31 @@ impl support::IntoDartExceptPrimitive for mirror_AesSuccessActionDataResult {}
 impl rust2dart::IntoIntoDart<mirror_AesSuccessActionDataResult> for AesSuccessActionDataResult {
     fn into_into_dart(self) -> mirror_AesSuccessActionDataResult {
         mirror_AesSuccessActionDataResult(self)
+    }
+}
+
+impl support::IntoDart for mirror_Amount {
+    fn into_dart(self) -> support::DartAbi {
+        match self.0 {
+            Amount::Bitcoin { amount_msat } => {
+                vec![0.into_dart(), amount_msat.into_into_dart().into_dart()]
+            }
+            Amount::Currency {
+                iso4217_code,
+                fractional_amount,
+            } => vec![
+                1.into_dart(),
+                iso4217_code.into_into_dart().into_dart(),
+                fractional_amount.into_into_dart().into_dart(),
+            ],
+        }
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for mirror_Amount {}
+impl rust2dart::IntoIntoDart<mirror_Amount> for Amount {
+    fn into_into_dart(self) -> mirror_Amount {
+        mirror_Amount(self)
     }
 }
 
@@ -1683,6 +1736,27 @@ impl support::IntoDartExceptPrimitive for mirror_LNInvoice {}
 impl rust2dart::IntoIntoDart<mirror_LNInvoice> for LNInvoice {
     fn into_into_dart(self) -> mirror_LNInvoice {
         mirror_LNInvoice(self)
+    }
+}
+
+impl support::IntoDart for mirror_LNOffer {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.0.bolt12.into_into_dart().into_dart(),
+            self.0.chains.into_into_dart().into_dart(),
+            self.0.amount.map(|v| mirror_Amount(v)).into_dart(),
+            self.0.description.into_into_dart().into_dart(),
+            self.0.absolute_expiry.into_dart(),
+            self.0.issuer.into_dart(),
+            self.0.signing_pubkey.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for mirror_LNOffer {}
+impl rust2dart::IntoIntoDart<mirror_LNOffer> for LNOffer {
+    fn into_into_dart(self) -> mirror_LNOffer {
+        mirror_LNOffer(self)
     }
 }
 

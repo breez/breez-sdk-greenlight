@@ -731,10 +731,26 @@ dictionary RecommendedFees {
 };
 
 [Enum]
+interface Amount {
+    Bitcoin(u64 amount_msat);
+    Currency(string iso4217_code, u64 fractional_amount);
+};
+
+dictionary LNOffer {
+    string bolt12;
+    sequence<string> chains;
+    string description;
+    string signing_pubkey;
+    Amount? amount;
+    u64? absolute_expiry;
+    string? issuer;
+};
+
+[Enum]
 interface InputType {
     BitcoinAddress(BitcoinAddressData address);
     Bolt11(LNInvoice invoice);
-    Bolt12(string offer);
+    Bolt12(LNOffer offer);
     NodeId(string node_id);
     Url(string url);
     LnUrlPay(LnUrlPayRequestData data);
