@@ -419,7 +419,7 @@ pub enum InputType {
         invoice: LNInvoice,
     },
     #[cfg(feature = "liquid")]
-    Bolt12 {
+    Bolt12Offer {
         offer: LNOffer,
     },
     NodeId {
