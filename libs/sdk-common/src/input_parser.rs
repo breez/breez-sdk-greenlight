@@ -1,12 +1,11 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use ::bip21::Uri;
 use anyhow::{anyhow, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
-use lightning::offers::offer::Offer;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
@@ -184,24 +183,6 @@ pub async fn parse(input: &str) -> Result<InputType> {
 
     if let Ok(invoice) = parse_invoice(input) {
         return Ok(InputType::Bolt11 { invoice });
-    }
-
-    if let Ok(offer) = input.parse::<Offer>() {
-        return Ok(InputType::Bolt12 {
-            offer: LNOffer {
-                bolt12: input.to_string(),
-                chains: offer
-                    .chains()
-                    .iter()
-                    .map(|chain| chain.to_string())
-                    .collect(),
-                amount: offer.amount().map(|amount| amount.clone().into()),
-                description: offer.description().to_string(),
-                absolute_expiry: offer.absolute_expiry().map(|expiry| expiry.as_secs()),
-                issuer: offer.issuer().map(|s| s.to_string()),
-                signing_pubkey: offer.signing_pubkey().to_string(),
-            },
-        });
     }
 
     // Public key serialized in compressed form (66 hex chars)
@@ -437,6 +418,7 @@ pub enum InputType {
     Bolt11 {
         invoice: LNInvoice,
     },
+    #[cfg(feature = "liquid")]
     Bolt12 {
         offer: LNOffer,
     },
@@ -943,19 +925,6 @@ pub(crate) mod tests {
         assert!(matches!(
             parse(&addr_2).await?,
             InputType::Bolt11 { invoice: _invoice }
-        ));
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_bolt12_offer() -> Result<()> {
-        let bolt12_offer = "lno1pqpzwyq2p32x2um5ypmx2cm5dae8x93pqthvwfzadd7jejes8q9lhc4rvjxd022zv5l44g6qah82ru5rdpnpj";
-
-        assert!(matches!(
-            parse(bolt12_offer).await?,
-            InputType::Bolt12 { offer }
-            if offer == bolt12_offer
         ));
 
         Ok(())
