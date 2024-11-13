@@ -133,8 +133,10 @@ impl From<lightning::offers::offer::Amount> for Amount {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNOffer {
+    /// String representation of the Bolt12 offer
     pub bolt12: String,
     pub chains: Vec<String>,
+    /// If set, it represents the minimum amount that an invoice must have to be valid for this offer
     pub amount: Option<Amount>,
     pub description: Option<String>,
     pub absolute_expiry: Option<u64>,
