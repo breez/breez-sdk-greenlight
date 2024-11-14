@@ -106,9 +106,11 @@ pub enum Amount {
     Bitcoin {
         amount_msat: u64,
     },
+    /// An amount of currency specified using ISO 4712.
     Currency {
-        // Reference to [FiatCurrency.id]
+        /// The currency that the amount is denominated in.
         iso4217_code: String,
+        /// The amount in the currency unit adjusted by the ISO 4712 exponent (e.g., USD cents).
         fractional_amount: u64,
     },
 }
