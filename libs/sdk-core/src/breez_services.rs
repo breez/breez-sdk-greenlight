@@ -807,7 +807,7 @@ impl BreezServices {
     /// Onchain receive swap API
     ///
     /// Create and start a new swap. A user-selected [OpeningFeeParams] can be optionally set in the argument.
-    /// If set, and the operation requires a new channel, the SDK will enforce the use the given fee params.
+    /// If set, and the operation requires a new channel, the SDK will use the given fee params.
     /// The provided [OpeningFeeParams] need to be valid at the time of swap redeeming.
     ///
     /// Since we only allow one in-progress swap this method will return error if there is currently
