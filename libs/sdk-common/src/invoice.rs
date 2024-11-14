@@ -2,6 +2,7 @@ use std::num::ParseIntError;
 use std::str::FromStr;
 use std::time::{SystemTimeError, UNIX_EPOCH};
 
+use anyhow::anyhow;
 use bitcoin::secp256k1::{self, PublicKey};
 use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
@@ -115,20 +116,22 @@ pub enum Amount {
     },
 }
 
-impl From<lightning::offers::offer::Amount> for Amount {
-    fn from(amount: lightning::offers::offer::Amount) -> Self {
+impl TryFrom<lightning::offers::offer::Amount> for Amount {
+    type Error = anyhow::Error;
+
+    fn try_from(amount: lightning::offers::offer::Amount) -> Result<Self, Self::Error> {
         match amount {
-            lightning::offers::offer::Amount::Bitcoin { amount_msats } => Amount::Bitcoin {
+            lightning::offers::offer::Amount::Bitcoin { amount_msats } => Ok(Amount::Bitcoin {
                 amount_msat: amount_msats,
-            },
+            }),
             lightning::offers::offer::Amount::Currency {
                 iso4217_code,
                 amount,
-            } => Amount::Currency {
+            } => Ok(Amount::Currency {
                 iso4217_code: String::from_utf8(iso4217_code.to_vec())
-                    .expect("Expecting a valid ISO 4217 character sequence"),
+                    .map_err(|_| anyhow!("Expecting a valid ISO 4217 character sequence"))?,
                 fractional_amount: amount,
-            },
+            }),
         }
     }
 }
