@@ -137,10 +137,12 @@ pub struct LNOffer {
     pub bolt12: String,
     pub chains: Vec<String>,
     /// If set, it represents the minimum amount that an invoice must have to be valid for this offer
-    pub amount: Option<Amount>,
+    pub min_amount: Option<Amount>,
     pub description: Option<String>,
+    /// Epoch time from which an invoice should no longer be requested. If None, the offer does not expire.
     pub absolute_expiry: Option<u64>,
     pub issuer: Option<String>,
+    /// The public key used by the recipient to sign invoices.
     pub signing_pubkey: Option<String>,
     // pub paths: Vec<BlindedPath>,
 }
