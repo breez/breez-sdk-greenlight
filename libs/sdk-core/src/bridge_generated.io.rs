@@ -209,16 +209,6 @@ pub extern "C" fn wire_list_fiat_currencies(port_: i64) {
 }
 
 #[no_mangle]
-pub extern "C" fn wire_max_reverse_swap_amount(port_: i64) {
-    wire_max_reverse_swap_amount_impl(port_)
-}
-
-#[no_mangle]
-pub extern "C" fn wire_send_onchain(port_: i64, req: *mut wire_SendOnchainRequest) {
-    wire_send_onchain_impl(port_, req)
-}
-
-#[no_mangle]
 pub extern "C" fn wire_pay_onchain(port_: i64, req: *mut wire_PayOnchainRequest) {
     wire_pay_onchain_impl(port_, req)
 }
@@ -279,11 +269,6 @@ pub extern "C" fn wire_in_progress_swap(port_: i64) {
 #[no_mangle]
 pub extern "C" fn wire_list_swaps(port_: i64, req: *mut wire_ListSwapsRequest) {
     wire_list_swaps_impl(port_, req)
-}
-
-#[no_mangle]
-pub extern "C" fn wire_in_progress_reverse_swaps(port_: i64) {
-    wire_in_progress_reverse_swaps_impl(port_)
 }
 
 #[no_mangle]
@@ -474,11 +459,6 @@ pub extern "C" fn new_box_autoadd_report_payment_failure_details_0(
 pub extern "C" fn new_box_autoadd_reverse_swap_fees_request_0() -> *mut wire_ReverseSwapFeesRequest
 {
     support::new_leak_box_ptr(wire_ReverseSwapFeesRequest::new_with_null_ptr())
-}
-
-#[no_mangle]
-pub extern "C" fn new_box_autoadd_send_onchain_request_0() -> *mut wire_SendOnchainRequest {
-    support::new_leak_box_ptr(wire_SendOnchainRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -726,12 +706,6 @@ impl Wire2Api<ReverseSwapFeesRequest> for *mut wire_ReverseSwapFeesRequest {
     fn wire2api(self) -> ReverseSwapFeesRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
         Wire2Api::<ReverseSwapFeesRequest>::wire2api(*wrap).into()
-    }
-}
-impl Wire2Api<SendOnchainRequest> for *mut wire_SendOnchainRequest {
-    fn wire2api(self) -> SendOnchainRequest {
-        let wrap = unsafe { support::box_from_leak_ptr(self) };
-        Wire2Api::<SendOnchainRequest>::wire2api(*wrap).into()
     }
 }
 impl Wire2Api<SendPaymentRequest> for *mut wire_SendPaymentRequest {
@@ -1114,16 +1088,6 @@ impl Wire2Api<ReverseSwapFeesRequest> for wire_ReverseSwapFeesRequest {
         }
     }
 }
-impl Wire2Api<SendOnchainRequest> for wire_SendOnchainRequest {
-    fn wire2api(self) -> SendOnchainRequest {
-        SendOnchainRequest {
-            amount_sat: self.amount_sat.wire2api(),
-            onchain_recipient_address: self.onchain_recipient_address.wire2api(),
-            pair_hash: self.pair_hash.wire2api(),
-            sat_per_vbyte: self.sat_per_vbyte.wire2api(),
-        }
-    }
-}
 impl Wire2Api<SendPaymentRequest> for wire_SendPaymentRequest {
     fn wire2api(self) -> SendPaymentRequest {
         SendPaymentRequest {
@@ -1452,15 +1416,6 @@ pub struct wire_ReportPaymentFailureDetails {
 pub struct wire_ReverseSwapFeesRequest {
     send_amount_sat: *mut u64,
     claim_tx_feerate: *mut u32,
-}
-
-#[repr(C)]
-#[derive(Clone)]
-pub struct wire_SendOnchainRequest {
-    amount_sat: u64,
-    onchain_recipient_address: *mut wire_uint_8_list,
-    pair_hash: *mut wire_uint_8_list,
-    sat_per_vbyte: u32,
 }
 
 #[repr(C)]
@@ -2070,23 +2025,6 @@ impl NewWithNullPtr for wire_ReverseSwapFeesRequest {
 }
 
 impl Default for wire_ReverseSwapFeesRequest {
-    fn default() -> Self {
-        Self::new_with_null_ptr()
-    }
-}
-
-impl NewWithNullPtr for wire_SendOnchainRequest {
-    fn new_with_null_ptr() -> Self {
-        Self {
-            amount_sat: Default::default(),
-            onchain_recipient_address: core::ptr::null_mut(),
-            pair_hash: core::ptr::null_mut(),
-            sat_per_vbyte: Default::default(),
-        }
-    }
-}
-
-impl Default for wire_SendOnchainRequest {
     fn default() -> Self {
         Self::new_with_null_ptr()
     }

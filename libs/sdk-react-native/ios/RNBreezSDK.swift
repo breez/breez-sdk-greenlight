@@ -618,42 +618,11 @@ class RNBreezSDK: RCTEventEmitter {
         }
     }
 
-    @objc(inProgressReverseSwaps:reject:)
-    func inProgressReverseSwaps(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        do {
-            var res = try getBreezServices().inProgressReverseSwaps()
-            resolve(BreezSDKMapper.arrayOf(reverseSwapInfoList: res))
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-
     @objc(claimReverseSwap:resolve:reject:)
     func claimReverseSwap(_ lockupAddress: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
         do {
             try getBreezServices().claimReverseSwap(lockupAddress: lockupAddress)
             resolve(["status": "ok"])
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-
-    @objc(maxReverseSwapAmount:reject:)
-    func maxReverseSwapAmount(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        do {
-            var res = try getBreezServices().maxReverseSwapAmount()
-            resolve(BreezSDKMapper.dictionaryOf(maxReverseSwapAmountResponse: res))
-        } catch let err {
-            rejectErr(err: err, reject: reject)
-        }
-    }
-
-    @objc(sendOnchain:resolve:reject:)
-    func sendOnchain(_ req: [String: Any], resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-        do {
-            let sendOnchainRequest = try BreezSDKMapper.asSendOnchainRequest(sendOnchainRequest: req)
-            var res = try getBreezServices().sendOnchain(req: sendOnchainRequest)
-            resolve(BreezSDKMapper.dictionaryOf(sendOnchainResponse: res))
         } catch let err {
             rejectErr(err: err, reject: reject)
         }

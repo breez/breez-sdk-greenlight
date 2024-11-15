@@ -1650,38 +1650,6 @@ fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
     return list
 }
 
-fun asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: ReadableMap): MaxReverseSwapAmountResponse? {
-    if (!validateMandatoryFields(
-            maxReverseSwapAmountResponse,
-            arrayOf(
-                "totalSat",
-            ),
-        )
-    ) {
-        return null
-    }
-    val totalSat = maxReverseSwapAmountResponse.getDouble("totalSat").toULong()
-    return MaxReverseSwapAmountResponse(
-        totalSat,
-    )
-}
-
-fun readableMapOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse): ReadableMap =
-    readableMapOf(
-        "totalSat" to maxReverseSwapAmountResponse.totalSat,
-    )
-
-fun asMaxReverseSwapAmountResponseList(arr: ReadableArray): List<MaxReverseSwapAmountResponse> {
-    val list = ArrayList<MaxReverseSwapAmountResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asMaxReverseSwapAmountResponse(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
 fun asMessageSuccessActionData(messageSuccessActionData: ReadableMap): MessageSuccessActionData? {
     if (!validateMandatoryFields(
             messageSuccessActionData,
@@ -3158,82 +3126,6 @@ fun asRouteHintHopList(arr: ReadableArray): List<RouteHintHop> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRouteHintHop(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asSendOnchainRequest(sendOnchainRequest: ReadableMap): SendOnchainRequest? {
-    if (!validateMandatoryFields(
-            sendOnchainRequest,
-            arrayOf(
-                "amountSat",
-                "onchainRecipientAddress",
-                "pairHash",
-                "satPerVbyte",
-            ),
-        )
-    ) {
-        return null
-    }
-    val amountSat = sendOnchainRequest.getDouble("amountSat").toULong()
-    val onchainRecipientAddress = sendOnchainRequest.getString("onchainRecipientAddress")!!
-    val pairHash = sendOnchainRequest.getString("pairHash")!!
-    val satPerVbyte = sendOnchainRequest.getInt("satPerVbyte").toUInt()
-    return SendOnchainRequest(
-        amountSat,
-        onchainRecipientAddress,
-        pairHash,
-        satPerVbyte,
-    )
-}
-
-fun readableMapOf(sendOnchainRequest: SendOnchainRequest): ReadableMap =
-    readableMapOf(
-        "amountSat" to sendOnchainRequest.amountSat,
-        "onchainRecipientAddress" to sendOnchainRequest.onchainRecipientAddress,
-        "pairHash" to sendOnchainRequest.pairHash,
-        "satPerVbyte" to sendOnchainRequest.satPerVbyte,
-    )
-
-fun asSendOnchainRequestList(arr: ReadableArray): List<SendOnchainRequest> {
-    val list = ArrayList<SendOnchainRequest>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asSendOnchainRequest(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asSendOnchainResponse(sendOnchainResponse: ReadableMap): SendOnchainResponse? {
-    if (!validateMandatoryFields(
-            sendOnchainResponse,
-            arrayOf(
-                "reverseSwapInfo",
-            ),
-        )
-    ) {
-        return null
-    }
-    val reverseSwapInfo = sendOnchainResponse.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
-    return SendOnchainResponse(
-        reverseSwapInfo,
-    )
-}
-
-fun readableMapOf(sendOnchainResponse: SendOnchainResponse): ReadableMap =
-    readableMapOf(
-        "reverseSwapInfo" to readableMapOf(sendOnchainResponse.reverseSwapInfo),
-    )
-
-fun asSendOnchainResponseList(arr: ReadableArray): List<SendOnchainResponse> {
-    val list = ArrayList<SendOnchainResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asSendOnchainResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

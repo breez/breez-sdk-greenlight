@@ -1921,38 +1921,6 @@ enum BreezSDKMapper {
         return lspInformationList.map { v -> [String: Any?] in return dictionaryOf(lspInformation: v) }
     }
 
-    static func asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: [String: Any?]) throws -> MaxReverseSwapAmountResponse {
-        guard let totalSat = maxReverseSwapAmountResponse["totalSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalSat", typeName: "MaxReverseSwapAmountResponse"))
-        }
-
-        return MaxReverseSwapAmountResponse(
-            totalSat: totalSat)
-    }
-
-    static func dictionaryOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse) -> [String: Any?] {
-        return [
-            "totalSat": maxReverseSwapAmountResponse.totalSat,
-        ]
-    }
-
-    static func asMaxReverseSwapAmountResponseList(arr: [Any]) throws -> [MaxReverseSwapAmountResponse] {
-        var list = [MaxReverseSwapAmountResponse]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var maxReverseSwapAmountResponse = try asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: val)
-                list.append(maxReverseSwapAmountResponse)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "MaxReverseSwapAmountResponse"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(maxReverseSwapAmountResponseList: [MaxReverseSwapAmountResponse]) -> [Any] {
-        return maxReverseSwapAmountResponseList.map { v -> [String: Any?] in return dictionaryOf(maxReverseSwapAmountResponse: v) }
-    }
-
     static func asMessageSuccessActionData(messageSuccessActionData: [String: Any?]) throws -> MessageSuccessActionData {
         guard let message = messageSuccessActionData["message"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "message", typeName: "MessageSuccessActionData"))
@@ -3591,87 +3559,6 @@ enum BreezSDKMapper {
 
     static func arrayOf(routeHintHopList: [RouteHintHop]) -> [Any] {
         return routeHintHopList.map { v -> [String: Any?] in return dictionaryOf(routeHintHop: v) }
-    }
-
-    static func asSendOnchainRequest(sendOnchainRequest: [String: Any?]) throws -> SendOnchainRequest {
-        guard let amountSat = sendOnchainRequest["amountSat"] as? UInt64 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "amountSat", typeName: "SendOnchainRequest"))
-        }
-        guard let onchainRecipientAddress = sendOnchainRequest["onchainRecipientAddress"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "onchainRecipientAddress", typeName: "SendOnchainRequest"))
-        }
-        guard let pairHash = sendOnchainRequest["pairHash"] as? String else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "pairHash", typeName: "SendOnchainRequest"))
-        }
-        guard let satPerVbyte = sendOnchainRequest["satPerVbyte"] as? UInt32 else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "SendOnchainRequest"))
-        }
-
-        return SendOnchainRequest(
-            amountSat: amountSat,
-            onchainRecipientAddress: onchainRecipientAddress,
-            pairHash: pairHash,
-            satPerVbyte: satPerVbyte
-        )
-    }
-
-    static func dictionaryOf(sendOnchainRequest: SendOnchainRequest) -> [String: Any?] {
-        return [
-            "amountSat": sendOnchainRequest.amountSat,
-            "onchainRecipientAddress": sendOnchainRequest.onchainRecipientAddress,
-            "pairHash": sendOnchainRequest.pairHash,
-            "satPerVbyte": sendOnchainRequest.satPerVbyte,
-        ]
-    }
-
-    static func asSendOnchainRequestList(arr: [Any]) throws -> [SendOnchainRequest] {
-        var list = [SendOnchainRequest]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var sendOnchainRequest = try asSendOnchainRequest(sendOnchainRequest: val)
-                list.append(sendOnchainRequest)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "SendOnchainRequest"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(sendOnchainRequestList: [SendOnchainRequest]) -> [Any] {
-        return sendOnchainRequestList.map { v -> [String: Any?] in return dictionaryOf(sendOnchainRequest: v) }
-    }
-
-    static func asSendOnchainResponse(sendOnchainResponse: [String: Any?]) throws -> SendOnchainResponse {
-        guard let reverseSwapInfoTmp = sendOnchainResponse["reverseSwapInfo"] as? [String: Any?] else {
-            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "reverseSwapInfo", typeName: "SendOnchainResponse"))
-        }
-        let reverseSwapInfo = try asReverseSwapInfo(reverseSwapInfo: reverseSwapInfoTmp)
-
-        return SendOnchainResponse(
-            reverseSwapInfo: reverseSwapInfo)
-    }
-
-    static func dictionaryOf(sendOnchainResponse: SendOnchainResponse) -> [String: Any?] {
-        return [
-            "reverseSwapInfo": dictionaryOf(reverseSwapInfo: sendOnchainResponse.reverseSwapInfo),
-        ]
-    }
-
-    static func asSendOnchainResponseList(arr: [Any]) throws -> [SendOnchainResponse] {
-        var list = [SendOnchainResponse]()
-        for value in arr {
-            if let val = value as? [String: Any?] {
-                var sendOnchainResponse = try asSendOnchainResponse(sendOnchainResponse: val)
-                list.append(sendOnchainResponse)
-            } else {
-                throw SdkError.Generic(message: errUnexpectedType(typeName: "SendOnchainResponse"))
-            }
-        }
-        return list
-    }
-
-    static func arrayOf(sendOnchainResponseList: [SendOnchainResponse]) -> [Any] {
-        return sendOnchainResponseList.map { v -> [String: Any?] in return dictionaryOf(sendOnchainResponse: v) }
     }
 
     static func asSendPaymentRequest(sendPaymentRequest: [String: Any?]) throws -> SendPaymentRequest {

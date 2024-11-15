@@ -791,24 +791,9 @@ dictionary SendPaymentResponse {
     Payment payment;
 };
 
-dictionary MaxReverseSwapAmountResponse {
-    u64 total_sat;
-};
-
-dictionary SendOnchainRequest {
-    u64 amount_sat;
-    string onchain_recipient_address;
-    string pair_hash;
-    u32 sat_per_vbyte;
-};
-
 dictionary PayOnchainRequest {
     string recipient_address;
     PrepareOnchainPaymentResponse prepare_res;
-};
-
-dictionary SendOnchainResponse {
-    ReverseSwapInfo reverse_swap_info;
 };
 
 dictionary PayOnchainResponse {
@@ -965,16 +950,7 @@ interface BlockingBreezServices {
    sequence<ReverseSwapInfo> in_progress_onchain_payments();
 
    [Throws=SdkError]
-   sequence<ReverseSwapInfo> in_progress_reverse_swaps();
-   
-   [Throws=SdkError]
    void claim_reverse_swap(string lockup_address);
-
-   [Throws=SdkError]
-   MaxReverseSwapAmountResponse max_reverse_swap_amount();
-
-   [Throws=SendOnchainError]
-   SendOnchainResponse send_onchain(SendOnchainRequest req);
 
    [Throws=SendOnchainError]
    PayOnchainResponse pay_onchain(PayOnchainRequest req);

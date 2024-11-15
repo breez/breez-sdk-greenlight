@@ -290,23 +290,7 @@ RCT_EXTERN_METHOD(
 )
 
 RCT_EXTERN_METHOD(
-    inProgressReverseSwaps: (RCTPromiseResolveBlock)resolve
-    reject: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
     claimReverseSwap: (NSString*)lockupAddress
-    resolve: (RCTPromiseResolveBlock)resolve
-    reject: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
-    maxReverseSwapAmount: (RCTPromiseResolveBlock)resolve
-    reject: (RCTPromiseRejectBlock)reject
-)
-
-RCT_EXTERN_METHOD(
-    sendOnchain: (NSDictionary*)req
     resolve: (RCTPromiseResolveBlock)resolve
     reject: (RCTPromiseRejectBlock)reject
 )

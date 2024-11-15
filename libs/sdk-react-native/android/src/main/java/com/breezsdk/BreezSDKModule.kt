@@ -830,18 +830,6 @@ class BreezSDKModule(
     }
 
     @ReactMethod
-    fun inProgressReverseSwaps(promise: Promise) {
-        executor.execute {
-            try {
-                val res = getBreezServices().inProgressReverseSwaps()
-                promise.resolve(readableArrayOf(res))
-            } catch (e: Exception) {
-                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
-            }
-        }
-    }
-
-    @ReactMethod
     fun claimReverseSwap(
         lockupAddress: String,
         promise: Promise,
@@ -850,35 +838,6 @@ class BreezSDKModule(
             try {
                 getBreezServices().claimReverseSwap(lockupAddress)
                 promise.resolve(readableMapOf("status" to "ok"))
-            } catch (e: Exception) {
-                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
-            }
-        }
-    }
-
-    @ReactMethod
-    fun maxReverseSwapAmount(promise: Promise) {
-        executor.execute {
-            try {
-                val res = getBreezServices().maxReverseSwapAmount()
-                promise.resolve(readableMapOf(res))
-            } catch (e: Exception) {
-                promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
-            }
-        }
-    }
-
-    @ReactMethod
-    fun sendOnchain(
-        req: ReadableMap,
-        promise: Promise,
-    ) {
-        executor.execute {
-            try {
-                val sendOnchainRequest =
-                    asSendOnchainRequest(req) ?: run { throw SdkException.Generic(errMissingMandatoryField("req", "SendOnchainRequest")) }
-                val res = getBreezServices().sendOnchain(sendOnchainRequest)
-                promise.resolve(readableMapOf(res))
             } catch (e: Exception) {
                 promise.reject(e.javaClass.simpleName.replace("Exception", "Error"), e.message, e)
             }
