@@ -459,8 +459,7 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "DELETE FROM cached_items WHERE key = 'sync_state'",
        // Delete send_pays, re-create it with groupid column as TEXT
        "
-       ALTER TABLE send_pays RENAME TO send_pays_old;
-       DROP TABLE send_pays_old;
+       DROP TABLE send_pays;
 
        CREATE TABLE send_pays (
         created_index INTEGER PRIMARY KEY NOT NULL,
