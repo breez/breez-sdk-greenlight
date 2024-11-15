@@ -14,7 +14,13 @@ pub(crate) enum SendPayStatus {
 pub(crate) struct SendPay {
     pub created_index: u64,
     pub updated_index: Option<u64>,
-    pub groupid: u64,
+
+    // The cln_grpc groupid (u64) can contain 64 bit values (e.g. > 2^63). This leads to errors when
+    // trying to persist them in an SQLite INTEGER column, which holds signed 64 bit numbers (63 bit
+    // value + 1 bit for the sign).
+    // To map the full range of u64 values in SQLite, we treat this field as String, stored as TEXT.
+    pub groupid: String,
+
     pub partid: Option<u64>,
     pub payment_hash: Vec<u8>,
     pub status: SendPayStatus,
@@ -74,7 +80,7 @@ impl SqliteStorage {
 
     pub(crate) fn list_send_pays(
         &self,
-        hash_groups: &[(Vec<u8>, u64)],
+        hash_groups: &[(Vec<u8>, String)],
     ) -> PersistResult<Vec<SendPay>> {
         let conn = self.get_connection()?;
         let mut stmt = conn.prepare(
