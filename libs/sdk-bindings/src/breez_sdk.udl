@@ -602,7 +602,7 @@ dictionary PrepareOnchainPaymentResponse {
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
-
+    u64 fees_service;
     u64 sender_amount_sat;
     u64 recipient_amount_sat;
     u64 total_fees;
@@ -615,6 +615,10 @@ dictionary ReverseSwapInfo {
     string? claim_txid;
     u64 onchain_amount_sat;
     ReverseSwapStatus status;
+    u64 fees_lockup;
+    u64 fees_claim;
+    u64 fees_service;
+    u64 total_fees;
 };
 
 dictionary BitcoinAddressData {

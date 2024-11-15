@@ -2258,6 +2258,7 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
                 "feesPercentage",
                 "feesLockup",
                 "feesClaim",
+                "feesService",
                 "senderAmountSat",
                 "recipientAmountSat",
                 "totalFees",
@@ -2270,6 +2271,7 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
     val feesPercentage = prepareOnchainPaymentResponse.getDouble("feesPercentage")
     val feesLockup = prepareOnchainPaymentResponse.getDouble("feesLockup").toULong()
     val feesClaim = prepareOnchainPaymentResponse.getDouble("feesClaim").toULong()
+    val feesService = prepareOnchainPaymentResponse.getDouble("feesService").toULong()
     val senderAmountSat = prepareOnchainPaymentResponse.getDouble("senderAmountSat").toULong()
     val recipientAmountSat = prepareOnchainPaymentResponse.getDouble("recipientAmountSat").toULong()
     val totalFees = prepareOnchainPaymentResponse.getDouble("totalFees").toULong()
@@ -2278,6 +2280,7 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
         feesPercentage,
         feesLockup,
         feesClaim,
+        feesService,
         senderAmountSat,
         recipientAmountSat,
         totalFees,
@@ -2290,6 +2293,7 @@ fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse):
         "feesPercentage" to prepareOnchainPaymentResponse.feesPercentage,
         "feesLockup" to prepareOnchainPaymentResponse.feesLockup,
         "feesClaim" to prepareOnchainPaymentResponse.feesClaim,
+        "feesService" to prepareOnchainPaymentResponse.feesService,
         "senderAmountSat" to prepareOnchainPaymentResponse.senderAmountSat,
         "recipientAmountSat" to prepareOnchainPaymentResponse.recipientAmountSat,
         "totalFees" to prepareOnchainPaymentResponse.totalFees,
@@ -2949,6 +2953,10 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
                 "claimPubkey",
                 "onchainAmountSat",
                 "status",
+                "feesLockup",
+                "feesClaim",
+                "feesService",
+                "totalFees",
             ),
         )
     ) {
@@ -2960,6 +2968,10 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
     val claimTxid = if (hasNonNullKey(reverseSwapInfo, "claimTxid")) reverseSwapInfo.getString("claimTxid") else null
     val onchainAmountSat = reverseSwapInfo.getDouble("onchainAmountSat").toULong()
     val status = reverseSwapInfo.getString("status")?.let { asReverseSwapStatus(it) }!!
+    val feesLockup = reverseSwapInfo.getDouble("feesLockup").toULong()
+    val feesClaim = reverseSwapInfo.getDouble("feesClaim").toULong()
+    val feesService = reverseSwapInfo.getDouble("feesService").toULong()
+    val totalFees = reverseSwapInfo.getDouble("totalFees").toULong()
     return ReverseSwapInfo(
         id,
         claimPubkey,
@@ -2967,6 +2979,10 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
         claimTxid,
         onchainAmountSat,
         status,
+        feesLockup,
+        feesClaim,
+        feesService,
+        totalFees,
     )
 }
 
@@ -2978,6 +2994,10 @@ fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap =
         "claimTxid" to reverseSwapInfo.claimTxid,
         "onchainAmountSat" to reverseSwapInfo.onchainAmountSat,
         "status" to reverseSwapInfo.status.name.lowercase(),
+        "feesLockup" to reverseSwapInfo.feesLockup,
+        "feesClaim" to reverseSwapInfo.feesClaim,
+        "feesService" to reverseSwapInfo.feesService,
+        "totalFees" to reverseSwapInfo.totalFees,
     )
 
 fun asReverseSwapInfoList(arr: ReadableArray): List<ReverseSwapInfo> {

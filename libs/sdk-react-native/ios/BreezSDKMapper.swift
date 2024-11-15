@@ -2627,6 +2627,9 @@ enum BreezSDKMapper {
         guard let feesClaim = prepareOnchainPaymentResponse["feesClaim"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesClaim", typeName: "PrepareOnchainPaymentResponse"))
         }
+        guard let feesService = prepareOnchainPaymentResponse["feesService"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesService", typeName: "PrepareOnchainPaymentResponse"))
+        }
         guard let senderAmountSat = prepareOnchainPaymentResponse["senderAmountSat"] as? UInt64 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "senderAmountSat", typeName: "PrepareOnchainPaymentResponse"))
         }
@@ -2642,6 +2645,7 @@ enum BreezSDKMapper {
             feesPercentage: feesPercentage,
             feesLockup: feesLockup,
             feesClaim: feesClaim,
+            feesService: feesService,
             senderAmountSat: senderAmountSat,
             recipientAmountSat: recipientAmountSat,
             totalFees: totalFees
@@ -2654,6 +2658,7 @@ enum BreezSDKMapper {
             "feesPercentage": prepareOnchainPaymentResponse.feesPercentage,
             "feesLockup": prepareOnchainPaymentResponse.feesLockup,
             "feesClaim": prepareOnchainPaymentResponse.feesClaim,
+            "feesService": prepareOnchainPaymentResponse.feesService,
             "senderAmountSat": prepareOnchainPaymentResponse.senderAmountSat,
             "recipientAmountSat": prepareOnchainPaymentResponse.recipientAmountSat,
             "totalFees": prepareOnchainPaymentResponse.totalFees,
@@ -3352,13 +3357,30 @@ enum BreezSDKMapper {
         }
         let status = try asReverseSwapStatus(reverseSwapStatus: statusTmp)
 
+        guard let feesLockup = reverseSwapInfo["feesLockup"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesLockup", typeName: "ReverseSwapInfo"))
+        }
+        guard let feesClaim = reverseSwapInfo["feesClaim"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesClaim", typeName: "ReverseSwapInfo"))
+        }
+        guard let feesService = reverseSwapInfo["feesService"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "feesService", typeName: "ReverseSwapInfo"))
+        }
+        guard let totalFees = reverseSwapInfo["totalFees"] as? UInt64 else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalFees", typeName: "ReverseSwapInfo"))
+        }
+
         return ReverseSwapInfo(
             id: id,
             claimPubkey: claimPubkey,
             lockupTxid: lockupTxid,
             claimTxid: claimTxid,
             onchainAmountSat: onchainAmountSat,
-            status: status
+            status: status,
+            feesLockup: feesLockup,
+            feesClaim: feesClaim,
+            feesService: feesService,
+            totalFees: totalFees
         )
     }
 
@@ -3370,6 +3392,10 @@ enum BreezSDKMapper {
             "claimTxid": reverseSwapInfo.claimTxid == nil ? nil : reverseSwapInfo.claimTxid,
             "onchainAmountSat": reverseSwapInfo.onchainAmountSat,
             "status": valueOf(reverseSwapStatus: reverseSwapInfo.status),
+            "feesLockup": reverseSwapInfo.feesLockup,
+            "feesClaim": reverseSwapInfo.feesClaim,
+            "feesService": reverseSwapInfo.feesService,
+            "totalFees": reverseSwapInfo.totalFees,
         ]
     }
 

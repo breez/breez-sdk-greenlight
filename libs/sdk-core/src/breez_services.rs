@@ -1021,7 +1021,7 @@ impl BreezServices {
         // Calculate (send_amt, recv_amt) from the inputs and fees
         let fees_lockup = fee_info.fees_lockup;
         let p = fee_info.fees_percentage;
-        let (send_amt, recv_amt) = match req.amount_type {
+        let (send_amt, recv_amt, fees_service) = match req.amount_type {
             SwapAmountType::Send => {
                 let temp_send_amt = req.amount_sat;
                 let service_fees = swap_out::get_service_fee_sat(temp_send_amt, p);
@@ -1033,14 +1033,14 @@ impl BreezServices {
                     )
                 );
 
-                (temp_send_amt, temp_send_amt - total_fees)
+                (temp_send_amt, temp_send_amt - total_fees, service_fees)
             }
             SwapAmountType::Receive => {
                 let temp_recv_amt = req.amount_sat;
                 let send_amt_minus_service_fee = temp_recv_amt + fees_lockup + fees_claim;
                 let temp_send_amt = swap_out::get_invoice_amount_sat(send_amt_minus_service_fee, p);
-
-                (temp_send_amt, temp_recv_amt)
+                let service_fees = temp_send_amt - send_amt_minus_service_fee;
+                (temp_send_amt, temp_recv_amt, service_fees)
             }
         };
 
@@ -1052,6 +1052,7 @@ impl BreezServices {
             fees_percentage: p,
             fees_lockup,
             fees_claim,
+            fees_service,
             sender_amount_sat: send_amt,
             recipient_amount_sat: recv_amt,
             total_fees: send_amt - recv_amt,
@@ -3020,6 +3021,10 @@ pub(crate) mod tests {
                 lockup_txid: Some("lockup_txid".to_string()),
                 claim_txid: Some("claim_txid".to_string()),
             },
+            fees_lockup: 0,
+            fees_claim: 0,
+            fees_service: 0,
+            total_fees: 0,
         };
         let rev_swap_info = ReverseSwapInfo {
             id: "rev_swap_id".to_string(),
@@ -3028,6 +3033,10 @@ pub(crate) mod tests {
             claim_txid: Some("claim_txid".to_string()),
             onchain_amount_sat: 250,
             status: ReverseSwapStatus::CompletedConfirmed,
+            fees_claim: 0,
+            fees_lockup: 0,
+            fees_service: 0,
+            total_fees: 0,
         };
         let dummy_transactions = vec![
             Payment {

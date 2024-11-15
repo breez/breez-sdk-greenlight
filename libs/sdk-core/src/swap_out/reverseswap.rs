@@ -346,6 +346,10 @@ impl BTCSendSwap {
                         lockup_txid: None,
                         claim_txid: None,
                     },
+                    fees_lockup: req.prepare_res.fees_lockup,
+                    fees_claim: req.prepare_res.fees_claim,
+                    fees_service: req.prepare_res.fees_service,
+                    total_fees: req.prepare_res.total_fees,
                 };
 
                 res.validate_invoice(req.prepare_res.sender_amount_sat * 1_000)?;
@@ -743,6 +747,10 @@ impl BTCSendSwap {
             },
             onchain_amount_sat: full_rsi.onchain_amount_sat,
             status: full_rsi.cache.status,
+            fees_lockup: full_rsi.fees_lockup,
+            fees_claim: full_rsi.fees_claim,
+            fees_service: full_rsi.fees_service,
+            total_fees: full_rsi.total_fees,
         })
     }
 }

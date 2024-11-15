@@ -2230,6 +2230,7 @@ impl support::IntoDart for PrepareOnchainPaymentResponse {
             self.fees_percentage.into_into_dart().into_dart(),
             self.fees_lockup.into_into_dart().into_dart(),
             self.fees_claim.into_into_dart().into_dart(),
+            self.fees_service.into_into_dart().into_dart(),
             self.sender_amount_sat.into_into_dart().into_dart(),
             self.recipient_amount_sat.into_into_dart().into_dart(),
             self.total_fees.into_into_dart().into_dart(),
@@ -2363,6 +2364,10 @@ impl support::IntoDart for ReverseSwapInfo {
             self.claim_txid.into_dart(),
             self.onchain_amount_sat.into_into_dart().into_dart(),
             self.status.into_into_dart().into_dart(),
+            self.fees_lockup.into_into_dart().into_dart(),
+            self.fees_claim.into_into_dart().into_dart(),
+            self.fees_service.into_into_dart().into_dart(),
+            self.total_fees.into_into_dart().into_dart(),
         ]
         .into_dart()
     }

@@ -8,8 +8,15 @@ impl SqliteStorage {
         let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
 
         tx.execute(
-            "INSERT INTO sync.reverse_swaps (id, created_at_block_height, preimage, private_key, claim_pubkey, timeout_block_height, invoice, onchain_amount_sat, sat_per_vbyte, receive_amount_sat, redeem_script)\
-            VALUES (:id, :created_at_block_height, :preimage, :private_key, :claim_pubkey, :timeout_block_height, :invoice, :onchain_amount_sat, :sat_per_vbyte, :receive_amount_sat, :redeem_script)",
+            r#"INSERT INTO sync.reverse_swaps (id, created_at_block_height, 
+                preimage, private_key, claim_pubkey, timeout_block_height, 
+                invoice, onchain_amount_sat, sat_per_vbyte, receive_amount_sat, 
+                redeem_script, fees_lockup, fees_claim, fees_service, total_fees)
+            VALUES (:id, :created_at_block_height, :preimage, :private_key, 
+                :claim_pubkey, :timeout_block_height, :invoice, 
+                :onchain_amount_sat, :sat_per_vbyte, :receive_amount_sat, 
+                :redeem_script, :fees_lockup, :fees_claim, :fees_service, 
+                :total_fees)"#,
             named_params! {
                 ":id": rsi.id,
                 ":created_at_block_height": rsi.created_at_block_height,
@@ -21,7 +28,11 @@ impl SqliteStorage {
                 ":onchain_amount_sat": rsi.onchain_amount_sat,
                 ":sat_per_vbyte": rsi.sat_per_vbyte,
                 ":receive_amount_sat": rsi.receive_amount_sat,
-                ":redeem_script": rsi.redeem_script
+                ":redeem_script": rsi.redeem_script,
+                ":fees_lockup": rsi.fees_lockup,
+                ":fees_claim": rsi.fees_claim,
+                ":fees_service": rsi.fees_service,
+                ":total_fees": rsi.total_fees,
             },
         )?;
 
@@ -131,7 +142,11 @@ impl SqliteStorage {
         {prefix}redeem_script,
         {prefix}status,
         {prefix}lockup_txid,
-        {prefix}claim_txid           
+        {prefix}claim_txid,
+        {prefix}fees_lockup,
+        {prefix}fees_claim,     
+        {prefix}fees_service,
+        {prefix}total_fees,
         "
         )
     }
@@ -162,6 +177,10 @@ impl SqliteStorage {
                 lockup_txid: row.get(format!("{prefix}lockup_txid").as_str())?,
                 claim_txid: row.get(format!("{prefix}claim_txid").as_str())?,
             },
+            fees_lockup: row.get(format!("{prefix}fees_lockup").as_str())?,
+            fees_claim: row.get(format!("{prefix}fees_claim").as_str())?,
+            fees_service: row.get(format!("{prefix}fees_service").as_str())?,
+            total_fees: row.get(format!("{prefix}total_fees").as_str())?,
         })
     }
 
@@ -181,7 +200,11 @@ impl SqliteStorage {
             redeem_script as {prefix}redeem_script,
             status as {prefix}status,
             lockup_txid as {prefix}lockup_txid,
-            claim_txid as {prefix}claim_txid         
+            claim_txid as {prefix}claim_txid,
+            fees_lockup as {prefix}fees_lockup,
+            fees_claim as {prefix}fees_claim,     
+            fees_service as {prefix}fees_service,
+            total_fees as {prefix}total_fees,
             "
         );
 

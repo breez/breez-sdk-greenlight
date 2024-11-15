@@ -1340,6 +1340,7 @@ class PrepareOnchainPaymentResponse {
   final double feesPercentage;
   final int feesLockup;
   final int feesClaim;
+  final int feesService;
   final int senderAmountSat;
   final int recipientAmountSat;
   final int totalFees;
@@ -1349,6 +1350,7 @@ class PrepareOnchainPaymentResponse {
     required this.feesPercentage,
     required this.feesLockup,
     required this.feesClaim,
+    required this.feesService,
     required this.senderAmountSat,
     required this.recipientAmountSat,
     required this.totalFees,
@@ -1578,6 +1580,10 @@ class ReverseSwapInfo {
   final String? claimTxid;
   final int onchainAmountSat;
   final ReverseSwapStatus status;
+  final int feesLockup;
+  final int feesClaim;
+  final int feesService;
+  final int totalFees;
 
   const ReverseSwapInfo({
     required this.id,
@@ -1586,6 +1592,10 @@ class ReverseSwapInfo {
     this.claimTxid,
     required this.onchainAmountSat,
     required this.status,
+    required this.feesLockup,
+    required this.feesClaim,
+    required this.feesService,
+    required this.totalFees,
   });
 }
 
@@ -3881,15 +3891,16 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   PrepareOnchainPaymentResponse _wire2api_prepare_onchain_payment_response(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 7) throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8) throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return PrepareOnchainPaymentResponse(
       feesHash: _wire2api_String(arr[0]),
       feesPercentage: _wire2api_f64(arr[1]),
       feesLockup: _wire2api_u64(arr[2]),
       feesClaim: _wire2api_u64(arr[3]),
-      senderAmountSat: _wire2api_u64(arr[4]),
-      recipientAmountSat: _wire2api_u64(arr[5]),
-      totalFees: _wire2api_u64(arr[6]),
+      feesService: _wire2api_u64(arr[4]),
+      senderAmountSat: _wire2api_u64(arr[5]),
+      recipientAmountSat: _wire2api_u64(arr[6]),
+      totalFees: _wire2api_u64(arr[7]),
     );
   }
 
@@ -3960,7 +3971,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
 
   ReverseSwapInfo _wire2api_reverse_swap_info(dynamic raw) {
     final arr = raw as List<dynamic>;
-    if (arr.length != 6) throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 10) throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
     return ReverseSwapInfo(
       id: _wire2api_String(arr[0]),
       claimPubkey: _wire2api_String(arr[1]),
@@ -3968,6 +3979,10 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       claimTxid: _wire2api_opt_String(arr[3]),
       onchainAmountSat: _wire2api_u64(arr[4]),
       status: _wire2api_reverse_swap_status(arr[5]),
+      feesLockup: _wire2api_u64(arr[6]),
+      feesClaim: _wire2api_u64(arr[7]),
+      feesService: _wire2api_u64(arr[8]),
+      totalFees: _wire2api_u64(arr[9]),
     );
   }
 
@@ -4889,6 +4904,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.fees_percentage = api2wire_f64(apiObj.feesPercentage);
     wireObj.fees_lockup = api2wire_u64(apiObj.feesLockup);
     wireObj.fees_claim = api2wire_u64(apiObj.feesClaim);
+    wireObj.fees_service = api2wire_u64(apiObj.feesService);
     wireObj.sender_amount_sat = api2wire_u64(apiObj.senderAmountSat);
     wireObj.recipient_amount_sat = api2wire_u64(apiObj.recipientAmountSat);
     wireObj.total_fees = api2wire_u64(apiObj.totalFees);
@@ -6698,6 +6714,9 @@ final class wire_PrepareOnchainPaymentResponse extends ffi.Struct {
 
   @ffi.Uint64()
   external int fees_claim;
+
+  @ffi.Uint64()
+  external int fees_service;
 
   @ffi.Uint64()
   external int sender_amount_sat;

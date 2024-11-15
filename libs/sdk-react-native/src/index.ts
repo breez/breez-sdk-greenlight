@@ -369,6 +369,7 @@ export interface PrepareOnchainPaymentResponse {
     feesPercentage: number
     feesLockup: number
     feesClaim: number
+    feesService: number
     senderAmountSat: number
     recipientAmountSat: number
     totalFees: number
@@ -464,6 +465,10 @@ export interface ReverseSwapInfo {
     claimTxid?: string
     onchainAmountSat: number
     status: ReverseSwapStatus
+    feesLockup: number
+    feesClaim: number
+    feesService: number
+    totalFees: number
 }
 
 export interface ReverseSwapPairInfo {
