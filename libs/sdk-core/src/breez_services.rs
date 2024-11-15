@@ -1053,7 +1053,6 @@ impl BreezServices {
         // Calculate (send_amt, recv_amt) from the inputs and fees
         let fees_lockup = fee_info.fees_lockup;
         let p = fee_info.fees_percentage;
-        let fees_claim = BTCSendSwap::calculate_claim_tx_fee(req.claim_tx_feerate)?;
         let (send_amt, recv_amt) = match req.amount_type {
             SwapAmountType::Send => {
                 let temp_send_amt = req.amount_sat;
