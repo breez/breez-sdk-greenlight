@@ -793,12 +793,6 @@ pub struct ReverseSwapFeesRequest {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MaxReverseSwapAmountResponse {
-    /// The total sats that can be sent onchain.
-    pub total_sat: u64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MaxChannelAmount {
     /// The channel id.
     pub channel_id: String,
@@ -995,18 +989,6 @@ pub struct RedeemOnchainFundsRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RedeemOnchainFundsResponse {
     pub txid: Vec<u8>,
-}
-
-#[derive(Clone)]
-pub struct SendOnchainRequest {
-    pub amount_sat: u64,
-    pub onchain_recipient_address: String,
-    pub pair_hash: String,
-    pub sat_per_vbyte: u32,
-}
-
-pub struct SendOnchainResponse {
-    pub reverse_swap_info: ReverseSwapInfo,
 }
 
 pub enum SwapAmountType {

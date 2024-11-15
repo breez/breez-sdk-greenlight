@@ -322,17 +322,6 @@ class BreezSDK {
 
   /* On-Chain Swap API's */
 
-  /// Creates a reverse swap and attempts to pay the HODL invoice
-  @Deprecated(
-    'Use payOnchain instead. '
-    'This method was deprecated after v0.3.2',
-  )
-  Future<SendOnchainResponse> sendOnchain({
-    required SendOnchainRequest req,
-  }) async {
-    return await _lnToolkit.sendOnchain(req: req);
-  }
-
   Future<OnchainPaymentLimitsResponse> onchainPaymentLimits() async {
     return await _lnToolkit.onchainPaymentLimits();
   }
@@ -365,15 +354,6 @@ class BreezSDK {
     final redeemOnchainFundsResponse = await _lnToolkit.redeemOnchainFunds(req: req);
     await listPayments(req: const ListPaymentsRequest());
     return redeemOnchainFundsResponse;
-  }
-
-  /// Returns the max amount that can be sent on-chain using the send_onchain method.
-  /// The returned amount is the sum of the max amount that can be sent on each channel
-  /// minus the expected fees.
-  /// This is possible since the route to the swapper node is known in advance and is expected
-  /// to consist of maximum 3 hops.
-  Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount() async {
-    return await _lnToolkit.maxReverseSwapAmount();
   }
 
   /* Refundables API's */
@@ -419,13 +399,6 @@ class BreezSDK {
   }) async {
     return await _lnToolkit.redeemSwap(swapAddress: swapAddress);
   }
-
-  /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  @Deprecated(
-    'Use inProgressOnchainPayments instead. '
-    'This method was deprecated after v0.3.6',
-  )
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
 
   /// Claims an individual reverse swap.
   ///

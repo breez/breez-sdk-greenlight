@@ -215,13 +215,6 @@ typedef struct wire_ReportIssueRequest {
   union ReportIssueRequestKind *kind;
 } wire_ReportIssueRequest;
 
-typedef struct wire_SendOnchainRequest {
-  uint64_t amount_sat;
-  struct wire_uint_8_list *onchain_recipient_address;
-  struct wire_uint_8_list *pair_hash;
-  uint32_t sat_per_vbyte;
-} wire_SendOnchainRequest;
-
 typedef struct wire_PrepareOnchainPaymentResponse {
   struct wire_uint_8_list *fees_hash;
   double fees_percentage;
@@ -393,10 +386,6 @@ void wire_fetch_fiat_rates(int64_t port_);
 
 void wire_list_fiat_currencies(int64_t port_);
 
-void wire_max_reverse_swap_amount(int64_t port_);
-
-void wire_send_onchain(int64_t port_, struct wire_SendOnchainRequest *req);
-
 void wire_pay_onchain(int64_t port_, struct wire_PayOnchainRequest *req);
 
 void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req);
@@ -421,8 +410,6 @@ void wire_redeem_swap(int64_t port_, struct wire_uint_8_list *swap_address);
 void wire_in_progress_swap(int64_t port_);
 
 void wire_list_swaps(int64_t port_, struct wire_ListSwapsRequest *req);
-
-void wire_in_progress_reverse_swaps(int64_t port_);
 
 void wire_claim_reverse_swap(int64_t port_, struct wire_uint_8_list *lockup_address);
 
@@ -496,8 +483,6 @@ struct wire_ReportPaymentFailureDetails *new_box_autoadd_report_payment_failure_
 
 struct wire_ReverseSwapFeesRequest *new_box_autoadd_reverse_swap_fees_request_0(void);
 
-struct wire_SendOnchainRequest *new_box_autoadd_send_onchain_request_0(void);
-
 struct wire_SendPaymentRequest *new_box_autoadd_send_payment_request_0(void);
 
 struct wire_SendSpontaneousPaymentRequest *new_box_autoadd_send_spontaneous_payment_request_0(void);
@@ -567,8 +552,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_report_issue);
     dummy_var ^= ((int64_t) (void*) wire_fetch_fiat_rates);
     dummy_var ^= ((int64_t) (void*) wire_list_fiat_currencies);
-    dummy_var ^= ((int64_t) (void*) wire_max_reverse_swap_amount);
-    dummy_var ^= ((int64_t) (void*) wire_send_onchain);
     dummy_var ^= ((int64_t) (void*) wire_pay_onchain);
     dummy_var ^= ((int64_t) (void*) wire_receive_onchain);
     dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);
@@ -581,7 +564,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_redeem_swap);
     dummy_var ^= ((int64_t) (void*) wire_in_progress_swap);
     dummy_var ^= ((int64_t) (void*) wire_list_swaps);
-    dummy_var ^= ((int64_t) (void*) wire_in_progress_reverse_swaps);
     dummy_var ^= ((int64_t) (void*) wire_claim_reverse_swap);
     dummy_var ^= ((int64_t) (void*) wire_open_channel_fee);
     dummy_var ^= ((int64_t) (void*) wire_fetch_reverse_swap_fees);
@@ -618,7 +600,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_report_issue_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_report_payment_failure_details_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_reverse_swap_fees_request_0);
-    dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_onchain_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_send_spontaneous_payment_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_sign_message_request_0);

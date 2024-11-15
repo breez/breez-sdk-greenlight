@@ -45,7 +45,7 @@ use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
 use crate::swap_in::swap::BTCReceiveSwap;
 use crate::swap_out::boltzswap::BoltzApi;
-use crate::swap_out::reverseswap::{BTCSendSwap, CreateReverseSwapArg};
+use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
 
 const DETECT_HIBERNATE_SLEEP_DURATION: Duration = Duration::from_secs(1);
@@ -935,14 +935,12 @@ impl BreezServices {
 
         Ok(res)
     }
-
     /// Returns the max amount that can be sent on-chain using the send_onchain method.
     /// The returned amount is the sum of the max amount that can be sent on each channel
     /// minus the expected fees.
     /// This is possible since the route to the swapper node is known in advance and is expected
     /// to consist of maximum 3 hops.
-    #[deprecated(note = "use onchain_payment_limits instead")]
-    pub async fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
+    async fn max_reverse_swap_amount(&self) -> SdkResult<u64> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
         info!("max_reverse_swap_amount last_hop={:?}", last_hop);
@@ -965,36 +963,7 @@ impl BreezServices {
         // Sum the max amount per channel and return the result
         let total_msat: u64 = max_to_pay.into_iter().map(|m| m.amount_msat).sum();
         let total_sat = total_msat / 1000;
-        Ok(MaxReverseSwapAmountResponse { total_sat })
-    }
-
-    /// Creates a reverse swap and attempts to pay the HODL invoice
-    #[deprecated(note = "use pay_onchain instead")]
-    pub async fn send_onchain(
-        &self,
-        req: SendOnchainRequest,
-    ) -> Result<SendOnchainResponse, SendOnchainError> {
-        let reverse_swap_info = self
-            .pay_onchain_common(CreateReverseSwapArg::V1(req))
-            .await?;
-        Ok(SendOnchainResponse { reverse_swap_info })
-    }
-
-    /// Returns the blocking [ReverseSwapInfo]s that are in progress
-    #[deprecated(note = "use in_progress_onchain_payments instead")]
-    pub async fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
-        let full_rsis = self.btc_send_swapper.list_blocking().await?;
-
-        let mut rsis = vec![];
-        for full_rsi in full_rsis {
-            let rsi = self
-                .btc_send_swapper
-                .convert_reverse_swap_info(full_rsi)
-                .await?;
-            rsis.push(rsi);
-        }
-
-        Ok(rsis)
+        Ok(total_sat)
     }
 
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
@@ -1023,14 +992,13 @@ impl BreezServices {
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
         let fee_info = self.btc_send_swapper.fetch_reverse_swap_fees().await?;
         debug!("Reverse swap pair info: {fee_info:?}");
-        #[allow(deprecated)]
         let max_amt_current_channels = self.max_reverse_swap_amount().await?;
         debug!("Max send amount possible with current channels: {max_amt_current_channels:?}");
 
         Ok(OnchainPaymentLimitsResponse {
             min_sat: fee_info.min,
             max_sat: fee_info.max,
-            max_payable_sat: max_amt_current_channels.total_sat,
+            max_payable_sat: max_amt_current_channels,
         })
     }
 
@@ -1091,8 +1059,6 @@ impl BreezServices {
     }
 
     /// Creates a reverse swap and attempts to pay the HODL invoice
-    ///
-    /// Supersedes [BreezServices::send_onchain]
     pub async fn pay_onchain(
         &self,
         req: PayOnchainRequest,
@@ -1102,16 +1068,9 @@ impl BreezServices {
             SendOnchainError::generic("Send amount must be bigger than receive amount")
         );
 
-        let reverse_swap_info = self
-            .pay_onchain_common(CreateReverseSwapArg::V2(req))
-            .await?;
-        Ok(PayOnchainResponse { reverse_swap_info })
-    }
-
-    async fn pay_onchain_common(&self, req: CreateReverseSwapArg) -> SdkResult<ReverseSwapInfo> {
-        ensure_sdk!(self.in_progress_onchain_payments().await?.is_empty(), SdkError::Generic { err:
+        ensure_sdk!(self.in_progress_onchain_payments().await?.is_empty(), SendOnchainError::Generic { err:
             "You can only start a new one after after the ongoing ones finish. \
-            Use the in_progress_reverse_swaps method to get an overview of currently ongoing reverse swaps".into(),
+            Use the in_progress_onchain_payments method to get an overview of currently ongoing reverse swaps".into(),
         });
 
         let full_rsi = self.btc_send_swapper.create_reverse_swap(req).await?;
@@ -1129,15 +1088,23 @@ impl BreezServices {
             self.register_onchain_tx_notification(address, &webhook_url)
                 .await?;
         }
-        Ok(reverse_swap_info)
+        Ok(PayOnchainResponse { reverse_swap_info })
     }
 
     /// Returns the blocking [ReverseSwapInfo]s that are in progress.
-    ///
-    /// Supersedes [BreezServices::in_progress_reverse_swaps]
     pub async fn in_progress_onchain_payments(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
-        #[allow(deprecated)]
-        self.in_progress_reverse_swaps().await
+        let full_rsis = self.btc_send_swapper.list_blocking().await?;
+
+        let mut rsis = vec![];
+        for full_rsi in full_rsis {
+            let rsi = self
+                .btc_send_swapper
+                .convert_reverse_swap_info(full_rsi)
+                .await?;
+            rsis.push(rsi);
+        }
+
+        Ok(rsis)
     }
 
     /// Execute a command directly on the NodeAPI interface.

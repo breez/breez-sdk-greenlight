@@ -147,17 +147,6 @@ pub(crate) enum Commands {
         limit: Option<u32>,
     },
 
-    /// [swap-out] Send on-chain using a reverse swap
-    SendOnchain {
-        amount_sat: u64,
-        onchain_recipient_address: String,
-        /// The fee rate for the claim transaction
-        sat_per_vbyte: u32,
-    },
-
-    /// [swap-out] The maximum amount that can be sent onchain with a reverse swap
-    MaxReverseSwapAmount {},
-
     /// [swap-out] Get the current fees for a potential new reverse swap
     FetchOnchainFees {
         #[clap(name = "amount", short = 'a', long = "amt")]
