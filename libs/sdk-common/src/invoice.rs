@@ -213,7 +213,8 @@ pub fn add_routing_hints(
         .timestamp(invoice.timestamp())
         .expiry_time(invoice.expiry_time())
         .payment_secret(*invoice.payment_secret())
-        .min_final_cltv_expiry_delta(invoice.min_final_cltv_expiry_delta());
+        .min_final_cltv_expiry_delta(invoice.min_final_cltv_expiry_delta())
+        .basic_mpp();
     if let Some(new_amount_msat) = new_amount_msats {
         invoice_builder = invoice_builder.amount_milli_satoshis(new_amount_msat)
     }
