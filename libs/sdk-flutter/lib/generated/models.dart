@@ -372,6 +372,41 @@ class ListPaymentsRequest {
           limit == other.limit;
 }
 
+class ListSwapsRequest {
+  final List<SwapStatus>? status;
+
+  /// Epoch time, in seconds. If set, acts as filter for minimum swap creation time, inclusive.
+  final PlatformInt64? fromTimestamp;
+
+  /// Epoch time, in seconds. If set, acts as filter for maximum swap creation time, exclusive.
+  final PlatformInt64? toTimestamp;
+  final int? offset;
+  final int? limit;
+
+  const ListSwapsRequest({
+    this.status,
+    this.fromTimestamp,
+    this.toTimestamp,
+    this.offset,
+    this.limit,
+  });
+
+  @override
+  int get hashCode =>
+      status.hashCode ^ fromTimestamp.hashCode ^ toTimestamp.hashCode ^ offset.hashCode ^ limit.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ListSwapsRequest &&
+          runtimeType == other.runtimeType &&
+          status == other.status &&
+          fromTimestamp == other.fromTimestamp &&
+          toTimestamp == other.toTimestamp &&
+          offset == other.offset &&
+          limit == other.limit;
+}
+
 /// Details of a LN payment, as included in a [Payment]
 class LnPaymentDetails {
   final String paymentHash;

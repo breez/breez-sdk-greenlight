@@ -386,6 +386,19 @@ typedef struct wire_cst_list_payments_request {
   uint32_t *limit;
 } wire_cst_list_payments_request;
 
+typedef struct wire_cst_list_swap_status {
+  int32_t *ptr;
+  int32_t len;
+} wire_cst_list_swap_status;
+
+typedef struct wire_cst_list_swaps_request {
+  struct wire_cst_list_swap_status *status;
+  int64_t *from_timestamp;
+  int64_t *to_timestamp;
+  uint32_t *offset;
+  uint32_t *limit;
+} wire_cst_list_swaps_request;
+
 typedef struct wire_cst_ln_url_auth_request_data {
   struct wire_cst_list_prim_u_8_strict *k1;
   struct wire_cst_list_prim_u_8_strict *action;
@@ -998,6 +1011,9 @@ void frbgen_breez_sdk_wire__crate__binding__list_payments(int64_t port_,
 
 void frbgen_breez_sdk_wire__crate__binding__list_refundables(int64_t port_);
 
+void frbgen_breez_sdk_wire__crate__binding__list_swaps(int64_t port_,
+                                                       struct wire_cst_list_swaps_request *req);
+
 void frbgen_breez_sdk_wire__crate__binding__lnurl_auth(int64_t port_,
                                                        struct wire_cst_ln_url_auth_request_data *req_data);
 
@@ -1134,6 +1150,8 @@ struct wire_cst_invoice_paid_details *frbgen_breez_sdk_cst_new_box_autoadd_invoi
 
 struct wire_cst_list_payments_request *frbgen_breez_sdk_cst_new_box_autoadd_list_payments_request(void);
 
+struct wire_cst_list_swaps_request *frbgen_breez_sdk_cst_new_box_autoadd_list_swaps_request(void);
+
 struct wire_cst_ln_invoice *frbgen_breez_sdk_cst_new_box_autoadd_ln_invoice(void);
 
 struct wire_cst_ln_payment_details *frbgen_breez_sdk_cst_new_box_autoadd_ln_payment_details(void);
@@ -1248,6 +1266,8 @@ struct wire_cst_list_route_hint_hop *frbgen_breez_sdk_cst_new_list_route_hint_ho
 
 struct wire_cst_list_swap_info *frbgen_breez_sdk_cst_new_list_swap_info(int32_t len);
 
+struct wire_cst_list_swap_status *frbgen_breez_sdk_cst_new_list_swap_status(int32_t len);
+
 struct wire_cst_list_tlv_entry *frbgen_breez_sdk_cst_new_list_tlv_entry(int32_t len);
 
 struct wire_cst_list_unspent_transaction_output *frbgen_breez_sdk_cst_new_list_unspent_transaction_output(int32_t len);
@@ -1271,6 +1291,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_i_64);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_invoice_paid_details);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_list_payments_request);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_list_swaps_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_invoice);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_payment_details);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_url_auth_request_data);
@@ -1328,6 +1349,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_route_hint);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_route_hint_hop);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_swap_info);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_swap_status);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_tlv_entry);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_list_unspent_transaction_output);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__backup);
@@ -1357,6 +1379,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__list_lsps);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__list_payments);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__list_refundables);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__list_swaps);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__lnurl_auth);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__lnurl_pay);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__lnurl_withdraw);
