@@ -808,7 +808,7 @@ impl Greenlight {
                 let mut key = hex::encode(&p.payment_hash);
                 key.push('|');
                 key.push_str(&p.groupid.to_string());
-                (key, (p.payment_hash.clone(), p.groupid))
+                (key, (p.payment_hash.clone(), p.groupid.to_string()))
             })
             .collect();
         let hash_group_values: Vec<_> = hash_groups.values().cloned().collect();
@@ -840,7 +840,7 @@ impl Greenlight {
         for send_pay in send_pays {
             let mut key = hex::encode(&send_pay.payment_hash);
             key.push('|');
-            key.push_str(&send_pay.groupid.to_string());
+            key.push_str(&send_pay.groupid);
             let payment = outbound_payments.entry(key).or_insert(SendPayAgg {
                 state: 0,
                 created_at: send_pay.created_at,
@@ -2147,7 +2147,7 @@ impl TryFrom<ListsendpaysPayments> for SendPay {
                 .created_index
                 .ok_or(NodeError::generic("missing created index"))?,
             updated_index: value.updated_index,
-            groupid: value.groupid,
+            groupid: value.groupid.to_string(),
             partid: value.partid,
             payment_hash: value.payment_hash,
             status: value.status.try_into()?,

@@ -457,6 +457,31 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        ",
        "DELETE FROM payments",
        "DELETE FROM cached_items WHERE key = 'sync_state'",
+       // Delete send_pays, re-create it with groupid column as TEXT
+       "
+       DROP TABLE send_pays;
+
+       CREATE TABLE send_pays (
+        created_index INTEGER PRIMARY KEY NOT NULL,
+        updated_index INTEGER,
+        groupid TEXT NOT NULL,
+        partid INTEGER,
+        payment_hash BLOB NOT NULL,
+        status INTEGER NOT NULL,
+        amount_msat INTEGER,
+        destination BLOB,
+        created_at INTEGER NOT NULL,
+        amount_sent_msat INTEGER,
+        label TEXT,
+        bolt11 TEXT,
+        description TEXT,
+        bolt12 TEXT,
+        payment_preimage BLOB,
+        erroronion BLOB
+       ) STRICT;
+
+       DELETE FROM cached_items WHERE key = 'sync_state';
+       ",
     ]
 }
 
