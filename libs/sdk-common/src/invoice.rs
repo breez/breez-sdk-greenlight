@@ -149,11 +149,11 @@ pub struct LNOffer {
     pub issuer: Option<String>,
     /// The public key used by the recipient to sign invoices.
     pub signing_pubkey: Option<String>,
-    pub paths: Vec<LNOfferBlindedPath>,
+    pub paths: Vec<LnOfferBlindedPath>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct LNOfferBlindedPath {
+pub struct LnOfferBlindedPath {
     /// For each blinded hop, we store the node ID (pubkey as hex).
     pub blinded_hops: Vec<String>,
 }
