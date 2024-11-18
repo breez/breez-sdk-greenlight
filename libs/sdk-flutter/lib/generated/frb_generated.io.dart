@@ -111,6 +111,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   ListPaymentsRequest dco_decode_box_autoadd_list_payments_request(dynamic raw);
 
   @protected
+  ListSwapsRequest dco_decode_box_autoadd_list_swaps_request(dynamic raw);
+
+  @protected
   LNInvoice dco_decode_box_autoadd_ln_invoice(dynamic raw);
 
   @protected
@@ -354,6 +357,12 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   List<SwapInfo> dco_decode_list_swap_info(dynamic raw);
 
   @protected
+  List<SwapStatus> dco_decode_list_swap_status(dynamic raw);
+
+  @protected
+  ListSwapsRequest dco_decode_list_swaps_request(dynamic raw);
+
+  @protected
   List<TlvEntry> dco_decode_list_tlv_entry(dynamic raw);
 
   @protected
@@ -505,6 +514,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<SwapStatus>? dco_decode_opt_list_swap_status(dynamic raw);
 
   @protected
   List<TlvEntry>? dco_decode_opt_list_tlv_entry(dynamic raw);
@@ -763,6 +775,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   ListPaymentsRequest sse_decode_box_autoadd_list_payments_request(SseDeserializer deserializer);
 
   @protected
+  ListSwapsRequest sse_decode_box_autoadd_list_swaps_request(SseDeserializer deserializer);
+
+  @protected
   LNInvoice sse_decode_box_autoadd_ln_invoice(SseDeserializer deserializer);
 
   @protected
@@ -1010,6 +1025,12 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   List<SwapInfo> sse_decode_list_swap_info(SseDeserializer deserializer);
 
   @protected
+  List<SwapStatus> sse_decode_list_swap_status(SseDeserializer deserializer);
+
+  @protected
+  ListSwapsRequest sse_decode_list_swaps_request(SseDeserializer deserializer);
+
+  @protected
   List<TlvEntry> sse_decode_list_tlv_entry(SseDeserializer deserializer);
 
   @protected
@@ -1161,6 +1182,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   Uint8List? sse_decode_opt_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<SwapStatus>? sse_decode_opt_list_swap_status(SseDeserializer deserializer);
 
   @protected
   List<TlvEntry>? sse_decode_opt_list_tlv_entry(SseDeserializer deserializer);
@@ -1513,6 +1537,14 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     // Codec=Cst (C-struct based), see doc to use other codecs
     final ptr = wire.cst_new_box_autoadd_list_payments_request();
     cst_api_fill_to_wire_list_payments_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
+  ffi.Pointer<wire_cst_list_swaps_request> cst_encode_box_autoadd_list_swaps_request(ListSwapsRequest raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    final ptr = wire.cst_new_box_autoadd_list_swaps_request();
+    cst_api_fill_to_wire_list_swaps_request(raw, ptr.ref);
     return ptr;
   }
 
@@ -2032,6 +2064,16 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   }
 
   @protected
+  ffi.Pointer<wire_cst_list_swap_status> cst_encode_list_swap_status(List<SwapStatus> raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    final ans = wire.cst_new_list_swap_status(raw.length);
+    for (var i = 0; i < raw.length; ++i) {
+      ans.ref.ptr[i] = cst_encode_swap_status(raw[i]);
+    }
+    return ans;
+  }
+
+  @protected
   ffi.Pointer<wire_cst_list_tlv_entry> cst_encode_list_tlv_entry(List<TlvEntry> raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     final ans = wire.cst_new_list_tlv_entry(raw.length);
@@ -2168,6 +2210,12 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   ffi.Pointer<wire_cst_list_prim_u_8_strict> cst_encode_opt_list_prim_u_8_strict(Uint8List? raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     return raw == null ? ffi.nullptr : cst_encode_list_prim_u_8_strict(raw);
+  }
+
+  @protected
+  ffi.Pointer<wire_cst_list_swap_status> cst_encode_opt_list_swap_status(List<SwapStatus>? raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    return raw == null ? ffi.nullptr : cst_encode_list_swap_status(raw);
   }
 
   @protected
@@ -2319,6 +2367,12 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void cst_api_fill_to_wire_box_autoadd_list_payments_request(
       ListPaymentsRequest apiObj, ffi.Pointer<wire_cst_list_payments_request> wireObj) {
     cst_api_fill_to_wire_list_payments_request(apiObj, wireObj.ref);
+  }
+
+  @protected
+  void cst_api_fill_to_wire_box_autoadd_list_swaps_request(
+      ListSwapsRequest apiObj, ffi.Pointer<wire_cst_list_swaps_request> wireObj) {
+    cst_api_fill_to_wire_list_swaps_request(apiObj, wireObj.ref);
   }
 
   @protected
@@ -2789,6 +2843,15 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     wireObj.from_timestamp = cst_encode_opt_box_autoadd_i_64(apiObj.fromTimestamp);
     wireObj.to_timestamp = cst_encode_opt_box_autoadd_i_64(apiObj.toTimestamp);
     wireObj.include_failures = cst_encode_opt_box_autoadd_bool(apiObj.includeFailures);
+    wireObj.offset = cst_encode_opt_box_autoadd_u_32(apiObj.offset);
+    wireObj.limit = cst_encode_opt_box_autoadd_u_32(apiObj.limit);
+  }
+
+  @protected
+  void cst_api_fill_to_wire_list_swaps_request(ListSwapsRequest apiObj, wire_cst_list_swaps_request wireObj) {
+    wireObj.status = cst_encode_opt_list_swap_status(apiObj.status);
+    wireObj.from_timestamp = cst_encode_opt_box_autoadd_i_64(apiObj.fromTimestamp);
+    wireObj.to_timestamp = cst_encode_opt_box_autoadd_i_64(apiObj.toTimestamp);
     wireObj.offset = cst_encode_opt_box_autoadd_u_32(apiObj.offset);
     wireObj.limit = cst_encode_opt_box_autoadd_u_32(apiObj.limit);
   }
@@ -3624,6 +3687,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void sse_encode_box_autoadd_list_payments_request(ListPaymentsRequest self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_list_swaps_request(ListSwapsRequest self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_ln_invoice(LNInvoice self, SseSerializer serializer);
 
   @protected
@@ -3876,6 +3942,12 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void sse_encode_list_swap_info(List<SwapInfo> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_swap_status(List<SwapStatus> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_swaps_request(ListSwapsRequest self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_tlv_entry(List<TlvEntry> self, SseSerializer serializer);
 
   @protected
@@ -4032,6 +4104,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   void sse_encode_opt_list_prim_u_8_strict(Uint8List? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_list_swap_status(List<SwapStatus>? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_list_tlv_entry(List<TlvEntry>? self, SseSerializer serializer);
@@ -4655,6 +4730,22 @@ class BreezSdkBindingsWire implements BaseWire {
           'frbgen_breez_sdk_wire__crate__binding__list_refundables');
   late final _wire__crate__binding__list_refundables =
       _wire__crate__binding__list_refundablesPtr.asFunction<void Function(int)>();
+
+  void wire__crate__binding__list_swaps(
+    int port_,
+    ffi.Pointer<wire_cst_list_swaps_request> req,
+  ) {
+    return _wire__crate__binding__list_swaps(
+      port_,
+      req,
+    );
+  }
+
+  late final _wire__crate__binding__list_swapsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_cst_list_swaps_request>)>>(
+          'frbgen_breez_sdk_wire__crate__binding__list_swaps');
+  late final _wire__crate__binding__list_swaps = _wire__crate__binding__list_swapsPtr
+      .asFunction<void Function(int, ffi.Pointer<wire_cst_list_swaps_request>)>();
 
   void wire__crate__binding__lnurl_auth(
     int port_,
@@ -5415,6 +5506,16 @@ class BreezSdkBindingsWire implements BaseWire {
   late final _cst_new_box_autoadd_list_payments_request = _cst_new_box_autoadd_list_payments_requestPtr
       .asFunction<ffi.Pointer<wire_cst_list_payments_request> Function()>();
 
+  ffi.Pointer<wire_cst_list_swaps_request> cst_new_box_autoadd_list_swaps_request() {
+    return _cst_new_box_autoadd_list_swaps_request();
+  }
+
+  late final _cst_new_box_autoadd_list_swaps_requestPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_cst_list_swaps_request> Function()>>(
+          'frbgen_breez_sdk_cst_new_box_autoadd_list_swaps_request');
+  late final _cst_new_box_autoadd_list_swaps_request = _cst_new_box_autoadd_list_swaps_requestPtr
+      .asFunction<ffi.Pointer<wire_cst_list_swaps_request> Function()>();
+
   ffi.Pointer<wire_cst_ln_invoice> cst_new_box_autoadd_ln_invoice() {
     return _cst_new_box_autoadd_ln_invoice();
   }
@@ -6065,6 +6166,20 @@ class BreezSdkBindingsWire implements BaseWire {
   late final _cst_new_list_swap_info =
       _cst_new_list_swap_infoPtr.asFunction<ffi.Pointer<wire_cst_list_swap_info> Function(int)>();
 
+  ffi.Pointer<wire_cst_list_swap_status> cst_new_list_swap_status(
+    int len,
+  ) {
+    return _cst_new_list_swap_status(
+      len,
+    );
+  }
+
+  late final _cst_new_list_swap_statusPtr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_cst_list_swap_status> Function(ffi.Int32)>>(
+          'frbgen_breez_sdk_cst_new_list_swap_status');
+  late final _cst_new_list_swap_status =
+      _cst_new_list_swap_statusPtr.asFunction<ffi.Pointer<wire_cst_list_swap_status> Function(int)>();
+
   ffi.Pointer<wire_cst_list_tlv_entry> cst_new_list_tlv_entry(
     int len,
   ) {
@@ -6639,6 +6754,25 @@ final class wire_cst_list_payments_request extends ffi.Struct {
   external ffi.Pointer<ffi.Int64> to_timestamp;
 
   external ffi.Pointer<ffi.Bool> include_failures;
+
+  external ffi.Pointer<ffi.Uint32> offset;
+
+  external ffi.Pointer<ffi.Uint32> limit;
+}
+
+final class wire_cst_list_swap_status extends ffi.Struct {
+  external ffi.Pointer<ffi.Int32> ptr;
+
+  @ffi.Int32()
+  external int len;
+}
+
+final class wire_cst_list_swaps_request extends ffi.Struct {
+  external ffi.Pointer<wire_cst_list_swap_status> status;
+
+  external ffi.Pointer<ffi.Int64> from_timestamp;
+
+  external ffi.Pointer<ffi.Int64> to_timestamp;
 
   external ffi.Pointer<ffi.Uint32> offset;
 

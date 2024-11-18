@@ -207,6 +207,10 @@ Future<void> redeemSwap({required String swapAddress}) =>
 /// See [BreezServices::in_progress_swap]
 Future<SwapInfo?> inProgressSwap() => BreezSdkBindings.instance.api.crateBindingInProgressSwap();
 
+/// See [BreezServices::list_swaps]
+Future<List<SwapInfo>> listSwaps({required ListSwapsRequest req}) =>
+    BreezSdkBindings.instance.api.crateBindingListSwaps(req: req);
+
 /// See [BreezServices::in_progress_reverse_swaps]
 Future<List<ReverseSwapInfo>> inProgressReverseSwaps() =>
     BreezSdkBindings.instance.api.crateBindingInProgressReverseSwaps();
