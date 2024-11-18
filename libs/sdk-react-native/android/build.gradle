@@ -1,7 +1,7 @@
 import groovy.json.JsonSlurper
 
 def getVersionFromNpmPackage() {
-    def inputFile = new File("$rootDir/../node_modules/@breeztech/react-native-breez-sdk/package.json")
+    def inputFile = new File("$projectDir/../package.json")
     def packageJson = new JsonSlurper().parseText(inputFile.text)
 
     return packageJson["version"]
@@ -50,7 +50,7 @@ repositories {
     mavenLocal()
     maven {
         // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-        url("$rootDir/../node_modules/react-native/android")
+        url("$projectDir")
     }
     google()
     mavenCentral {
