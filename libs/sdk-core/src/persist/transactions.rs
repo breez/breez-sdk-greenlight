@@ -560,6 +560,10 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             lockup_txid: Some("lockup_txid".to_string()),
             claim_txid: Some("claim_txid".to_string()),
         },
+        fees_lockup: 0,
+        fees_claim: 0,
+        fees_service: 0,
+        total_fees: 0,
     };
     let rev_swap_info = ReverseSwapInfo {
         id: "rev_swap_id".to_string(),
@@ -568,6 +572,10 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         claim_txid: Some("claim_txid".to_string()),
         onchain_amount_sat: 250,
         status: ReverseSwapStatus::CompletedConfirmed,
+        fees_lockup: 0,
+        fees_claim: 0,
+        fees_service: 0,
+        total_fees: 0,
     };
     let txs = [
         Payment {

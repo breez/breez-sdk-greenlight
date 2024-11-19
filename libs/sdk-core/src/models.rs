@@ -168,6 +168,11 @@ pub struct FullReverseSwapInfo {
     pub receive_amount_sat: Option<u64>,
 
     pub cache: ReverseSwapInfoCached,
+
+    pub fees_lockup: u64,
+    pub fees_claim: u64,
+    pub fees_service: u64,
+    pub total_fees: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -316,6 +321,10 @@ impl FullReverseSwapInfo {
             claim_txid: self.cache.claim_txid.clone(),
             onchain_amount_sat: self.onchain_amount_sat,
             status: self.cache.status,
+            fees_lockup: self.fees_lockup,
+            fees_claim: self.fees_claim,
+            fees_service: self.fees_service,
+            total_fees: self.total_fees,
         }
     }
 }
@@ -331,6 +340,10 @@ pub struct ReverseSwapInfo {
     pub claim_txid: Option<String>,
     pub onchain_amount_sat: u64,
     pub status: ReverseSwapStatus,
+    pub fees_lockup: u64,
+    pub fees_claim: u64,
+    pub fees_service: u64,
+    pub total_fees: u64,
 }
 
 /// The possible statuses of a reverse swap, from the Breez SDK perspective.
@@ -793,12 +806,6 @@ pub struct ReverseSwapFeesRequest {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct MaxReverseSwapAmountResponse {
-    /// The total sats that can be sent onchain.
-    pub total_sat: u64,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MaxChannelAmount {
     /// The channel id.
     pub channel_id: String,
@@ -997,18 +1004,6 @@ pub struct RedeemOnchainFundsResponse {
     pub txid: Vec<u8>,
 }
 
-#[derive(Clone)]
-pub struct SendOnchainRequest {
-    pub amount_sat: u64,
-    pub onchain_recipient_address: String,
-    pub pair_hash: String,
-    pub sat_per_vbyte: u32,
-}
-
-pub struct SendOnchainResponse {
-    pub reverse_swap_info: ReverseSwapInfo,
-}
-
 pub enum SwapAmountType {
     Send,
     Receive,
@@ -1042,7 +1037,7 @@ pub struct PrepareOnchainPaymentResponse {
     pub fees_percentage: f64,
     pub fees_lockup: u64,
     pub fees_claim: u64,
-
+    pub fees_service: u64,
     pub sender_amount_sat: u64,
     pub recipient_amount_sat: u64,
     pub total_fees: u64,
@@ -1835,6 +1830,10 @@ mod tests {
                 lockup_txid: Some("lockup_txid".to_string()),
                 claim_txid: Some("claim_txid".to_string()),
             },
+            fees_lockup: 0,
+            fees_claim: 0,
+            fees_service: 0,
+            total_fees: 0,
         }
         .sanitize();
         assert_eq!(rev_swap_info_sanitized.preimage, Vec::<u8>::new());

@@ -1650,38 +1650,6 @@ fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
     return list
 }
 
-fun asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: ReadableMap): MaxReverseSwapAmountResponse? {
-    if (!validateMandatoryFields(
-            maxReverseSwapAmountResponse,
-            arrayOf(
-                "totalSat",
-            ),
-        )
-    ) {
-        return null
-    }
-    val totalSat = maxReverseSwapAmountResponse.getDouble("totalSat").toULong()
-    return MaxReverseSwapAmountResponse(
-        totalSat,
-    )
-}
-
-fun readableMapOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse): ReadableMap =
-    readableMapOf(
-        "totalSat" to maxReverseSwapAmountResponse.totalSat,
-    )
-
-fun asMaxReverseSwapAmountResponseList(arr: ReadableArray): List<MaxReverseSwapAmountResponse> {
-    val list = ArrayList<MaxReverseSwapAmountResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asMaxReverseSwapAmountResponse(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
 fun asMessageSuccessActionData(messageSuccessActionData: ReadableMap): MessageSuccessActionData? {
     if (!validateMandatoryFields(
             messageSuccessActionData,
@@ -2290,6 +2258,7 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
                 "feesPercentage",
                 "feesLockup",
                 "feesClaim",
+                "feesService",
                 "senderAmountSat",
                 "recipientAmountSat",
                 "totalFees",
@@ -2302,6 +2271,7 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
     val feesPercentage = prepareOnchainPaymentResponse.getDouble("feesPercentage")
     val feesLockup = prepareOnchainPaymentResponse.getDouble("feesLockup").toULong()
     val feesClaim = prepareOnchainPaymentResponse.getDouble("feesClaim").toULong()
+    val feesService = prepareOnchainPaymentResponse.getDouble("feesService").toULong()
     val senderAmountSat = prepareOnchainPaymentResponse.getDouble("senderAmountSat").toULong()
     val recipientAmountSat = prepareOnchainPaymentResponse.getDouble("recipientAmountSat").toULong()
     val totalFees = prepareOnchainPaymentResponse.getDouble("totalFees").toULong()
@@ -2310,6 +2280,7 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
         feesPercentage,
         feesLockup,
         feesClaim,
+        feesService,
         senderAmountSat,
         recipientAmountSat,
         totalFees,
@@ -2322,6 +2293,7 @@ fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse):
         "feesPercentage" to prepareOnchainPaymentResponse.feesPercentage,
         "feesLockup" to prepareOnchainPaymentResponse.feesLockup,
         "feesClaim" to prepareOnchainPaymentResponse.feesClaim,
+        "feesService" to prepareOnchainPaymentResponse.feesService,
         "senderAmountSat" to prepareOnchainPaymentResponse.senderAmountSat,
         "recipientAmountSat" to prepareOnchainPaymentResponse.recipientAmountSat,
         "totalFees" to prepareOnchainPaymentResponse.totalFees,
@@ -2981,6 +2953,10 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
                 "claimPubkey",
                 "onchainAmountSat",
                 "status",
+                "feesLockup",
+                "feesClaim",
+                "feesService",
+                "totalFees",
             ),
         )
     ) {
@@ -2992,6 +2968,10 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
     val claimTxid = if (hasNonNullKey(reverseSwapInfo, "claimTxid")) reverseSwapInfo.getString("claimTxid") else null
     val onchainAmountSat = reverseSwapInfo.getDouble("onchainAmountSat").toULong()
     val status = reverseSwapInfo.getString("status")?.let { asReverseSwapStatus(it) }!!
+    val feesLockup = reverseSwapInfo.getDouble("feesLockup").toULong()
+    val feesClaim = reverseSwapInfo.getDouble("feesClaim").toULong()
+    val feesService = reverseSwapInfo.getDouble("feesService").toULong()
+    val totalFees = reverseSwapInfo.getDouble("totalFees").toULong()
     return ReverseSwapInfo(
         id,
         claimPubkey,
@@ -2999,6 +2979,10 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
         claimTxid,
         onchainAmountSat,
         status,
+        feesLockup,
+        feesClaim,
+        feesService,
+        totalFees,
     )
 }
 
@@ -3010,6 +2994,10 @@ fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap =
         "claimTxid" to reverseSwapInfo.claimTxid,
         "onchainAmountSat" to reverseSwapInfo.onchainAmountSat,
         "status" to reverseSwapInfo.status.name.lowercase(),
+        "feesLockup" to reverseSwapInfo.feesLockup,
+        "feesClaim" to reverseSwapInfo.feesClaim,
+        "feesService" to reverseSwapInfo.feesService,
+        "totalFees" to reverseSwapInfo.totalFees,
     )
 
 fun asReverseSwapInfoList(arr: ReadableArray): List<ReverseSwapInfo> {
@@ -3158,82 +3146,6 @@ fun asRouteHintHopList(arr: ReadableArray): List<RouteHintHop> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asRouteHintHop(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asSendOnchainRequest(sendOnchainRequest: ReadableMap): SendOnchainRequest? {
-    if (!validateMandatoryFields(
-            sendOnchainRequest,
-            arrayOf(
-                "amountSat",
-                "onchainRecipientAddress",
-                "pairHash",
-                "satPerVbyte",
-            ),
-        )
-    ) {
-        return null
-    }
-    val amountSat = sendOnchainRequest.getDouble("amountSat").toULong()
-    val onchainRecipientAddress = sendOnchainRequest.getString("onchainRecipientAddress")!!
-    val pairHash = sendOnchainRequest.getString("pairHash")!!
-    val satPerVbyte = sendOnchainRequest.getInt("satPerVbyte").toUInt()
-    return SendOnchainRequest(
-        amountSat,
-        onchainRecipientAddress,
-        pairHash,
-        satPerVbyte,
-    )
-}
-
-fun readableMapOf(sendOnchainRequest: SendOnchainRequest): ReadableMap =
-    readableMapOf(
-        "amountSat" to sendOnchainRequest.amountSat,
-        "onchainRecipientAddress" to sendOnchainRequest.onchainRecipientAddress,
-        "pairHash" to sendOnchainRequest.pairHash,
-        "satPerVbyte" to sendOnchainRequest.satPerVbyte,
-    )
-
-fun asSendOnchainRequestList(arr: ReadableArray): List<SendOnchainRequest> {
-    val list = ArrayList<SendOnchainRequest>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asSendOnchainRequest(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asSendOnchainResponse(sendOnchainResponse: ReadableMap): SendOnchainResponse? {
-    if (!validateMandatoryFields(
-            sendOnchainResponse,
-            arrayOf(
-                "reverseSwapInfo",
-            ),
-        )
-    ) {
-        return null
-    }
-    val reverseSwapInfo = sendOnchainResponse.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
-    return SendOnchainResponse(
-        reverseSwapInfo,
-    )
-}
-
-fun readableMapOf(sendOnchainResponse: SendOnchainResponse): ReadableMap =
-    readableMapOf(
-        "reverseSwapInfo" to readableMapOf(sendOnchainResponse.reverseSwapInfo),
-    )
-
-fun asSendOnchainResponseList(arr: ReadableArray): List<SendOnchainResponse> {
-    val list = ArrayList<SendOnchainResponse>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asSendOnchainResponse(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

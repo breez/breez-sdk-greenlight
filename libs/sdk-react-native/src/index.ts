@@ -270,10 +270,6 @@ export interface LspInformation {
     openingFeeParamsList: OpeningFeeParamsMenu
 }
 
-export interface MaxReverseSwapAmountResponse {
-    totalSat: number
-}
-
 export interface MessageSuccessActionData {
     message: string
 }
@@ -373,6 +369,7 @@ export interface PrepareOnchainPaymentResponse {
     feesPercentage: number
     feesLockup: number
     feesClaim: number
+    feesService: number
     senderAmountSat: number
     recipientAmountSat: number
     totalFees: number
@@ -468,6 +465,10 @@ export interface ReverseSwapInfo {
     claimTxid?: string
     onchainAmountSat: number
     status: ReverseSwapStatus
+    feesLockup: number
+    feesClaim: number
+    feesService: number
+    totalFees: number
 }
 
 export interface ReverseSwapPairInfo {
@@ -492,17 +493,6 @@ export interface RouteHintHop {
     cltvExpiryDelta: number
     htlcMinimumMsat?: number
     htlcMaximumMsat?: number
-}
-
-export interface SendOnchainRequest {
-    amountSat: number
-    onchainRecipientAddress: string
-    pairHash: string
-    satPerVbyte: number
-}
-
-export interface SendOnchainResponse {
-    reverseSwapInfo: ReverseSwapInfo
 }
 
 export interface SendPaymentRequest {
@@ -1117,23 +1107,8 @@ export const inProgressOnchainPayments = async (): Promise<ReverseSwapInfo[]> =>
     return response
 }
 
-export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
-    const response = await BreezSDK.inProgressReverseSwaps()
-    return response
-}
-
 export const claimReverseSwap = async (lockupAddress: string): Promise<void> => {
     await BreezSDK.claimReverseSwap(lockupAddress)
-}
-
-export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountResponse> => {
-    const response = await BreezSDK.maxReverseSwapAmount()
-    return response
-}
-
-export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainResponse> => {
-    const response = await BreezSDK.sendOnchain(req)
-    return response
 }
 
 export const payOnchain = async (req: PayOnchainRequest): Promise<PayOnchainResponse> => {

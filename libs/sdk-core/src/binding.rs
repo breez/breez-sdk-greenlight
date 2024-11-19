@@ -39,16 +39,16 @@ use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
     ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, ListSwapsRequest,
-    LnUrlAuthError, MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials,
-    OnchainPaymentLimitsResponse, OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest,
-    PayOnchainResponse, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
-    PrepareRefundResponse, ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
+    LnUrlAuthError, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
+    OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
+    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
     ReportIssueRequest, ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo,
-    SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SendPaymentRequest, SendPaymentResponse, SendSpontaneousPaymentRequest,
+    ServiceHealthCheckResponse, SignMessageRequest, SignMessageResponse, StaticBackupRequest,
+    StaticBackupResponse,
 };
 
 // === FRB mirroring
@@ -601,20 +601,6 @@ pub fn list_fiat_currencies() -> Result<Vec<FiatCurrency>> {
 
 /*  On-Chain Swap API's */
 
-/// See [BreezServices::max_reverse_swap_amount]
-pub fn max_reverse_swap_amount() -> Result<MaxReverseSwapAmountResponse> {
-    #[allow(deprecated)]
-    block_on(async { get_breez_services().await?.max_reverse_swap_amount().await })
-        .map_err(anyhow::Error::new::<SdkError>)
-}
-
-/// See [BreezServices::send_onchain]
-pub fn send_onchain(req: SendOnchainRequest) -> Result<SendOnchainResponse> {
-    #[allow(deprecated)]
-    block_on(async { get_breez_services().await?.send_onchain(req).await })
-        .map_err(anyhow::Error::new::<SendOnchainError>)
-}
-
 /// See [BreezServices::pay_onchain]
 pub fn pay_onchain(req: PayOnchainRequest) -> Result<PayOnchainResponse> {
     block_on(async { get_breez_services().await?.pay_onchain(req).await })
@@ -696,18 +682,6 @@ pub fn in_progress_swap() -> Result<Option<SwapInfo>> {
 pub fn list_swaps(req: ListSwapsRequest) -> Result<Vec<SwapInfo>> {
     block_on(async { get_breez_services().await?.list_swaps(req).await })
         .map_err(anyhow::Error::new::<SdkError>)
-}
-
-/// See [BreezServices::in_progress_reverse_swaps]
-pub fn in_progress_reverse_swaps() -> Result<Vec<ReverseSwapInfo>> {
-    #[allow(deprecated)]
-    block_on(async {
-        get_breez_services()
-            .await?
-            .in_progress_reverse_swaps()
-            .await
-    })
-    .map_err(anyhow::Error::new::<SdkError>)
 }
 
 /// See [BreezServices::claim_reverse_swap]

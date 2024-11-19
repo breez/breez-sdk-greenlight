@@ -562,6 +562,14 @@ impl From<ReverseSwapError> for SendOnchainError {
     }
 }
 
+impl From<PersistError> for SendOnchainError {
+    fn from(err: PersistError) -> Self {
+        Self::Generic {
+            err: err.to_string(),
+        }
+    }
+}
+
 /// Error returned by [crate::breez_services::BreezServices::send_payment] and [crate::breez_services::BreezServices::send_spontaneous_payment]
 #[derive(Clone, Debug, Error)]
 pub enum SendPaymentError {

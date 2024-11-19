@@ -130,7 +130,8 @@ class BreezSDK {
   /// Attempts to convert the phrase to a mnemonic, then to a seed.
   ///
   /// If the phrase is not a valid mnemonic, an error is returned.
-  Future<Uint8List> mnemonicToSeed(String phrase) async => await _lnToolkit.mnemonicToSeed(phrase: phrase);
+  Future<Uint8List> mnemonicToSeed(String phrase) async =>
+      await _lnToolkit.mnemonicToSeed(phrase: phrase);
 
   /// Get the full default config for a specific environment type
   Future<Config> defaultConfig({
@@ -178,7 +179,8 @@ class BreezSDK {
   Future<LspInformation?> lspInfo() async => await _lnToolkit.lspInfo();
 
   /// Convenience method to look up [LspInformation] for a given LSP ID
-  Future<LspInformation?> fetchLspInfo(String lspId) async => await _lnToolkit.fetchLspInfo(id: lspId);
+  Future<LspInformation?> fetchLspInfo(String lspId) async =>
+      await _lnToolkit.fetchLspInfo(id: lspId);
 
   /// close all channels with the current lsp
   Future closeLspChannels() async => await _lnToolkit.closeLspChannels();
@@ -199,10 +201,12 @@ class BreezSDK {
   /* Parse API's */
 
   /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
-  Future<LNInvoice> parseInvoice(String invoice) async => await _lnToolkit.parseInvoice(invoice: invoice);
+  Future<LNInvoice> parseInvoice(String invoice) async =>
+      await _lnToolkit.parseInvoice(invoice: invoice);
 
   /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
-  Future<InputType> parseInput({required String input}) async => await _lnToolkit.parseInput(input: input);
+  Future<InputType> parseInput({required String input}) async =>
+      await _lnToolkit.parseInput(input: input);
 
   /// Get the static backup data.
   Future<StaticBackupResponse> staticBackup({
@@ -322,17 +326,6 @@ class BreezSDK {
 
   /* On-Chain Swap API's */
 
-  /// Creates a reverse swap and attempts to pay the HODL invoice
-  @Deprecated(
-    'Use payOnchain instead. '
-    'This method was deprecated after v0.3.2',
-  )
-  Future<SendOnchainResponse> sendOnchain({
-    required SendOnchainRequest req,
-  }) async {
-    return await _lnToolkit.sendOnchain(req: req);
-  }
-
   Future<OnchainPaymentLimitsResponse> onchainPaymentLimits() async {
     return await _lnToolkit.onchainPaymentLimits();
   }
@@ -365,15 +358,6 @@ class BreezSDK {
     final redeemOnchainFundsResponse = await _lnToolkit.redeemOnchainFunds(req: req);
     await listPayments(req: const ListPaymentsRequest());
     return redeemOnchainFundsResponse;
-  }
-
-  /// Returns the max amount that can be sent on-chain using the send_onchain method.
-  /// The returned amount is the sum of the max amount that can be sent on each channel
-  /// minus the expected fees.
-  /// This is possible since the route to the swapper node is known in advance and is expected
-  /// to consist of maximum 3 hops.
-  Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount() async {
-    return await _lnToolkit.maxReverseSwapAmount();
   }
 
   /* Refundables API's */
@@ -420,13 +404,6 @@ class BreezSDK {
     return await _lnToolkit.redeemSwap(swapAddress: swapAddress);
   }
 
-  /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  @Deprecated(
-    'Use inProgressOnchainPayments instead. '
-    'This method was deprecated after v0.3.6',
-  )
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => _lnToolkit.inProgressReverseSwaps();
-
   /// Claims an individual reverse swap.
   ///
   /// To be used only in the context of mobile notifications, where the notification triggers
@@ -467,7 +444,8 @@ class BreezSDK {
   }
 
   /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  Future<List<ReverseSwapInfo>> inProgressOnchainPayments() async => _lnToolkit.inProgressOnchainPayments();
+  Future<List<ReverseSwapInfo>> inProgressOnchainPayments() async =>
+      _lnToolkit.inProgressOnchainPayments();
 
   /// Fetches the current recommended fees
   Future<RecommendedFees> recommendedFees() async => await _lnToolkit.recommendedFees();

@@ -50,7 +50,6 @@ use crate::models::ListPaymentsRequest;
 use crate::models::ListSwapsRequest;
 use crate::models::LnPaymentDetails;
 use crate::models::LogEntry;
-use crate::models::MaxReverseSwapAmountResponse;
 use crate::models::MetadataFilter;
 use crate::models::NodeConfig;
 use crate::models::NodeCredentials;
@@ -86,8 +85,6 @@ use crate::models::ReverseSwapFeesRequest;
 use crate::models::ReverseSwapInfo;
 use crate::models::ReverseSwapPairInfo;
 use crate::models::ReverseSwapStatus;
-use crate::models::SendOnchainRequest;
-use crate::models::SendOnchainResponse;
 use crate::models::SendPaymentRequest;
 use crate::models::SendPaymentResponse;
 use crate::models::SendSpontaneousPaymentRequest;
@@ -607,29 +604,6 @@ fn wire_list_fiat_currencies_impl(port_: MessagePort) {
         move || move |task_callback| list_fiat_currencies(),
     )
 }
-fn wire_max_reverse_swap_amount_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, MaxReverseSwapAmountResponse, _>(
-        WrapInfo {
-            debug_name: "max_reverse_swap_amount",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| max_reverse_swap_amount(),
-    )
-}
-fn wire_send_onchain_impl(port_: MessagePort, req: impl Wire2Api<SendOnchainRequest> + UnwindSafe) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, SendOnchainResponse, _>(
-        WrapInfo {
-            debug_name: "send_onchain",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || {
-            let api_req = req.wire2api();
-            move |task_callback| send_onchain(api_req)
-        },
-    )
-}
 fn wire_pay_onchain_impl(port_: MessagePort, req: impl Wire2Api<PayOnchainRequest> + UnwindSafe) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, PayOnchainResponse, _>(
         WrapInfo {
@@ -787,16 +761,6 @@ fn wire_list_swaps_impl(port_: MessagePort, req: impl Wire2Api<ListSwapsRequest>
             let api_req = req.wire2api();
             move |task_callback| list_swaps(api_req)
         },
-    )
-}
-fn wire_in_progress_reverse_swaps_impl(port_: MessagePort) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, Vec<ReverseSwapInfo>, _>(
-        WrapInfo {
-            debug_name: "in_progress_reverse_swaps",
-            port: Some(port_),
-            mode: FfiCallMode::Normal,
-        },
-        move || move |task_callback| in_progress_reverse_swaps(),
     )
 }
 fn wire_claim_reverse_swap_impl(
@@ -1993,18 +1957,6 @@ impl rust2dart::IntoIntoDart<LspInformation> for LspInformation {
     }
 }
 
-impl support::IntoDart for MaxReverseSwapAmountResponse {
-    fn into_dart(self) -> support::DartAbi {
-        vec![self.total_sat.into_into_dart().into_dart()].into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for MaxReverseSwapAmountResponse {}
-impl rust2dart::IntoIntoDart<MaxReverseSwapAmountResponse> for MaxReverseSwapAmountResponse {
-    fn into_into_dart(self) -> Self {
-        self
-    }
-}
-
 impl support::IntoDart for mirror_MessageSuccessActionData {
     fn into_dart(self) -> support::DartAbi {
         vec![self.0.message.into_into_dart().into_dart()].into_dart()
@@ -2278,6 +2230,7 @@ impl support::IntoDart for PrepareOnchainPaymentResponse {
             self.fees_percentage.into_into_dart().into_dart(),
             self.fees_lockup.into_into_dart().into_dart(),
             self.fees_claim.into_into_dart().into_dart(),
+            self.fees_service.into_into_dart().into_dart(),
             self.sender_amount_sat.into_into_dart().into_dart(),
             self.recipient_amount_sat.into_into_dart().into_dart(),
             self.total_fees.into_into_dart().into_dart(),
@@ -2411,6 +2364,10 @@ impl support::IntoDart for ReverseSwapInfo {
             self.claim_txid.into_dart(),
             self.onchain_amount_sat.into_into_dart().into_dart(),
             self.status.into_into_dart().into_dart(),
+            self.fees_lockup.into_into_dart().into_dart(),
+            self.fees_claim.into_into_dart().into_dart(),
+            self.fees_service.into_into_dart().into_dart(),
+            self.total_fees.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -2495,18 +2452,6 @@ impl support::IntoDartExceptPrimitive for mirror_RouteHintHop {}
 impl rust2dart::IntoIntoDart<mirror_RouteHintHop> for RouteHintHop {
     fn into_into_dart(self) -> mirror_RouteHintHop {
         mirror_RouteHintHop(self)
-    }
-}
-
-impl support::IntoDart for SendOnchainResponse {
-    fn into_dart(self) -> support::DartAbi {
-        vec![self.reverse_swap_info.into_into_dart().into_dart()].into_dart()
-    }
-}
-impl support::IntoDartExceptPrimitive for SendOnchainResponse {}
-impl rust2dart::IntoIntoDart<SendOnchainResponse> for SendOnchainResponse {
-    fn into_into_dart(self) -> Self {
-        self
     }
 }
 

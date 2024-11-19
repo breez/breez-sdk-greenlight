@@ -28,7 +28,7 @@ use crate::swap_in::swap::create_swap_keys;
 use crate::{
     ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
     ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
-    ReverseSwapStatus::*, RouteHintHop, SendOnchainRequest,
+    ReverseSwapStatus::*, RouteHintHop,
 };
 
 // Estimates based on https://github.com/BoltzExchange/boltz-backend/blob/master/lib/rates/FeeProvider.ts#L31-L42
@@ -73,34 +73,6 @@ impl From<&Option<OnchainTx>> for TxStatus {
                 Some(_) => TxStatus::Confirmed,
                 None => TxStatus::Mempool,
             },
-        }
-    }
-}
-
-#[derive(Clone)]
-pub(crate) enum CreateReverseSwapArg {
-    /// Used for backward compatibility with older SDK nodes. Works with the [FullReverseSwapInfo]
-    /// `sat_per_vbyte` instead of the newer `receive_amount_sat`.
-    V1(SendOnchainRequest),
-    V2(PayOnchainRequest),
-}
-impl CreateReverseSwapArg {
-    fn pair_hash(&self) -> String {
-        match self {
-            CreateReverseSwapArg::V1(s) => s.pair_hash.clone(),
-            CreateReverseSwapArg::V2(s) => s.prepare_res.fees_hash.clone(),
-        }
-    }
-    fn send_amount_sat(&self) -> u64 {
-        match self {
-            CreateReverseSwapArg::V1(s) => s.amount_sat,
-            CreateReverseSwapArg::V2(s) => s.prepare_res.sender_amount_sat,
-        }
-    }
-    fn onchain_recipient_address(&self) -> String {
-        match self {
-            CreateReverseSwapArg::V1(s) => s.onchain_recipient_address.clone(),
-            CreateReverseSwapArg::V2(s) => s.recipient_address.clone(),
         }
     }
 }
@@ -213,9 +185,9 @@ impl BTCSendSwap {
     /// status persisted.
     pub(crate) async fn create_reverse_swap(
         &self,
-        req: CreateReverseSwapArg,
+        req: PayOnchainRequest,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
-        Self::validate_recipient_address(&req.onchain_recipient_address())?;
+        Self::validate_recipient_address(&req.recipient_address)?;
 
         let routing_node = self
             .reverse_swapper_api
@@ -226,38 +198,35 @@ impl BTCSendSwap {
             .create_and_validate_rev_swap_on_remote(req.clone(), routing_node)
             .await?;
 
-        // For v2 reverse swaps, we perform validation on the created swap
-        if let CreateReverseSwapArg::V2(req) = req {
-            trace!("create_rev_swap v2 request: {req:?}");
-            trace!("create_rev_swap v2 created_rsi: {created_rsi:?}");
+        // Perform validation on the created swap
+        trace!("create_rev_swap v2 request: {req:?}");
+        trace!("create_rev_swap v2 created_rsi: {created_rsi:?}");
 
-            // Validate send_amount
-            let request_send_amount_sat = req.prepare_res.sender_amount_sat;
-            let request_send_amount_msat = request_send_amount_sat * 1_000;
-            created_rsi.validate_invoice_amount(request_send_amount_msat)?;
+        // Validate send_amount
+        let request_send_amount_sat = req.prepare_res.sender_amount_sat;
+        let request_send_amount_msat = request_send_amount_sat * 1_000;
+        created_rsi.validate_invoice_amount(request_send_amount_msat)?;
 
-            // Validate onchain_amount
-            let lockup_fee_sat = req.prepare_res.fees_lockup;
-            let service_fee_sat = super::get_service_fee_sat(
-                req.prepare_res.sender_amount_sat,
-                req.prepare_res.fees_percentage,
-            );
-            trace!("create_rev_swap v2 service_fee_sat: {service_fee_sat} sat");
-            let expected_onchain_amount =
-                request_send_amount_sat - service_fee_sat - lockup_fee_sat;
-            ensure_sdk!(
-                created_rsi.onchain_amount_sat == expected_onchain_amount,
-                ReverseSwapError::generic("Unexpected onchain amount (lockup fee or service fee)")
-            );
+        // Validate onchain_amount
+        let lockup_fee_sat = req.prepare_res.fees_lockup;
+        let service_fee_sat = super::get_service_fee_sat(
+            req.prepare_res.sender_amount_sat,
+            req.prepare_res.fees_percentage,
+        );
+        trace!("create_rev_swap v2 service_fee_sat: {service_fee_sat} sat");
+        let expected_onchain_amount = request_send_amount_sat - service_fee_sat - lockup_fee_sat;
+        ensure_sdk!(
+            created_rsi.onchain_amount_sat == expected_onchain_amount,
+            ReverseSwapError::generic("Unexpected onchain amount (lockup fee or service fee)")
+        );
 
-            // Validate claim_fee. If onchain_amount and claim_fee are both valid, receive_amount is also valid.
-            ensure_sdk!(
-                created_rsi.onchain_amount_sat > req.prepare_res.recipient_amount_sat,
-                ReverseSwapError::generic("Unexpected receive amount")
-            );
-            let claim_fee = created_rsi.onchain_amount_sat - req.prepare_res.recipient_amount_sat;
-            Self::validate_claim_tx_fee(claim_fee)?;
-        }
+        // Validate claim_fee. If onchain_amount and claim_fee are both valid, receive_amount is also valid.
+        ensure_sdk!(
+            created_rsi.onchain_amount_sat > req.prepare_res.recipient_amount_sat,
+            ReverseSwapError::generic("Unexpected receive amount")
+        );
+        let claim_fee = created_rsi.onchain_amount_sat - req.prepare_res.recipient_amount_sat;
+        Self::validate_claim_tx_fee(claim_fee)?;
 
         self.persister.insert_reverse_swap(&created_rsi)?;
         info!("Created and persisted reverse swap {}", created_rsi.id);
@@ -343,7 +312,7 @@ impl BTCSendSwap {
     /// before returning it
     async fn create_and_validate_rev_swap_on_remote(
         &self,
-        req: CreateReverseSwapArg,
+        req: PayOnchainRequest,
         routing_node: String,
     ) -> ReverseSwapResult<FullReverseSwapInfo> {
         let reverse_swap_keys = create_swap_keys()?;
@@ -351,39 +320,39 @@ impl BTCSendSwap {
         let boltz_response = self
             .reverse_swap_service_api
             .create_reverse_swap_on_remote(
-                req.send_amount_sat(),
+                req.prepare_res.sender_amount_sat,
                 reverse_swap_keys.preimage_hash_bytes().to_hex(),
                 reverse_swap_keys.public_key()?.to_hex(),
-                req.pair_hash(),
+                req.prepare_res.fees_hash,
                 routing_node,
             )
             .await?;
-        let (sat_per_vbyte, receive_amount_sat) = match &req {
-            CreateReverseSwapArg::V1(req) => (Some(req.sat_per_vbyte), None),
-            CreateReverseSwapArg::V2(req) => (None, Some(req.prepare_res.recipient_amount_sat)),
-        };
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
                     created_at_block_height: self.chain_service.current_tip().await?,
-                    claim_pubkey: req.onchain_recipient_address(),
+                    claim_pubkey: req.recipient_address,
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
                     private_key: reverse_swap_keys.priv_key,
                     timeout_block_height: response.timeout_block_height,
                     id: response.id,
                     onchain_amount_sat: response.onchain_amount,
-                    sat_per_vbyte,
-                    receive_amount_sat,
+                    sat_per_vbyte: None,
+                    receive_amount_sat: Some(req.prepare_res.recipient_amount_sat),
                     redeem_script: response.redeem_script,
                     cache: ReverseSwapInfoCached {
                         status: Initial,
                         lockup_txid: None,
                         claim_txid: None,
                     },
+                    fees_lockup: req.prepare_res.fees_lockup,
+                    fees_claim: req.prepare_res.fees_claim,
+                    fees_service: req.prepare_res.fees_service,
+                    total_fees: req.prepare_res.total_fees,
                 };
 
-                res.validate_invoice(req.send_amount_sat() * 1_000)?;
+                res.validate_invoice(req.prepare_res.sender_amount_sat * 1_000)?;
                 res.validate_redeem_script(response.lockup_address, self.config.network)?;
                 Ok(res)
             }
@@ -778,6 +747,10 @@ impl BTCSendSwap {
             },
             onchain_amount_sat: full_rsi.onchain_amount_sat,
             status: full_rsi.cache.status,
+            fees_lockup: full_rsi.fees_lockup,
+            fees_claim: full_rsi.fees_claim,
+            fees_service: full_rsi.fees_service,
+            total_fees: full_rsi.total_fees,
         })
     }
 }

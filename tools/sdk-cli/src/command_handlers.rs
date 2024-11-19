@@ -10,7 +10,7 @@ use breez_sdk_core::{
     LnUrlWithdrawRequest, MetadataFilter, PayOnchainRequest, PrepareOnchainPaymentRequest,
     PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
     ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
-    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendOnchainRequest, SendPaymentRequest,
+    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendPaymentRequest,
     SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, SwapAmountType,
 };
 use breez_sdk_core::{GreenlightNodeConfig, NodeConfig};
@@ -149,32 +149,6 @@ pub(crate) async fn handle_command(
             result.push('\n');
             result.push_str(&build_qr_text(&recv_payment_response.ln_invoice.bolt11));
             Ok(result)
-        }
-        Commands::SendOnchain {
-            amount_sat,
-            onchain_recipient_address,
-            sat_per_vbyte,
-        } => {
-            let pair_info = sdk()?
-                .fetch_reverse_swap_fees(ReverseSwapFeesRequest::default())
-                .await
-                .map_err(|e| anyhow!("Failed to fetch reverse swap fee infos: {e}"))?;
-
-            #[allow(deprecated)]
-            let rev_swap_res = sdk()?
-                .send_onchain(SendOnchainRequest {
-                    amount_sat,
-                    onchain_recipient_address,
-                    pair_hash: pair_info.fees_hash,
-                    sat_per_vbyte,
-                })
-                .await?;
-            serde_json::to_string_pretty(&rev_swap_res.reverse_swap_info).map_err(|e| e.into())
-        }
-        Commands::MaxReverseSwapAmount {} => {
-            #[allow(deprecated)]
-            let response = sdk()?.max_reverse_swap_amount().await?;
-            serde_json::to_string_pretty(&response).map_err(|e| e.into())
         }
         Commands::OnchainPaymentLimits {} => {
             let response = sdk()?.onchain_payment_limits().await?;

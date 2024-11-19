@@ -106,8 +106,9 @@
 //! ### D. Sending to an on-chain address (swap-out)
 //!
 //! * [BreezServices::fetch_reverse_swap_fees] to get the current swap-out fees
-//! * [BreezServices::send_onchain] to start the swap-out
-//! * [BreezServices::in_progress_reverse_swaps] to see any in-progress swaps
+//! * [BreezServices::prepare_onchain_payment] to prepare the swap-out
+//! * [BreezServices::pay_onchain] to start the swap-out
+//! * [BreezServices::in_progress_onchain_payments] to see any in-progress swaps
 //!
 //! ### E. Using LNURL
 //!

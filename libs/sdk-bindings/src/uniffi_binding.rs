@@ -14,22 +14,21 @@ use breez_sdk_core::{
     LnPaymentDetails, LnUrlAuthError, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
     LnUrlPayError, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
     LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
-    LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation,
-    MaxReverseSwapAmountResponse, MessageSuccessActionData, MetadataFilter, MetadataItem, Network,
-    NodeConfig, NodeCredentials, NodeState, OnchainPaymentLimitsResponse, OpenChannelFeeRequest,
-    OpenChannelFeeResponse, OpeningFeeParams, OpeningFeeParamsMenu, PayOnchainRequest,
-    PayOnchainResponse, Payment, PaymentDetails, PaymentFailedData, PaymentStatus, PaymentType,
-    PaymentTypeFilter, PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse,
-    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, PrepareRefundRequest,
-    PrepareRefundResponse, Rate, ReceiveOnchainRequest, ReceivePaymentRequest,
-    ReceivePaymentResponse, RecommendedFees, RedeemOnchainFundsRequest, RedeemOnchainFundsResponse,
-    RefundRequest, RefundResponse, ReportIssueRequest, ReportPaymentFailureDetails,
-    ReverseSwapFeesRequest, ReverseSwapInfo, ReverseSwapPairInfo, ReverseSwapStatus, RouteHint,
-    RouteHintHop, SendOnchainRequest, SendOnchainResponse, SendPaymentRequest, SendPaymentResponse,
-    SendSpontaneousPaymentRequest, ServiceHealthCheckResponse, SignMessageRequest,
-    SignMessageResponse, StaticBackupRequest, StaticBackupResponse, SuccessActionProcessed,
-    SwapAmountType, SwapInfo, SwapStatus, Symbol, TlvEntry, UnspentTransactionOutput,
-    UrlSuccessActionData,
+    LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData,
+    MetadataFilter, MetadataItem, Network, NodeConfig, NodeCredentials, NodeState,
+    OnchainPaymentLimitsResponse, OpenChannelFeeRequest, OpenChannelFeeResponse, OpeningFeeParams,
+    OpeningFeeParamsMenu, PayOnchainRequest, PayOnchainResponse, Payment, PaymentDetails,
+    PaymentFailedData, PaymentStatus, PaymentType, PaymentTypeFilter, PrepareOnchainPaymentRequest,
+    PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse, Rate,
+    ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse, RecommendedFees,
+    RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, ReverseSwapInfo,
+    ReverseSwapPairInfo, ReverseSwapStatus, RouteHint, RouteHintHop, SendPaymentRequest,
+    SendPaymentResponse, SendSpontaneousPaymentRequest, ServiceHealthCheckResponse,
+    SignMessageRequest, SignMessageResponse, StaticBackupRequest, StaticBackupResponse,
+    SuccessActionProcessed, SwapAmountType, SwapInfo, SwapStatus, Symbol, TlvEntry,
+    UnspentTransactionOutput, UrlSuccessActionData,
 };
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
@@ -332,26 +331,8 @@ impl BlockingBreezServices {
         rt().block_on(self.breez_services.in_progress_onchain_payments())
     }
 
-    pub fn in_progress_reverse_swaps(&self) -> SdkResult<Vec<ReverseSwapInfo>> {
-        #[allow(deprecated)]
-        rt().block_on(self.breez_services.in_progress_reverse_swaps())
-    }
-
     pub fn claim_reverse_swap(&self, lockup_address: String) -> SdkResult<()> {
         rt().block_on(self.breez_services.claim_reverse_swap(lockup_address))
-    }
-
-    pub fn max_reverse_swap_amount(&self) -> SdkResult<MaxReverseSwapAmountResponse> {
-        #[allow(deprecated)]
-        rt().block_on(self.breez_services.max_reverse_swap_amount())
-    }
-
-    pub fn send_onchain(
-        &self,
-        req: SendOnchainRequest,
-    ) -> Result<SendOnchainResponse, SendOnchainError> {
-        #[allow(deprecated)]
-        rt().block_on(self.breez_services.send_onchain(req))
     }
 
     pub fn pay_onchain(
