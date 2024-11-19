@@ -2,6 +2,7 @@ use std::num::ParseIntError;
 use std::str::FromStr;
 use std::time::{SystemTimeError, UNIX_EPOCH};
 
+use anyhow::anyhow;
 use bitcoin::secp256k1::{self, PublicKey};
 use hex::ToHex;
 use lightning::routing::gossip::RoutingFees;
@@ -99,6 +100,62 @@ fn format_short_channel_id(id: u64) -> String {
     let tx_num = ((id >> 16) & 0xFFFFFF) as u32;
     let tx_out = (id & 0xFFFF) as u16;
     format!("{block_num}x{tx_num}x{tx_out}")
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum Amount {
+    Bitcoin {
+        amount_msat: u64,
+    },
+    /// An amount of currency specified using ISO 4712.
+    Currency {
+        /// The currency that the amount is denominated in.
+        iso4217_code: String,
+        /// The amount in the currency unit adjusted by the ISO 4712 exponent (e.g., USD cents).
+        fractional_amount: u64,
+    },
+}
+
+impl TryFrom<lightning::offers::offer::Amount> for Amount {
+    type Error = anyhow::Error;
+
+    fn try_from(amount: lightning::offers::offer::Amount) -> Result<Self, Self::Error> {
+        match amount {
+            lightning::offers::offer::Amount::Bitcoin { amount_msats } => Ok(Amount::Bitcoin {
+                amount_msat: amount_msats,
+            }),
+            lightning::offers::offer::Amount::Currency {
+                iso4217_code,
+                amount,
+            } => Ok(Amount::Currency {
+                iso4217_code: String::from_utf8(iso4217_code.to_vec())
+                    .map_err(|_| anyhow!("Expecting a valid ISO 4217 character sequence"))?,
+                fractional_amount: amount,
+            }),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct LNOffer {
+    /// String representation of the Bolt12 offer
+    pub offer: String,
+    pub chains: Vec<String>,
+    /// If set, it represents the minimum amount that an invoice must have to be valid for this offer
+    pub min_amount: Option<Amount>,
+    pub description: Option<String>,
+    /// Epoch time from which an invoice should no longer be requested. If None, the offer does not expire.
+    pub absolute_expiry: Option<u64>,
+    pub issuer: Option<String>,
+    /// The public key used by the recipient to sign invoices.
+    pub signing_pubkey: Option<String>,
+    pub paths: Vec<LnOfferBlindedPath>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct LnOfferBlindedPath {
+    /// For each blinded hop, we store the node ID (pubkey as hex).
+    pub blinded_hops: Vec<String>,
 }
 
 /// Wrapper for a BOLT11 LN invoice

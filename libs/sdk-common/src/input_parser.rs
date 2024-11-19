@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 use ::bip21::Uri;
@@ -5,7 +6,6 @@ use anyhow::{anyhow, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
@@ -417,6 +417,10 @@ pub enum InputType {
     /// and discards all other data.
     Bolt11 {
         invoice: LNInvoice,
+    },
+    #[cfg(feature = "liquid")]
+    Bolt12Offer {
+        offer: LNOffer,
     },
     NodeId {
         node_id: String,
