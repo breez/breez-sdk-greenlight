@@ -106,8 +106,7 @@ See the instructions in each sub-project readme on how to build, test, and run.
 - [x]  Spend all funds
 - [x]  Webhook for receiving payments
 - [x]  Offline receive via notifications
-- [ ]  LSPS2 support
-- [ ]  LSPS1 support
+- [ ]  Taproot swaps
 - [ ]  Send/receive bolt12
 - [ ]  Simplifed key management (cloud key backup)
 - [ ]  WebAssembly support
