@@ -332,17 +332,6 @@ class BreezSDK {
 
   /* On-Chain Swap API's */
 
-  /// Creates a reverse swap and attempts to pay the HODL invoice
-  @Deprecated(
-    'Use payOnchain instead. '
-    'This method was deprecated after v0.3.2',
-  )
-  Future<SendOnchainResponse> sendOnchain({
-    required SendOnchainRequest req,
-  }) async {
-    return await binding.sendOnchain(req: req);
-  }
-
   Future<OnchainPaymentLimitsResponse> onchainPaymentLimits() async {
     return await binding.onchainPaymentLimits();
   }
@@ -429,13 +418,6 @@ class BreezSDK {
   }) async {
     return await binding.redeemSwap(swapAddress: swapAddress);
   }
-
-  /// Returns the blocking [ReverseSwapInfo]s that are in progress
-  @Deprecated(
-    'Use inProgressOnchainPayments instead. '
-    'This method was deprecated after v0.3.6',
-  )
-  Future<List<ReverseSwapInfo>> inProgressReverseSwaps() async => binding.inProgressReverseSwaps();
 
   /// Claims an individual reverse swap.
   ///
