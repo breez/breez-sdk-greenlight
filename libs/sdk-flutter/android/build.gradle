@@ -1,36 +1,23 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+}
+
 group 'com.breez.breez_sdk'
 version '1.0-SNAPSHOT'
 
-buildscript {
-    ext.kotlin_version = '1.8.20'
-    repositories {
-        google()
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-    }
-}
-
-rootProject.allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
-apply plugin: 'kotlinx-serialization'
-
 android {
-    compileSdkVersion 33
+    namespace = 'com.breez.breez_sdk'
+    compileSdk = 34
+
+    defaultConfig {
+        minSdk = 24
+    }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
@@ -38,16 +25,13 @@ android {
     }
 
     sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
-
-    defaultConfig {
-        minSdkVersion 24
+        main {
+            java.srcDirs += 'src/main/kotlin'
+        }
     }
 }
 
 dependencies {
     implementation "net.java.dev.jna:jna:5.14.0@aar"
-    /* JSON serialization */
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
 }
