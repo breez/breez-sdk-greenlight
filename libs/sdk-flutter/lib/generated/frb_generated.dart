@@ -69,7 +69,7 @@ class BreezSdkBindings
   String get codegenVersion => '2.6.0';
 
   @override
-  int get rustContentHash => -488953100;
+  int get rustContentHash => -1202170102;
 
   static const kDefaultExternalLibraryLoaderConfig = ExternalLibraryLoaderConfig(
     stem: 'breez_sdk_core',
@@ -121,8 +121,6 @@ abstract class BreezSdkBindingsApi extends BaseApi {
 
   Future<List<ReverseSwapInfo>> crateBindingInProgressOnchainPayments();
 
-  Future<List<ReverseSwapInfo>> crateBindingInProgressReverseSwaps();
-
   Future<SwapInfo?> crateBindingInProgressSwap();
 
   Future<bool> crateBindingIsInitialized();
@@ -135,6 +133,8 @@ abstract class BreezSdkBindingsApi extends BaseApi {
 
   Future<List<SwapInfo>> crateBindingListRefundables();
 
+  Future<List<SwapInfo>> crateBindingListSwaps({required ListSwapsRequest req});
+
   Future<LnUrlCallbackStatus> crateBindingLnurlAuth({required LnUrlAuthRequestData reqData});
 
   Future<LnUrlPayResult> crateBindingLnurlPay({required LnUrlPayRequest req});
@@ -144,8 +144,6 @@ abstract class BreezSdkBindingsApi extends BaseApi {
   Future<String?> crateBindingLspId();
 
   Future<LspInformation> crateBindingLspInfo();
-
-  Future<MaxReverseSwapAmountResponse> crateBindingMaxReverseSwapAmount();
 
   Future<Uint8List> crateBindingMnemonicToSeed({required String phrase});
 
@@ -190,8 +188,6 @@ abstract class BreezSdkBindingsApi extends BaseApi {
   Future<void> crateBindingReportIssue({required ReportIssueRequest req});
 
   Future<void> crateBindingRescanSwaps();
-
-  Future<SendOnchainResponse> crateBindingSendOnchain({required SendOnchainRequest req});
 
   Future<SendPaymentResponse> crateBindingSendPayment({required SendPaymentRequest req});
 
@@ -662,27 +658,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       );
 
   @override
-  Future<List<ReverseSwapInfo>> crateBindingInProgressReverseSwaps() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        return wire.wire__crate__binding__in_progress_reverse_swaps(port_);
-      },
-      codec: DcoCodec(
-        decodeSuccessData: dco_decode_list_reverse_swap_info,
-        decodeErrorData: dco_decode_AnyhowException,
-      ),
-      constMeta: kCrateBindingInProgressReverseSwapsConstMeta,
-      argValues: [],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateBindingInProgressReverseSwapsConstMeta => const TaskConstMeta(
-        debugName: "in_progress_reverse_swaps",
-        argNames: [],
-      );
-
-  @override
   Future<SwapInfo?> crateBindingInProgressSwap() {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -810,6 +785,28 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       );
 
   @override
+  Future<List<SwapInfo>> crateBindingListSwaps({required ListSwapsRequest req}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        var arg0 = cst_encode_box_autoadd_list_swaps_request(req);
+        return wire.wire__crate__binding__list_swaps(port_, arg0);
+      },
+      codec: DcoCodec(
+        decodeSuccessData: dco_decode_list_swap_info,
+        decodeErrorData: dco_decode_AnyhowException,
+      ),
+      constMeta: kCrateBindingListSwapsConstMeta,
+      argValues: [req],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateBindingListSwapsConstMeta => const TaskConstMeta(
+        debugName: "list_swaps",
+        argNames: ["req"],
+      );
+
+  @override
   Future<LnUrlCallbackStatus> crateBindingLnurlAuth({required LnUrlAuthRequestData reqData}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -914,27 +911,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
 
   TaskConstMeta get kCrateBindingLspInfoConstMeta => const TaskConstMeta(
         debugName: "lsp_info",
-        argNames: [],
-      );
-
-  @override
-  Future<MaxReverseSwapAmountResponse> crateBindingMaxReverseSwapAmount() {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        return wire.wire__crate__binding__max_reverse_swap_amount(port_);
-      },
-      codec: DcoCodec(
-        decodeSuccessData: dco_decode_max_reverse_swap_amount_response,
-        decodeErrorData: dco_decode_AnyhowException,
-      ),
-      constMeta: kCrateBindingMaxReverseSwapAmountConstMeta,
-      argValues: [],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateBindingMaxReverseSwapAmountConstMeta => const TaskConstMeta(
-        debugName: "max_reverse_swap_amount",
         argNames: [],
       );
 
@@ -1399,28 +1375,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       );
 
   @override
-  Future<SendOnchainResponse> crateBindingSendOnchain({required SendOnchainRequest req}) {
-    return handler.executeNormal(NormalTask(
-      callFfi: (port_) {
-        var arg0 = cst_encode_box_autoadd_send_onchain_request(req);
-        return wire.wire__crate__binding__send_onchain(port_, arg0);
-      },
-      codec: DcoCodec(
-        decodeSuccessData: dco_decode_send_onchain_response,
-        decodeErrorData: dco_decode_AnyhowException,
-      ),
-      constMeta: kCrateBindingSendOnchainConstMeta,
-      argValues: [req],
-      apiImpl: this,
-    ));
-  }
-
-  TaskConstMeta get kCrateBindingSendOnchainConstMeta => const TaskConstMeta(
-        debugName: "send_onchain",
-        argNames: ["req"],
-      );
-
-  @override
   Future<SendPaymentResponse> crateBindingSendPayment({required SendPaymentRequest req}) {
     return handler.executeNormal(NormalTask(
       callFfi: (port_) {
@@ -1807,6 +1761,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  ListSwapsRequest dco_decode_box_autoadd_list_swaps_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_list_swaps_request(raw);
+  }
+
+  @protected
   LNInvoice dco_decode_box_autoadd_ln_invoice(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_ln_invoice(raw);
@@ -1990,12 +1950,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   ReverseSwapInfo dco_decode_box_autoadd_reverse_swap_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_reverse_swap_info(raw);
-  }
-
-  @protected
-  SendOnchainRequest dco_decode_box_autoadd_send_onchain_request(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    return dco_decode_send_onchain_request(raw);
   }
 
   @protected
@@ -2462,6 +2416,26 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  List<SwapStatus> dco_decode_list_swap_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_swap_status).toList();
+  }
+
+  @protected
+  ListSwapsRequest dco_decode_list_swaps_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5) throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return ListSwapsRequest(
+      status: dco_decode_opt_list_swap_status(arr[0]),
+      fromTimestamp: dco_decode_opt_box_autoadd_i_64(arr[1]),
+      toTimestamp: dco_decode_opt_box_autoadd_i_64(arr[2]),
+      offset: dco_decode_opt_box_autoadd_u_32(arr[3]),
+      limit: dco_decode_opt_box_autoadd_u_32(arr[4]),
+    );
+  }
+
+  @protected
   List<TlvEntry> dco_decode_list_tlv_entry(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_tlv_entry).toList();
@@ -2745,16 +2719,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
-  MaxReverseSwapAmountResponse dco_decode_max_reverse_swap_amount_response(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return MaxReverseSwapAmountResponse(
-      totalSat: dco_decode_u_64(arr[0]),
-    );
-  }
-
-  @protected
   MessageSuccessActionData dco_decode_message_success_action_data(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -3000,6 +2964,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   Uint8List? dco_decode_opt_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_list_prim_u_8_strict(raw);
+  }
+
+  @protected
+  List<SwapStatus>? dco_decode_opt_list_swap_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_list_swap_status(raw);
   }
 
   @protected
@@ -3370,29 +3340,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       cltvExpiryDelta: dco_decode_u_64(arr[4]),
       htlcMinimumMsat: dco_decode_opt_box_autoadd_u_64(arr[5]),
       htlcMaximumMsat: dco_decode_opt_box_autoadd_u_64(arr[6]),
-    );
-  }
-
-  @protected
-  SendOnchainRequest dco_decode_send_onchain_request(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
-    return SendOnchainRequest(
-      amountSat: dco_decode_u_64(arr[0]),
-      onchainRecipientAddress: dco_decode_String(arr[1]),
-      pairHash: dco_decode_String(arr[2]),
-      satPerVbyte: dco_decode_u_32(arr[3]),
-    );
-  }
-
-  @protected
-  SendOnchainResponse dco_decode_send_onchain_response(dynamic raw) {
-    // Codec=Dco (DartCObject based), see doc to use other codecs
-    final arr = raw as List<dynamic>;
-    if (arr.length != 1) throw Exception('unexpected arr length: expect 1 but see ${arr.length}');
-    return SendOnchainResponse(
-      reverseSwapInfo: dco_decode_reverse_swap_info(arr[0]),
     );
   }
 
@@ -3835,6 +3782,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  ListSwapsRequest sse_decode_box_autoadd_list_swaps_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_list_swaps_request(deserializer));
+  }
+
+  @protected
   LNInvoice sse_decode_box_autoadd_ln_invoice(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_ln_invoice(deserializer));
@@ -4022,12 +3975,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   ReverseSwapInfo sse_decode_box_autoadd_reverse_swap_info(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_reverse_swap_info(deserializer));
-  }
-
-  @protected
-  SendOnchainRequest sse_decode_box_autoadd_send_onchain_request(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    return (sse_decode_send_onchain_request(deserializer));
   }
 
   @protected
@@ -4558,6 +4505,34 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  List<SwapStatus> sse_decode_list_swap_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SwapStatus>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_swap_status(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  ListSwapsRequest sse_decode_list_swaps_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_status = sse_decode_opt_list_swap_status(deserializer);
+    var var_fromTimestamp = sse_decode_opt_box_autoadd_i_64(deserializer);
+    var var_toTimestamp = sse_decode_opt_box_autoadd_i_64(deserializer);
+    var var_offset = sse_decode_opt_box_autoadd_u_32(deserializer);
+    var var_limit = sse_decode_opt_box_autoadd_u_32(deserializer);
+    return ListSwapsRequest(
+        status: var_status,
+        fromTimestamp: var_fromTimestamp,
+        toTimestamp: var_toTimestamp,
+        offset: var_offset,
+        limit: var_limit);
+  }
+
+  @protected
   List<TlvEntry> sse_decode_list_tlv_entry(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -4863,13 +4838,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
         minHtlcMsat: var_minHtlcMsat,
         lspPubkey: var_lspPubkey,
         openingFeeParamsList: var_openingFeeParamsList);
-  }
-
-  @protected
-  MaxReverseSwapAmountResponse sse_decode_max_reverse_swap_amount_response(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_totalSat = sse_decode_u_64(deserializer);
-    return MaxReverseSwapAmountResponse(totalSat: var_totalSat);
   }
 
   @protected
@@ -5209,6 +5177,17 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_list_prim_u_8_strict(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  List<SwapStatus>? sse_decode_opt_list_swap_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_list_swap_status(deserializer));
     } else {
       return null;
     }
@@ -5573,27 +5552,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
         cltvExpiryDelta: var_cltvExpiryDelta,
         htlcMinimumMsat: var_htlcMinimumMsat,
         htlcMaximumMsat: var_htlcMaximumMsat);
-  }
-
-  @protected
-  SendOnchainRequest sse_decode_send_onchain_request(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_amountSat = sse_decode_u_64(deserializer);
-    var var_onchainRecipientAddress = sse_decode_String(deserializer);
-    var var_pairHash = sse_decode_String(deserializer);
-    var var_satPerVbyte = sse_decode_u_32(deserializer);
-    return SendOnchainRequest(
-        amountSat: var_amountSat,
-        onchainRecipientAddress: var_onchainRecipientAddress,
-        pairHash: var_pairHash,
-        satPerVbyte: var_satPerVbyte);
-  }
-
-  @protected
-  SendOnchainResponse sse_decode_send_onchain_response(SseDeserializer deserializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    var var_reverseSwapInfo = sse_decode_reverse_swap_info(deserializer);
-    return SendOnchainResponse(reverseSwapInfo: var_reverseSwapInfo);
   }
 
   @protected
@@ -6135,6 +6093,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  void sse_encode_box_autoadd_list_swaps_request(ListSwapsRequest self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_swaps_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_ln_invoice(LNInvoice self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_ln_invoice(self, serializer);
@@ -6326,12 +6290,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   void sse_encode_box_autoadd_reverse_swap_info(ReverseSwapInfo self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_reverse_swap_info(self, serializer);
-  }
-
-  @protected
-  void sse_encode_box_autoadd_send_onchain_request(SendOnchainRequest self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_send_onchain_request(self, serializer);
   }
 
   @protected
@@ -6768,6 +6726,25 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  void sse_encode_list_swap_status(List<SwapStatus> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_swap_status(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_swaps_request(ListSwapsRequest self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_list_swap_status(self.status, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.fromTimestamp, serializer);
+    sse_encode_opt_box_autoadd_i_64(self.toTimestamp, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.offset, serializer);
+    sse_encode_opt_box_autoadd_u_32(self.limit, serializer);
+  }
+
+  @protected
   void sse_encode_list_tlv_entry(List<TlvEntry> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -6988,13 +6965,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_i_64(self.minHtlcMsat, serializer);
     sse_encode_list_prim_u_8_strict(self.lspPubkey, serializer);
     sse_encode_opening_fee_params_menu(self.openingFeeParamsList, serializer);
-  }
-
-  @protected
-  void sse_encode_max_reverse_swap_amount_response(
-      MaxReverseSwapAmountResponse self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_u_64(self.totalSat, serializer);
   }
 
   @protected
@@ -7291,6 +7261,16 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  void sse_encode_opt_list_swap_status(List<SwapStatus>? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_list_swap_status(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_list_tlv_entry(List<TlvEntry>? self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -7564,21 +7544,6 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_u_64(self.cltvExpiryDelta, serializer);
     sse_encode_opt_box_autoadd_u_64(self.htlcMinimumMsat, serializer);
     sse_encode_opt_box_autoadd_u_64(self.htlcMaximumMsat, serializer);
-  }
-
-  @protected
-  void sse_encode_send_onchain_request(SendOnchainRequest self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_u_64(self.amountSat, serializer);
-    sse_encode_String(self.onchainRecipientAddress, serializer);
-    sse_encode_String(self.pairHash, serializer);
-    sse_encode_u_32(self.satPerVbyte, serializer);
-  }
-
-  @protected
-  void sse_encode_send_onchain_response(SendOnchainResponse self, SseSerializer serializer) {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    sse_encode_reverse_swap_info(self.reverseSwapInfo, serializer);
   }
 
   @protected

@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueNom,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.6.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -488953100;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1202170102;
 
 // Section: executor
 
@@ -498,27 +498,6 @@ fn wire__crate__binding__in_progress_onchain_payments_impl(
         },
     )
 }
-fn wire__crate__binding__in_progress_reverse_swaps_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::DcoCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "in_progress_reverse_swaps",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            move |context| {
-                transform_result_dco::<_, _, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let output_ok = crate::binding::in_progress_reverse_swaps()?;
-                        Ok(output_ok)
-                    })(),
-                )
-            }
-        },
-    )
-}
 fn wire__crate__binding__in_progress_swap_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
 ) {
@@ -643,6 +622,29 @@ fn wire__crate__binding__list_refundables_impl(
         },
     )
 }
+fn wire__crate__binding__list_swaps_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    req: impl CstDecode<crate::models::ListSwapsRequest>,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::DcoCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "list_swaps",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.cst_decode();
+            move |context| {
+                transform_result_dco::<_, _, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::binding::list_swaps(api_req)?;
+                        Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
 fn wire__crate__binding__lnurl_auth_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     req_data: impl CstDecode<crate::binding::LnUrlAuthRequestData>,
@@ -743,27 +745,6 @@ fn wire__crate__binding__lsp_info_impl(port_: flutter_rust_bridge::for_generated
                 transform_result_dco::<_, _, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
                         let output_ok = crate::binding::lsp_info()?;
-                        Ok(output_ok)
-                    })(),
-                )
-            }
-        },
-    )
-}
-fn wire__crate__binding__max_reverse_swap_amount_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::DcoCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "max_reverse_swap_amount",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            move |context| {
-                transform_result_dco::<_, _, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let output_ok = crate::binding::max_reverse_swap_amount()?;
                         Ok(output_ok)
                     })(),
                 )
@@ -1233,29 +1214,6 @@ fn wire__crate__binding__rescan_swaps_impl(port_: flutter_rust_bridge::for_gener
                 transform_result_dco::<_, _, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
                         let output_ok = crate::binding::rescan_swaps()?;
-                        Ok(output_ok)
-                    })(),
-                )
-            }
-        },
-    )
-}
-fn wire__crate__binding__send_onchain_impl(
-    port_: flutter_rust_bridge::for_generated::MessagePort,
-    req: impl CstDecode<crate::models::SendOnchainRequest>,
-) {
-    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::DcoCodec, _, _>(
-        flutter_rust_bridge::for_generated::TaskInfo {
-            debug_name: "send_onchain",
-            port: Some(port_),
-            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
-        },
-        move || {
-            let api_req = req.cst_decode();
-            move |context| {
-                transform_result_dco::<_, _, flutter_rust_bridge::for_generated::anyhow::Error>(
-                    (move || {
-                        let output_ok = crate::binding::send_onchain(api_req)?;
                         Ok(output_ok)
                     })(),
                 )
@@ -2553,6 +2511,36 @@ impl SseDecode for Vec<crate::models::SwapInfo> {
     }
 }
 
+impl SseDecode for Vec<crate::models::SwapStatus> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::models::SwapStatus>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for crate::models::ListSwapsRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_status = <Option<Vec<crate::models::SwapStatus>>>::sse_decode(deserializer);
+        let mut var_fromTimestamp = <Option<i64>>::sse_decode(deserializer);
+        let mut var_toTimestamp = <Option<i64>>::sse_decode(deserializer);
+        let mut var_offset = <Option<u32>>::sse_decode(deserializer);
+        let mut var_limit = <Option<u32>>::sse_decode(deserializer);
+        return crate::models::ListSwapsRequest {
+            status: var_status,
+            from_timestamp: var_fromTimestamp,
+            to_timestamp: var_toTimestamp,
+            offset: var_offset,
+            limit: var_limit,
+        };
+    }
+}
+
 impl SseDecode for Vec<crate::models::TlvEntry> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -2925,16 +2913,6 @@ impl SseDecode for crate::lsp::LspInformation {
             min_htlc_msat: var_minHtlcMsat,
             lsp_pubkey: var_lspPubkey,
             opening_fee_params_list: var_openingFeeParamsList,
-        };
-    }
-}
-
-impl SseDecode for crate::models::MaxReverseSwapAmountResponse {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_totalSat = <u64>::sse_decode(deserializer);
-        return crate::models::MaxReverseSwapAmountResponse {
-            total_sat: var_totalSat,
         };
     }
 }
@@ -3323,6 +3301,17 @@ impl SseDecode for Option<Vec<u8>> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<Vec<u8>>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<Vec<crate::models::SwapStatus>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<Vec<crate::models::SwapStatus>>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -3800,32 +3789,6 @@ impl SseDecode for crate::binding::RouteHintHop {
             cltv_expiry_delta: var_cltvExpiryDelta,
             htlc_minimum_msat: var_htlcMinimumMsat,
             htlc_maximum_msat: var_htlcMaximumMsat,
-        };
-    }
-}
-
-impl SseDecode for crate::models::SendOnchainRequest {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_amountSat = <u64>::sse_decode(deserializer);
-        let mut var_onchainRecipientAddress = <String>::sse_decode(deserializer);
-        let mut var_pairHash = <String>::sse_decode(deserializer);
-        let mut var_satPerVbyte = <u32>::sse_decode(deserializer);
-        return crate::models::SendOnchainRequest {
-            amount_sat: var_amountSat,
-            onchain_recipient_address: var_onchainRecipientAddress,
-            pair_hash: var_pairHash,
-            sat_per_vbyte: var_satPerVbyte,
-        };
-    }
-}
-
-impl SseDecode for crate::models::SendOnchainResponse {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
-        let mut var_reverseSwapInfo = <crate::models::ReverseSwapInfo>::sse_decode(deserializer);
-        return crate::models::SendOnchainResponse {
-            reverse_swap_info: var_reverseSwapInfo,
         };
     }
 }
@@ -4767,6 +4730,30 @@ impl flutter_rust_bridge::IntoIntoDart<crate::models::ListPaymentsRequest>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::models::ListSwapsRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.status.into_into_dart().into_dart(),
+            self.from_timestamp.into_into_dart().into_dart(),
+            self.to_timestamp.into_into_dart().into_dart(),
+            self.offset.into_into_dart().into_dart(),
+            self.limit.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::models::ListSwapsRequest
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::models::ListSwapsRequest>
+    for crate::models::ListSwapsRequest
+{
+    fn into_into_dart(self) -> crate::models::ListSwapsRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<crate::binding::LNInvoice> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -5202,23 +5189,6 @@ impl flutter_rust_bridge::IntoDart for crate::lsp::LspInformation {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::lsp::LspInformation {}
 impl flutter_rust_bridge::IntoIntoDart<crate::lsp::LspInformation> for crate::lsp::LspInformation {
     fn into_into_dart(self) -> crate::lsp::LspInformation {
-        self
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::models::MaxReverseSwapAmountResponse {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [self.total_sat.into_into_dart().into_dart()].into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::models::MaxReverseSwapAmountResponse
-{
-}
-impl flutter_rust_bridge::IntoIntoDart<crate::models::MaxReverseSwapAmountResponse>
-    for crate::models::MaxReverseSwapAmountResponse
-{
-    fn into_into_dart(self) -> crate::models::MaxReverseSwapAmountResponse {
         self
     }
 }
@@ -6125,46 +6095,6 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<crate::binding::RouteHintHop>>
 {
     fn into_into_dart(self) -> FrbWrapper<crate::binding::RouteHintHop> {
         self.into()
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::models::SendOnchainRequest {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [
-            self.amount_sat.into_into_dart().into_dart(),
-            self.onchain_recipient_address.into_into_dart().into_dart(),
-            self.pair_hash.into_into_dart().into_dart(),
-            self.sat_per_vbyte.into_into_dart().into_dart(),
-        ]
-        .into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::models::SendOnchainRequest
-{
-}
-impl flutter_rust_bridge::IntoIntoDart<crate::models::SendOnchainRequest>
-    for crate::models::SendOnchainRequest
-{
-    fn into_into_dart(self) -> crate::models::SendOnchainRequest {
-        self
-    }
-}
-// Codec=Dco (DartCObject based), see doc to use other codecs
-impl flutter_rust_bridge::IntoDart for crate::models::SendOnchainResponse {
-    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
-        [self.reverse_swap_info.into_into_dart().into_dart()].into_dart()
-    }
-}
-impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
-    for crate::models::SendOnchainResponse
-{
-}
-impl flutter_rust_bridge::IntoIntoDart<crate::models::SendOnchainResponse>
-    for crate::models::SendOnchainResponse
-{
-    fn into_into_dart(self) -> crate::models::SendOnchainResponse {
-        self
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -7077,6 +7007,27 @@ impl SseEncode for Vec<crate::models::SwapInfo> {
     }
 }
 
+impl SseEncode for Vec<crate::models::SwapStatus> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::models::SwapStatus>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for crate::models::ListSwapsRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Option<Vec<crate::models::SwapStatus>>>::sse_encode(self.status, serializer);
+        <Option<i64>>::sse_encode(self.from_timestamp, serializer);
+        <Option<i64>>::sse_encode(self.to_timestamp, serializer);
+        <Option<u32>>::sse_encode(self.offset, serializer);
+        <Option<u32>>::sse_encode(self.limit, serializer);
+    }
+}
+
 impl SseEncode for Vec<crate::models::TlvEntry> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -7333,13 +7284,6 @@ impl SseEncode for crate::lsp::LspInformation {
         <i64>::sse_encode(self.min_htlc_msat, serializer);
         <Vec<u8>>::sse_encode(self.lsp_pubkey, serializer);
         <crate::models::OpeningFeeParamsMenu>::sse_encode(self.opening_fee_params_list, serializer);
-    }
-}
-
-impl SseEncode for crate::models::MaxReverseSwapAmountResponse {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <u64>::sse_encode(self.total_sat, serializer);
     }
 }
 
@@ -7655,6 +7599,16 @@ impl SseEncode for Option<Vec<u8>> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <Vec<u8>>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<Vec<crate::models::SwapStatus>> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <Vec<crate::models::SwapStatus>>::sse_encode(value, serializer);
         }
     }
 }
@@ -8006,23 +7960,6 @@ impl SseEncode for crate::binding::RouteHintHop {
         <u64>::sse_encode(self.cltv_expiry_delta, serializer);
         <Option<u64>>::sse_encode(self.htlc_minimum_msat, serializer);
         <Option<u64>>::sse_encode(self.htlc_maximum_msat, serializer);
-    }
-}
-
-impl SseEncode for crate::models::SendOnchainRequest {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <u64>::sse_encode(self.amount_sat, serializer);
-        <String>::sse_encode(self.onchain_recipient_address, serializer);
-        <String>::sse_encode(self.pair_hash, serializer);
-        <u32>::sse_encode(self.sat_per_vbyte, serializer);
-    }
-}
-
-impl SseEncode for crate::models::SendOnchainResponse {
-    // Codec=Sse (Serialization based), see doc to use other codecs
-    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
-        <crate::models::ReverseSwapInfo>::sse_encode(self.reverse_swap_info, serializer);
     }
 }
 
@@ -8519,6 +8456,13 @@ mod io {
             CstDecode::<crate::models::ListPaymentsRequest>::cst_decode(*wrap).into()
         }
     }
+    impl CstDecode<crate::models::ListSwapsRequest> for *mut wire_cst_list_swaps_request {
+        // Codec=Cst (C-struct based), see doc to use other codecs
+        fn cst_decode(self) -> crate::models::ListSwapsRequest {
+            let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
+            CstDecode::<crate::models::ListSwapsRequest>::cst_decode(*wrap).into()
+        }
+    }
     impl CstDecode<crate::binding::LNInvoice> for *mut wire_cst_ln_invoice {
         // Codec=Cst (C-struct based), see doc to use other codecs
         fn cst_decode(self) -> crate::binding::LNInvoice {
@@ -8748,13 +8692,6 @@ mod io {
         fn cst_decode(self) -> crate::models::ReverseSwapInfo {
             let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
             CstDecode::<crate::models::ReverseSwapInfo>::cst_decode(*wrap).into()
-        }
-    }
-    impl CstDecode<crate::models::SendOnchainRequest> for *mut wire_cst_send_onchain_request {
-        // Codec=Cst (C-struct based), see doc to use other codecs
-        fn cst_decode(self) -> crate::models::SendOnchainRequest {
-            let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
-            CstDecode::<crate::models::SendOnchainRequest>::cst_decode(*wrap).into()
         }
     }
     impl CstDecode<crate::models::SendPaymentRequest> for *mut wire_cst_send_payment_request {
@@ -9246,6 +9183,28 @@ mod io {
             vec.into_iter().map(CstDecode::cst_decode).collect()
         }
     }
+    impl CstDecode<Vec<crate::models::SwapStatus>> for *mut wire_cst_list_swap_status {
+        // Codec=Cst (C-struct based), see doc to use other codecs
+        fn cst_decode(self) -> Vec<crate::models::SwapStatus> {
+            let vec = unsafe {
+                let wrap = flutter_rust_bridge::for_generated::box_from_leak_ptr(self);
+                flutter_rust_bridge::for_generated::vec_from_leak_ptr(wrap.ptr, wrap.len)
+            };
+            vec.into_iter().map(CstDecode::cst_decode).collect()
+        }
+    }
+    impl CstDecode<crate::models::ListSwapsRequest> for wire_cst_list_swaps_request {
+        // Codec=Cst (C-struct based), see doc to use other codecs
+        fn cst_decode(self) -> crate::models::ListSwapsRequest {
+            crate::models::ListSwapsRequest {
+                status: self.status.cst_decode(),
+                from_timestamp: self.from_timestamp.cst_decode(),
+                to_timestamp: self.to_timestamp.cst_decode(),
+                offset: self.offset.cst_decode(),
+                limit: self.limit.cst_decode(),
+            }
+        }
+    }
     impl CstDecode<Vec<crate::models::TlvEntry>> for *mut wire_cst_list_tlv_entry {
         // Codec=Cst (C-struct based), see doc to use other codecs
         fn cst_decode(self) -> Vec<crate::models::TlvEntry> {
@@ -9516,16 +9475,6 @@ mod io {
                 min_htlc_msat: self.min_htlc_msat.cst_decode(),
                 lsp_pubkey: self.lsp_pubkey.cst_decode(),
                 opening_fee_params_list: self.opening_fee_params_list.cst_decode(),
-            }
-        }
-    }
-    impl CstDecode<crate::models::MaxReverseSwapAmountResponse>
-        for wire_cst_max_reverse_swap_amount_response
-    {
-        // Codec=Cst (C-struct based), see doc to use other codecs
-        fn cst_decode(self) -> crate::models::MaxReverseSwapAmountResponse {
-            crate::models::MaxReverseSwapAmountResponse {
-                total_sat: self.total_sat.cst_decode(),
             }
         }
     }
@@ -9951,25 +9900,6 @@ mod io {
                 cltv_expiry_delta: self.cltv_expiry_delta.cst_decode(),
                 htlc_minimum_msat: self.htlc_minimum_msat.cst_decode(),
                 htlc_maximum_msat: self.htlc_maximum_msat.cst_decode(),
-            }
-        }
-    }
-    impl CstDecode<crate::models::SendOnchainRequest> for wire_cst_send_onchain_request {
-        // Codec=Cst (C-struct based), see doc to use other codecs
-        fn cst_decode(self) -> crate::models::SendOnchainRequest {
-            crate::models::SendOnchainRequest {
-                amount_sat: self.amount_sat.cst_decode(),
-                onchain_recipient_address: self.onchain_recipient_address.cst_decode(),
-                pair_hash: self.pair_hash.cst_decode(),
-                sat_per_vbyte: self.sat_per_vbyte.cst_decode(),
-            }
-        }
-    }
-    impl CstDecode<crate::models::SendOnchainResponse> for wire_cst_send_onchain_response {
-        // Codec=Cst (C-struct based), see doc to use other codecs
-        fn cst_decode(self) -> crate::models::SendOnchainResponse {
-            crate::models::SendOnchainResponse {
-                reverse_swap_info: self.reverse_swap_info.cst_decode(),
             }
         }
     }
@@ -10466,6 +10396,22 @@ mod io {
             Self::new_with_null_ptr()
         }
     }
+    impl NewWithNullPtr for wire_cst_list_swaps_request {
+        fn new_with_null_ptr() -> Self {
+            Self {
+                status: core::ptr::null_mut(),
+                from_timestamp: core::ptr::null_mut(),
+                to_timestamp: core::ptr::null_mut(),
+                offset: core::ptr::null_mut(),
+                limit: core::ptr::null_mut(),
+            }
+        }
+    }
+    impl Default for wire_cst_list_swaps_request {
+        fn default() -> Self {
+            Self::new_with_null_ptr()
+        }
+    }
     impl NewWithNullPtr for wire_cst_ln_invoice {
         fn new_with_null_ptr() -> Self {
             Self {
@@ -10745,18 +10691,6 @@ mod io {
         }
     }
     impl Default for wire_cst_lsp_information {
-        fn default() -> Self {
-            Self::new_with_null_ptr()
-        }
-    }
-    impl NewWithNullPtr for wire_cst_max_reverse_swap_amount_response {
-        fn new_with_null_ptr() -> Self {
-            Self {
-                total_sat: Default::default(),
-            }
-        }
-    }
-    impl Default for wire_cst_max_reverse_swap_amount_response {
         fn default() -> Self {
             Self::new_with_null_ptr()
         }
@@ -11292,33 +11226,6 @@ mod io {
             Self::new_with_null_ptr()
         }
     }
-    impl NewWithNullPtr for wire_cst_send_onchain_request {
-        fn new_with_null_ptr() -> Self {
-            Self {
-                amount_sat: Default::default(),
-                onchain_recipient_address: core::ptr::null_mut(),
-                pair_hash: core::ptr::null_mut(),
-                sat_per_vbyte: Default::default(),
-            }
-        }
-    }
-    impl Default for wire_cst_send_onchain_request {
-        fn default() -> Self {
-            Self::new_with_null_ptr()
-        }
-    }
-    impl NewWithNullPtr for wire_cst_send_onchain_response {
-        fn new_with_null_ptr() -> Self {
-            Self {
-                reverse_swap_info: Default::default(),
-            }
-        }
-    }
-    impl Default for wire_cst_send_onchain_response {
-        fn default() -> Self {
-            Self::new_with_null_ptr()
-        }
-    }
     impl NewWithNullPtr for wire_cst_send_payment_request {
         fn new_with_null_ptr() -> Self {
             Self {
@@ -11673,11 +11580,6 @@ mod io {
     }
 
     #[no_mangle]
-    pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__in_progress_reverse_swaps(port_: i64) {
-        wire__crate__binding__in_progress_reverse_swaps_impl(port_)
-    }
-
-    #[no_mangle]
     pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__in_progress_swap(port_: i64) {
         wire__crate__binding__in_progress_swap_impl(port_)
     }
@@ -11708,6 +11610,14 @@ mod io {
     #[no_mangle]
     pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__list_refundables(port_: i64) {
         wire__crate__binding__list_refundables_impl(port_)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__list_swaps(
+        port_: i64,
+        req: *mut wire_cst_list_swaps_request,
+    ) {
+        wire__crate__binding__list_swaps_impl(port_, req)
     }
 
     #[no_mangle]
@@ -11742,11 +11652,6 @@ mod io {
     #[no_mangle]
     pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__lsp_info(port_: i64) {
         wire__crate__binding__lsp_info_impl(port_)
-    }
-
-    #[no_mangle]
-    pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__max_reverse_swap_amount(port_: i64) {
-        wire__crate__binding__max_reverse_swap_amount_impl(port_)
     }
 
     #[no_mangle]
@@ -11900,14 +11805,6 @@ mod io {
     #[no_mangle]
     pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__rescan_swaps(port_: i64) {
         wire__crate__binding__rescan_swaps_impl(port_)
-    }
-
-    #[no_mangle]
-    pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__send_onchain(
-        port_: i64,
-        req: *mut wire_cst_send_onchain_request,
-    ) {
-        wire__crate__binding__send_onchain_impl(port_, req)
     }
 
     #[no_mangle]
@@ -12107,6 +12004,14 @@ mod io {
     ) -> *mut wire_cst_list_payments_request {
         flutter_rust_bridge::for_generated::new_leak_box_ptr(
             wire_cst_list_payments_request::new_with_null_ptr(),
+        )
+    }
+
+    #[no_mangle]
+    pub extern "C" fn frbgen_breez_sdk_cst_new_box_autoadd_list_swaps_request(
+    ) -> *mut wire_cst_list_swaps_request {
+        flutter_rust_bridge::for_generated::new_leak_box_ptr(
+            wire_cst_list_swaps_request::new_with_null_ptr(),
         )
     }
 
@@ -12352,14 +12257,6 @@ mod io {
     ) -> *mut wire_cst_reverse_swap_info {
         flutter_rust_bridge::for_generated::new_leak_box_ptr(
             wire_cst_reverse_swap_info::new_with_null_ptr(),
-        )
-    }
-
-    #[no_mangle]
-    pub extern "C" fn frbgen_breez_sdk_cst_new_box_autoadd_send_onchain_request(
-    ) -> *mut wire_cst_send_onchain_request {
-        flutter_rust_bridge::for_generated::new_leak_box_ptr(
-            wire_cst_send_onchain_request::new_with_null_ptr(),
         )
     }
 
@@ -12626,6 +12523,17 @@ mod io {
                 <wire_cst_swap_info>::new_with_null_ptr(),
                 len,
             ),
+            len,
+        };
+        flutter_rust_bridge::for_generated::new_leak_box_ptr(wrap)
+    }
+
+    #[no_mangle]
+    pub extern "C" fn frbgen_breez_sdk_cst_new_list_swap_status(
+        len: i32,
+    ) -> *mut wire_cst_list_swap_status {
+        let wrap = wire_cst_list_swap_status {
+            ptr: flutter_rust_bridge::for_generated::new_leak_vec_ptr(Default::default(), len),
             len,
         };
         flutter_rust_bridge::for_generated::new_leak_box_ptr(wrap)
@@ -13027,6 +12935,21 @@ mod io {
     }
     #[repr(C)]
     #[derive(Clone, Copy)]
+    pub struct wire_cst_list_swap_status {
+        ptr: *mut i32,
+        len: i32,
+    }
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    pub struct wire_cst_list_swaps_request {
+        status: *mut wire_cst_list_swap_status,
+        from_timestamp: *mut i64,
+        to_timestamp: *mut i64,
+        offset: *mut u32,
+        limit: *mut u32,
+    }
+    #[repr(C)]
+    #[derive(Clone, Copy)]
     pub struct wire_cst_list_tlv_entry {
         ptr: *mut wire_cst_tlv_entry,
         len: i32,
@@ -13250,11 +13173,6 @@ mod io {
         min_htlc_msat: i64,
         lsp_pubkey: *mut wire_cst_list_prim_u_8_strict,
         opening_fee_params_list: wire_cst_opening_fee_params_menu,
-    }
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    pub struct wire_cst_max_reverse_swap_amount_response {
-        total_sat: u64,
     }
     #[repr(C)]
     #[derive(Clone, Copy)]
@@ -13577,19 +13495,6 @@ mod io {
         cltv_expiry_delta: u64,
         htlc_minimum_msat: *mut u64,
         htlc_maximum_msat: *mut u64,
-    }
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    pub struct wire_cst_send_onchain_request {
-        amount_sat: u64,
-        onchain_recipient_address: *mut wire_cst_list_prim_u_8_strict,
-        pair_hash: *mut wire_cst_list_prim_u_8_strict,
-        sat_per_vbyte: u32,
-    }
-    #[repr(C)]
-    #[derive(Clone, Copy)]
-    pub struct wire_cst_send_onchain_response {
-        reverse_swap_info: wire_cst_reverse_swap_info,
     }
     #[repr(C)]
     #[derive(Clone, Copy)]

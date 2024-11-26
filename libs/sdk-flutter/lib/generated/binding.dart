@@ -157,14 +157,6 @@ Future<List<Rate>> fetchFiatRates() => BreezSdkBindings.instance.api.crateBindin
 Future<List<FiatCurrency>> listFiatCurrencies() =>
     BreezSdkBindings.instance.api.crateBindingListFiatCurrencies();
 
-/// See [BreezServices::max_reverse_swap_amount]
-Future<MaxReverseSwapAmountResponse> maxReverseSwapAmount() =>
-    BreezSdkBindings.instance.api.crateBindingMaxReverseSwapAmount();
-
-/// See [BreezServices::send_onchain]
-Future<SendOnchainResponse> sendOnchain({required SendOnchainRequest req}) =>
-    BreezSdkBindings.instance.api.crateBindingSendOnchain(req: req);
-
 /// See [BreezServices::pay_onchain]
 Future<PayOnchainResponse> payOnchain({required PayOnchainRequest req}) =>
     BreezSdkBindings.instance.api.crateBindingPayOnchain(req: req);
@@ -207,9 +199,9 @@ Future<void> redeemSwap({required String swapAddress}) =>
 /// See [BreezServices::in_progress_swap]
 Future<SwapInfo?> inProgressSwap() => BreezSdkBindings.instance.api.crateBindingInProgressSwap();
 
-/// See [BreezServices::in_progress_reverse_swaps]
-Future<List<ReverseSwapInfo>> inProgressReverseSwaps() =>
-    BreezSdkBindings.instance.api.crateBindingInProgressReverseSwaps();
+/// See [BreezServices::list_swaps]
+Future<List<SwapInfo>> listSwaps({required ListSwapsRequest req}) =>
+    BreezSdkBindings.instance.api.crateBindingListSwaps(req: req);
 
 /// See [BreezServices::claim_reverse_swap]
 Future<void> claimReverseSwap({required String lockupAddress}) =>

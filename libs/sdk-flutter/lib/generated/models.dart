@@ -372,6 +372,41 @@ class ListPaymentsRequest {
           limit == other.limit;
 }
 
+class ListSwapsRequest {
+  final List<SwapStatus>? status;
+
+  /// Epoch time, in seconds. If set, acts as filter for minimum swap creation time, inclusive.
+  final PlatformInt64? fromTimestamp;
+
+  /// Epoch time, in seconds. If set, acts as filter for maximum swap creation time, exclusive.
+  final PlatformInt64? toTimestamp;
+  final int? offset;
+  final int? limit;
+
+  const ListSwapsRequest({
+    this.status,
+    this.fromTimestamp,
+    this.toTimestamp,
+    this.offset,
+    this.limit,
+  });
+
+  @override
+  int get hashCode =>
+      status.hashCode ^ fromTimestamp.hashCode ^ toTimestamp.hashCode ^ offset.hashCode ^ limit.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ListSwapsRequest &&
+          runtimeType == other.runtimeType &&
+          status == other.status &&
+          fromTimestamp == other.fromTimestamp &&
+          toTimestamp == other.toTimestamp &&
+          offset == other.offset &&
+          limit == other.limit;
+}
+
 /// Details of a LN payment, as included in a [Payment]
 class LnPaymentDetails {
   final String paymentHash;
@@ -491,23 +526,6 @@ class LogEntry {
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is LogEntry && runtimeType == other.runtimeType && line == other.line && level == other.level;
-}
-
-class MaxReverseSwapAmountResponse {
-  /// The total sats that can be sent onchain.
-  final BigInt totalSat;
-
-  const MaxReverseSwapAmountResponse({
-    required this.totalSat,
-  });
-
-  @override
-  int get hashCode => totalSat.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MaxReverseSwapAmountResponse && runtimeType == other.runtimeType && totalSat == other.totalSat;
 }
 
 /// A metadata filter which can be applied when retrieving the transaction list
@@ -1444,52 +1462,6 @@ enum ReverseSwapStatus {
   /// Successfully completed (claim tx has at least one confirmation)
   CompletedConfirmed,
   ;
-}
-
-class SendOnchainRequest {
-  final BigInt amountSat;
-  final String onchainRecipientAddress;
-  final String pairHash;
-  final int satPerVbyte;
-
-  const SendOnchainRequest({
-    required this.amountSat,
-    required this.onchainRecipientAddress,
-    required this.pairHash,
-    required this.satPerVbyte,
-  });
-
-  @override
-  int get hashCode =>
-      amountSat.hashCode ^ onchainRecipientAddress.hashCode ^ pairHash.hashCode ^ satPerVbyte.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SendOnchainRequest &&
-          runtimeType == other.runtimeType &&
-          amountSat == other.amountSat &&
-          onchainRecipientAddress == other.onchainRecipientAddress &&
-          pairHash == other.pairHash &&
-          satPerVbyte == other.satPerVbyte;
-}
-
-class SendOnchainResponse {
-  final ReverseSwapInfo reverseSwapInfo;
-
-  const SendOnchainResponse({
-    required this.reverseSwapInfo,
-  });
-
-  @override
-  int get hashCode => reverseSwapInfo.hashCode;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is SendOnchainResponse &&
-          runtimeType == other.runtimeType &&
-          reverseSwapInfo == other.reverseSwapInfo;
 }
 
 /// Represents a send payment request.
