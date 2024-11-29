@@ -4,7 +4,8 @@ use crate::{
 };
 
 use super::node_api::Greenlight;
-use gl_client::{node, pb::cln};
+use gl_client::pb::cln;
+use sdk_common::tonic_wrap::with_connection_fallback;
 use std::sync::Arc;
 
 const BREEZ_SDK_DATASTORE_PATH: [&str; 2] = ["breez-sdk", "backup"];
@@ -23,9 +24,14 @@ impl GLBackupTransport {
 impl BackupTransport for GLBackupTransport {
     async fn pull(&self) -> SdkResult<Option<BackupState>> {
         let key = self.gl_key();
-        let mut c: node::ClnClient = self.inner.get_node_client().await?;
-        let response: cln::ListdatastoreResponse = c
-            .list_datastore(cln::ListdatastoreRequest { key })
+        let mut client = self.inner.get_node_client().await?;
+        let mut client_clone = client.clone();
+
+        let req = cln::ListdatastoreRequest { key };
+        let response: cln::ListdatastoreResponse =
+            with_connection_fallback(client.list_datastore(req.clone()), || {
+                client_clone.list_datastore(req)
+            })
             .await?
             .into_inner();
         let store = response.datastore;
@@ -44,21 +50,25 @@ impl BackupTransport for GLBackupTransport {
     async fn push(&self, version: Option<u64>, hex: Vec<u8>) -> SdkResult<u64> {
         let key = self.gl_key();
         info!("set_value key = {:?} data length={:?}", key, hex.len());
-        let mut c: node::ClnClient = self.inner.get_node_client().await?;
+        let mut client = self.inner.get_node_client().await?;
+        let mut client_clone = client.clone();
+
         let mut mode = cln::datastore_request::DatastoreMode::MustCreate;
         if version.is_some() {
             mode = cln::datastore_request::DatastoreMode::MustReplace;
         }
-        let response = c
-            .datastore(cln::DatastoreRequest {
-                key,
-                string: None,
-                hex: Some(hex),
-                generation: version,
-                mode: Some(mode.into()),
-            })
-            .await?
-            .into_inner();
+        let req = cln::DatastoreRequest {
+            key,
+            string: None,
+            hex: Some(hex),
+            generation: version,
+            mode: Some(mode.into()),
+        };
+        let response = with_connection_fallback(client.datastore(req.clone()), || {
+            client_clone.datastore(req)
+        })
+        .await?
+        .into_inner();
         Ok(response.generation.unwrap())
     }
 }
