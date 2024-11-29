@@ -332,21 +332,25 @@ impl Greenlight {
     }
 
     async fn fetch_outgoing_payment_with_retry(
-        mut cln_client: node::ClnClient,
+        mut client: node::ClnClient,
         payment_hash: Vec<u8>,
     ) -> Result<cln::ListpaysPays> {
         let mut response = cln::ListpaysResponse::default();
         let mut retry = 0;
         let max_retries = 20;
+
+        let mut client_clone = client.clone();
         while response.pays.is_empty() && retry < max_retries {
-            response = cln_client
-                .list_pays(cln::ListpaysRequest {
-                    payment_hash: Some(payment_hash.clone()),
-                    status: Some(cln::listpays_request::ListpaysStatus::Complete.into()),
-                    ..cln::ListpaysRequest::default()
-                })
-                .await?
-                .into_inner();
+            let req = cln::ListpaysRequest {
+                payment_hash: Some(payment_hash.clone()),
+                status: Some(cln::listpays_request::ListpaysStatus::Complete.into()),
+                ..cln::ListpaysRequest::default()
+            };
+            response = with_connection_fallback(client.list_pays(req.clone()), || {
+                client_clone.list_pays(req)
+            })
+            .await?
+            .into_inner();
             if response.pays.is_empty() {
                 debug!("fetch outgoing payment failed, retrying in 100ms...");
                 sleep(Duration::from_millis(100)).await;
@@ -406,18 +410,22 @@ impl Greenlight {
     }
 
     async fn fetch_channels_and_balance(
-        mut cln_client: node::ClnClient,
+        mut client: node::ClnClient,
     ) -> NodeResult<(
         Vec<cln::ListpeerchannelsChannels>,
         Vec<cln::ListpeerchannelsChannels>,
         Vec<String>,
         u64,
     )> {
+        let mut client_clone = client.clone();
+
         // list all channels
-        let peerchannels = cln_client
-            .list_peer_channels(cln::ListpeerchannelsRequest::default())
-            .await?
-            .into_inner();
+        let req = cln::ListpeerchannelsRequest::default();
+        let peerchannels = with_connection_fallback(client.list_peer_channels(req.clone()), || {
+            client_clone.list_peer_channels(req)
+        })
+        .await?
+        .into_inner();
 
         // filter only connected peers
         let connected_peers: Vec<String> = peerchannels
@@ -454,8 +462,12 @@ impl Greenlight {
 
     async fn list_funds(&self) -> Result<cln::ListfundsResponse> {
         let mut client = self.get_node_client().await?;
-        let funds: cln::ListfundsResponse = client
-            .list_funds(cln::ListfundsRequest::default())
+        let mut client_clone = client.clone();
+        let req = cln::ListfundsRequest::default();
+        let funds: cln::ListfundsResponse =
+            with_connection_fallback(client.list_funds(req.clone()), || {
+                client_clone.list_funds(req)
+            })
             .await?
             .into_inner();
         Ok(funds)
@@ -526,18 +538,21 @@ impl Greenlight {
         first_edge: PaymentPathEdge,
     ) -> NodeResult<PaymentPath> {
         let mut client = self.get_node_client().await?;
+        let mut client_clone = self.get_node_client().await?;
         let mut hops = vec![first_edge];
 
         for hop in route {
-            let hopchannels = client
-                .list_channels(ListchannelsRequest {
-                    short_channel_id: Some(hop.channel.clone()),
-                    source: None,
-                    destination: None,
-                })
-                .await?
-                .into_inner()
-                .channels;
+            let req = ListchannelsRequest {
+                short_channel_id: Some(hop.channel.clone()),
+                source: None,
+                destination: None,
+            };
+            let hopchannels = with_connection_fallback(client.list_channels(req.clone()), || {
+                client_clone.list_channels(req)
+            })
+            .await?
+            .into_inner()
+            .channels;
 
             let first_channel = hopchannels.first().ok_or(NodeError::RouteNotFound(format!(
                 "Channel not found {}",
@@ -565,6 +580,7 @@ impl Greenlight {
         last_hop_hint: Option<&RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         let mut client = self.get_node_client().await?;
+        let mut client_clone = client.clone();
 
         // Consider the hints as part of the route. If there is a routing hint we will
         // attempt to calculate the path until the last hop in the hint and then add
@@ -589,19 +605,21 @@ impl Greenlight {
             hex::encode(last_node.clone()),
             max_hops - 1
         );
-        let route_result = client
-            .get_route(GetrouteRequest {
-                id: last_node.clone(),
-                amount_msat: Some(Amount { msat: 0 }),
-                riskfactor: 0,
-                cltv: None,
-                fromid: Some(via_peer_id.clone()),
-                fuzzpercent: Some(0),
-                exclude: vec![],
-                // we deduct the first hop that we calculate manually
-                maxhops: Some(max_hops - 1),
-            })
-            .await;
+        let req = GetrouteRequest {
+            id: last_node.clone(),
+            amount_msat: Some(Amount { msat: 0 }),
+            riskfactor: 0,
+            cltv: None,
+            fromid: Some(via_peer_id.clone()),
+            fuzzpercent: Some(0),
+            exclude: vec![],
+            // we deduct the first hop that we calculate manually
+            maxhops: Some(max_hops - 1),
+        };
+        let route_result = with_connection_fallback(client.get_route(req.clone()), || {
+            client_clone.get_route(req)
+        })
+        .await;
 
         // In case we have no route better to return no amounts for this peer's channels.
         if let Err(e) = route_result {
@@ -677,10 +695,14 @@ impl Greenlight {
     async fn get_open_peer_channels_pb(
         &self,
     ) -> NodeResult<HashMap<Vec<u8>, cln::ListpeerchannelsChannels>> {
-        let mut node_client = self.get_node_client().await?;
+        let mut client = self.get_node_client().await?;
+        let mut client_clone = client.clone();
         // Get the peer channels
-        let peer_channels = node_client
-            .list_peer_channels(cln::ListpeerchannelsRequest::default())
+        let req = cln::ListpeerchannelsRequest::default();
+        let peer_channels =
+            with_connection_fallback(client.list_peer_channels(req.clone()), || {
+                client_clone.list_peer_channels(req)
+            })
             .await?
             .into_inner();
 
@@ -735,22 +757,28 @@ impl Greenlight {
         state: &SyncIndex,
     ) -> NodeResult<(Vec<Payment>, SyncIndex)> {
         let mut client = self.get_node_client().await?;
-        let created_invoices = client
-            .list_invoices(cln::ListinvoicesRequest {
-                index: Some(ListinvoicesIndex::Created.into()),
-                start: Some(state.created),
-                ..Default::default()
-            })
-            .await?
-            .into_inner();
-        let updated_invoices = client
-            .list_invoices(cln::ListinvoicesRequest {
-                index: Some(ListinvoicesIndex::Updated.into()),
-                start: Some(state.updated),
-                ..Default::default()
-            })
-            .await?
-            .into_inner();
+        let mut client_clone = client.clone();
+
+        let req = cln::ListinvoicesRequest {
+            index: Some(ListinvoicesIndex::Created.into()),
+            start: Some(state.created),
+            ..Default::default()
+        };
+        let created_invoices = with_connection_fallback(client.list_invoices(req.clone()), || {
+            client_clone.list_invoices(req)
+        })
+        .await?
+        .into_inner();
+        let req = cln::ListinvoicesRequest {
+            index: Some(ListinvoicesIndex::Updated.into()),
+            start: Some(state.updated),
+            ..Default::default()
+        };
+        let updated_invoices = with_connection_fallback(client.list_invoices(req.clone()), || {
+            client_clone.list_invoices(req)
+        })
+        .await?
+        .into_inner();
         let mut new_state = state.clone();
         if let Some(last) = created_invoices.invoices.last() {
             new_state.created = last.created_index()
@@ -776,19 +804,26 @@ impl Greenlight {
         htlc_list: Vec<Htlc>,
     ) -> NodeResult<(Vec<Payment>, SyncIndex)> {
         let mut client = self.get_node_client().await?;
-        let created_send_pays = client
-            .list_send_pays(cln::ListsendpaysRequest {
-                index: Some(ListsendpaysIndex::Created.into()),
-                start: Some(state.created),
-                ..Default::default()
+        let mut client_clone = client.clone();
+        let req = cln::ListsendpaysRequest {
+            index: Some(ListsendpaysIndex::Created.into()),
+            start: Some(state.created),
+            ..Default::default()
+        };
+        let created_send_pays =
+            with_connection_fallback(client.list_send_pays(req.clone()), || {
+                client_clone.list_send_pays(req)
             })
             .await?
             .into_inner();
-        let updated_send_pays = client
-            .list_send_pays(cln::ListsendpaysRequest {
-                index: Some(ListsendpaysIndex::Updated.into()),
-                start: Some(state.updated),
-                ..Default::default()
+        let req = cln::ListsendpaysRequest {
+            index: Some(ListsendpaysIndex::Updated.into()),
+            start: Some(state.updated),
+            ..Default::default()
+        };
+        let updated_send_pays =
+            with_connection_fallback(client.list_send_pays(req.clone()), || {
+                client_clone.list_send_pays(req)
             })
             .await?
             .into_inner();
@@ -920,12 +955,15 @@ impl Greenlight {
             None => return Err(NodeError::generic("Channel not found")),
         };
         let mut client = self.get_node_client().await?;
-        let res = client
-            .list_peer_channels(cln::ListpeerchannelsRequest {
-                id: Some(edge.node_id.clone()),
-            })
-            .await?
-            .into_inner();
+        let mut client_clone = client.clone();
+        let req = cln::ListpeerchannelsRequest {
+            id: Some(edge.node_id.clone()),
+        };
+        let res = with_connection_fallback(client.list_peer_channels(req.clone()), || {
+            client_clone.list_peer_channels(req)
+        })
+        .await?
+        .into_inner();
         let channel = match res.channels.iter().find(|c| {
             match (
                 c.alias.as_ref().and_then(|a| a.local.as_ref()),
