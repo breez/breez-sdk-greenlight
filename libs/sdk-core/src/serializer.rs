@@ -47,7 +47,7 @@ where
     }
 }
 
-impl<'a, S: 'a> serde::ser::Serializer for HexSerializer<S>
+impl<S> serde::ser::Serializer for HexSerializer<S>
 where
     S: serde::ser::Serializer,
 {

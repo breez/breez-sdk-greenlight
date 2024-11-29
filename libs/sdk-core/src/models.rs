@@ -1582,7 +1582,7 @@ impl PaymentPathEdge {
     }
 
     fn divide_ceil(dividend: u64, factor: u64) -> u64 {
-        (dividend + factor - 1) / factor
+        dividend.div_ceil(factor)
     }
 }
 
