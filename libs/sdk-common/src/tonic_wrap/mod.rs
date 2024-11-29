@@ -20,10 +20,11 @@ impl Display for Status {
 
 pub struct TransportError(pub tonic::transport::Error);
 
-const BROKEN_CONNECTION_STRINGS: [&str; 3] = [
+const BROKEN_CONNECTION_STRINGS: [&str; 4] = [
     "http2 error: keep-alive timed out",
     "connection error: address not available",
     "connection error: timed out",
+    "connection error: unexpected end of file",
 ];
 
 impl Display for TransportError {
