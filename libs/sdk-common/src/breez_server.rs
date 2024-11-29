@@ -46,7 +46,6 @@ impl BreezServer {
         Ok(Endpoint::from_shared(server_url.to_string())?
             .http2_keep_alive_interval(Duration::new(5, 0))
             .tcp_keepalive(Some(Duration::from_secs(5)))
-            .http2_keep_alive_interval(Duration::from_secs(5))
             .keep_alive_timeout(Duration::from_secs(5))
             .keep_alive_while_idle(true))
     }
