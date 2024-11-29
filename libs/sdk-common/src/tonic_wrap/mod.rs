@@ -20,9 +20,10 @@ impl Display for Status {
 
 pub struct TransportError(pub tonic::transport::Error);
 
-const BROKEN_CONNECTION_STRINGS: [&str; 2] = [
+const BROKEN_CONNECTION_STRINGS: [&str; 3] = [
     "http2 error: keep-alive timed out",
     "connection error: address not available",
+    "connection error: timed out",
 ];
 
 impl Display for TransportError {
@@ -77,7 +78,7 @@ where
     // It's a bit of a guess which errors can occur here. hyper Io errors start
     // with 'connection error'. These are some of the errors seen before.
     if !BROKEN_CONNECTION_STRINGS.contains(&source.to_string().as_str()) {
-        debug!("transport error string is: {}", source.to_string());
+        debug!("transport error string is: '{}'", source.to_string());
         return Err(status);
     }
 
