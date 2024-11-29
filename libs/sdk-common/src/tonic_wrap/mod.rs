@@ -20,6 +20,11 @@ impl Display for Status {
 
 pub struct TransportError(pub tonic::transport::Error);
 
+const BROKEN_CONNECTION_STRINGS: [&str; 2] = [
+    "http2 error: keep-alive timed out",
+    "connection error: address not available",
+];
+
 impl Display for TransportError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -69,13 +74,15 @@ where
         None => return Err(status),
     };
 
-    if !source.to_string().contains("keep-alive timed out") {
+    // It's a bit of a guess which errors can occur here. hyper Io errors start
+    // with 'connection error'. These are some of the errors seen before.
+    if !BROKEN_CONNECTION_STRINGS.contains(&source.to_string().as_str()) {
+        debug!("transport error string is: {}", source.to_string());
         return Err(status);
     }
 
     debug!(
-        "with_connection_fallback: initial call failed due to keepalive 
-        timeout. Retrying fallback."
+        "with_connection_fallback: initial call failed due to broken connection. Retrying fallback."
     );
 
     fallback().await
