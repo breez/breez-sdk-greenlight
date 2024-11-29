@@ -1,5 +1,6 @@
 use std::cmp::{min, Reverse};
 use std::collections::{HashMap, HashSet};
+use std::error::Error;
 use std::iter::Iterator;
 use std::pin::Pin;
 use std::str::FromStr;
@@ -23,7 +24,7 @@ use gl_client::pb::cln::{
     ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels, ListsendpaysPayments,
     PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
-use gl_client::pb::{OffChainPayment, PayStatus, TrampolinePayRequest};
+use gl_client::pb::{OffChainPayment, TrampolinePayRequest};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::Signer;
@@ -72,6 +73,7 @@ pub(crate) struct Greenlight {
     node_client: Mutex<Option<ClnClient>>,
     persister: Arc<SqliteStorage>,
     inprogress_payments: AtomicU16,
+    network_change_detector: watch::Sender<()>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -100,6 +102,7 @@ impl Greenlight {
         seed: Vec<u8>,
         restore_only: Option<bool>,
         persister: Arc<SqliteStorage>,
+        network_change_detector: watch::Sender<()>,
     ) -> NodeResult<Self> {
         // Derive the encryption key from the seed
         let temp_signer = Arc::new(Signer::new(
@@ -161,7 +164,13 @@ impl Greenlight {
                 match encrypted_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(config, seed, creds.clone(), persister)
+                        Greenlight::new(
+                            config,
+                            seed,
+                            creds.clone(),
+                            persister,
+                            network_change_detector,
+                        )
                     }
                     None => Err(NodeError::generic("Failed to encrypt credentials")),
                 }
@@ -175,6 +184,7 @@ impl Greenlight {
         seed: Vec<u8>,
         device: Device,
         persister: Arc<SqliteStorage>,
+        network_change_detector: watch::Sender<()>,
     ) -> NodeResult<Greenlight> {
         let greenlight_network = sdk_config.network.into();
         let signer = Signer::new(seed.clone(), greenlight_network, device.clone())?;
@@ -187,6 +197,7 @@ impl Greenlight {
             node_client: Mutex::new(None),
             persister,
             inprogress_payments: AtomicU16::new(0),
+            network_change_detector,
         })
     }
 
@@ -704,6 +715,61 @@ impl Greenlight {
         res
     }
 
+    async fn with_connection_fallback<T, M, F>(
+        &self,
+        main: M,
+        fallback: impl FnOnce() -> F,
+    ) -> Result<T, tonic::Status>
+    where
+        M: Future<Output = Result<T, tonic::Status>>,
+        F: Future<Output = Result<T, tonic::Status>>,
+        T: std::fmt::Debug,
+    {
+        let res = main.await;
+        let status = match res {
+            Ok(t) => return Ok(t),
+            Err(s) => s,
+        };
+        info!("AAAAAAAAAAAAAAA got status");
+
+        let source = match status.source() {
+            Some(source) => source,
+            None => return Err(status),
+        };
+        info!("AAAAAAAAAAAAAAA got source");
+
+        let error: &tonic::transport::Error = match source.downcast_ref() {
+            Some(error) => error,
+            None => return Err(status),
+        };
+        info!("AAAAAAAAAAAAAAA got error");
+
+        if error.to_string() != "transport error" {
+            return Err(status);
+        }
+        info!("AAAAAAAAAAAAAAA is transport error");
+
+        let source = match error.source() {
+            Some(source) => source,
+            None => return Err(status),
+        };
+        info!("AAAAAAAAAAAAAAA got source");
+        info!("AAAAAAAAAAAAAAA {}", source.to_string());
+        if !source.to_string().contains("keep-alive timed out") {
+            return Err(status);
+        }
+
+        info!("AAAAAAAAAAAAAAA is connection error");
+        if self.network_change_detector.send(()).is_err() {
+            warn!("greenlight network change detector died.");
+        }
+
+        let res = fallback().await;
+
+        info!("AAAAAAAAAAAAAAA fallback returned {:?}", res);
+        res
+    }
+
     // pulls transactions from greenlight based on last sync timestamp.
     // greenlight gives us the payments via API and for received payments we are looking for settled invoices.
     async fn pull_transactions(
@@ -997,14 +1063,14 @@ struct SyncState {
 #[tonic::async_trait]
 impl NodeAPI for Greenlight {
     async fn reconnect(&self) {
-        debug!("Reconnect hibernation: request received");
+        debug!("Reconnect: request received");
 
         // Force refresh existing grpc clients
         *self.gl_client.lock().await = None;
         *self.node_client.lock().await = None;
 
         // Create a new signer
-        debug!("Reconnect hibernation: creating new signer");
+        debug!("Reconnect: creating new signer");
         let new_signer = match Signer::new(
             self.seed.clone(),
             self.sdk_config.network.into(),
@@ -1013,7 +1079,7 @@ impl NodeAPI for Greenlight {
             Ok(new_signer) => new_signer,
             Err(e) => {
                 error!(
-                    "Reconnect hibernation: failed to create new signer after reconnect request: {:?}",
+                    "Reconnect: failed to create new signer after reconnect request: {:?}",
                     e
                 );
                 return;
@@ -1062,6 +1128,7 @@ impl NodeAPI for Greenlight {
 
     async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String> {
         let mut client = self.get_node_client().await?;
+        let mut client_clone = self.get_node_client().await?;
         let label = serde_json::to_string(&InvoiceLabel {
             unix_milli: SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis(),
             payer_amount_msat: request.payer_amount_msat,
@@ -1081,7 +1148,12 @@ impl NodeAPI for Greenlight {
             cltv: request.cltv,
         };
 
-        let res = client.invoice(cln_request).await?.into_inner();
+        let res = self
+            .with_connection_fallback(client.invoice(cln_request.clone()), || {
+                client_clone.invoice(cln_request)
+            })
+            .await?
+            .into_inner();
         Ok(res.bolt11)
     }
 
@@ -1359,7 +1431,8 @@ impl NodeAPI for Greenlight {
             description = invoice.description;
         }
 
-        let mut client: node::ClnClient = self.get_node_client().await?;
+        let mut client = self.get_node_client().await?;
+        let mut client_clone = self.get_node_client().await?;
         let request = cln::PayRequest {
             bolt11,
             amount_msat: amount_msat.map(|amt| cln::Amount { msat: amt }),
@@ -1377,7 +1450,11 @@ impl NodeAPI for Greenlight {
             }),
         };
         let result: cln::PayResponse = self
-            .with_keep_alive(client.pay(request))
+            .with_keep_alive(
+                self.with_connection_fallback(client.pay(request.clone()), || {
+                    client_clone.pay(request)
+                }),
+            )
             .await?
             .into_inner();
 
@@ -1407,6 +1484,7 @@ impl NodeAPI for Greenlight {
         let fee_percent = ((fee_msat as f64 / amount_msat as f64) * 100.) as f32;
         debug!("using fee msat {} fee percent {}", fee_msat, fee_percent);
         let mut client = self.get_client().await?;
+        let mut client_clone = client.clone();
         let request = TrampolinePayRequest {
             bolt11,
             trampoline_node_id,
@@ -1417,7 +1495,11 @@ impl NodeAPI for Greenlight {
             maxfeepercent: fee_percent,
         };
         let result = self
-            .with_keep_alive(client.trampoline_pay(request))
+            .with_keep_alive(
+                self.with_connection_fallback(client.trampoline_pay(request.clone()), || {
+                    client_clone.trampoline_pay(request)
+                }),
+            )
             .await?
             .into_inner();
 
@@ -2289,16 +2371,6 @@ impl TryFrom<OffChainPayment> for Payment {
             },
             metadata: None,
         })
-    }
-}
-
-impl From<PayStatus> for PaymentStatus {
-    fn from(value: PayStatus) -> Self {
-        match value {
-            PayStatus::Pending => PaymentStatus::Pending,
-            PayStatus::Complete => PaymentStatus::Complete,
-            PayStatus::Failed => PaymentStatus::Failed,
-        }
     }
 }
 

@@ -170,8 +170,9 @@ pub struct BreezServices {
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
-    hibernation_sender: watch::Sender<()>,
-    hibernation_receiver: watch::Receiver<()>,
+    reconnect_sender: watch::Sender<()>,
+    reconnect_receiver: watch::Receiver<()>,
+    network_change_receiver: watch::Receiver<()>,
 }
 
 impl BreezServices {
@@ -1439,6 +1440,7 @@ impl BreezServices {
     async fn start_background_tasks(self: &Arc<BreezServices>) -> SdkResult<()> {
         // Detect hibernation
         self.detect_hibernation();
+        self.detect_network_change();
 
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = watch::channel(());
@@ -1491,6 +1493,34 @@ impl BreezServices {
         Ok(())
     }
 
+    fn detect_network_change(self: &Arc<BreezServices>) {
+        let cloned = Arc::clone(self);
+        let mut network_change_receiver = cloned.network_change_receiver.clone();
+        tokio::spawn(async move {
+            loop {
+                if network_change_receiver.changed().await.is_err() {
+                    debug!("network change detector stopped");
+                    return;
+                }
+
+                debug!("Network change detected.");
+                cloned.reconnect().await;
+            }
+        });
+    }
+
+    async fn reconnect(self: &Arc<BreezServices>) {
+        // Reconnect node api before notifying anything else, to
+        // ensure there are no races reconnecting dependant
+        // services.
+        debug!("Reconnecting node api.");
+        self.node_api.reconnect().await;
+
+        // Now notify dependant services.
+        debug!("Notifying services about reconnect.");
+        let _ = self.reconnect_sender.send(());
+    }
+
     fn detect_hibernation(self: &Arc<BreezServices>) {
         let cloned = Arc::clone(self);
         tokio::spawn(async move {
@@ -1509,25 +1539,15 @@ impl BreezServices {
                     .saturating_sub(DETECT_HIBERNATE_SLEEP_DURATION)
                     .ge(&DETECT_HIBERNATE_MAX_OFFSET)
                 {
-                    // Reconnect node api before notifying anything else, to
-                    // ensure there are no races reconnecting dependant
-                    // services.
-                    debug!(
-                        "Hibernation detected, time diff {}s, reconnecting node api.",
-                        elapsed.as_secs_f32()
-                    );
-                    cloned.node_api.reconnect().await;
-
-                    // Now notify dependant services.
-                    debug!("Hibernation detected, notifying services.");
-                    let _ = cloned.hibernation_sender.send(());
+                    debug!("Hibernation detected, time diff {}s", elapsed.as_secs_f32());
+                    cloned.reconnect().await;
                 }
             }
         });
     }
 
     async fn start_signer(self: &Arc<BreezServices>, mut shutdown_receiver: watch::Receiver<()>) {
-        let mut hibernation_receiver = self.hibernation_receiver.clone();
+        let mut reconnect_receiver = self.reconnect_receiver.clone();
         let node_api = self.node_api.clone();
 
         tokio::spawn(async move {
@@ -1543,9 +1563,9 @@ impl BreezServices {
                         true
                     }
 
-                    _ = hibernation_receiver.changed() => {
+                    _ = reconnect_receiver.changed() => {
                         // NOTE: The node api is reconnected already inside the
-                        //       detect_hibernation function, to avoid races.
+                        //       reconnect function, to avoid races.
                         false
                     }
                 };
@@ -1648,7 +1668,7 @@ impl BreezServices {
         let cloned = self.clone();
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
-            let mut reconnect_receiver = cloned.hibernation_receiver.clone();
+            let mut reconnect_receiver = cloned.reconnect_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
@@ -1674,7 +1694,7 @@ impl BreezServices {
                         }
 
                         _ = reconnect_receiver.changed() => {
-                            debug!("Reconnect hibernation: track invoices");
+                            debug!("Reconnect: track invoices");
                             break;
                         }
                     };
@@ -1733,7 +1753,7 @@ impl BreezServices {
         let cloned = self.clone();
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
-            let mut reconnect_receiver = cloned.hibernation_receiver.clone();
+            let mut reconnect_receiver = cloned.reconnect_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
@@ -1759,7 +1779,7 @@ impl BreezServices {
                         }
 
                         _ = reconnect_receiver.changed() => {
-                            debug!("Reconnect hibernation: track logs");
+                            debug!("Reconnect: track logs");
                             break;
                         }
                     };
@@ -2394,7 +2414,8 @@ impl BreezServicesBuilder {
             });
         }
 
-        let (hibernation_sender, hibernation_receiver) = watch::channel(());
+        let (reconnect_sender, reconnect_receiver) = watch::channel(());
+        let (network_change_sender, network_change_receiver) = watch::channel(());
         // The storage is implemented via sqlite.
         let persister = self
             .persister
@@ -2410,6 +2431,7 @@ impl BreezServicesBuilder {
                 self.seed.clone().unwrap(),
                 restore_only,
                 persister.clone(),
+                network_change_sender.clone(),
             )
             .await?;
             let gl_arc = Arc::new(greenlight);
@@ -2468,16 +2490,16 @@ impl BreezServicesBuilder {
             }
         });
 
-        // Reconnect breez server on hibernation.
+        // Reconnect breez server on when requested.
         let cloned_breez_server = breez_server.clone();
-        let mut cloned_hibernation_receiver = hibernation_receiver.clone();
+        let mut cloned_reconnect_receiver = reconnect_receiver.clone();
         tokio::spawn(async move {
             loop {
-                if cloned_hibernation_receiver.changed().await.is_err() {
+                if cloned_reconnect_receiver.changed().await.is_err() {
                     return;
                 }
 
-                debug!("Reconnect hibernation: reconnecting breez server");
+                debug!("Reconnect: reconnecting breez server");
                 let _ = cloned_breez_server.reconnect().await;
             }
         });
@@ -2572,8 +2594,9 @@ impl BreezServicesBuilder {
             backup_watcher: Arc::new(backup_watcher),
             shutdown_sender,
             shutdown_receiver,
-            hibernation_sender,
-            hibernation_receiver,
+            reconnect_sender,
+            reconnect_receiver,
+            network_change_receiver,
         });
 
         Ok(breez_services)
