@@ -44,6 +44,6 @@ impl From<SdkError> for SwapError {
 
 impl From<tonic::Status> for SwapError {
     fn from(status: tonic::Status) -> Self {
-        Self::Generic(crate::tonic_wrap::Status(status).to_string())
+        Self::Generic(sdk_common::tonic_wrap::Status(status).to_string())
     }
 }

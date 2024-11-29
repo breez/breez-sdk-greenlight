@@ -52,9 +52,9 @@ use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::persist::db::SqliteStorage;
 use crate::persist::send_pays::{SendPay, SendPayStatus};
-use crate::tonic_wrap::with_connection_fallback;
 use crate::{models::*, LspInformation};
 use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
+use sdk_common::tonic_wrap::with_connection_fallback;
 
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
@@ -162,12 +162,7 @@ impl Greenlight {
                 match encrypted_creds {
                     Some(c) => {
                         persister.set_gl_credentials(c)?;
-                        Greenlight::new(
-                            config,
-                            seed,
-                            creds.clone(),
-                            persister,
-                        )
+                        Greenlight::new(config, seed, creds.clone(), persister)
                     }
                     None => Err(NodeError::generic("Failed to encrypt credentials")),
                 }

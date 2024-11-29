@@ -154,7 +154,7 @@ impl From<SystemTimeError> for NodeError {
 
 impl From<tonic::Status> for NodeError {
     fn from(status: tonic::Status) -> Self {
-        let wrapped_status = crate::tonic_wrap::Status(status.clone());
+        let wrapped_status = sdk_common::tonic_wrap::Status(status.clone());
         match parse_cln_error(status) {
             Ok(code) => match code {
                 // Pay errors

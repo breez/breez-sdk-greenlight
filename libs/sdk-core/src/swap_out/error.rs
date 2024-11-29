@@ -113,6 +113,6 @@ impl From<serde_json::Error> for ReverseSwapError {
 
 impl From<tonic::Status> for ReverseSwapError {
     fn from(err: tonic::Status) -> Self {
-        Self::Generic(crate::tonic_wrap::Status(err).to_string())
+        Self::Generic(sdk_common::tonic_wrap::Status(err).to_string())
     }
 }

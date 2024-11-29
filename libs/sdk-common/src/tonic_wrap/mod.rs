@@ -1,5 +1,7 @@
 use std::{error::Error, fmt::Display, future::Future};
 
+use log::debug;
+
 pub struct Status(pub tonic::Status);
 
 impl Display for Status {
@@ -75,6 +77,6 @@ where
         "with_connection_fallback: initial call failed due to keepalive 
         timeout. Retrying fallback."
     );
-    let res = fallback().await;
-    res
+
+    fallback().await
 }

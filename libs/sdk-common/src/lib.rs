@@ -9,6 +9,7 @@ pub mod invoice;
 pub mod liquid;
 mod lnurl;
 mod model;
+pub mod tonic_wrap;
 mod utils;
 
 // Re-export commonly used crates, to make it easy for callers to use the specific versions we're using.

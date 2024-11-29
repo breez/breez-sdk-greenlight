@@ -446,7 +446,7 @@ impl From<serde_json::Error> for SdkError {
 impl From<tonic::transport::Error> for SdkError {
     fn from(err: tonic::transport::Error) -> Self {
         Self::ServiceConnectivity {
-            err: crate::tonic_wrap::TransportError(err).to_string(),
+            err: sdk_common::tonic_wrap::TransportError(err).to_string(),
         }
     }
 }
@@ -454,7 +454,7 @@ impl From<tonic::transport::Error> for SdkError {
 impl From<tonic::Status> for SdkError {
     fn from(err: tonic::Status) -> Self {
         Self::Generic {
-            err: crate::tonic_wrap::Status(err).to_string(),
+            err: sdk_common::tonic_wrap::Status(err).to_string(),
         }
     }
 }

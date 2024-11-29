@@ -187,7 +187,6 @@ mod swap_out;
 #[allow(unused_mut)]
 #[allow(dead_code)]
 mod test_utils;
-mod tonic_wrap;
 
 pub use breez_services::{
     mnemonic_to_seed, BackupFailedData, BreezEvent, BreezServices, CheckMessageRequest,
