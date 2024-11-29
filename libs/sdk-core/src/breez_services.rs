@@ -172,7 +172,6 @@ pub struct BreezServices {
     shutdown_receiver: watch::Receiver<()>,
     reconnect_sender: watch::Sender<()>,
     reconnect_receiver: watch::Receiver<()>,
-    network_change_receiver: watch::Receiver<()>,
 }
 
 impl BreezServices {
@@ -1440,7 +1439,6 @@ impl BreezServices {
     async fn start_background_tasks(self: &Arc<BreezServices>) -> SdkResult<()> {
         // Detect hibernation
         self.detect_hibernation();
-        self.detect_network_change();
 
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = watch::channel(());
@@ -1491,22 +1489,6 @@ impl BreezServices {
         self.init_chainservice_urls().await?;
 
         Ok(())
-    }
-
-    fn detect_network_change(self: &Arc<BreezServices>) {
-        let cloned = Arc::clone(self);
-        let mut network_change_receiver = cloned.network_change_receiver.clone();
-        tokio::spawn(async move {
-            loop {
-                if network_change_receiver.changed().await.is_err() {
-                    debug!("network change detector stopped");
-                    return;
-                }
-
-                debug!("Network change detected.");
-                cloned.reconnect().await;
-            }
-        });
     }
 
     async fn reconnect(self: &Arc<BreezServices>) {
@@ -2415,7 +2397,6 @@ impl BreezServicesBuilder {
         }
 
         let (reconnect_sender, reconnect_receiver) = watch::channel(());
-        let (network_change_sender, network_change_receiver) = watch::channel(());
         // The storage is implemented via sqlite.
         let persister = self
             .persister
@@ -2431,7 +2412,6 @@ impl BreezServicesBuilder {
                 self.seed.clone().unwrap(),
                 restore_only,
                 persister.clone(),
-                network_change_sender.clone(),
             )
             .await?;
             let gl_arc = Arc::new(greenlight);
@@ -2596,7 +2576,6 @@ impl BreezServicesBuilder {
             shutdown_receiver,
             reconnect_sender,
             reconnect_receiver,
-            network_change_receiver,
         });
 
         Ok(breez_services)
