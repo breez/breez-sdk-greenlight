@@ -7,8 +7,8 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use sdk_common::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
 use sdk_common::prelude::BreezServer;
+use sdk_common::tonic_wrap::with_connection_fallback;
 use serde::{Deserialize, Serialize};
-use tonic::Request;
 
 #[derive(Serialize, Deserialize)]
 struct PaymentFailureReport {
@@ -33,15 +33,16 @@ impl TryFrom<i32> for HealthCheckStatus {
 impl SupportAPI for BreezServer {
     async fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
         let mut client = self.get_support_client().await?;
+        let mut client_clone = client.clone();
 
-        let request = Request::new(BreezStatusRequest {});
-        let response =
-            client
-                .breez_status(request)
-                .await
-                .map_err(|e| SdkError::ServiceConnectivity {
-                    err: format!("(Breez) Fetch status failed: {e}"),
-                })?;
+        let request = BreezStatusRequest {};
+        let response = with_connection_fallback(client.breez_status(request.clone()), || {
+            client_clone.breez_status(request)
+        })
+        .await
+        .map_err(|e| SdkError::ServiceConnectivity {
+            err: format!("(Breez) Fetch status failed: {e}"),
+        })?;
         let status = response.into_inner().status.try_into()?;
         Ok(ServiceHealthCheckResponse { status })
     }
@@ -54,13 +55,15 @@ impl SupportAPI for BreezServer {
         comment: Option<String>,
     ) -> SdkResult<()> {
         let mut client = self.get_support_client().await?;
+        let mut client_clone = client.clone();
+
         let timestamp: DateTime<Utc> = SystemTime::now().into();
         let report = PaymentFailureReport {
             node_state: node_state.clone(),
             payment,
         };
 
-        let request = Request::new(ReportPaymentFailureRequest {
+        let request = ReportPaymentFailureRequest {
             sdk_version: option_env!("CARGO_PKG_VERSION")
                 .unwrap_or_default()
                 .to_string(),
@@ -70,11 +73,13 @@ impl SupportAPI for BreezServer {
             timestamp: timestamp.to_rfc3339(),
             comment: comment.unwrap_or_default(),
             report: serde_json::to_string(&report)?,
-        });
-        _ = client.report_payment_failure(request).await.map_err(|e| {
-            SdkError::ServiceConnectivity {
-                err: format!("(Breez) Report payment failure failed: {e}"),
-            }
+        };
+        _ = with_connection_fallback(client.report_payment_failure(request.clone()), || {
+            client_clone.report_payment_failure(request)
+        })
+        .await
+        .map_err(|e| SdkError::ServiceConnectivity {
+            err: format!("(Breez) Report payment failure failed: {e}"),
         })?;
         Ok(())
     }

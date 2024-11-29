@@ -11,8 +11,8 @@ use sdk_common::grpc::{
     SubscribeNotificationsRequest, UnsubscribeNotificationsRequest,
 };
 use sdk_common::prelude::BreezServer;
+use sdk_common::tonic_wrap::with_connection_fallback;
 use serde::{Deserialize, Serialize};
-use tonic::Request;
 
 /// Details of supported LSP
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -94,9 +94,13 @@ impl LspInformation {
 impl LspAPI for BreezServer {
     async fn list_lsps(&self, pubkey: String) -> SdkResult<Vec<LspInformation>> {
         let mut client = self.get_channel_opener_client().await?;
+        let mut client_clone = client.clone();
 
-        let request = Request::new(LspListRequest { pubkey });
-        let response = client.lsp_list(request).await?;
+        let request = LspListRequest { pubkey };
+        let response = with_connection_fallback(client.lsp_list(request.clone()), || {
+            client_clone.lsp_list(request)
+        })
+        .await?;
         let mut lsp_list: Vec<LspInformation> = Vec::new();
         for (lsp_id, lsp_info) in response.into_inner().lsps.into_iter() {
             match LspInformation::try_from(&lsp_id, lsp_info) {
@@ -110,9 +114,13 @@ impl LspAPI for BreezServer {
 
     async fn list_used_lsps(&self, pubkey: String) -> SdkResult<Vec<LspInformation>> {
         let mut client = self.get_channel_opener_client().await?;
+        let mut client_clone = client.clone();
 
-        let request = Request::new(LspFullListRequest { pubkey });
-        let response = client.lsp_full_list(request).await?;
+        let request = LspFullListRequest { pubkey };
+        let response = with_connection_fallback(client.lsp_full_list(request.clone()), || {
+            client_clone.lsp_full_list(request)
+        })
+        .await?;
         let mut lsp_list: Vec<LspInformation> = Vec::new();
         for grpc_lsp_info in response.into_inner().lsps.into_iter() {
             let lsp_id = grpc_lsp_info.id.clone();
@@ -138,6 +146,7 @@ impl LspAPI for BreezServer {
         };
 
         let mut client = self.get_payment_notifier_client().await;
+        let mut client_clone = client.clone();
 
         let mut buf = Vec::with_capacity(subscribe_request.encoded_len());
         subscribe_request
@@ -150,7 +159,11 @@ impl LspAPI for BreezServer {
             lsp_id,
             blob: encrypt(lsp_pubkey, buf)?,
         };
-        let response = client.register_payment_notification(request).await?;
+        let response = with_connection_fallback(
+            client.register_payment_notification(request.clone()),
+            || client_clone.register_payment_notification(request),
+        )
+        .await?;
 
         Ok(response.into_inner())
     }
@@ -168,6 +181,7 @@ impl LspAPI for BreezServer {
         };
 
         let mut client = self.get_payment_notifier_client().await;
+        let mut client_clone = client.clone();
 
         let mut buf = Vec::with_capacity(unsubscribe_request.encoded_len());
         unsubscribe_request
@@ -180,7 +194,11 @@ impl LspAPI for BreezServer {
             lsp_id,
             blob: encrypt(lsp_pubkey, buf)?,
         };
-        let response = client.remove_payment_notification(request).await?;
+        let response =
+            with_connection_fallback(client.remove_payment_notification(request.clone()), || {
+                client_clone.remove_payment_notification(request)
+            })
+            .await?;
 
         Ok(response.into_inner())
     }
@@ -192,6 +210,7 @@ impl LspAPI for BreezServer {
         payment_info: PaymentInformation,
     ) -> SdkResult<RegisterPaymentReply> {
         let mut client = self.get_channel_opener_client().await?;
+        let mut client_clone = client.clone();
 
         let mut buf = Vec::with_capacity(payment_info.encoded_len());
         payment_info
@@ -200,11 +219,14 @@ impl LspAPI for BreezServer {
                 err: format!("(LSP {lsp_id}) Failed to encode payment info: {e}"),
             })?;
 
-        let request = Request::new(RegisterPaymentRequest {
+        let request = RegisterPaymentRequest {
             lsp_id,
             blob: encrypt(lsp_pubkey, buf)?,
-        });
-        let response = client.register_payment(request).await?;
+        };
+        let response = with_connection_fallback(client.register_payment(request.clone()), || {
+            client_clone.register_payment(request)
+        })
+        .await?;
 
         Ok(response.into_inner())
     }

@@ -7,6 +7,7 @@ use rand::Rng;
 use ripemd::{Digest, Ripemd160};
 use sdk_common::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
 use sdk_common::prelude::BreezServer;
+use sdk_common::tonic_wrap::with_connection_fallback;
 use tokio::sync::broadcast;
 
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -44,7 +45,9 @@ impl SwapperAPI for BreezServer {
         payer_pubkey: Vec<u8>,
         node_id: String,
     ) -> SwapResult<Swap> {
-        let mut fund_client = self.get_swapper_client().await;
+        let mut client = self.get_swapper_client().await;
+        let mut client_clone = client.clone();
+
         let req = AddFundInitRequest {
             hash: hash.clone(),
             pubkey: payer_pubkey.clone(),
@@ -52,7 +55,11 @@ impl SwapperAPI for BreezServer {
             notification_token: "".to_string(),
         };
 
-        let result = fund_client.add_fund_init(req).await?.into_inner();
+        let result = with_connection_fallback(client.add_fund_init(req.clone()), || {
+            client_clone.add_fund_init(req)
+        })
+        .await?
+        .into_inner();
         Ok(Swap {
             bitcoin_address: result.address,
             swapper_pubkey: result.pubkey,
@@ -65,15 +72,16 @@ impl SwapperAPI for BreezServer {
     }
 
     async fn complete_swap(&self, bolt11: String) -> Result<()> {
+        let mut client = self.get_swapper_client().await;
+        let mut client_clone = client.clone();
         let req = GetSwapPaymentRequest {
             payment_request: bolt11,
         };
-        let resp = self
-            .get_swapper_client()
-            .await
-            .get_swap_payment(req)
-            .await?
-            .into_inner();
+        let resp = with_connection_fallback(client.get_swap_payment(req.clone()), || {
+            client_clone.get_swap_payment(req)
+        })
+        .await?
+        .into_inner();
 
         match resp.swap_error() {
             crate::grpc::get_swap_payment_reply::SwapError::NoError => Ok(()),

@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
-use tonic::Request;
 
 use crate::grpc::RatesRequest;
 use crate::prelude::BreezServer;
+use crate::tonic_wrap::with_connection_fallback;
 
 /// Trait covering fiat-related functionality
 #[tonic::async_trait]
@@ -97,12 +97,14 @@ impl FiatAPI for BreezServer {
 
     async fn fetch_fiat_rates(&self) -> Result<Vec<Rate>> {
         let mut client = self.get_information_client().await;
+        let mut client_clone = client.clone();
 
-        let request = Request::new(RatesRequest {});
-        let response = client
-            .rates(request)
-            .await
-            .map_err(|e| anyhow!("Fetch rates request failed: {e}"))?;
+        let request = RatesRequest {};
+        let response = with_connection_fallback(client.rates(request.clone()), || {
+            client_clone.rates(request)
+        })
+        .await
+        .map_err(|e| anyhow!("Fetch rates request failed: {e}"))?;
 
         let mut rates = response.into_inner().rates;
         rates.sort_by(|a, b| a.coin.cmp(&b.coin));
