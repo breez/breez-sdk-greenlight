@@ -7,7 +7,7 @@ use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use sdk_common::grpc::{BreezStatusRequest, ReportPaymentFailureRequest};
 use sdk_common::prelude::BreezServer;
-use sdk_common::tonic_wrap::with_connection_fallback;
+use sdk_common::with_connection_retry;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -33,16 +33,13 @@ impl TryFrom<i32> for HealthCheckStatus {
 impl SupportAPI for BreezServer {
     async fn service_health_check(&self) -> SdkResult<ServiceHealthCheckResponse> {
         let mut client = self.get_support_client().await?;
-        let mut client_clone = client.clone();
 
         let request = BreezStatusRequest {};
-        let response = with_connection_fallback(client.breez_status(request.clone()), || {
-            client_clone.breez_status(request)
-        })
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez) Fetch status failed: {e}"),
-        })?;
+        let response = with_connection_retry!(client.breez_status(request.clone()))
+            .await
+            .map_err(|e| SdkError::ServiceConnectivity {
+                err: format!("(Breez) Fetch status failed: {e}"),
+            })?;
         let status = response.into_inner().status.try_into()?;
         Ok(ServiceHealthCheckResponse { status })
     }
@@ -55,7 +52,6 @@ impl SupportAPI for BreezServer {
         comment: Option<String>,
     ) -> SdkResult<()> {
         let mut client = self.get_support_client().await?;
-        let mut client_clone = client.clone();
 
         let timestamp: DateTime<Utc> = SystemTime::now().into();
         let report = PaymentFailureReport {
@@ -74,13 +70,11 @@ impl SupportAPI for BreezServer {
             comment: comment.unwrap_or_default(),
             report: serde_json::to_string(&report)?,
         };
-        _ = with_connection_fallback(client.report_payment_failure(request.clone()), || {
-            client_clone.report_payment_failure(request)
-        })
-        .await
-        .map_err(|e| SdkError::ServiceConnectivity {
-            err: format!("(Breez) Report payment failure failed: {e}"),
-        })?;
+        _ = with_connection_retry!(client.report_payment_failure(request.clone()))
+            .await
+            .map_err(|e| SdkError::ServiceConnectivity {
+                err: format!("(Breez) Report payment failure failed: {e}"),
+            })?;
         Ok(())
     }
 }

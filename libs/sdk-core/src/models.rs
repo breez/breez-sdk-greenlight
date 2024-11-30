@@ -14,7 +14,6 @@ use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use strum_macros::{Display, EnumString};
-use tonic_wrap::with_connection_fallback;
 
 use crate::bitcoin::blockdata::opcodes;
 use crate::bitcoin::blockdata::script::Builder;
@@ -402,11 +401,9 @@ pub(crate) trait ReverseSwapperRoutingAPI: Send + Sync {
 impl ReverseSwapperRoutingAPI for BreezServer {
     async fn fetch_reverse_routing_node(&self) -> ReverseSwapResult<Vec<u8>> {
         let mut client = self.get_swapper_client().await;
-        let mut client_clone = client.clone();
 
-        Ok(with_connection_fallback(
-            client.get_reverse_routing_node(grpc::GetReverseRoutingNodeRequest::default()),
-            || client_clone.get_reverse_routing_node(grpc::GetReverseRoutingNodeRequest::default()),
+        Ok(with_connection_retry!(
+            client.get_reverse_routing_node(grpc::GetReverseRoutingNodeRequest::default())
         )
         .await
         .map(|reply| reply.into_inner().node_id)?)
