@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::Result;
 use log::trace;
 use tokio::sync::Mutex;
@@ -30,16 +32,23 @@ pub struct BreezServer {
 impl BreezServer {
     pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
         Ok(Self {
-            grpc_channel: Mutex::new(Endpoint::from_shared(server_url.clone())?.connect_lazy()),
+            grpc_channel: Mutex::new(Self::create_endpoint(&server_url)?.connect_lazy()),
             api_key,
             server_url,
         })
     }
 
     pub async fn reconnect(&self) -> Result<()> {
-        *self.grpc_channel.lock().await =
-            Endpoint::from_shared(self.server_url.clone())?.connect_lazy();
+        *self.grpc_channel.lock().await = Self::create_endpoint(&self.server_url)?.connect_lazy();
         Ok(())
+    }
+
+    fn create_endpoint(server_url: &str) -> Result<Endpoint> {
+        Ok(Endpoint::from_shared(server_url.to_string())?
+            .http2_keep_alive_interval(Duration::new(5, 0))
+            .tcp_keepalive(Some(Duration::from_secs(5)))
+            .keep_alive_timeout(Duration::from_secs(5))
+            .keep_alive_while_idle(true))
     }
 
     fn api_key_metadata(&self) -> Result<Option<MetadataValue<Ascii>>, ServiceConnectivityError> {
