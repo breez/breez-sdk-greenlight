@@ -48,8 +48,6 @@ use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
 
-const DETECT_HIBERNATE_SLEEP_DURATION: Duration = Duration::from_secs(1);
-const DETECT_HIBERNATE_MAX_OFFSET: Duration = Duration::from_secs(2);
 pub type BreezServicesResult<T, E = ConnectError> = Result<T, E>;
 
 /// Trait that can be used to react to various [BreezEvent]s emitted by the SDK.
@@ -170,8 +168,6 @@ pub struct BreezServices {
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
-    reconnect_sender: watch::Sender<()>,
-    reconnect_receiver: watch::Receiver<()>,
 }
 
 impl BreezServices {
@@ -1437,9 +1433,6 @@ impl BreezServices {
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
     async fn start_background_tasks(self: &Arc<BreezServices>) -> SdkResult<()> {
-        // Detect hibernation
-        self.detect_hibernation();
-
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = watch::channel(());
         self.start_signer(signer_signer_receiver).await;
@@ -1491,45 +1484,7 @@ impl BreezServices {
         Ok(())
     }
 
-    async fn reconnect(self: &Arc<BreezServices>) {
-        // Reconnect node api before notifying anything else, to
-        // ensure there are no races reconnecting dependant
-        // services.
-        debug!("Reconnecting node api.");
-        self.node_api.reconnect().await;
-
-        // Now notify dependant services.
-        debug!("Notifying services about reconnect.");
-        let _ = self.reconnect_sender.send(());
-    }
-
-    fn detect_hibernation(self: &Arc<BreezServices>) {
-        let cloned = Arc::clone(self);
-        tokio::spawn(async move {
-            loop {
-                let now = SystemTime::now();
-                tokio::time::sleep(DETECT_HIBERNATE_SLEEP_DURATION).await;
-                let elapsed = match now.elapsed() {
-                    Ok(elapsed) => elapsed,
-                    Err(e) => {
-                        error!("track_hibernation failed with: {:?}", e);
-                        continue;
-                    }
-                };
-
-                if elapsed
-                    .saturating_sub(DETECT_HIBERNATE_SLEEP_DURATION)
-                    .ge(&DETECT_HIBERNATE_MAX_OFFSET)
-                {
-                    debug!("Hibernation detected, time diff {}s", elapsed.as_secs_f32());
-                    cloned.reconnect().await;
-                }
-            }
-        });
-    }
-
     async fn start_signer(self: &Arc<BreezServices>, mut shutdown_receiver: watch::Receiver<()>) {
-        let mut reconnect_receiver = self.reconnect_receiver.clone();
         let node_api = self.node_api.clone();
 
         tokio::spawn(async move {
@@ -1543,12 +1498,6 @@ impl BreezServices {
 
                     _ = shutdown_receiver.changed() => {
                         true
-                    }
-
-                    _ = reconnect_receiver.changed() => {
-                        // NOTE: The node api is reconnected already inside the
-                        //       reconnect function, to avoid races.
-                        false
                     }
                 };
 
@@ -1650,7 +1599,6 @@ impl BreezServices {
         let cloned = self.clone();
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
-            let mut reconnect_receiver = cloned.reconnect_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
@@ -1673,11 +1621,6 @@ impl BreezServices {
                         _ = shutdown_receiver.changed() => {
                             debug!("Invoice tracking task has completed");
                             return;
-                        }
-
-                        _ = reconnect_receiver.changed() => {
-                            debug!("Reconnect: track invoices");
-                            break;
                         }
                     };
 
@@ -1735,7 +1678,6 @@ impl BreezServices {
         let cloned = self.clone();
         tokio::spawn(async move {
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
-            let mut reconnect_receiver = cloned.reconnect_receiver.clone();
             loop {
                 if shutdown_receiver.has_changed().unwrap_or(true) {
                     return;
@@ -1758,11 +1700,6 @@ impl BreezServices {
                         _ = shutdown_receiver.changed() => {
                             debug!("Track logs task has completed");
                             return;
-                        }
-
-                        _ = reconnect_receiver.changed() => {
-                            debug!("Reconnect: track logs");
-                            break;
                         }
                     };
 
@@ -2396,7 +2333,6 @@ impl BreezServicesBuilder {
             });
         }
 
-        let (reconnect_sender, reconnect_receiver) = watch::channel(());
         // The storage is implemented via sqlite.
         let persister = self
             .persister
@@ -2467,20 +2403,6 @@ impl BreezServicesBuilder {
         tokio::spawn(async move {
             if let Err(e) = cloned_breez_server.ping().await {
                 error!("Failed to ping breez server: {e}");
-            }
-        });
-
-        // Reconnect breez server on when requested.
-        let cloned_breez_server = breez_server.clone();
-        let mut cloned_reconnect_receiver = reconnect_receiver.clone();
-        tokio::spawn(async move {
-            loop {
-                if cloned_reconnect_receiver.changed().await.is_err() {
-                    return;
-                }
-
-                debug!("Reconnect: reconnecting breez server");
-                let _ = cloned_breez_server.reconnect().await;
             }
         });
 
@@ -2574,8 +2496,6 @@ impl BreezServicesBuilder {
             backup_watcher: Arc::new(backup_watcher),
             shutdown_sender,
             shutdown_receiver,
-            reconnect_sender,
-            reconnect_receiver,
         });
 
         Ok(breez_services)

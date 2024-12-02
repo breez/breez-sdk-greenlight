@@ -67,7 +67,6 @@ pub(crate) struct Greenlight {
     sdk_config: Config,
     signer: Mutex<Arc<Signer>>,
     device: Device,
-    seed: Vec<u8>,
     gl_client: Mutex<Option<node::Client>>,
     node_client: Mutex<Option<ClnClient>>,
     persister: Arc<SqliteStorage>,
@@ -182,7 +181,6 @@ impl Greenlight {
             sdk_config,
             signer: Mutex::new(Arc::new(signer)),
             device,
-            seed,
             gl_client: Mutex::new(None),
             node_client: Mutex::new(None),
             persister,
@@ -1002,32 +1000,6 @@ struct SyncState {
 
 #[tonic::async_trait]
 impl NodeAPI for Greenlight {
-    async fn reconnect(&self) {
-        debug!("Reconnect: request received");
-
-        // Force refresh existing grpc clients
-        *self.gl_client.lock().await = None;
-        *self.node_client.lock().await = None;
-
-        // Create a new signer
-        debug!("Reconnect: creating new signer");
-        let new_signer = match Signer::new(
-            self.seed.clone(),
-            self.sdk_config.network.into(),
-            self.device.clone(),
-        ) {
-            Ok(new_signer) => new_signer,
-            Err(e) => {
-                error!(
-                    "Reconnect: failed to create new signer after reconnect request: {:?}",
-                    e
-                );
-                return;
-            }
-        };
-        *self.signer.lock().await = Arc::new(new_signer);
-    }
-
     async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>> {
         Ok(Self::get_node_credentials(
             self.sdk_config.network,
