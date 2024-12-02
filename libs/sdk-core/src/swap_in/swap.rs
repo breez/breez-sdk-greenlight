@@ -52,6 +52,7 @@ impl SwapperAPI for BreezServer {
             pubkey: payer_pubkey.clone(),
             node_id,
             notification_token: "".to_string(),
+            version: 1,
         };
 
         let result = with_connection_retry!(client.add_fund_init(req.clone()))
