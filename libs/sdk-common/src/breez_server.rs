@@ -26,7 +26,6 @@ pub static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443"
 pub struct BreezServer {
     grpc_channel: Mutex<Channel>,
     api_key: Option<String>,
-    server_url: String,
 }
 
 impl BreezServer {
@@ -34,13 +33,7 @@ impl BreezServer {
         Ok(Self {
             grpc_channel: Mutex::new(Self::create_endpoint(&server_url)?.connect_lazy()),
             api_key,
-            server_url,
         })
-    }
-
-    pub async fn reconnect(&self) -> Result<()> {
-        *self.grpc_channel.lock().await = Self::create_endpoint(&self.server_url)?.connect_lazy();
-        Ok(())
     }
 
     fn create_endpoint(server_url: &str) -> Result<Endpoint> {
