@@ -30,6 +30,7 @@ use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 
 pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
+pub const SWAP_INVOICE_CLTV_DELTA: u32 = 36;
 
 /// Different types of supported payments
 #[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash)]

@@ -29,7 +29,7 @@ use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
 use crate::persist::swap::SwapChainInfo;
 use crate::swap_in::error::SwapError;
-use crate::ListSwapsRequest;
+use crate::{ListSwapsRequest, SWAP_INVOICE_CLTV_DELTA};
 use crate::{
     models::OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
     RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
@@ -467,7 +467,7 @@ impl BTCReceiveSwap {
                         opening_fee_params: swap_info.channel_opening_fees.clone(),
                         use_description_hash: Some(false),
                         expiry: Some(SWAP_PAYMENT_FEE_EXPIRY_SECONDS),
-                        cltv: None,
+                        cltv: Some(SWAP_INVOICE_CLTV_DELTA),
                     })
                     .await;
 
