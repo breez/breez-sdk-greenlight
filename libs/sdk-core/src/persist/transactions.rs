@@ -20,7 +20,11 @@ impl SqliteStorage {
     /// Note that, if a payment has details of type [LnPaymentDetails] which contain a [SuccessActionProcessed],
     /// then the [LnPaymentDetails] will NOT be persisted. In that case, the [SuccessActionProcessed]
     /// can be inserted separately via [SqliteStorage::insert_payment_external_info].
-    pub fn insert_or_update_payments(&self, transactions: &[Payment]) -> PersistResult<()> {
+    pub fn insert_or_update_payments(
+        &self,
+        transactions: &[Payment],
+        is_pseudo: bool,
+    ) -> PersistResult<()> {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
@@ -32,9 +36,10 @@ impl SqliteStorage {
            fee_msat,                 
            status,
            description,
-           details
+           details,
+           is_pseudo
         )
-         VALUES (?1,?2,?3,?4,?5,?6,?7,?8)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)
         ",
         )?;
 
@@ -48,8 +53,20 @@ impl SqliteStorage {
                 &ln_tx.status,
                 &ln_tx.description,
                 &ln_tx.details,
+                &is_pseudo,
             ))?;
         }
+        Ok(())
+    }
+
+    pub fn delete_pseudo_payments(&self) -> PersistResult<()> {
+        let con = self.get_connection()?;
+        let mut stmt = con.prepare("DELETE FROM payments where is_pseudo=1")?;
+        let res = stmt.execute([])?;
+        if res > 0 {
+            debug!("deleted {} pseudo-payments", res);
+        }
+
         Ok(())
     }
 
@@ -759,8 +776,8 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
     }];
     let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
     storage.init()?;
-    storage.insert_or_update_payments(&txs)?;
-    storage.insert_or_update_payments(&failed_txs)?;
+    storage.insert_or_update_payments(&txs, false)?;
+    storage.insert_or_update_payments(&failed_txs, false)?;
     storage.insert_payment_external_info(
         payment_hash_with_lnurl_success_action,
         PaymentExternalInfo {
@@ -851,7 +868,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
         matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}} if swap == &Some(swap_info))
     );
 
-    storage.insert_or_update_payments(&txs)?;
+    storage.insert_or_update_payments(&txs, false)?;
     let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
     assert_eq!(retrieve_txs.len(), 5);
     assert_eq!(retrieve_txs, txs);

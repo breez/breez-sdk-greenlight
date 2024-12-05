@@ -1196,7 +1196,8 @@ impl BreezServices {
         // update both closed channels and lightning transaction payments
         let mut payments = closed_channel_payments;
         payments.extend(new_data.payments.clone());
-        self.persister.insert_or_update_payments(&payments)?;
+        self.persister.delete_pseudo_payments()?;
+        self.persister.insert_or_update_payments(&payments, false)?;
         let duration = start.elapsed();
         info!("Sync duration: {:?}", duration);
 
@@ -1253,37 +1254,40 @@ impl BreezServices {
         amount_msat: u64,
         label: Option<String>,
     ) -> Result<(), SendPaymentError> {
-        self.persister.insert_or_update_payments(&[Payment {
-            id: invoice.payment_hash.clone(),
-            payment_type: PaymentType::Sent,
-            payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
-            amount_msat,
-            fee_msat: 0,
-            status: PaymentStatus::Pending,
-            error: None,
-            description: invoice.description.clone(),
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: invoice.payment_hash.clone(),
-                    label: label.unwrap_or_default(),
-                    destination_pubkey: invoice.payee_pubkey.clone(),
-                    payment_preimage: String::new(),
-                    keysend: false,
-                    bolt11: invoice.bolt11.clone(),
-                    lnurl_success_action: None,
-                    lnurl_pay_domain: None,
-                    lnurl_pay_comment: None,
-                    ln_address: None,
-                    lnurl_metadata: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
+        self.persister.insert_or_update_payments(
+            &[Payment {
+                id: invoice.payment_hash.clone(),
+                payment_type: PaymentType::Sent,
+                payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
+                amount_msat,
+                fee_msat: 0,
+                status: PaymentStatus::Pending,
+                error: None,
+                description: invoice.description.clone(),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: invoice.payment_hash.clone(),
+                        label: label.unwrap_or_default(),
+                        destination_pubkey: invoice.payee_pubkey.clone(),
+                        payment_preimage: String::new(),
+                        keysend: false,
+                        bolt11: invoice.bolt11.clone(),
+                        lnurl_success_action: None,
+                        lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
+                        ln_address: None,
+                        lnurl_metadata: None,
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: None,
+                        reverse_swap_info: None,
+                        pending_expiration_block: None,
+                        open_channel_bolt11: None,
+                    },
                 },
-            },
-            metadata: None,
-        }])?;
+                metadata: None,
+            }],
+            true,
+        )?;
 
         self.persister.insert_payment_external_info(
             &invoice.payment_hash,
@@ -1644,7 +1648,9 @@ impl BreezServices {
 
                     let mut payment: Option<crate::models::Payment> = p.clone().try_into().ok();
                     if let Some(ref p) = payment {
-                        let res = cloned.persister.insert_or_update_payments(&vec![p.clone()]);
+                        let res = cloned
+                            .persister
+                            .insert_or_update_payments(&vec![p.clone()], false);
                         debug!("paid invoice was added to payments list {res:?}");
                         if let Ok(Some(mut node_info)) = cloned.persister.get_node_state() {
                             node_info.channels_balance_msat += p.amount_msat;
@@ -3113,7 +3119,7 @@ pub(crate) mod tests {
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
-        persister.insert_or_update_payments(&dummy_transactions)?;
+        persister.insert_or_update_payments(&dummy_transactions, false)?;
         persister.insert_payment_external_info(
             payment_hash_with_lnurl_success_action,
             PaymentExternalInfo {
@@ -3334,7 +3340,7 @@ pub(crate) mod tests {
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
         persister.init()?;
-        persister.insert_or_update_payments(&known_payments)?;
+        persister.insert_or_update_payments(&known_payments, false)?;
         persister.set_lsp(MockBreezServer {}.lsp_id(), None)?;
 
         let mut builder = BreezServicesBuilder::new(test_config.clone());
