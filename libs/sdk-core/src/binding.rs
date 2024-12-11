@@ -504,7 +504,7 @@ pub fn parse_invoice(invoice: String) -> Result<LNInvoice> {
 }
 
 pub fn parse_input(input: String) -> Result<InputType> {
-    block_on(async { parse(&input).await })
+    block_on(async { parse(&input, None).await })
 }
 
 /*  Payment API's */
