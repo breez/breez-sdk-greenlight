@@ -280,7 +280,10 @@ async fn parse_external(
 ) -> Result<InputType> {
     for parser in external_input_parsers {
         // Check regex
-        let re = Regex::new(&parser.input_regex).context("Couldn't parse regex")?;
+        let re = Regex::new(&parser.input_regex).context(format!(
+            "Couldn't parse regex {} for provider {}",
+            parser.input_regex, parser.provider_id
+        ))?;
         if re.is_match(input).not() {
             continue;
         }
