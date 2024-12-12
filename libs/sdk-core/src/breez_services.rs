@@ -3315,7 +3315,7 @@ pub(crate) mod tests {
         assert_eq!(parsed.host_str(), Some("mock.moonpay"));
         assert_eq!(parsed.path(), "/");
 
-        let wallet_address = parse(query_pairs.get("wa").unwrap()).await?;
+        let wallet_address = parse(query_pairs.get("wa").unwrap(), None).await?;
         assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
 
         let max_amount = query_pairs.get("ma").unwrap();

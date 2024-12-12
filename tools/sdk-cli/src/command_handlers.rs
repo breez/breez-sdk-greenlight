@@ -124,7 +124,7 @@ pub(crate) async fn handle_command(
             sdk()?.sync().await?;
             Ok("Sync finished successfully".to_string())
         }
-        Commands::Parse { input } => parse(&input)
+        Commands::Parse { input } => parse(&input, None)
             .await
             .map(|res| serde_json::to_string_pretty(&res))?
             .map_err(|e| e.into()),
@@ -466,7 +466,7 @@ pub(crate) async fn handle_command(
             label,
             validate_success_url,
             use_trampoline,
-        } => match parse(&lnurl).await? {
+        } => match parse(&lnurl, None).await? {
             LnUrlPay { data: pd } => {
                 let prompt = format!(
                     "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
@@ -494,7 +494,7 @@ pub(crate) async fn handle_command(
             _ => Err(anyhow!("Invalid input")),
         },
         Commands::LnurlWithdraw { lnurl } => {
-            match parse(&lnurl).await? {
+            match parse(&lnurl, None).await? {
                 LnUrlWithdraw { data: wd } => {
                     info!("Endpoint description: {}", wd.default_description);
 
@@ -536,7 +536,7 @@ pub(crate) async fn handle_command(
         Commands::LnurlAuth { lnurl } => {
             let lnurl_endpoint = lnurl.trim();
 
-            match parse(lnurl_endpoint).await? {
+            match parse(lnurl_endpoint, None).await? {
                 LnUrlAuth { data: ad } => {
                     let auth_res = sdk()?.lnurl_auth(ad).await?;
                     serde_json::to_string_pretty(&auth_res).map_err(|e| e.into())

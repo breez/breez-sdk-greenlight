@@ -378,7 +378,7 @@ pub fn parse_invoice(invoice: String) -> SdkResult<LNInvoice> {
 }
 
 pub fn parse_input(s: String) -> SdkResult<InputType> {
-    rt().block_on(async move { Ok(sdk_parse_input(&s).await?) })
+    rt().block_on(async move { Ok(sdk_parse_input(&s, None).await?) })
 }
 
 pub fn mnemonic_to_seed(phrase: String) -> SdkResult<Vec<u8>> {
