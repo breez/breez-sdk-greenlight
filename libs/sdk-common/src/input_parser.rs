@@ -767,7 +767,7 @@ impl From<Uri<'_>> for BitcoinAddressData {
 }
 
 /// Configuration for an external input parser
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ExternalInputParser {
     /// An arbitrary parser provider id
     pub provider_id: String,
