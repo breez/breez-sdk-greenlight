@@ -24,7 +24,7 @@ use crate::bitcoin::{Address, Script};
 use crate::error::SdkResult;
 use crate::lsp::LspInformation;
 use crate::persist::swap::SwapChainInfo;
-use crate::swap_in::error::{SwapError, SwapResult};
+use crate::swap_in_segwit::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 

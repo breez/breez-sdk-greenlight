@@ -28,7 +28,7 @@ use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
 use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
 use crate::persist::swap::SwapChainInfo;
-use crate::swap_in::error::SwapError;
+use crate::swap_in_segwit::error::SwapError;
 use crate::ListSwapsRequest;
 use crate::{
     models::OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
@@ -789,7 +789,9 @@ mod tests {
 
     use crate::chain::{AddressUtxos, Utxo};
     use crate::persist::swap::SwapChainInfo;
-    use crate::swap_in::swap::{compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx};
+    use crate::swap_in_segwit::swap::{
+        compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx,
+    };
     use crate::test_utils::{get_test_ofp, MockNodeAPI};
     use crate::{
         bitcoin::consensus::deserialize,

@@ -39,8 +39,8 @@ use crate::models::{
     LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
-use crate::swap_in::error::SwapResult;
-use crate::swap_in::swap::create_submarine_swap_script;
+use crate::swap_in_segwit::error::SwapResult;
+use crate::swap_in_segwit::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{

@@ -181,7 +181,7 @@ mod models;
 mod persist;
 mod serializer;
 mod support;
-mod swap_in;
+mod swap_in_segwit;
 mod swap_out;
 #[allow(clippy::all)]
 #[allow(unused_mut)]

@@ -43,7 +43,7 @@ use crate::models::{
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
-use crate::swap_in::swap::BTCReceiveSwap;
+use crate::swap_in_segwit::swap::BTCReceiveSwap;
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
