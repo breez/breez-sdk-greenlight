@@ -1,8 +1,8 @@
 use rusqlite::{named_params, OptionalExtension, Params, Row, Transaction, TransactionBehavior};
 
 use crate::{
-    models::{OpeningFeeParams, SwapInfo, SwapStatus},
-    ListSwapsRequest,
+    models::{SwapInfo, SwapStatus},
+    ListSwapsRequest, OpeningFeeParams,
 };
 
 use super::{
@@ -21,6 +21,7 @@ pub(crate) struct SwapChainInfo {
 }
 
 impl SqliteStorage {
+    #[allow(unused)]
     pub(crate) fn insert_swap(&self, swap_info: SwapInfo) -> PersistResult<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
@@ -114,22 +115,6 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_swap_max_allowed_deposit(
-        &self,
-        bitcoin_address: String,
-        max_allowed_deposit: i64,
-    ) -> PersistResult<()> {
-        self.get_connection()?.execute(
-            "UPDATE sync.swaps SET max_allowed_deposit=:max_allowed_deposit where bitcoin_address=:bitcoin_address",
-            named_params! {
-             ":max_allowed_deposit": max_allowed_deposit,
-             ":bitcoin_address": bitcoin_address,
-            },
-        )?;
-
-        Ok(())
-    }
-
     pub(crate) fn update_swap_redeem_error(
         &self,
         bitcoin_address: String,
@@ -175,21 +160,6 @@ impl SqliteStorage {
             },
         )?;
 
-        Ok(())
-    }
-
-    /// Update the dynamic fees associated with a swap
-    pub(crate) fn update_swap_fees(
-        &self,
-        bitcoin_address: String,
-        channel_opening_fees: OpeningFeeParams,
-    ) -> PersistResult<()> {
-        let mut con = self.get_connection()?;
-        let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
-
-        Self::insert_swaps_fees(&tx, bitcoin_address, channel_opening_fees)?;
-
-        tx.commit()?;
         Ok(())
     }
 

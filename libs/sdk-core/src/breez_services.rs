@@ -829,24 +829,21 @@ impl BreezServices {
                     in_progress.bitcoin_address
                 )});
         }
-        let channel_opening_fees = req.opening_fee_params.unwrap_or(
+        let _channel_opening_fees = req.opening_fee_params.unwrap_or(
             self.lsp_info()
                 .await?
                 .cheapest_open_channel_fee(SWAP_PAYMENT_FEE_EXPIRY_SECONDS)?
                 .clone(),
         );
 
-        let swap_info = self
-            .btc_receive_swapper
-            .create_swap_address(channel_opening_fees)
-            .await?;
-        if let Some(webhook_url) = self.persister.get_webhook_url()? {
-            let address = &swap_info.bitcoin_address;
-            info!("Registering for onchain tx notification for address {address}");
-            self.register_onchain_tx_notification(address, &webhook_url)
-                .await?;
-        }
-        Ok(swap_info)
+        todo!("create taproot swap address");
+        // if let Some(webhook_url) = self.persister.get_webhook_url()? {
+        //     let address = &swap_info.bitcoin_address;
+        //     info!("Registering for onchain tx notification for address {address}");
+        //     self.register_onchain_tx_notification(address, &webhook_url)
+        //         .await?;
+        // }
+        // Ok(swap_info)
     }
 
     /// Returns an optional in-progress [SwapInfo].
@@ -2462,7 +2459,6 @@ impl BreezServicesBuilder {
         ));
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
-            self.config.network.into(),
             unwrapped_node_api.clone(),
             self.swapper_api
                 .clone()

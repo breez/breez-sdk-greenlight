@@ -1,11 +1,10 @@
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use rand::Rng;
 use ripemd::{Digest, Ripemd160};
-use sdk_common::grpc::{AddFundInitRequest, GetSwapPaymentRequest};
+use sdk_common::grpc::GetSwapPaymentRequest;
 use sdk_common::prelude::BreezServer;
 use sdk_common::with_connection_retry;
 use tokio::sync::broadcast;
@@ -24,51 +23,18 @@ use crate::bitcoin::{
 use crate::breez_services::{BreezEvent, OpenChannelParams, Receiver};
 use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
-use crate::models::{SegwitSwapperAPI, Swap, SwapInfo, SwapStatus};
+use crate::models::{SegwitSwapperAPI, SwapInfo, SwapStatus};
 use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
 use crate::persist::swap::SwapChainInfo;
-use crate::swap_in_segwit::error::SwapError;
 use crate::ListSwapsRequest;
 use crate::{
-    models::OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest,
-    RefundRequest, RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
+    PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest, RefundRequest,
+    RefundResponse, SWAP_PAYMENT_FEE_EXPIRY_SECONDS,
 };
-
-use super::error::SwapResult;
 
 #[tonic::async_trait]
 impl SegwitSwapperAPI for BreezServer {
-    async fn create_swap(
-        &self,
-        hash: Vec<u8>,
-        payer_pubkey: Vec<u8>,
-        node_id: String,
-    ) -> SwapResult<Swap> {
-        let mut client = self.get_swapper_client().await;
-
-        let req = AddFundInitRequest {
-            hash: hash.clone(),
-            pubkey: payer_pubkey.clone(),
-            node_id,
-            notification_token: "".to_string(),
-            version: 1,
-        };
-
-        let result = with_connection_retry!(client.add_fund_init(req.clone()))
-            .await?
-            .into_inner();
-        Ok(Swap {
-            bitcoin_address: result.address,
-            swapper_pubkey: result.pubkey,
-            lock_height: result.lock_height,
-            swapper_min_payable: result.min_allowed_deposit,
-            swapper_max_payable: result.max_allowed_deposit,
-            error_message: result.error_message,
-            required_reserve: result.required_reserve,
-        })
-    }
-
     async fn complete_swap(&self, bolt11: String) -> Result<()> {
         let mut client = self.get_swapper_client().await;
         let req = GetSwapPaymentRequest {
@@ -88,7 +54,6 @@ impl SegwitSwapperAPI for BreezServer {
 /// This struct is responsible for handling on-chain funds with lightning payments.
 /// It uses internally an implementation of SwapperAPI that represents the actually swapper service.
 pub(crate) struct BTCReceiveSwap {
-    network: crate::bitcoin::Network,
     node_api: Arc<dyn NodeAPI>,
     swapper_api: Arc<dyn SegwitSwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
@@ -100,7 +65,6 @@ pub(crate) struct BTCReceiveSwap {
 
 impl BTCReceiveSwap {
     pub(crate) fn new(
-        network: crate::bitcoin::Network,
         node_api: Arc<dyn NodeAPI>,
         swapper_api: Arc<dyn SegwitSwapperAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
@@ -109,7 +73,6 @@ impl BTCReceiveSwap {
     ) -> Self {
         let (status_changes_notifier, _) = broadcast::channel::<BreezEvent>(100);
         Self {
-            network,
             node_api,
             swapper_api,
             persister,
@@ -174,120 +137,6 @@ impl BTCReceiveSwap {
         }
 
         Ok(())
-    }
-
-    /// Create a [SwapInfo] that represents the details of an on-going swap.
-    pub(crate) async fn create_swap_address(
-        &self,
-        channel_opening_fees: OpeningFeeParams,
-    ) -> SwapResult<SwapInfo> {
-        let node_state = self
-            .persister
-            .get_node_state()?
-            .ok_or(SwapError::generic("Node info not found"))?;
-
-        // Calculate max_allowed_deposit based on absolute max and current node state
-        let fn_max_allowed_deposit = |max_allowed_deposit_abs: i64| {
-            std::cmp::min(
-                (node_state.max_receivable_msat / 1000) as i64,
-                max_allowed_deposit_abs,
-            )
-        };
-
-        // check first that we don't already have an unused swap
-        if let Some(unused_swap) = self.list_unused()?.first().cloned() {
-            info!("Found unused swap when trying to create new swap address");
-            let bitcoin_address = unused_swap.bitcoin_address.clone();
-
-            // Check max_allowed_deposit and, if it changed, persist and validate changes
-            let current_max = fn_max_allowed_deposit(unused_swap.max_swapper_payable);
-            let res_swap = match current_max == unused_swap.max_allowed_deposit {
-                true => unused_swap,
-                false => {
-                    info!("max_allowed_deposit for this swap has changed, updating it");
-                    let mut new_swap = unused_swap.clone();
-
-                    new_swap.max_allowed_deposit = current_max;
-                    new_swap.validate_swap_limits()?;
-                    self.persister
-                        .update_swap_max_allowed_deposit(bitcoin_address.clone(), current_max)?;
-                    new_swap
-                }
-            };
-
-            self.persister
-                .update_swap_fees(bitcoin_address, channel_opening_fees)?;
-            return Ok(res_swap);
-        }
-
-        // create fresh swap keys
-        let swap_keys = create_swap_keys()?;
-        let pubkey = swap_keys.public_key_bytes()?;
-        let hash = swap_keys.preimage_hash_bytes();
-
-        // use swap API to fetch a new swap address
-        let swap_reply = self
-            .swapper_api
-            .create_swap(hash.clone(), pubkey.clone(), node_state.id.clone())
-            .await?;
-        info!("created swap address {}", swap_reply.bitcoin_address);
-        // calculate the submarine swap script
-        let our_script = create_submarine_swap_script(
-            hash.clone(),
-            swap_reply.swapper_pubkey.clone(),
-            pubkey.clone(),
-            swap_reply.lock_height,
-        )?;
-
-        let address = Address::p2wsh(&our_script, self.network);
-        let address_str = address.to_string();
-
-        // Ensure our address generation match the service
-        if address_str != swap_reply.bitcoin_address {
-            return Err(SwapError::Generic(format!("Wrong address: {address_str}")));
-        }
-
-        let swap_info = SwapInfo {
-            bitcoin_address: swap_reply.bitcoin_address,
-            created_at: SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs() as i64,
-            lock_height: swap_reply.lock_height,
-            payment_hash: hash.clone(),
-            preimage: swap_keys.preimage,
-            private_key: swap_keys.priv_key.to_vec(),
-            public_key: pubkey.clone(),
-            swapper_public_key: swap_reply.swapper_pubkey.clone(),
-            script: our_script.as_bytes().to_vec(),
-            bolt11: None,
-            paid_msat: 0,
-            unconfirmed_sats: 0,
-            confirmed_sats: 0,
-            total_incoming_txs: 0,
-            refund_tx_ids: Vec::new(),
-            confirmed_tx_ids: Vec::new(),
-            unconfirmed_tx_ids: Vec::new(),
-            status: SwapStatus::Initial,
-            min_allowed_deposit: swap_reply.swapper_min_payable,
-            max_allowed_deposit: fn_max_allowed_deposit(swap_reply.swapper_max_payable),
-            max_swapper_payable: swap_reply.swapper_max_payable,
-            last_redeem_error: None,
-            channel_opening_fees: Some(channel_opening_fees),
-            confirmed_at: None,
-        };
-        swap_info.validate_swap_limits()?;
-
-        // persist the swap info
-        self.persister.insert_swap(swap_info.clone())?;
-        Ok(swap_info)
-    }
-
-    fn list_unused(&self) -> Result<Vec<SwapInfo>> {
-        Ok(self.persister.list_swaps(ListSwapsRequest {
-            status: Some(SwapStatus::unused()),
-            ..Default::default()
-        })?)
     }
 
     pub(crate) fn list_in_progress(&self) -> Result<Vec<SwapInfo>> {
@@ -617,10 +466,6 @@ impl SwapKeys {
         ))
     }
 
-    pub(crate) fn public_key_bytes(&self) -> Result<Vec<u8>> {
-        Ok(self.public_key()?.serialize().to_vec())
-    }
-
     pub(crate) fn preimage_hash_bytes(&self) -> Vec<u8> {
         Message::from_hashed_data::<sha256::Hash>(&self.preimage[..])
             .as_ref()
@@ -782,17 +627,14 @@ fn create_refund_tx(
 
 #[cfg(test)]
 mod tests {
-    use std::time::{SystemTime, UNIX_EPOCH};
-    use std::{sync::Arc, vec};
+    use std::vec;
 
     use anyhow::Result;
 
     use crate::chain::{AddressUtxos, Utxo};
-    use crate::persist::swap::SwapChainInfo;
     use crate::swap_in_segwit::swap::{
         compute_refund_tx_weight, compute_tx_fee, prepare_refund_tx,
     };
-    use crate::test_utils::{get_test_ofp, MockNodeAPI};
     use crate::{
         bitcoin::consensus::deserialize,
         bitcoin::hashes::{hex::FromHex, sha256},
@@ -800,18 +642,10 @@ mod tests {
             secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
             OutPoint, Transaction, Txid,
         },
-        breez_services::tests::get_dummy_node_state,
-        chain::{ChainService, OnchainTx},
-        models::*,
-        persist::db::SqliteStorage,
-        test_utils::{
-            create_test_config, create_test_persister, MockChainService, MockReceiver,
-            MockSwapperAPI,
-        },
-        BreezEvent,
+        chain::OnchainTx,
     };
 
-    use super::{create_refund_tx, create_submarine_swap_script, get_utxos, BTCReceiveSwap};
+    use super::{create_refund_tx, create_submarine_swap_script, get_utxos};
 
     #[test]
     fn test_build_swap_script() -> Result<()> {
@@ -879,382 +713,6 @@ mod tests {
         let utxos = get_utxos(swap_address, txs, true)?;
         assert_eq!(utxos.confirmed.len(), 0);
         assert_eq!(utxos.unconfirmed.len(), 1);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_swap_max_allowed_deposit() -> Result<()> {
-        let chain_service = Arc::new(MockChainService::default());
-        let (swapper, persister) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
-
-        assert_eq!(swap_info.max_swapper_payable, 4_000_000);
-        assert_eq!(swap_info.max_allowed_deposit, 4_000_000);
-
-        // After changing the node's max_receivable_msat, the swap max_allowed_deposit changes as well when the swap is fetched
-        let custom_max_receivable = 1_000_000;
-        let mut dummy_node_state = get_dummy_node_state();
-        dummy_node_state.max_receivable_msat = custom_max_receivable * 1_000;
-        persister.set_node_state(&dummy_node_state)?;
-
-        let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
-        assert_eq!(swap_info.max_swapper_payable, 4_000_000);
-        assert_eq!(swap_info.max_allowed_deposit, custom_max_receivable as i64);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_swap_statuses() -> Result<()> {
-        let tip = 1000;
-        let chain_service = Arc::new(MockChainService::default());
-        let (swapper, persister) = create_swapper(chain_service.clone())?;
-        let mut swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
-
-        // test initial status
-        assert_eq!(swap_info.status, SwapStatus::Initial);
-        assert_eq!(swapper.list_in_progress()?.len(), 0);
-        assert_eq!(swapper.list_monitored()?.len(), 1);
-        assert_eq!(swapper.list_redeemables()?.len(), 0);
-        assert_eq!(swapper.list_refundables()?.len(), 0);
-        assert_eq!(swapper.list_unused()?.len(), 1);
-
-        // test with uncormfirmed tx
-        let chain_info = SwapChainInfo {
-            confirmed_tx_ids: vec![],
-            confirmed_sats: 0,
-            confirmed_at: None,
-            unconfirmed_sats: 5000,
-            unconfirmed_tx_ids: vec!["222".into()],
-            total_incoming_txs: 0,
-        };
-        swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
-        persister.update_swap_chain_info(
-            swap_info.bitcoin_address.clone(),
-            chain_info,
-            swap_info.status.clone(),
-        )?;
-        assert_eq!(swap_info.status, SwapStatus::WaitingConfirmation);
-        assert_eq!(swapper.list_in_progress()?.len(), 1);
-        assert_eq!(swapper.list_monitored()?.len(), 1);
-        assert_eq!(swapper.list_redeemables()?.len(), 0);
-        assert_eq!(swapper.list_refundables()?.len(), 0);
-        assert_eq!(swapper.list_unused()?.len(), 0);
-
-        // test with confirmed tx
-        let chain_info = SwapChainInfo {
-            confirmed_tx_ids: vec!["222".into()],
-            confirmed_sats: 5000,
-            confirmed_at: Some(1000),
-            unconfirmed_sats: 0,
-            unconfirmed_tx_ids: vec![],
-            total_incoming_txs: 1,
-        };
-        swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
-        persister.update_swap_chain_info(
-            swap_info.bitcoin_address.clone(),
-            chain_info,
-            swap_info.status.clone(),
-        )?;
-        assert_eq!(swap_info.status, SwapStatus::Redeemable);
-        assert_eq!(swapper.list_in_progress()?.len(), 1);
-        assert_eq!(swapper.list_monitored()?.len(), 1);
-        assert_eq!(swapper.list_redeemables()?.len(), 1);
-        assert_eq!(swapper.list_refundables()?.len(), 0);
-        assert_eq!(swapper.list_unused()?.len(), 0);
-
-        // test with confirmed and uncofirmed tx
-        let chain_info = SwapChainInfo {
-            confirmed_tx_ids: vec!["222".into()],
-            confirmed_sats: 5000,
-            confirmed_at: Some(1000),
-            unconfirmed_sats: 2000,
-            unconfirmed_tx_ids: vec!["111".into()],
-            total_incoming_txs: 1,
-        };
-        swap_info = swap_info.with_chain_info(chain_info.clone(), tip);
-        persister.update_swap_chain_info(
-            swap_info.bitcoin_address.clone(),
-            chain_info,
-            swap_info.status.clone(),
-        )?;
-        assert_eq!(swap_info.status, SwapStatus::Redeemable);
-        assert_eq!(swapper.list_in_progress()?.len(), 1);
-        assert_eq!(swapper.list_monitored()?.len(), 1);
-        assert_eq!(swapper.list_redeemables()?.len(), 1);
-        assert_eq!(swapper.list_refundables()?.len(), 0);
-        assert_eq!(swapper.list_unused()?.len(), 0);
-
-        // test with paid amount
-        swap_info = swap_info.with_paid_amount(5000000, tip);
-        persister.update_swap_paid_amount(
-            swap_info.bitcoin_address.clone(),
-            5000000,
-            swap_info.status.clone(),
-        )?;
-        assert_eq!(swap_info.status, SwapStatus::Redeemed);
-        assert_eq!(swapper.list_in_progress()?.len(), 0);
-        assert_eq!(swapper.list_monitored()?.len(), 1);
-        assert_eq!(swapper.list_redeemables()?.len(), 0);
-        assert_eq!(swapper.list_refundables()?.len(), 0);
-        assert_eq!(swapper.list_unused()?.len(), 0);
-
-        // test refundable
-        let chain_info = SwapChainInfo {
-            confirmed_tx_ids: vec!["222".into()],
-            confirmed_sats: 5000,
-            confirmed_at: Some(1000),
-            unconfirmed_sats: 2000,
-            unconfirmed_tx_ids: vec!["111".into()],
-            total_incoming_txs: 1,
-        };
-        swap_info = swap_info.with_chain_info(chain_info.clone(), tip + 1000);
-        persister.update_swap_chain_info(
-            swap_info.bitcoin_address.clone(),
-            chain_info,
-            swap_info.status.clone(),
-        )?;
-
-        assert_eq!(swap_info.status, SwapStatus::Refundable);
-        assert_eq!(swapper.list_in_progress()?.len(), 0);
-        assert_eq!(swapper.list_monitored()?.len(), 1);
-        assert_eq!(swapper.list_redeemables()?.len(), 0);
-        assert_eq!(swapper.list_refundables()?.len(), 1);
-        assert_eq!(swapper.list_unused()?.len(), 0);
-
-        // test completed
-        let chain_info = SwapChainInfo {
-            confirmed_tx_ids: vec![],
-            confirmed_sats: 0,
-            confirmed_at: Some(1000),
-            unconfirmed_sats: 0,
-            unconfirmed_tx_ids: vec![],
-            total_incoming_txs: 0,
-        };
-        swap_info = swap_info.with_chain_info(chain_info.clone(), tip + 1000);
-        persister.update_swap_chain_info(
-            swap_info.bitcoin_address.clone(),
-            chain_info,
-            swap_info.status.clone(),
-        )?;
-        assert_eq!(swap_info.status, SwapStatus::Completed);
-        assert_eq!(swapper.list_in_progress()?.len(), 0);
-        assert_eq!(swapper.list_monitored()?.len(), 0);
-        assert_eq!(swapper.list_redeemables()?.len(), 0);
-        assert_eq!(swapper.list_refundables()?.len(), 0);
-        assert_eq!(swapper.list_unused()?.len(), 0);
-
-        Ok(())
-    }
-
-    // 1. User has sent funds to swap address
-    // 2. Swap didn't complete before timeout
-    // Swap should move to Expired status and returned in the refundable list.
-    #[tokio::test]
-    async fn test_expired_swap() -> Result<()> {
-        let chain_service = Arc::new(MockChainService::default());
-        let (mut swapper, _) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
-        assert_eq!(swap_info.confirmed_at, None);
-        // We test the case that a confirmed transaction was detected on chain that
-        // sent funds to this address but the lock timeout has expired.
-        swapper.chain_service = chain_service_with_confirmed_txs(swap_info.clone().bitcoin_address);
-        let mut receiver = swapper.subscribe_status_changes();
-        tokio::spawn(async move {
-            let _ = receiver.recv().await;
-        });
-        swapper
-            .on_event(BreezEvent::NewBlock {
-                block: chain_service.tip + 145,
-            })
-            .await?;
-        let swap = swapper
-            .get_swap_info(swap_info.clone().bitcoin_address)?
-            .unwrap();
-        assert_eq!(swap.refund_tx_ids, Vec::<String>::new());
-        assert_eq!(
-            swap.confirmed_tx_ids,
-            vec!["ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe".to_string()]
-        );
-
-        assert_eq!(swap.confirmed_sats, 50000);
-        assert_eq!(swap.confirmed_at.unwrap(), 767637);
-        assert_eq!(swap.paid_msat, 0);
-        assert_eq!(swap.status, SwapStatus::Refundable);
-        assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
-        assert_eq!(swapper.list_refundables().unwrap().len(), 1);
-
-        // broadcast refund transaction
-        let req = RefundRequest {
-            swap_address: swap.bitcoin_address,
-            to_address: String::from("34RQERthXaruAXtW6q1bvrGTeUbqi2Sm1i"),
-            sat_per_vbyte: 1,
-        };
-        let refund_response = swapper.refund_swap(req).await?;
-        let swap = swapper
-            .get_swap_info(swap_info.clone().bitcoin_address)?
-            .unwrap();
-        assert_eq!(swap.status, SwapStatus::Refundable);
-        assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
-        // the swap should be refundable by now
-        let refundables = swapper.list_refundables()?;
-        assert_eq!(refundables.len(), 1);
-        assert_eq!(refundables[0].clone().refund_tx_ids.len(), 1);
-        assert_eq!(
-            refundables[0].clone().refund_tx_ids[0],
-            refund_response.refund_tx_id
-        );
-        Ok(())
-    }
-
-    // 1. User sent funds to swap address
-    // 2. Funds are redeemed in lightning transaction
-    // Swap paid amount is updated and no longer redeemable.
-    #[tokio::test]
-    async fn test_redeem_swap() -> Result<()> {
-        let chain_service = Arc::new(MockChainService::default());
-        let (mut swapper, persister) = create_swapper(chain_service.clone())?;
-        let mut receiver = swapper.subscribe_status_changes();
-        tokio::spawn(async move {
-            let _ = receiver.recv().await;
-        });
-        let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
-
-        // add a payment with the same hash and test that the swapper updates the paid_amount for
-        // the swap.
-        let payment = Payment {
-            id: hex::encode(swap_info.payment_hash.clone()),
-            payment_type: PaymentType::Received,
-            payment_time: 0,
-            amount_msat: 5_000,
-            fee_msat: 0,
-            status: PaymentStatus::Complete,
-            error: None,
-            description: Some("desc".to_string()),
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: hex::encode(swap_info.payment_hash.clone()),
-                    label: "".to_string(),
-                    destination_pubkey: "".to_string(),
-                    payment_preimage: "111".to_string(),
-                    keysend: false,
-                    bolt11: "".to_string(),
-                    lnurl_success_action: None,
-                    lnurl_pay_domain: None,
-                    lnurl_pay_comment: None,
-                    lnurl_metadata: None,
-                    ln_address: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
-                },
-            },
-            metadata: None,
-        };
-        persister.insert_or_update_payments(&vec![payment.clone()], false)?;
-
-        // We test the case that a confirmed transaction was detected on chain that
-        // sent funds to this address.
-        swapper.chain_service = chain_service_with_confirmed_txs(swap_info.clone().bitcoin_address);
-        swapper
-            .on_event(BreezEvent::NewBlock {
-                block: chain_service.tip + 1,
-            })
-            .await?;
-
-        let swap = swapper
-            .get_swap_info(swap_info.clone().bitcoin_address)?
-            .unwrap();
-        assert_eq!(swap.refund_tx_ids, Vec::<String>::new());
-        assert_eq!(
-            swap.confirmed_tx_ids,
-            vec!["ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe".to_string()]
-        );
-        assert_eq!(swap.confirmed_at.unwrap(), 767637);
-
-        assert_eq!(swap.confirmed_sats, 50_000);
-        assert_eq!(swap.paid_msat, 5_000);
-
-        assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
-        assert_eq!(swapper.list_refundables().unwrap().len(), 0);
-
-        // change payment amount and test that the InvoicePaid event triggers updating the
-        // paid_amount of the swap.
-        let mut payment = payment.clone();
-        payment.amount_msat = 2_000;
-        persister.insert_or_update_payments(&vec![payment], false)?;
-        swapper
-            .on_event(BreezEvent::InvoicePaid {
-                details: crate::InvoicePaidDetails {
-                    payment_hash: hex::encode(swap_info.payment_hash.clone()),
-                    bolt11: "".to_string(),
-                    payment: None,
-                },
-            })
-            .await?;
-        let swap = swapper
-            .get_swap_info(swap_info.clone().bitcoin_address)?
-            .unwrap();
-        assert_eq!(swap.paid_msat, 2_000);
-
-        Ok(())
-    }
-
-    // 1. User sent funds to swap address
-    // 2. Funds are redeemed in lightning transaction
-    // Swap paid amount is updated and no longer redeemable.
-    #[tokio::test]
-    async fn test_spent_swap() -> Result<()> {
-        let chain_service = Arc::new(MockChainService::default());
-        let (mut swapper, _) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
-
-        // Once swap is spent on-chain the confirmed_sats would be set to zero again.
-        swapper.chain_service = chain_service_after_spent(swap_info.clone().bitcoin_address);
-        swapper
-            .on_event(BreezEvent::NewBlock {
-                block: chain_service.tip + 1,
-            })
-            .await?;
-
-        let swap = swapper
-            .get_swap_info(swap_info.clone().bitcoin_address)?
-            .unwrap();
-        assert_eq!(swap.refund_tx_ids, Vec::<String>::new());
-        assert_eq!(swap.confirmed_tx_ids, Vec::<String>::new());
-        assert_eq!(swap.confirmed_sats, 0);
-        assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
-        assert_eq!(swapper.list_refundables().unwrap().len(), 0);
-
-        // timeout expired
-        swapper
-            .on_event(BreezEvent::NewBlock {
-                block: chain_service.tip + 145,
-            })
-            .await?;
-
-        let swap = swapper
-            .get_swap_info(swap_info.clone().bitcoin_address)?
-            .unwrap();
-
-        assert_eq!(swap.status, SwapStatus::Completed);
-        assert_eq!(swapper.list_redeemables().unwrap().len(), 0);
-        assert_eq!(swapper.list_refundables().unwrap().len(), 0);
 
         Ok(())
     }
@@ -1400,75 +858,5 @@ mod tests {
         assert_eq!(hex::encode(refund_tx), "0200000000010130037fa97f58d7f685ce861f7862112d8377364c4898f1d63213ff949ffeb31a00000000002001000001204e00000000000016001465c96c830168b8f0b584294d3b9716bb8584c2d80347304402203285efcf44640551a56c53bde677988964ef1b4d11182d5d6634096042c320120220227b625f7827993aca5b9d2f4690c5e5fae44d8d42fdd5f3778ba21df8ba7c7b010064a9148a486ff2e31d6158bf39e2608864d63fefd09d5b876321024d4b6cd1361032ca9bd2aeb9d900aa4d45d9ead80ac9423374c451a7254d076667022001b27521031b84c5567b126440995d3ed5aaba0565d71e1834604819ff9c17f5e9d5dd078f68ac80af0a00");
 
         Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_create_swap_address_uses_the_current_time() -> Result<()> {
-        let current_time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs() as i64;
-        let chain_service = Arc::new(MockChainService::default());
-        let (swapper, _) = create_swapper(chain_service.clone())?;
-        let swap_info = swapper
-            .create_swap_address(get_test_ofp(10, 10, true).into())
-            .await?;
-        assert!(swap_info.created_at >= current_time);
-        Ok(())
-    }
-
-    fn create_swapper(
-        chain_service: Arc<dyn ChainService>,
-    ) -> Result<(BTCReceiveSwap, Arc<SqliteStorage>)> {
-        let config = create_test_config();
-        debug!("working = {}", config.working_dir);
-
-        let persister = Arc::new(create_test_persister(config));
-        persister.init()?;
-
-        let dummy_node_state = get_dummy_node_state();
-        persister.set_node_state(&dummy_node_state)?;
-
-        let swapper = BTCReceiveSwap::new(
-            crate::bitcoin::Network::Bitcoin,
-            Arc::new(MockNodeAPI::new(get_dummy_node_state())),
-            Arc::new(MockSwapperAPI {}),
-            persister.clone(),
-            chain_service.clone(),
-            Arc::new(MockReceiver::default()),
-        );
-        Ok((swapper, persister))
-    }
-
-    fn chain_service_with_confirmed_txs(address: String) -> Arc<dyn ChainService> {
-        let confirmed_txs_raw = r#"[{"txid":"ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe","version":1,"locktime":767636,"vin":[{"txid":"d4344fc9e7f66b3a1a50d1d76836a157629ba0c6ede093e94f1c809d334c9146","vout":0,"prevout":{"scriptpubkey":"0014cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qe2ez9y9h4hr4lpsaaqst42taxxwpzy9xlzqt8k","value":209639471},"scriptsig":"","scriptsig_asm":"","witness":["304402202e914c35b75da798f0898c7cfe6ead207aaee41219afd77124fd56971f05d9030220123ce5d124f4635171b7622995dae35e00373a5fbf8117bfdca5e5080ad6554101","02122fa6d20413bb5da5c7e3fb42228be5436b1bd84e29b294bfc200db5eac460e"],"is_coinbase":false,"sequence":4294967293}],"vout":[{"scriptpubkey":"0014b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5","value":50000},{"scriptpubkey":"0014f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1q7r32q47suczprtpawgvw9xlefzd9nhccyatxvu","value":12140465}],"size":222,"weight":561,"fee":1753,"status":{"confirmed":true,"block_height":767637,"block_hash":"000000000000000000077769f3b2e6a28b9ed688f0d773f9ff2d73c622a2cfac","block_time":1671174562}}]"#;
-        let confirmed_txs = confirmed_txs_raw.replace(
-            "bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5",
-            address.as_str(),
-        );
-        chain_service_with_transactions(address, confirmed_txs)
-    }
-
-    fn chain_service_after_spent(address: String) -> Arc<dyn ChainService> {
-        let txs_raw = r#"[{"txid":"a418e856bb22b6345868dc0b1ac1dd7a6b7fae1d231b275b74172f9584fa0bdf","version":1,"locktime":0,"vin":[{"txid":"ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe","vout":0,"prevout":{"scriptpubkey":"0014b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5","value":50000},"scriptsig":"","scriptsig_asm":"","witness":["304502210089933e46614114e060d3d681c54af71e3d47f8be8131d9310ef8fe231c060f3302204103910a6790e3a678964df6f0f9ae2107666a91e777bd87f9172a28653e374701","0356f385879fefb8c52758126f6e7b9ac57374c2f73f2ee9047b4c61df0ba390b9"],"is_coinbase":false,"sequence":4294967293},{"txid":"fda3ce37f5fb849502e2027958d51efebd1841cb43bbfdd5f3d354c93a551ef9","vout":0,"prevout":{"scriptpubkey":"00145c7f3b6ceb79d03d5a5397df83f2334394ebdd2c","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 5c7f3b6ceb79d03d5a5397df83f2334394ebdd2c","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qt3lnkm8t08gr6kjnjl0c8u3ngw2whhfvzwsxrg","value":786885},"scriptsig":"","scriptsig_asm":"","witness":["304402200ae5465efe824609f7faf1094cce0195763df52e5409dd9ae0526568bf3bcaa20220103749041a87e082cf95bf1e12c5174881e5e4c55e75ab2db29a68538dbabbad01","03dfd8cc1f72f46d259dc0afc6d756bce551fce2fbf58a9ad36409a1b82a17e64f"],"is_coinbase":false,"sequence":4294967293}],"vout":[{"scriptpubkey":"a9141df45814863edfd6d87457e8f8bd79607a116a8f87","scriptpubkey_asm":"OP_HASH160 OP_PUSHBYTES_20 1df45814863edfd6d87457e8f8bd79607a116a8f OP_EQUAL","scriptpubkey_type":"p2sh","scriptpubkey_address":"34RQERthXaruAXtW6q1bvrGTeUbqi2Sm1i","value":26087585},{"scriptpubkey":"001479001aa5f4b981a0b654c3f834d0573595b0ed53","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 79001aa5f4b981a0b654c3f834d0573595b0ed53","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1q0yqp4f05hxq6pdj5c0urf5zhxk2mpm2ndx85za","value":171937413}],"size":372,"weight":837,"fee":259140,"status":{"confirmed":true,"block_height":767637,"block_hash":"000000000000000000077769f3b2e6a28b9ed688f0d773f9ff2d73c622a2cfac","block_time":1671174562}},{"txid":"ec901bcab07df7d475d98fff2933dcb56d57bbdaa029c4142aed93462b6928fe","version":1,"locktime":767636,"vin":[{"txid":"d4344fc9e7f66b3a1a50d1d76836a157629ba0c6ede093e94f1c809d334c9146","vout":0,"prevout":{"scriptpubkey":"0014cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 cab22290b7adc75f861de820baa97d319c1110a6","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qe2ez9y9h4hr4lpsaaqst42taxxwpzy9xlzqt8k","value":209639471},"scriptsig":"","scriptsig_asm":"","witness":["304402202e914c35b75da798f0898c7cfe6ead207aaee41219afd77124fd56971f05d9030220123ce5d124f4635171b7622995dae35e00373a5fbf8117bfdca5e5080ad6554101","02122fa6d20413bb5da5c7e3fb42228be5436b1bd84e29b294bfc200db5eac460e"],"is_coinbase":false,"sequence":4294967293}],"vout":[{"scriptpubkey":"0014b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 b34b7da80e662d1db3fcfbe34b7f4cacc4fac34d","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5","value":50000},{"scriptpubkey":"0014f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_asm":"OP_0 OP_PUSHBYTES_20 f0e2a057d0e60411ac3d7218e29bf9489a59df18","scriptpubkey_type":"v0_p2wpkh","scriptpubkey_address":"bc1q7r32q47suczprtpawgvw9xlefzd9nhccyatxvu","value":12140465}],"size":222,"weight":561,"fee":1753,"status":{"confirmed":true,"block_height":767637,"block_hash":"000000000000000000077769f3b2e6a28b9ed688f0d773f9ff2d73c622a2cfac","block_time":1671174562}}]"#;
-        let with_spent_txs = txs_raw.replace(
-            "bc1qkd9hm2qwvck3mvlul035kl6v4nz04s6dmryeq5",
-            address.as_str(),
-        );
-        chain_service_with_transactions(address, with_spent_txs)
-    }
-
-    fn chain_service_with_transactions(
-        address: String,
-        transactions: String,
-    ) -> Arc<dyn ChainService> {
-        let mut chain_service = MockChainService::default();
-        let spent_txs_json: Vec<OnchainTx> = serde_json::from_str(&transactions).unwrap();
-        chain_service.address_to_transactions.clear();
-        chain_service
-            .address_to_transactions
-            .insert(address, spent_txs_json);
-
-        Arc::new(chain_service)
     }
 }

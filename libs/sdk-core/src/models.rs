@@ -24,7 +24,6 @@ use crate::bitcoin::{Address, Script};
 use crate::error::SdkResult;
 use crate::lsp::LspInformation;
 use crate::persist::swap::SwapChainInfo;
-use crate::swap_in_segwit::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 
@@ -96,13 +95,6 @@ pub struct Swap {
 /// Trait covering functionality involving segwit swaps
 #[tonic::async_trait]
 pub trait SegwitSwapperAPI: Send + Sync {
-    async fn create_swap(
-        &self,
-        hash: Vec<u8>,
-        payer_pubkey: Vec<u8>,
-        node_pubkey: String,
-    ) -> SwapResult<Swap>;
-
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
 }
 
@@ -1293,10 +1285,6 @@ pub enum SwapStatus {
 }
 
 impl SwapStatus {
-    pub(crate) fn unused() -> Vec<SwapStatus> {
-        vec![SwapStatus::Initial]
-    }
-
     pub(crate) fn in_progress() -> Vec<SwapStatus> {
         vec![SwapStatus::Redeemable, SwapStatus::WaitingConfirmation]
     }
@@ -1474,14 +1462,6 @@ impl SwapInfo {
             (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
             _ => SwapStatus::Initial,
         }
-    }
-
-    pub(crate) fn validate_swap_limits(&self) -> SwapResult<()> {
-        ensure_sdk!(
-            self.max_allowed_deposit >= self.min_allowed_deposit,
-            SwapError::unsupported_swap_limits("No allowed deposit amounts")
-        );
-        Ok(())
     }
 }
 

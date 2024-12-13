@@ -1,7 +1,5 @@
 use crate::{error::SdkError, persist::error::PersistError};
 
-pub type SwapResult<T, E = SwapError> = Result<T, E>;
-
 #[derive(Debug, thiserror::Error)]
 pub enum SwapError {
     #[error("{0}")]
@@ -15,16 +13,6 @@ pub enum SwapError {
 
     #[error("{0}")]
     UnsupportedSwapLimits(String),
-}
-
-impl SwapError {
-    pub(crate) fn generic(err: &str) -> Self {
-        Self::Generic(err.to_string())
-    }
-
-    pub(crate) fn unsupported_swap_limits(err: &str) -> Self {
-        Self::UnsupportedSwapLimits(err.to_string())
-    }
 }
 
 impl From<anyhow::Error> for SwapError {

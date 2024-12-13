@@ -24,7 +24,7 @@ use crate::backup::{BackupState, BackupTransport};
 use crate::bitcoin::hashes::hex::ToHex;
 use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::ecdsa::RecoverableSignature;
-use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
+use crate::bitcoin::secp256k1::{KeyPair, Message, Secp256k1};
 use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::Network;
 use crate::breez_services::{OpenChannelParams, Receiver};
@@ -36,12 +36,9 @@ use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
-    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, SegwitSwapperAPI, Swap, SyncResponse,
-    TlvEntry,
+    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, SegwitSwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
-use crate::swap_in_segwit::error::SwapResult;
-use crate::swap_in_segwit::swap::create_submarine_swap_script;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
@@ -118,37 +115,6 @@ pub struct MockSwapperAPI {}
 
 #[tonic::async_trait]
 impl SegwitSwapperAPI for MockSwapperAPI {
-    async fn create_swap(
-        &self,
-        hash: Vec<u8>,
-        payer_pubkey: Vec<u8>,
-        _node_pubkey: String,
-    ) -> SwapResult<Swap> {
-        let mut swapper_priv_key_raw = [2; 32];
-        rand::thread_rng().fill(&mut swapper_priv_key_raw);
-
-        let secp = Secp256k1::new();
-        // swapper keys
-        let swapper_private_key = SecretKey::from_slice(&swapper_priv_key_raw).unwrap();
-        let swapper_pub_key = PublicKey::from_secret_key(&secp, &swapper_private_key)
-            .serialize()
-            .to_vec();
-
-        let script =
-            create_submarine_swap_script(hash, swapper_pub_key.clone(), payer_pubkey, 144).unwrap();
-        let address = crate::bitcoin::Address::p2wsh(&script, crate::bitcoin::Network::Bitcoin);
-
-        Ok(Swap {
-            bitcoin_address: address.to_string(),
-            swapper_pubkey: swapper_pub_key,
-            lock_height: 144,
-            swapper_max_payable: 4_000_000,
-            error_message: "".to_string(),
-            required_reserve: 0,
-            swapper_min_payable: 3_000,
-        })
-    }
-
     async fn complete_swap(&self, _bolt11: String) -> Result<()> {
         Ok(())
     }
