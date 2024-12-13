@@ -23,7 +23,7 @@ use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
 use crate::error::SdkResult;
 use crate::lsp::LspInformation;
-use crate::persist::swap::SwapChainInfo;
+use crate::persist::swap_segwit::SwapChainInfo;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 

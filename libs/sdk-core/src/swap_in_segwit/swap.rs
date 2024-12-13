@@ -26,7 +26,7 @@ use crate::error::ReceivePaymentError;
 use crate::models::{SegwitSwapperAPI, SwapInfo, SwapStatus};
 use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
-use crate::persist::swap::SwapChainInfo;
+use crate::persist::swap_segwit::SwapChainInfo;
 use crate::ListSwapsRequest;
 use crate::{
     PrepareRefundRequest, PrepareRefundResponse, ReceivePaymentRequest, RefundRequest,

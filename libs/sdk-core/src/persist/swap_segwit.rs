@@ -417,7 +417,7 @@ impl SqliteStorage {
 mod tests {
     use crate::persist::db::SqliteStorage;
     use crate::persist::error::PersistResult;
-    use crate::persist::swap::SwapChainInfo;
+    use crate::persist::swap_segwit::SwapChainInfo;
     use crate::test_utils::get_test_ofp_48h;
     use crate::{ListSwapsRequest, OpeningFeeParams, SwapInfo, SwapStatus};
     use rusqlite::{named_params, Connection};
