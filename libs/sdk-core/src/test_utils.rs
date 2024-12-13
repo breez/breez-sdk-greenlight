@@ -36,7 +36,8 @@ use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
-    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry,
+    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, SegwitSwapperAPI, Swap, SyncResponse,
+    TlvEntry,
 };
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
 use crate::swap_in_segwit::error::SwapResult;
@@ -116,7 +117,7 @@ impl BackupTransport for MockBackupTransport {
 pub struct MockSwapperAPI {}
 
 #[tonic::async_trait]
-impl SwapperAPI for MockSwapperAPI {
+impl SegwitSwapperAPI for MockSwapperAPI {
     async fn create_swap(
         &self,
         hash: Vec<u8>,

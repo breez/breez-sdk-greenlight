@@ -93,9 +93,9 @@ pub struct Swap {
     pub swapper_max_payable: i64,
 }
 
-/// Trait covering functionality involving swaps
+/// Trait covering functionality involving segwit swaps
 #[tonic::async_trait]
-pub trait SwapperAPI: Send + Sync {
+pub trait SegwitSwapperAPI: Send + Sync {
     async fn create_swap(
         &self,
         hash: Vec<u8>,

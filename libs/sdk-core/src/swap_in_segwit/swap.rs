@@ -24,7 +24,7 @@ use crate::bitcoin::{
 use crate::breez_services::{BreezEvent, OpenChannelParams, Receiver};
 use crate::chain::{get_total_incoming_txs, get_utxos, AddressUtxos, ChainService};
 use crate::error::ReceivePaymentError;
-use crate::models::{Swap, SwapInfo, SwapStatus, SwapperAPI};
+use crate::models::{SegwitSwapperAPI, Swap, SwapInfo, SwapStatus};
 use crate::node_api::NodeAPI;
 use crate::persist::error::PersistResult;
 use crate::persist::swap::SwapChainInfo;
@@ -38,7 +38,7 @@ use crate::{
 use super::error::SwapResult;
 
 #[tonic::async_trait]
-impl SwapperAPI for BreezServer {
+impl SegwitSwapperAPI for BreezServer {
     async fn create_swap(
         &self,
         hash: Vec<u8>,
@@ -90,7 +90,7 @@ impl SwapperAPI for BreezServer {
 pub(crate) struct BTCReceiveSwap {
     network: crate::bitcoin::Network,
     node_api: Arc<dyn NodeAPI>,
-    swapper_api: Arc<dyn SwapperAPI>,
+    swapper_api: Arc<dyn SegwitSwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
     chain_service: Arc<dyn ChainService>,
     payment_receiver: Arc<dyn Receiver>,
@@ -102,7 +102,7 @@ impl BTCReceiveSwap {
     pub(crate) fn new(
         network: crate::bitcoin::Network,
         node_api: Arc<dyn NodeAPI>,
-        swapper_api: Arc<dyn SwapperAPI>,
+        swapper_api: Arc<dyn SegwitSwapperAPI>,
         persister: Arc<crate::persist::db::SqliteStorage>,
         chain_service: Arc<dyn ChainService>,
         payment_receiver: Arc<dyn Receiver>,

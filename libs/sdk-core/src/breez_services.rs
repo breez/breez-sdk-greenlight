@@ -39,7 +39,7 @@ use crate::lsp::LspInformation;
 use crate::models::{
     sanitize::*, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType, LspAPI,
     NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo, ReverseSwapServiceAPI,
-    SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
+    SegwitSwapperAPI, SwapInfo, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
@@ -2241,7 +2241,7 @@ struct BreezServicesBuilder {
     persister: Option<Arc<SqliteStorage>>,
     rest_client: Option<Arc<dyn RestClient>>,
     support_api: Option<Arc<dyn SupportAPI>>,
-    swapper_api: Option<Arc<dyn SwapperAPI>>,
+    swapper_api: Option<Arc<dyn SegwitSwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
@@ -2304,7 +2304,7 @@ impl BreezServicesBuilder {
         self
     }
 
-    pub fn swapper_api(&mut self, swapper_api: Arc<dyn SwapperAPI>) -> &mut Self {
+    pub fn swapper_api(&mut self, swapper_api: Arc<dyn SegwitSwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
         self
     }
