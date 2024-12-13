@@ -158,7 +158,7 @@ use crate::prelude::*;
 /// }
 /// ```
 ///
-/// ### External input parsing
+/// ## External input parsing
 ///
 /// ```no_run
 /// use sdk_common::prelude::{InputType::*, parse, ExternalInputParser};
