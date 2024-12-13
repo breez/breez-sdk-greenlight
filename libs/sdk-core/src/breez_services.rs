@@ -43,7 +43,7 @@ use crate::models::{
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
-use crate::swap_in_segwit::swap::BTCReceiveSwap;
+use crate::swap_in_segwit::swap::SegwitReceiveSwap;
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -163,7 +163,7 @@ pub struct BreezServices {
     persister: Arc<SqliteStorage>,
     rest_client: Arc<dyn RestClient>,
     payment_receiver: Arc<PaymentReceiver>,
-    btc_receive_swapper: Arc<BTCReceiveSwap>,
+    segwit_receive_swapper: Arc<SegwitReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
     backup_watcher: Arc<BackupWatcher>,
@@ -850,8 +850,10 @@ impl BreezServices {
     /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
-        self.btc_receive_swapper.rescan_monitored_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress()?;
+        self.segwit_receive_swapper
+            .rescan_monitored_swaps(tip)
+            .await?;
+        let in_progress = self.segwit_receive_swapper.list_in_progress()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }
@@ -862,7 +864,7 @@ impl BreezServices {
     /// The status is then updated in the persistent storage.
     pub async fn rescan_swaps(&self) -> SdkResult<()> {
         let tip = self.chain_service.current_tip().await?;
-        self.btc_receive_swapper.rescan_swaps(tip).await?;
+        self.segwit_receive_swapper.rescan_swaps(tip).await?;
         Ok(())
     }
 
@@ -874,10 +876,12 @@ impl BreezServices {
     /// This is taken care of automatically in the context of typical SDK usage.
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
         let tip = self.chain_service.current_tip().await?;
-        self.btc_receive_swapper
+        self.segwit_receive_swapper
             .refresh_swap_on_chain_status(swap_address.clone(), tip)
             .await?;
-        self.btc_receive_swapper.redeem_swap(swap_address).await?;
+        self.segwit_receive_swapper
+            .redeem_swap(swap_address)
+            .await?;
         Ok(())
     }
 
@@ -968,7 +972,7 @@ impl BreezServices {
 
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> SdkResult<Vec<SwapInfo>> {
-        Ok(self.btc_receive_swapper.list_refundables()?)
+        Ok(self.segwit_receive_swapper.list_refundables()?)
     }
 
     /// Prepares a refund transaction for a failed/expired swap.
@@ -979,14 +983,14 @@ impl BreezServices {
         &self,
         req: PrepareRefundRequest,
     ) -> SdkResult<PrepareRefundResponse> {
-        Ok(self.btc_receive_swapper.prepare_refund_swap(req).await?)
+        Ok(self.segwit_receive_swapper.prepare_refund_swap(req).await?)
     }
 
     /// Construct and broadcast a refund transaction for a failed/expired swap
     ///
     /// Returns the txid of the refund transaction.
     pub async fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
-        Ok(self.btc_receive_swapper.refund_swap(req).await?)
+        Ok(self.segwit_receive_swapper.refund_swap(req).await?)
     }
 
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
@@ -1352,9 +1356,9 @@ impl BreezServices {
     }
 
     async fn notify_event_listeners(&self, e: BreezEvent) -> Result<()> {
-        if let Err(err) = self.btc_receive_swapper.on_event(e.clone()).await {
+        if let Err(err) = self.segwit_receive_swapper.on_event(e.clone()).await {
             debug!(
-                "btc_receive_swapper failed to process event {:?}: {:?}",
+                "segwit_receive_swapper failed to process event {:?}: {:?}",
                 e, err
             )
         };
@@ -1575,7 +1579,7 @@ impl BreezServices {
     async fn track_swap_events(self: &Arc<BreezServices>) {
         let cloned = self.clone();
         tokio::spawn(async move {
-            let mut swap_events_stream = cloned.btc_receive_swapper.subscribe_status_changes();
+            let mut swap_events_stream = cloned.segwit_receive_swapper.subscribe_status_changes();
             let mut rev_swap_events_stream = cloned.btc_send_swapper.subscribe_status_changes();
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
@@ -2458,7 +2462,7 @@ impl BreezServicesBuilder {
             mempoolspace_urls,
         ));
 
-        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
+        let segwit_receive_swapper = Arc::new(SegwitReceiveSwap::new(
             unwrapped_node_api.clone(),
             self.swapper_api
                 .clone()
@@ -2507,7 +2511,7 @@ impl BreezServicesBuilder {
             chain_service,
             persister: persister.clone(),
             rest_client,
-            btc_receive_swapper,
+            segwit_receive_swapper,
             btc_send_swapper,
             payment_receiver,
             event_listener,

@@ -53,7 +53,7 @@ impl SegwitSwapperAPI for BreezServer {
 
 /// This struct is responsible for handling on-chain funds with lightning payments.
 /// It uses internally an implementation of SwapperAPI that represents the actually swapper service.
-pub(crate) struct BTCReceiveSwap {
+pub(crate) struct SegwitReceiveSwap {
     node_api: Arc<dyn NodeAPI>,
     swapper_api: Arc<dyn SegwitSwapperAPI>,
     persister: Arc<crate::persist::db::SqliteStorage>,
@@ -63,7 +63,7 @@ pub(crate) struct BTCReceiveSwap {
     status_changes_notifier: broadcast::Sender<BreezEvent>,
 }
 
-impl BTCReceiveSwap {
+impl SegwitReceiveSwap {
     pub(crate) fn new(
         node_api: Arc<dyn NodeAPI>,
         swapper_api: Arc<dyn SegwitSwapperAPI>,
