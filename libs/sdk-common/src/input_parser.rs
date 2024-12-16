@@ -168,7 +168,7 @@ use crate::prelude::*;
 ///     let external_parser = ExternalInputParser {
 ///         provider_id: "provider_id".to_string(),
 ///         input_regex: "(.*)(provider.domain)(.*)".to_string(),
-///         parser_url: "http://external-parser-domain.com/{{input}}".to_string(),
+///         parser_url: "http://external-parser-domain.com/<input>".to_string(),
 ///     };
 ///
 ///     let data = "151931provider.domain069135";
@@ -291,7 +291,7 @@ async fn parse_external(
         // Build URL
         let urlsafe_input =
             percent_encoding::utf8_percent_encode(input, NON_ALPHANUMERIC).to_string();
-        let parser_url = parser.parser_url.replacen("{{input}}", &urlsafe_input, 1);
+        let parser_url = parser.parser_url.replacen("<input>", &urlsafe_input, 1);
 
         // Make request
         let parsed_value = match request_external_parsing(&parser_url).await {
@@ -773,7 +773,7 @@ pub struct ExternalInputParser {
     pub provider_id: String,
     /// The external parser will be used when an input conforms to this regex
     pub input_regex: String,
-    /// The URL of the parser containing a placeholder `{{input}}` that will be replaced with the
+    /// The URL of the parser containing a placeholder `<input>` that will be replaced with the
     /// input to be parsed. The input is sanitized using percent encoding.
     pub parser_url: String,
 }
@@ -1902,7 +1902,7 @@ pub(crate) mod tests {
         let parsers = vec![ExternalInputParser {
             provider_id: "id".to_string(),
             input_regex: "(.*)(provider.domain)(.*)".to_string(),
-            parser_url: "http://127.0.0.1:8080/{{input}}".to_string(),
+            parser_url: "http://127.0.0.1:8080/<input>".to_string(),
         }];
 
         let input_type = parse(input, Some(&parsers)).await?;
@@ -1955,12 +1955,12 @@ pub(crate) mod tests {
             ExternalInputParser {
                 provider_id: "bitcoin".to_string(),
                 input_regex: "(.*)(bitcoin.address.provider)(.*)".to_string(),
-                parser_url: "http://127.0.0.1:8080/{{input}}".to_string(),
+                parser_url: "http://127.0.0.1:8080/<input>".to_string(),
             },
             ExternalInputParser {
                 provider_id: "bolt11".to_string(),
                 input_regex: "(.*)(bolt11.provider)(.*)".to_string(),
-                parser_url: "http://127.0.0.1:8080/{{input}}".to_string(),
+                parser_url: "http://127.0.0.1:8080/<input>".to_string(),
             },
         ];
 
@@ -1995,7 +1995,7 @@ pub(crate) mod tests {
         let parsers = vec![ExternalInputParser {
             provider_id: "id".to_string(),
             input_regex: "(.*)(provider.domain)(.*)".to_string(),
-            parser_url: "http://127.0.0.1:8080/{{input}}".to_string(),
+            parser_url: "http://127.0.0.1:8080/<input>".to_string(),
         }];
 
         let result = parse(input, Some(&parsers)).await;
