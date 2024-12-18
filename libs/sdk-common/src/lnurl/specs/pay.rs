@@ -173,7 +173,7 @@ pub mod model {
     /// Payload of the AES success action, as received from the LNURL endpoint
     ///
     /// See [AesSuccessActionDataDecrypted] for a similar wrapper containing the decrypted payload
-    #[derive(Debug, Deserialize, Serialize)]
+    #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     pub struct AesSuccessActionData {
         /// Contents description, up to 144 characters
         pub description: String,
@@ -243,7 +243,7 @@ pub mod model {
     ///
     /// Receiving any other (unsupported) success action type will result in a failed parsing,
     /// which will abort the LNURL-pay workflow, as per LUD-09.
-    #[derive(Debug, Deserialize, Serialize)]
+    #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     #[serde(tag = "tag")]
     pub enum SuccessAction {

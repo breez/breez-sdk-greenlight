@@ -146,6 +146,14 @@ pub mod model {
         ServiceConnectivity { err: String },
     }
 
+    impl From<anyhow::Error> for LnUrlWithdrawError {
+        fn from(err: anyhow::Error) -> Self {
+            Self::Generic {
+                err: err.to_string(),
+            }
+        }
+    }
+
     impl From<InvoiceError> for LnUrlWithdrawError {
         fn from(value: InvoiceError) -> Self {
             match value {
