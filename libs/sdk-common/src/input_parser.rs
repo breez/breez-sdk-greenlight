@@ -205,8 +205,6 @@ pub async fn parse(
         input.to_string()
     };
 
-    println!("Input {}, input_str {}", input, input_str);
-
     input = input_str.as_str();
 
     if let Ok(input_type) = parse_core(input).await {
@@ -242,6 +240,8 @@ async fn bip353_parse(
         // Decode TXT data
         match String::from_utf8(txt_data) {
             Ok(decoded) => {
+                // The idea is to return from this parse only the BIP21 address and do logic on it inside the parse_core function.
+                // return Some(decoded);
                 if let Some((_, bolt12_address)) = decoded.split_once(BOLT12_PREFIX) {
                     return Some(bolt12_address.to_string());
                 }
