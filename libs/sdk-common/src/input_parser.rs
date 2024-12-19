@@ -12,7 +12,13 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
 
+use trust_dns_resolver::config::*;
+use trust_dns_resolver::TokioAsyncResolver;
+
 use crate::prelude::*;
+
+const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
+const LNURL_PAY_PREFIX: &str = "lnurl=";
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -180,11 +186,55 @@ use crate::prelude::*;
 ///     }
 /// }
 /// ```
+
+async fn bip353_parse(input: &str) -> Option<String> {
+    if let Some((local_part, domain)) = input.split_once('@') {
+        let dns_resolver =
+            TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
+
+        let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
+
+        // Query for TXT records of a domain
+        let txt_data = match dns_resolver.txt_lookup(dns_name).await {
+            Ok(records) => records
+                .iter()
+                .flat_map(|record| record.to_string().into_bytes())
+                .collect::<Vec<u8>>(),
+            Err(e) => {
+                eprintln!("Failed to lookup TXT records: {}", e);
+                return None;
+            }
+        };
+
+        // Decode TXT data
+        match String::from_utf8(txt_data) {
+            Ok(decoded) => {
+                if let Some((_, lnurl)) = decoded.split_once(LNURL_PAY_PREFIX) {
+                    return Some(lnurl.to_string());
+                }
+            }
+            Err(e) => {
+                eprintln!("Failed to decode TXT data: {}", e);
+            }
+        }
+    }
+
+    None
+}
+
 pub async fn parse(
     input: &str,
     external_input_parsers: Option<&[ExternalInputParser]>,
 ) -> Result<InputType> {
-    let input = input.trim();
+    let mut input = input.trim();
+
+    // Try to parse the destination as a bip353 address.
+    let input_str = match bip353_parse(input).await {
+        Some(value) => value,
+        None => input.to_string(),
+    };
+
+    input = input_str.as_str();
 
     if let Ok(input_type) = parse_core(input).await {
         return Ok(input_type);
