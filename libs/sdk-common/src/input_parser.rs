@@ -6,18 +6,20 @@ use ::bip21::Uri;
 use anyhow::{anyhow, Context, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
+use hickory_resolver::name_server::GenericConnector;
+use hickory_resolver::AsyncResolver;
 use log::error;
 use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
 
-use trust_dns_resolver::config::*;
-use trust_dns_resolver::TokioAsyncResolver;
+use hickory_resolver::name_server::*;
 
 use crate::prelude::*;
 
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
+const BOLT12_PREFIX: &str = "lno=";
 const LNURL_PAY_PREFIX: &str = "lnurl=";
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
@@ -186,12 +188,43 @@ const LNURL_PAY_PREFIX: &str = "lnurl=";
 ///     }
 /// }
 /// ```
+pub async fn parse(
+    input: &str,
+    external_input_parsers: Option<&[ExternalInputParser]>,
+    dns_resolver: Option<&AsyncResolver<GenericConnector<TokioRuntimeProvider>>>,
+) -> Result<InputType> {
+    let mut input = input.trim();
 
-async fn bip353_parse(input: &str) -> Option<String> {
+    // Try to parse the destination as a bip353 address.
+    let input_str = if let Some(resolver) = dns_resolver {
+        match bip353_parse(input, resolver).await {
+            Some(value) => value,
+            None => input.to_string(),
+        }
+    } else {
+        input.to_string()
+    };
+
+    println!("Input {}, input_str {}", input, input_str);
+
+    input = input_str.as_str();
+
+    if let Ok(input_type) = parse_core(input).await {
+        return Ok(input_type);
+    }
+
+    if let Some(external_input_parsers) = external_input_parsers {
+        return parse_external(input, external_input_parsers).await;
+    }
+
+    Err(anyhow!("Unrecognized input type"))
+}
+
+async fn bip353_parse(
+    input: &str,
+    dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
+) -> Option<String> {
     if let Some((local_part, domain)) = input.split_once('@') {
-        let dns_resolver =
-            TokioAsyncResolver::tokio(ResolverConfig::default(), ResolverOpts::default());
-
         let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
 
         // Query for TXT records of a domain
@@ -209,6 +242,10 @@ async fn bip353_parse(input: &str) -> Option<String> {
         // Decode TXT data
         match String::from_utf8(txt_data) {
             Ok(decoded) => {
+                if let Some((_, bolt12_address)) = decoded.split_once(BOLT12_PREFIX) {
+                    return Some(bolt12_address.to_string());
+                }
+
                 if let Some((_, lnurl)) = decoded.split_once(LNURL_PAY_PREFIX) {
                     return Some(lnurl.to_string());
                 }
@@ -220,31 +257,6 @@ async fn bip353_parse(input: &str) -> Option<String> {
     }
 
     None
-}
-
-pub async fn parse(
-    input: &str,
-    external_input_parsers: Option<&[ExternalInputParser]>,
-) -> Result<InputType> {
-    let mut input = input.trim();
-
-    // Try to parse the destination as a bip353 address.
-    let input_str = match bip353_parse(input).await {
-        Some(value) => value,
-        None => input.to_string(),
-    };
-
-    input = input_str.as_str();
-
-    if let Ok(input_type) = parse_core(input).await {
-        return Ok(input_type);
-    }
-
-    if let Some(external_input_parsers) = external_input_parsers {
-        return parse_external(input, external_input_parsers).await;
-    }
-
-    Err(anyhow!("Unrecognized input type"))
 }
 
 /// Core parse implementation

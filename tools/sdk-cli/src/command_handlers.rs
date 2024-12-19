@@ -29,6 +29,9 @@ use rustyline::hint::HistoryHinter;
 use rustyline::Editor;
 use rustyline::{Completer, Helper, Hinter, Validator};
 
+use breez_sdk_core::hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider};
+use breez_sdk_core::hickory_resolver::AsyncResolver;
+
 static BREEZ_SERVICES: OnceCell<Arc<BreezServices>> = OnceCell::new();
 
 fn sdk() -> Result<Arc<BreezServices>> {
@@ -72,6 +75,7 @@ pub(crate) async fn handle_command(
     rl: &mut Editor<CliHelper, DefaultHistory>,
     persistence: &CliPersistence,
     command: Commands,
+    dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
 ) -> Result<String, Error> {
     match command {
         Commands::SetAPIKey { key } => {
@@ -124,7 +128,7 @@ pub(crate) async fn handle_command(
             sdk()?.sync().await?;
             Ok("Sync finished successfully".to_string())
         }
-        Commands::Parse { input } => parse(&input, None)
+        Commands::Parse { input } => parse(&input, None, Some(dns_resolver))
             .await
             .map(|res| serde_json::to_string_pretty(&res))?
             .map_err(|e| e.into()),
@@ -466,7 +470,7 @@ pub(crate) async fn handle_command(
             label,
             validate_success_url,
             use_trampoline,
-        } => match parse(&lnurl, None).await? {
+        } => match parse(&lnurl, None, Some(dns_resolver)).await? {
             LnUrlPay { data: pd } => {
                 let prompt = format!(
                     "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
@@ -494,7 +498,7 @@ pub(crate) async fn handle_command(
             _ => Err(anyhow!("Invalid input")),
         },
         Commands::LnurlWithdraw { lnurl } => {
-            match parse(&lnurl, None).await? {
+            match parse(&lnurl, None, Some(dns_resolver)).await? {
                 LnUrlWithdraw { data: wd } => {
                     info!("Endpoint description: {}", wd.default_description);
 
@@ -536,7 +540,7 @@ pub(crate) async fn handle_command(
         Commands::LnurlAuth { lnurl } => {
             let lnurl_endpoint = lnurl.trim();
 
-            match parse(lnurl_endpoint, None).await? {
+            match parse(lnurl_endpoint, None, Some(dns_resolver)).await? {
                 LnUrlAuth { data: ad } => {
                     let auth_res = sdk()?.lnurl_auth(ad).await?;
                     serde_json::to_string_pretty(&auth_res).map_err(|e| e.into())
