@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use crate::{
     bitcoin::util::bip32, node_api::NodeError, persist::error::PersistError,
-    swap_in_segwit::error::SwapError, swap_out::error::ReverseSwapError,
+    swap_out::error::ReverseSwapError,
 };
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
@@ -184,17 +184,6 @@ impl From<SdkError> for ReceiveOnchainError {
         match value {
             SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
-        }
-    }
-}
-
-impl From<SwapError> for ReceiveOnchainError {
-    fn from(value: SwapError) -> Self {
-        match value {
-            SwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
-            _ => Self::Generic {
-                err: value.to_string(),
-            },
         }
     }
 }
