@@ -6,13 +6,22 @@ use ::bip21::Uri;
 use anyhow::{anyhow, Context, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
-use log::error;
+use hickory_resolver::config::{ResolverConfig, ResolverOpts};
+use hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider};
+use hickory_resolver::AsyncResolver;
+use hickory_resolver::TokioAsyncResolver;
+use log::{debug, error};
 use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
+
+const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
+const BOLT12_PREFIX: &str = "lno=";
+const LNURL_PAY_PREFIX: &str = "lnurl=";
+const BIP353_PREFIX: &str = "bitcoin:";
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -186,6 +195,19 @@ pub async fn parse(
 ) -> Result<InputType> {
     let input = input.trim();
 
+    let mut dns_resolvers_opts = ResolverOpts::default();
+    dns_resolvers_opts.validate = true;
+
+    let dns_resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), dns_resolvers_opts);
+
+    // Try to parse the destination as a bip353 address.
+    let input_parsed = match bip353_parse(input, &dns_resolver).await {
+        Some(value) => value,
+        None => input.to_string(),
+    };
+
+    let input = input_parsed.as_str();
+
     if let Ok(input_type) = parse_core(input).await {
         return Ok(input_type);
     }
@@ -195,6 +217,58 @@ pub async fn parse(
     }
 
     Err(anyhow!("Unrecognized input type"))
+}
+
+async fn bip353_parse(
+    input: &str,
+    dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
+) -> Option<String> {
+    if let Some((local_part, domain)) = input.split_once('@') {
+        let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
+
+        // Query for TXT records of a domain
+        let txt_data = match dns_resolver.txt_lookup(dns_name).await {
+            Ok(records) => records
+                .iter()
+                .flat_map(|record| record.to_string().into_bytes())
+                .collect::<Vec<u8>>(),
+            Err(e) => {
+                debug!("No BIP353 TXT records found: {}", e);
+                return None;
+            }
+        };
+
+        // Decode TXT data
+        match String::from_utf8(txt_data) {
+            Ok(decoded) => {
+                if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
+                    error!(
+                        "Invalid decoded TXT data (doesn't begin with: {})",
+                        BIP353_PREFIX
+                    );
+
+                    return None;
+                }
+
+                if let Some((_, bolt12_address)) =
+                    decoded.split_once(&format!("{}?{}", BIP353_PREFIX, BOLT12_PREFIX))
+                {
+                    return Some(bolt12_address.to_string());
+                }
+
+                if let Some((_, lnurl)) =
+                    decoded.split_once(&format!("{}?{}", BIP353_PREFIX, LNURL_PAY_PREFIX))
+                {
+                    return Some(lnurl.to_string());
+                }
+            }
+            Err(e) => {
+                error!("Failed to decode TXT data: {}", e);
+            }
+        }
+    }
+
+    None
 }
 
 /// Core parse implementation
