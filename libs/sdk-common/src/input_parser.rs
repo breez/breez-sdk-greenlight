@@ -7,7 +7,7 @@ use anyhow::{anyhow, Context, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use hickory_resolver::config::{ResolverConfig, ResolverOpts};
-use hickory_resolver::name_server::GenericConnector;
+use hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider};
 use hickory_resolver::AsyncResolver;
 use hickory_resolver::TokioAsyncResolver;
 use log::{debug, error};
@@ -15,8 +15,6 @@ use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
-
-use hickory_resolver::name_server::*;
 
 use crate::prelude::*;
 
