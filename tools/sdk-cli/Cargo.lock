@@ -1519,6 +1519,7 @@ dependencies = [
  "ipnet",
  "once_cell",
  "rand",
+ "ring 0.16.20",
  "thiserror",
  "tinyvec",
  "tokio",
