@@ -10,6 +10,7 @@ use hickory_resolver::config::{ResolverConfig, ResolverOpts};
 use hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider};
 use hickory_resolver::AsyncResolver;
 use hickory_resolver::TokioAsyncResolver;
+use lazy_static::lazy_static;
 use log::{debug, error};
 use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
@@ -22,6 +23,15 @@ const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
 const BOLT12_PREFIX: &str = "lno=";
 const LNURL_PAY_PREFIX: &str = "lnurl=";
 const BIP353_PREFIX: &str = "bitcoin:";
+
+lazy_static! {
+    static ref DNS_RESOLVER: TokioAsyncResolver = {
+        let mut opts = ResolverOpts::default();
+        opts.validate = true;
+
+        TokioAsyncResolver::tokio(ResolverConfig::default(), opts)
+    };
+}
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -195,13 +205,8 @@ pub async fn parse(
 ) -> Result<InputType> {
     let input = input.trim();
 
-    let mut dns_resolvers_opts = ResolverOpts::default();
-    dns_resolvers_opts.validate = true;
-
-    let dns_resolver = TokioAsyncResolver::tokio(ResolverConfig::default(), dns_resolvers_opts);
-
     // Try to parse the destination as a bip353 address.
-    let input_parsed = match bip353_parse(input, &dns_resolver).await {
+    let input_parsed = match bip353_parse(input, &DNS_RESOLVER).await {
         Some(value) => value,
         None => input.to_string(),
     };
