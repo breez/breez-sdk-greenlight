@@ -20,6 +20,7 @@ use LnUrlRequestData::*;
 use crate::prelude::*;
 
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
+#[cfg(feature = "liquid")]
 const BOLT12_PREFIX: &str = "lno=";
 const LNURL_PAY_PREFIX: &str = "lnurl=";
 const BIP353_PREFIX: &str = "bitcoin:";
@@ -246,24 +247,15 @@ async fn bip353_parse(
         // Decode TXT data
         match String::from_utf8(txt_data) {
             Ok(decoded) => {
-                if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
-                    error!(
-                        "Invalid decoded TXT data (doesn't begin with: {})",
-                        BIP353_PREFIX
-                    );
+                // FIXME: The idea is to return from here the complete uri and parse it inside the parse_core function
+                // return Some(decoded);
 
-                    return None;
+                #[cfg(feature = "liquid")]
+                if let Some(bolt12_offer) = extract_bolt12_offer(&decoded) {
+                    return Some(bolt12_offer.to_string());
                 }
 
-                if let Some((_, bolt12_address)) =
-                    decoded.split_once(&format!("{}?{}", BIP353_PREFIX, BOLT12_PREFIX))
-                {
-                    return Some(bolt12_address.to_string());
-                }
-
-                if let Some((_, lnurl)) =
-                    decoded.split_once(&format!("{}?{}", BIP353_PREFIX, LNURL_PAY_PREFIX))
-                {
+                if let Some(lnurl) = extract_lnurl(&decoded) {
                     return Some(lnurl.to_string());
                 }
             }
@@ -271,6 +263,25 @@ async fn bip353_parse(
                 error!("Failed to decode TXT data: {}", e);
             }
         }
+    }
+
+    None
+}
+
+#[cfg(feature = "liquid")]
+fn extract_bolt12_offer(input: &str) -> Option<String> {
+    if let Some((_, bolt12_address)) =
+        input.split_once(&format!("{}?{}", BIP353_PREFIX, BOLT12_PREFIX))
+    {
+        return Some(bolt12_address.to_string());
+    }
+
+    None
+}
+
+fn extract_lnurl(input: &str) -> Option<String> {
+    if let Some((_, lnurl)) = input.split_once(&format!("{}?{}", BIP353_PREFIX, LNURL_PAY_PREFIX)) {
+        return Some(lnurl.to_string());
     }
 
     None
