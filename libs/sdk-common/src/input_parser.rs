@@ -24,6 +24,7 @@ const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
 const BOLT12_PREFIX: &str = "lno=";
 const LNURL_PAY_PREFIX: &str = "lnurl=";
 const BIP353_PREFIX: &str = "bitcoin:";
+const QUERY_PARAMS_SEPARATOR: &str = "&";
 
 lazy_static! {
     static ref DNS_RESOLVER: TokioAsyncResolver = {
@@ -247,17 +248,16 @@ async fn bip353_parse(
         // Decode TXT data
         match String::from_utf8(txt_data) {
             Ok(decoded) => {
-                // FIXME: The idea is to return from here the complete uri and parse it inside the parse_core function
-                // return Some(decoded);
+                if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
+                    error!(
+                        "Invalid decoded TXT data (doesn't begin with: {})",
+                        BIP353_PREFIX
+                    );
 
-                #[cfg(feature = "liquid")]
-                if let Some(bolt12_offer) = extract_bolt12_offer(&decoded) {
-                    return Some(bolt12_offer.to_string());
+                    return None;
                 }
 
-                if let Some(lnurl) = extract_lnurl(&decoded) {
-                    return Some(lnurl.to_string());
-                }
+                return Some(decoded);
             }
             Err(e) => {
                 error!("Failed to decode TXT data: {}", e);
@@ -270,18 +270,20 @@ async fn bip353_parse(
 
 #[cfg(feature = "liquid")]
 fn extract_bolt12_offer(input: &str) -> Option<String> {
-    if let Some((_, bolt12_address)) =
-        input.split_once(&format!("{}?{}", BIP353_PREFIX, BOLT12_PREFIX))
-    {
-        return Some(bolt12_address.to_string());
-    }
-
-    None
+    return extract_by_label(input, BOLT12_PREFIX);
 }
 
 fn extract_lnurl(input: &str) -> Option<String> {
-    if let Some((_, lnurl)) = input.split_once(&format!("{}?{}", BIP353_PREFIX, LNURL_PAY_PREFIX)) {
-        return Some(lnurl.to_string());
+    return extract_by_label(input, LNURL_PAY_PREFIX);
+}
+
+fn extract_by_label(input: &str, label: &str) -> Option<String> {
+    if let Some((_, value)) = input.split_once(label) {
+        let value = value
+            .split_once(QUERY_PARAMS_SEPARATOR)
+            .map_or(value, |(first, _)| first);
+
+        return Some(value.to_string());
     }
 
     None
@@ -310,6 +312,11 @@ async fn parse_core(input: &str) -> Result<InputType> {
             }),
             Some(invoice) => Ok(InputType::Bolt11 { invoice }),
         };
+    }
+
+    #[cfg(feature = "liquid")]
+    if let Some(bolt12_offer) = extract_bolt12_offer(input) {
+        // TODO: Add the section to manage a bolt12_offer
     }
 
     #[cfg(feature = "liquid")]
@@ -350,6 +357,13 @@ async fn parse_core(input: &str) -> Result<InputType> {
             return Ok(InputType::Url { url: input.into() });
         }
     }
+
+    let lnurl = match extract_lnurl(input) {
+        Some(value) => value,
+        None => input.to_string(),
+    };
+
+    let input = lnurl.as_str();
 
     // Try to strip the "lightning:" prefix from possible lnurl string. If prefix is not there, default to original input
     let input = input
