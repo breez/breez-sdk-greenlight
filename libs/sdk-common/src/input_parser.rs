@@ -20,11 +20,10 @@ use LnUrlRequestData::*;
 use crate::prelude::*;
 
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
-#[cfg(feature = "liquid")]
-const BOLT12_PREFIX: &str = "lno=";
-const LNURL_PAY_PREFIX: &str = "lnurl=";
+// #[cfg(feature = "liquid")]
+const BOLT12_PREFIX: &str = "lno";
+const LNURL_PAY_PREFIX: &str = "lnurl";
 const BIP353_PREFIX: &str = "bitcoin:";
-const QUERY_PARAMS_SEPARATOR: &str = "&";
 
 lazy_static! {
     static ref DNS_RESOLVER: TokioAsyncResolver = {
@@ -226,6 +225,13 @@ pub async fn parse(
     Err(anyhow!("Unrecognized input type"))
 }
 
+fn get_by_key(tuple_vector: &Vec<(&str, &str)>, key: &str) -> Option<String> {
+    tuple_vector
+        .iter()
+        .find(|(k, _)| *k == key)
+        .map(|(_, v)| v.to_string())
+}
+
 async fn bip353_parse(
     input: &str,
     dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
@@ -257,7 +263,25 @@ async fn bip353_parse(
                     return None;
                 }
 
-                return Some(decoded);
+                println!("Decoded: {}", decoded);
+
+                if let Some((_, query_part)) = decoded.split_once(&format!("{}?", BIP353_PREFIX)) {
+                    println!("Query_part: {}", query_part);
+
+                    let query_params = querystring::querify(query_part);
+
+                    println!("Query_params: {:?}", query_params);
+
+                    if let Some(bolt12_address) = get_by_key(&query_params, BOLT12_PREFIX) {
+                        println!("BOLT 12: {:?}", get_by_key(&query_params, BOLT12_PREFIX));
+                        return Some(bolt12_address);
+                    }
+
+                    if let Some(lnurl) = get_by_key(&query_params, LNURL_PAY_PREFIX) {
+                        println!("LNURL: {:?}", get_by_key(&query_params, LNURL_PAY_PREFIX));
+                        return Some(lnurl);
+                    }
+                }
             }
             Err(e) => {
                 error!("Failed to decode TXT data: {}", e);
@@ -268,26 +292,26 @@ async fn bip353_parse(
     None
 }
 
-#[cfg(feature = "liquid")]
-fn extract_bolt12_offer(input: &str) -> Option<String> {
-    return extract_by_label(input, BOLT12_PREFIX);
-}
+// // #[cfg(feature = "liquid")]
+// fn extract_bolt12_offer(input: &str) -> Option<String> {
+//     return extract_by_label(input, BOLT12_PREFIX);
+// }
 
-fn extract_lnurl(input: &str) -> Option<String> {
-    return extract_by_label(input, LNURL_PAY_PREFIX);
-}
+// fn extract_lnurl(input: &str) -> Option<String> {
+//     return extract_by_label(input, LNURL_PAY_PREFIX);
+// }
 
-fn extract_by_label(input: &str, label: &str) -> Option<String> {
-    if let Some((_, value)) = input.split_once(label) {
-        let value = value
-            .split_once(QUERY_PARAMS_SEPARATOR)
-            .map_or(value, |(first, _)| first);
+// fn extract_by_label(input: &str, label: &str) -> Option<String> {
+//     if let Some((_, value)) = input.split_once(label) {
+//         let value = value
+//             .split_once(QUERY_PARAMS_SEPARATOR)
+//             .map_or(value, |(first, _)| first);
 
-        return Some(value.to_string());
-    }
+//         return Some(value.to_string());
+//     }
 
-    None
-}
+//     None
+// }
 
 /// Core parse implementation
 async fn parse_core(input: &str) -> Result<InputType> {
@@ -312,11 +336,6 @@ async fn parse_core(input: &str) -> Result<InputType> {
             }),
             Some(invoice) => Ok(InputType::Bolt11 { invoice }),
         };
-    }
-
-    #[cfg(feature = "liquid")]
-    if let Some(bolt12_offer) = extract_bolt12_offer(input) {
-        // TODO: Add the section to manage a bolt12_offer
     }
 
     #[cfg(feature = "liquid")]
@@ -357,13 +376,6 @@ async fn parse_core(input: &str) -> Result<InputType> {
             return Ok(InputType::Url { url: input.into() });
         }
     }
-
-    let lnurl = match extract_lnurl(input) {
-        Some(value) => value,
-        None => input.to_string(),
-    };
-
-    let input = lnurl.as_str();
 
     // Try to strip the "lightning:" prefix from possible lnurl string. If prefix is not there, default to original input
     let input = input
