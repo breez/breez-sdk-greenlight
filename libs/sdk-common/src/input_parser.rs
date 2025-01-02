@@ -23,6 +23,7 @@ const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
 const BOLT12_PREFIX: &str = "lno";
 const LNURL_PAY_PREFIX: &str = "lnurl";
 const BIP353_PREFIX: &str = "bitcoin:";
+const BIP353_PREFIX_COUNT_CONSTRAINT: usize = 1;
 
 lazy_static! {
     static ref DNS_RESOLVER: TokioAsyncResolver = {
@@ -224,6 +225,28 @@ pub async fn parse(
     Err(anyhow!("Unrecognized input type"))
 }
 
+fn validate_txt_record(decoded: &str) -> Option<bool> {
+    if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
+        error!(
+            "Invalid decoded TXT data (doesn't begin with: {})",
+            BIP353_PREFIX
+        );
+
+        return None;
+    }
+
+    if !decoded.to_lowercase().matches(BIP353_PREFIX).count() == BIP353_PREFIX_COUNT_CONSTRAINT {
+        error!(
+            "Invalid decoded TXT data. Number of {} != {}",
+            BIP353_PREFIX, BIP353_PREFIX_COUNT_CONSTRAINT
+        );
+
+        return None;
+    }
+
+    Some(true)
+}
+
 fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
     tuple_vector
         .iter()
@@ -238,17 +261,9 @@ fn decode_txt_record(txt_data: Vec<u8>) -> Option<String> {
         })
         .ok()?;
 
-    if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
-        error!(
-            "Invalid decoded TXT data (doesn't begin with: {})",
-            BIP353_PREFIX
-        );
+    validate_txt_record(&decoded)?;
 
-        return None;
-    }
-
-    let prefix_query = format!("{}?", BIP353_PREFIX);
-    let (_, query_part) = decoded.split_once(&prefix_query)?;
+    let (_, query_part) = decoded.split_once("?")?;
 
     let query_params = querystring::querify(query_part);
 
