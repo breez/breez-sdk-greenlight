@@ -20,7 +20,6 @@ use LnUrlRequestData::*;
 use crate::prelude::*;
 
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
-// #[cfg(feature = "liquid")]
 const BOLT12_PREFIX: &str = "lno";
 const LNURL_PAY_PREFIX: &str = "lnurl";
 const BIP353_PREFIX: &str = "bitcoin:";
@@ -225,93 +224,59 @@ pub async fn parse(
     Err(anyhow!("Unrecognized input type"))
 }
 
-fn get_by_key(tuple_vector: &Vec<(&str, &str)>, key: &str) -> Option<String> {
+fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
     tuple_vector
         .iter()
         .find(|(k, _)| *k == key)
         .map(|(_, v)| v.to_string())
 }
 
+fn decode_txt_record(txt_data: Vec<u8>) -> Option<String> {
+    let decoded = String::from_utf8(txt_data)
+        .map_err(|e| {
+            error!("Failed to decode TXT data: {}", e);
+        })
+        .ok()?;
+
+    if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
+        error!(
+            "Invalid decoded TXT data (doesn't begin with: {})",
+            BIP353_PREFIX
+        );
+
+        return None;
+    }
+
+    let prefix_query = format!("{}?", BIP353_PREFIX);
+    let (_, query_part) = decoded.split_once(&prefix_query)?;
+
+    let query_params = querystring::querify(query_part);
+
+    return get_by_key(&query_params, BOLT12_PREFIX)
+        .or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX));
+}
+
 async fn bip353_parse(
     input: &str,
     dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
 ) -> Option<String> {
-    if let Some((local_part, domain)) = input.split_once('@') {
-        let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
+    let (local_part, domain) = input.split_once('@')?;
+    let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
 
-        // Query for TXT records of a domain
-        let txt_data = match dns_resolver.txt_lookup(dns_name).await {
-            Ok(records) => records
-                .iter()
-                .flat_map(|record| record.to_string().into_bytes())
-                .collect::<Vec<u8>>(),
-            Err(e) => {
-                debug!("No BIP353 TXT records found: {}", e);
-                return None;
-            }
-        };
-
-        // Decode TXT data
-        match String::from_utf8(txt_data) {
-            Ok(decoded) => {
-                if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
-                    error!(
-                        "Invalid decoded TXT data (doesn't begin with: {})",
-                        BIP353_PREFIX
-                    );
-
-                    return None;
-                }
-
-                println!("Decoded: {}", decoded);
-
-                if let Some((_, query_part)) = decoded.split_once(&format!("{}?", BIP353_PREFIX)) {
-                    println!("Query_part: {}", query_part);
-
-                    let query_params = querystring::querify(query_part);
-
-                    println!("Query_params: {:?}", query_params);
-
-                    if let Some(bolt12_address) = get_by_key(&query_params, BOLT12_PREFIX) {
-                        println!("BOLT 12: {:?}", get_by_key(&query_params, BOLT12_PREFIX));
-                        return Some(bolt12_address);
-                    }
-
-                    if let Some(lnurl) = get_by_key(&query_params, LNURL_PAY_PREFIX) {
-                        println!("LNURL: {:?}", get_by_key(&query_params, LNURL_PAY_PREFIX));
-                        return Some(lnurl);
-                    }
-                }
-            }
-            Err(e) => {
-                error!("Failed to decode TXT data: {}", e);
-            }
+    // Query for TXT records of a domain
+    let txt_data = match dns_resolver.txt_lookup(dns_name).await {
+        Ok(records) => records
+            .iter()
+            .flat_map(|record| record.to_string().into_bytes())
+            .collect::<Vec<u8>>(),
+        Err(e) => {
+            debug!("No BIP353 TXT records found: {}", e);
+            return None;
         }
-    }
+    };
 
-    None
+    decode_txt_record(txt_data)
 }
-
-// // #[cfg(feature = "liquid")]
-// fn extract_bolt12_offer(input: &str) -> Option<String> {
-//     return extract_by_label(input, BOLT12_PREFIX);
-// }
-
-// fn extract_lnurl(input: &str) -> Option<String> {
-//     return extract_by_label(input, LNURL_PAY_PREFIX);
-// }
-
-// fn extract_by_label(input: &str, label: &str) -> Option<String> {
-//     if let Some((_, value)) = input.split_once(label) {
-//         let value = value
-//             .split_once(QUERY_PARAMS_SEPARATOR)
-//             .map_or(value, |(first, _)| first);
-
-//         return Some(value.to_string());
-//     }
-
-//     None
-// }
 
 /// Core parse implementation
 async fn parse_core(input: &str) -> Result<InputType> {
