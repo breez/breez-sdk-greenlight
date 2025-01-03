@@ -225,17 +225,43 @@ pub async fn parse(
     Err(anyhow!("Unrecognized input type"))
 }
 
-fn validate_txt_record(decoded: &str) -> Option<bool> {
+fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
+    tuple_vector
+        .iter()
+        .find(|(k, _)| *k == key)
+        .map(|(_, v)| v.to_string())
+}
+
+fn parse_bip353_record(bip353_record: String) -> Option<String> {
+    let (_, query_part) = bip353_record.split_once("?")?;
+
+    let query_params = querystring::querify(query_part);
+
+    return get_by_key(&query_params, BOLT12_PREFIX)
+        .or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX));
+}
+
+fn validate_bip353_record(decoded: &str) -> bool {
     if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
         error!(
             "Invalid decoded TXT data (doesn't begin with: {})",
             BIP353_PREFIX
         );
 
-        return None;
+        return false;
     }
 
-    if !decoded.to_lowercase().matches(BIP353_PREFIX).count() == BIP353_PREFIX_COUNT_CONSTRAINT {
+    return true;
+}
+
+fn extract_bip353_record(records: Vec<String>) -> Option<String> {
+    let bip353_record = records
+        .iter()
+        .filter(|record| validate_bip353_record(record))
+        .collect::<Vec<&String>>();
+
+    let bip353_prefix_counter = bip353_record.len();
+    if bip353_prefix_counter != BIP353_PREFIX_COUNT_CONSTRAINT {
         error!(
             "Invalid decoded TXT data. Number of {} != {}",
             BIP353_PREFIX, BIP353_PREFIX_COUNT_CONSTRAINT
@@ -244,31 +270,7 @@ fn validate_txt_record(decoded: &str) -> Option<bool> {
         return None;
     }
 
-    Some(true)
-}
-
-fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
-    tuple_vector
-        .iter()
-        .find(|(k, _)| *k == key)
-        .map(|(_, v)| v.to_string())
-}
-
-fn decode_txt_record(txt_data: Vec<u8>) -> Option<String> {
-    let decoded = String::from_utf8(txt_data)
-        .map_err(|e| {
-            error!("Failed to decode TXT data: {}", e);
-        })
-        .ok()?;
-
-    validate_txt_record(&decoded)?;
-
-    let (_, query_part) = decoded.split_once("?")?;
-
-    let query_params = querystring::querify(query_part);
-
-    return get_by_key(&query_params, BOLT12_PREFIX)
-        .or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX));
+    return bip353_record.first().map(|record| record.to_string());
 }
 
 async fn bip353_parse(
@@ -279,18 +281,22 @@ async fn bip353_parse(
     let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
 
     // Query for TXT records of a domain
-    let txt_data = match dns_resolver.txt_lookup(dns_name).await {
-        Ok(records) => records
-            .iter()
-            .flat_map(|record| record.to_string().into_bytes())
-            .collect::<Vec<u8>>(),
+    let bip353_record = match dns_resolver.txt_lookup(dns_name).await {
+        Ok(records) => {
+            let decoded_records: Vec<String> = records
+                .iter()
+                .filter_map(|record| String::from_utf8(record.to_string().into_bytes()).ok())
+                .collect();
+
+            extract_bip353_record(decoded_records)?
+        }
         Err(e) => {
             debug!("No BIP353 TXT records found: {}", e);
             return None;
         }
     };
 
-    decode_txt_record(txt_data)
+    parse_bip353_record(bip353_record)
 }
 
 /// Core parse implementation
