@@ -18,7 +18,6 @@ mod utils;
 // use a different version, the Into traits defined here would not be usable by them
 // (e.g. impl From<bip32::Error> for LnUrlError)
 pub use bitcoin;
-pub use hickory_resolver;
 pub use lightning;
 pub use lightning_invoice;
 

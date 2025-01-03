@@ -196,6 +196,5 @@ pub use breez_services::{
 pub use chain::RecommendedFees;
 pub use lsp::LspInformation;
 pub use models::*;
-pub use sdk_common::hickory_resolver;
 pub use sdk_common::prelude::*;
 pub use swap_out::reverseswap::{ESTIMATED_CLAIM_TX_VSIZE, ESTIMATED_LOCKUP_TX_VSIZE};

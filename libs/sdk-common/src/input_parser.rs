@@ -23,7 +23,6 @@ const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
 const BOLT12_PREFIX: &str = "lno";
 const LNURL_PAY_PREFIX: &str = "lnurl";
 const BIP353_PREFIX: &str = "bitcoin:";
-const BIP353_PREFIX_COUNT_CONSTRAINT: usize = 1;
 
 lazy_static! {
     static ref DNS_RESOLVER: TokioAsyncResolver = {
@@ -237,11 +236,10 @@ fn parse_bip353_record(bip353_record: String) -> Option<String> {
 
     let query_params = querystring::querify(query_part);
 
-    return get_by_key(&query_params, BOLT12_PREFIX)
-        .or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX));
+    get_by_key(&query_params, BOLT12_PREFIX).or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
 }
 
-fn validate_bip353_record(decoded: &str) -> bool {
+fn is_valid_bip353_record(decoded: &str) -> bool {
     if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
         error!(
             "Invalid decoded TXT data (doesn't begin with: {})",
@@ -251,26 +249,25 @@ fn validate_bip353_record(decoded: &str) -> bool {
         return false;
     }
 
-    return true;
+    true
 }
 
 fn extract_bip353_record(records: Vec<String>) -> Option<String> {
     let bip353_record = records
-        .iter()
-        .filter(|record| validate_bip353_record(record))
-        .collect::<Vec<&String>>();
+        .into_iter()
+        .filter(|record| is_valid_bip353_record(record))
+        .collect::<Vec<String>>();
 
-    let bip353_prefix_counter = bip353_record.len();
-    if bip353_prefix_counter != BIP353_PREFIX_COUNT_CONSTRAINT {
+    if bip353_record.len() > 1 {
         error!(
-            "Invalid decoded TXT data. Number of {} != {}",
-            BIP353_PREFIX, BIP353_PREFIX_COUNT_CONSTRAINT
+            "Invalid decoded TXT data. Multiple records found ({})",
+            bip353_record.len()
         );
 
         return None;
     }
 
-    return bip353_record.first().map(|record| record.to_string());
+    bip353_record.first().cloned()
 }
 
 async fn bip353_parse(
@@ -283,10 +280,7 @@ async fn bip353_parse(
     // Query for TXT records of a domain
     let bip353_record = match dns_resolver.txt_lookup(dns_name).await {
         Ok(records) => {
-            let decoded_records: Vec<String> = records
-                .iter()
-                .filter_map(|record| String::from_utf8(record.to_string().into_bytes()).ok())
-                .collect();
+            let decoded_records: Vec<String> = records.iter().map(|r| r.to_string()).collect();
 
             extract_bip353_record(decoded_records)?
         }
