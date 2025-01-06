@@ -6,13 +6,32 @@ use ::bip21::Uri;
 use anyhow::{anyhow, Context, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
-use log::error;
+use hickory_resolver::config::{ResolverConfig, ResolverOpts};
+use hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider};
+use hickory_resolver::AsyncResolver;
+use hickory_resolver::TokioAsyncResolver;
+use lazy_static::lazy_static;
+use log::{debug, error};
 use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
+
+const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
+const BOLT12_PREFIX: &str = "lno";
+const LNURL_PAY_PREFIX: &str = "lnurl";
+const BIP353_PREFIX: &str = "bitcoin:";
+
+lazy_static! {
+    static ref DNS_RESOLVER: TokioAsyncResolver = {
+        let mut opts = ResolverOpts::default();
+        opts.validate = true;
+
+        TokioAsyncResolver::tokio(ResolverConfig::default(), opts)
+    };
+}
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -186,6 +205,14 @@ pub async fn parse(
 ) -> Result<InputType> {
     let input = input.trim();
 
+    // Try to parse the destination as a bip353 address.
+    let input_parsed = match bip353_parse(input, &DNS_RESOLVER).await {
+        Some(value) => value,
+        None => input.to_string(),
+    };
+
+    let input = input_parsed.as_str();
+
     if let Ok(input_type) = parse_core(input).await {
         return Ok(input_type);
     }
@@ -195,6 +222,75 @@ pub async fn parse(
     }
 
     Err(anyhow!("Unrecognized input type"))
+}
+
+fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
+    tuple_vector
+        .iter()
+        .find(|(k, _)| *k == key)
+        .map(|(_, v)| v.to_string())
+}
+
+fn parse_bip353_record(bip353_record: String) -> Option<String> {
+    let (_, query_part) = bip353_record.split_once("?")?;
+
+    let query_params = querystring::querify(query_part);
+
+    get_by_key(&query_params, BOLT12_PREFIX).or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
+}
+
+fn is_valid_bip353_record(decoded: &str) -> bool {
+    if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
+        error!(
+            "Invalid decoded TXT data (doesn't begin with: {})",
+            BIP353_PREFIX
+        );
+
+        return false;
+    }
+
+    true
+}
+
+fn extract_bip353_record(records: Vec<String>) -> Option<String> {
+    let bip353_record = records
+        .into_iter()
+        .filter(|record| is_valid_bip353_record(record))
+        .collect::<Vec<String>>();
+
+    if bip353_record.len() > 1 {
+        error!(
+            "Invalid decoded TXT data. Multiple records found ({})",
+            bip353_record.len()
+        );
+
+        return None;
+    }
+
+    bip353_record.first().cloned()
+}
+
+async fn bip353_parse(
+    input: &str,
+    dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
+) -> Option<String> {
+    let (local_part, domain) = input.split_once('@')?;
+    let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
+
+    // Query for TXT records of a domain
+    let bip353_record = match dns_resolver.txt_lookup(dns_name).await {
+        Ok(records) => {
+            let decoded_records: Vec<String> = records.iter().map(|r| r.to_string()).collect();
+
+            extract_bip353_record(decoded_records)?
+        }
+        Err(e) => {
+            debug!("No BIP353 TXT records found: {}", e);
+            return None;
+        }
+    };
+
+    parse_bip353_record(bip353_record)
 }
 
 /// Core parse implementation
