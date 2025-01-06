@@ -12,6 +12,7 @@ bitcoin = { workspace = true }
 cbc = { version = "0.1", features = ["std"] }
 hex = { workspace = true }
 lightning = { workspace = true }
+lightning-125 = { package = "lightning", version = "0.0.125", default-features = false, features = ["std"], optional = true }
 lightning-invoice = { workspace = true }
 log = { workspace = true }
 querystring = "1"
@@ -45,4 +46,4 @@ once_cell = { workspace = true }
 tonic-build = { workspace = true }
 
 [features]
-liquid = ["dep:elements"]
+liquid = ["dep:elements", "dep:lightning-125"]

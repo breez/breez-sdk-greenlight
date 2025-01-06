@@ -323,6 +323,11 @@ async fn parse_core(input: &str) -> Result<InputType> {
         return Ok(InputType::LiquidAddress { address });
     }
 
+    #[cfg(feature = "liquid")]
+    if let Ok(offer) = parse_bolt12_offer(input) {
+        return Ok(InputType::Bolt12Offer { offer });
+    }
+
     if let Ok(invoice) = parse_invoice(input) {
         return Ok(InputType::Bolt11 { invoice });
     }

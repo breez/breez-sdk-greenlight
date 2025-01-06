@@ -10,6 +10,11 @@ use lightning::routing::*;
 use lightning_invoice::*;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "liquid")]
+use {
+    bitcoin::hashes::hex::ToHex as BitcoinHashToHex, lightning_125::ln::msgs::DecodeError,
+    lightning_125::offers::offer::Offer, lightning_125::offers::parse::Bolt12ParseError,
+};
 
 use crate::prelude::*;
 
@@ -381,6 +386,55 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
 // Covers BIP 21 URIs and simple onchain Liquid addresses (which are valid BIP 21 with the 'liquidnetwork:' prefix)
 pub fn parse_liquid_address(input: &str) -> Result<LiquidAddressData, DeserializeError> {
     LiquidAddressData::from_addr(input).or_else(|_| input.parse::<LiquidAddressData>())
+}
+
+#[cfg(feature = "liquid")]
+pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
+    let offer = input.parse::<Offer>()?;
+    // TODO This conversion (between lightning-v0.0.125 to -v0.0.118 Amount types)
+    //      won't be needed when gl-client upgrades to >=0.0.125
+    let min_amount = offer
+        .amount()
+        .map(|amount| match amount {
+            lightning_125::offers::offer::Amount::Bitcoin { amount_msats } => Ok(Amount::Bitcoin {
+                amount_msat: amount_msats,
+            }),
+            lightning_125::offers::offer::Amount::Currency {
+                iso4217_code,
+                amount,
+            } => Ok(Amount::Currency {
+                iso4217_code: String::from_utf8(iso4217_code.to_vec())
+                    .map_err(|_| anyhow!("Expecting a valid ISO 4217 character sequence"))?,
+                fractional_amount: amount,
+            }),
+        })
+        .transpose()
+        .map_err(|_e: anyhow::Error| Bolt12ParseError::Decode(DecodeError::InvalidValue))?;
+
+    Ok(LNOffer {
+        offer: input.to_string(),
+        chains: offer
+            .chains()
+            .iter()
+            .map(|chain| chain.to_string())
+            .collect(),
+        min_amount,
+        description: offer.description().map(|d| d.to_string()),
+        absolute_expiry: offer.absolute_expiry().map(|expiry| expiry.as_secs()),
+        issuer: offer.issuer().map(|s| s.to_string()),
+        signing_pubkey: offer.signing_pubkey().map(|pk| pk.to_string()),
+        paths: offer
+            .paths()
+            .iter()
+            .map(|path| LnOfferBlindedPath {
+                blinded_hops: path
+                    .blinded_hops()
+                    .iter()
+                    .map(|hop| hop.blinded_node_id.to_hex())
+                    .collect(),
+            })
+            .collect::<Vec<LnOfferBlindedPath>>(),
+    })
 }
 
 #[cfg(test)]

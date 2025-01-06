@@ -19,6 +19,8 @@ mod utils;
 // (e.g. impl From<bip32::Error> for LnUrlError)
 pub use bitcoin;
 pub use lightning;
+#[cfg(feature = "liquid")]
+pub use lightning_125;
 pub use lightning_invoice;
 
 // We don't include grpc::* in the prelude exports, to force callers to use the grpc path prefix.
