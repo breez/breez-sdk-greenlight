@@ -332,6 +332,17 @@ pub fn validate_network(invoice: LNInvoice, network: Network) -> InvoiceResult<(
     }
 }
 
+/// Try to take payee pubkey from the tagged fields, if doesn't exist recover it from the signature
+pub fn invoice_pubkey(invoice: &Bolt11Invoice) -> String {
+    match invoice.payee_pub_key() {
+        Some(key) => key.serialize().encode_hex::<String>(),
+        None => invoice
+            .recover_payee_pub_key()
+            .serialize()
+            .encode_hex::<String>(),
+    }
+}
+
 /// Parse a BOLT11 payment request and return a structure contains the parsed fields.
 pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
     if bolt11.trim().is_empty() {
@@ -347,13 +358,7 @@ pub fn parse_invoice(bolt11: &str) -> InvoiceResult<LNInvoice> {
     invoice.check_signature()?;
 
     // Try to take payee pubkey from the tagged fields, if doesn't exist recover it from the signature
-    let payee_pubkey: String = match invoice.payee_pub_key() {
-        Some(key) => key.serialize().encode_hex::<String>(),
-        None => invoice
-            .recover_payee_pub_key()
-            .serialize()
-            .encode_hex::<String>(),
-    };
+    let payee_pubkey = invoice_pubkey(&invoice);
 
     // convert hints to bridge interface
     let invoice_hints = invoice.route_hints();
