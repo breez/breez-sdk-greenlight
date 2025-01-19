@@ -10,7 +10,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [dependencies]
 aes = { workspace = true }
 anyhow = { workspace = true }
-flutter_rust_bridge = "=2.6.0"
+flutter_rust_bridge = "=2.0.0"
 hex = { workspace = true }
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",

@@ -18,6 +18,8 @@ typedef struct _Dart_Handle* Dart_Handle;
 
 #define INVOICE_PAYMENT_FEE_EXPIRY_SECONDS (60 * 60)
 
+#define SWAP_INVOICE_CLTV_DELTA 36
+
 #define ESTIMATED_CLAIM_TX_VSIZE 138
 
 #define ESTIMATED_LOCKUP_TX_VSIZE 153
@@ -521,13 +523,6 @@ typedef struct wire_cst_report_issue_request {
   union ReportIssueRequestKind kind;
 } wire_cst_report_issue_request;
 
-typedef struct wire_cst_send_onchain_request {
-  uint64_t amount_sat;
-  struct wire_cst_list_prim_u_8_strict *onchain_recipient_address;
-  struct wire_cst_list_prim_u_8_strict *pair_hash;
-  uint32_t sat_per_vbyte;
-} wire_cst_send_onchain_request;
-
 typedef struct wire_cst_send_payment_request {
   struct wire_cst_list_prim_u_8_strict *bolt11;
   bool use_trampoline;
@@ -843,10 +838,6 @@ typedef struct wire_cst_log_entry {
   struct wire_cst_list_prim_u_8_strict *level;
 } wire_cst_log_entry;
 
-typedef struct wire_cst_max_reverse_swap_amount_response {
-  uint64_t total_sat;
-} wire_cst_max_reverse_swap_amount_response;
-
 typedef struct wire_cst_node_state {
   struct wire_cst_list_prim_u_8_strict *id;
   uint32_t block_height;
@@ -920,10 +911,6 @@ typedef struct wire_cst_reverse_swap_pair_info {
   uint64_t *total_fees;
 } wire_cst_reverse_swap_pair_info;
 
-typedef struct wire_cst_send_onchain_response {
-  struct wire_cst_reverse_swap_info reverse_swap_info;
-} wire_cst_send_onchain_response;
-
 typedef struct wire_cst_send_payment_response {
   struct wire_cst_payment payment;
 } wire_cst_send_payment_response;
@@ -996,8 +983,6 @@ void frbgen_breez_sdk_wire__crate__binding__generate_diagnostic_data(int64_t por
 
 void frbgen_breez_sdk_wire__crate__binding__in_progress_onchain_payments(int64_t port_);
 
-void frbgen_breez_sdk_wire__crate__binding__in_progress_reverse_swaps(int64_t port_);
-
 void frbgen_breez_sdk_wire__crate__binding__in_progress_swap(int64_t port_);
 
 void frbgen_breez_sdk_wire__crate__binding__is_initialized(int64_t port_);
@@ -1026,8 +1011,6 @@ void frbgen_breez_sdk_wire__crate__binding__lnurl_withdraw(int64_t port_,
 void frbgen_breez_sdk_wire__crate__binding__lsp_id(int64_t port_);
 
 void frbgen_breez_sdk_wire__crate__binding__lsp_info(int64_t port_);
-
-void frbgen_breez_sdk_wire__crate__binding__max_reverse_swap_amount(int64_t port_);
 
 void frbgen_breez_sdk_wire__crate__binding__mnemonic_to_seed(int64_t port_,
                                                              struct wire_cst_list_prim_u_8_strict *phrase);
@@ -1086,9 +1069,6 @@ void frbgen_breez_sdk_wire__crate__binding__report_issue(int64_t port_,
                                                          struct wire_cst_report_issue_request *req);
 
 void frbgen_breez_sdk_wire__crate__binding__rescan_swaps(int64_t port_);
-
-void frbgen_breez_sdk_wire__crate__binding__send_onchain(int64_t port_,
-                                                         struct wire_cst_send_onchain_request *req);
 
 void frbgen_breez_sdk_wire__crate__binding__send_payment(int64_t port_,
                                                          struct wire_cst_send_payment_request *req);
@@ -1214,8 +1194,6 @@ struct wire_cst_reverse_swap_fees_request *frbgen_breez_sdk_cst_new_box_autoadd_
 
 struct wire_cst_reverse_swap_info *frbgen_breez_sdk_cst_new_box_autoadd_reverse_swap_info(void);
 
-struct wire_cst_send_onchain_request *frbgen_breez_sdk_cst_new_box_autoadd_send_onchain_request(void);
-
 struct wire_cst_send_payment_request *frbgen_breez_sdk_cst_new_box_autoadd_send_payment_request(void);
 
 struct wire_cst_send_spontaneous_payment_request *frbgen_breez_sdk_cst_new_box_autoadd_send_spontaneous_payment_request(void);
@@ -1323,7 +1301,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_report_payment_failure_details);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_reverse_swap_fees_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_reverse_swap_info);
-    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_send_onchain_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_send_payment_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_send_spontaneous_payment_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_sign_message_request);
@@ -1372,7 +1349,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__fetch_reverse_swap_fees);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__generate_diagnostic_data);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__in_progress_onchain_payments);
-    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__in_progress_reverse_swaps);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__in_progress_swap);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__is_initialized);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__list_fiat_currencies);
@@ -1385,7 +1361,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__lnurl_withdraw);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__lsp_id);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__lsp_info);
-    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__max_reverse_swap_amount);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__mnemonic_to_seed);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__node_credentials);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__node_info);
@@ -1407,7 +1382,6 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__register_webhook);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__report_issue);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__rescan_swaps);
-    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__send_onchain);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__send_payment);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__send_spontaneous_payment);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_wire__crate__binding__service_health_check);
