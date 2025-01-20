@@ -35,6 +35,7 @@ mod tests {
                 address: "tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk".to_string(),
                 network: crate::model::Network::Bitcoin,
                 asset_id: Some(AssetId::LIQUID_BTC.to_string()),
+                amount: None,
                 amount_sat: Some(amount_sat),
                 label: None,
                 message: None,
