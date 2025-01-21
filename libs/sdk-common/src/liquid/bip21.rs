@@ -41,23 +41,19 @@ impl LiquidAddressData {
 
         let mut optional_keys = HashMap::new();
 
-        if let Some(amount) = self.amount {
-            let Some(asset_id) = self.asset_id.clone() else {
-                return Err(URISerializationError::AssetIdMissing);
-            };
-
-            optional_keys.insert("amount", format!("{amount:.8}"));
+        // Ensure that assetid is always set when an amount is set
+        if let Some(asset_id) = self.asset_id.clone() {
             optional_keys.insert("assetid", asset_id);
+        } else if self.amount.is_some() || self.amount_sat.is_some() {
+            return Err(URISerializationError::AssetIdMissing);
         }
 
-        if let Some(amount_sat) = self.amount_sat {
-            let Some(asset_id) = self.asset_id.clone() else {
-                return Err(URISerializationError::AssetIdMissing);
-            };
-
+        // Take amount over amount_sat if both are set
+        if let Some(amount) = self.amount {
+            optional_keys.insert("amount", format!("{amount:.8}"));
+        } else if let Some(amount_sat) = self.amount_sat {
             let amount_btc = amount_sat as f64 / 100_000_000.0;
             optional_keys.insert("amount", format!("{amount_btc:.8}"));
-            optional_keys.insert("assetid", asset_id);
         }
 
         if let Some(message) = &self.message {
