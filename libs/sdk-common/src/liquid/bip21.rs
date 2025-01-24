@@ -17,12 +17,21 @@ pub struct LiquidAddressData {
     pub address: String,
     pub network: Network,
     pub asset_id: Option<String>,
+    pub amount: Option<f64>,
     pub amount_sat: Option<u64>,
     pub label: Option<String>,
     pub message: Option<String>,
 }
 
 impl LiquidAddressData {
+    /// Sets the precision for calculating the [LiquidAddressData::amount_sat] from the BIP21 URI amount.
+    /// By default the precision 8 for Bitcoin-like assets.
+    pub fn set_amount_precision(&mut self, precision: u32) {
+        if let Some(amount) = self.amount {
+            self.amount_sat = Some((amount * (10_u64.pow(precision) as f64)) as u64);
+        }
+    }
+
     /// Converts the structure to a BIP21 URI while also
     /// ensuring that all the fields are valid
     pub fn to_uri(&self) -> Result<String, URISerializationError> {
@@ -32,14 +41,19 @@ impl LiquidAddressData {
 
         let mut optional_keys = HashMap::new();
 
-        if let Some(amount_sat) = self.amount_sat {
-            let Some(asset_id) = self.asset_id.clone() else {
-                return Err(URISerializationError::AssetIdMissing);
-            };
+        // Ensure that assetid is always set when an amount is set
+        if let Some(asset_id) = self.asset_id.clone() {
+            optional_keys.insert("assetid", asset_id);
+        } else if self.amount.is_some() || self.amount_sat.is_some() {
+            return Err(URISerializationError::AssetIdMissing);
+        }
 
+        // Take amount over amount_sat if both are set
+        if let Some(amount) = self.amount {
+            optional_keys.insert("amount", format!("{amount:.8}"));
+        } else if let Some(amount_sat) = self.amount_sat {
             let amount_btc = amount_sat as f64 / 100_000_000.0;
             optional_keys.insert("amount", format!("{amount_btc:.8}"));
-            optional_keys.insert("assetid", asset_id);
         }
 
         if let Some(message) = &self.message {
@@ -110,6 +124,7 @@ impl LiquidAddressData {
             .map_err(DeserializeError::InvalidAddress)?
             .to_string();
 
+        let mut amount = None;
         let mut amount_sat = None;
         let mut asset_id = None;
         let mut label = None;
@@ -119,6 +134,9 @@ impl LiquidAddressData {
                 if let Some((key, val)) = pair.split_once('=') {
                     match key {
                         "amount" => {
+                            amount = bitcoin::Amount::from_str_in(val, Denomination::Bitcoin)
+                                .map(|amt| Some(amt.to_float_in(Denomination::Bitcoin)))
+                                .map_err(DeserializeError::InvalidAmount)?;
                             amount_sat = bitcoin::Amount::from_str_in(val, Denomination::Bitcoin)
                                 .map(|amt| Some(amt.to_sat()))
                                 .map_err(DeserializeError::InvalidAmount)?;
@@ -150,7 +168,7 @@ impl LiquidAddressData {
 
         // "assetid" MUST be provided if "amount" is present
         // See https://github.com/ElementsProject/elements/issues/805#issuecomment-576743532
-        if amount_sat.is_some() && asset_id.is_none() {
+        if (amount.is_some() || amount_sat.is_some()) && asset_id.is_none() {
             return Err(DeserializeError::AssetNotProvided);
         }
 
@@ -158,6 +176,7 @@ impl LiquidAddressData {
             address,
             network,
             asset_id,
+            amount,
             amount_sat,
             label,
             message,
@@ -183,6 +202,7 @@ impl LiquidAddressData {
             address: address.to_string(),
             network,
             asset_id: None,
+            amount: None,
             amount_sat: None,
             label: None,
             message: None,
