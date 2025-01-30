@@ -1784,8 +1784,8 @@ impl NodeAPI for Greenlight {
                 Ok(crate::serializer::value::to_value(&resp)?)
             }
             NodeCommand::ListPayments => {
-                let req = cln::ListpaysRequest::default();
-                let resp = with_connection_retry!(client.list_pays(req.clone()))
+                let req = cln::ListsendpaysRequest::default();
+                let resp = with_connection_retry!(client.list_send_pays(req.clone()))
                     .await?
                     .into_inner();
                 Ok(crate::serializer::value::to_value(&resp)?)
