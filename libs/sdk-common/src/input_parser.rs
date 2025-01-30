@@ -614,7 +614,7 @@ pub enum InputType {
     /// # Supported standards
     ///
     /// - plain on-chain liquid address
-    /// - BIP21 on liquid/liquidtestnet
+    /// - BIP21 on liquid/liquidtestnet/liquidregtest
     #[cfg(feature = "liquid")]
     LiquidAddress {
         address: LiquidAddressData,
