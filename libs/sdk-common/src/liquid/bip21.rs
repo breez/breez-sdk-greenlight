@@ -70,6 +70,7 @@ impl LiquidAddressData {
                 let scheme = match self.network {
                     Network::Bitcoin => "liquidnetwork",
                     Network::Testnet => "liquidtestnet",
+                    Network::Regtest => "liquidregtest",
                     _ => {
                         return Err(URISerializationError::UnsupportedNetwork);
                     }
@@ -108,6 +109,7 @@ impl LiquidAddressData {
         let network = match network {
             "liquidnetwork" => Network::Bitcoin,
             "liquidtestnet" => Network::Testnet,
+            "liquidregtest" => Network::Regtest,
             _ => return Err(DeserializeError::InvalidScheme),
         };
 
@@ -192,6 +194,8 @@ impl LiquidAddressData {
             Network::Bitcoin
         } else if elements_address.params.eq(&AddressParams::LIQUID_TESTNET) {
             Network::Testnet
+        } else if elements_address.params.eq(&AddressParams::ELEMENTS) {
+            Network::Regtest
         } else {
             return Err(DeserializeError::InvalidAddress(
                 AddressError::InvalidAddress("The specified asset is not supported".to_string()),
