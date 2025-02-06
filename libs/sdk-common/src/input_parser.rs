@@ -648,7 +648,7 @@ pub enum InputType {
     #[cfg(feature = "liquid")]
     Bolt12Offer {
         offer: LNOffer,
-        /// The BIP353 address in case one was resolved
+        /// The BIP353 address from which this InputType was resolved
         bip353_address: Option<String>,
     },
     NodeId {
@@ -666,7 +666,7 @@ pub enum InputType {
     /// - LUD-17 Support for lnurlp prefix with non-bech32-encoded LNURL URLs
     LnUrlPay {
         data: LnUrlPayRequestData,
-        /// The BIP353 address in case one was resolved
+        /// The BIP353 address from which this InputType was resolved
         bip353_address: Option<String>,
     },
 
