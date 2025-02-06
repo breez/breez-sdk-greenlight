@@ -690,6 +690,7 @@ export type InputType = {
 } | {
     type: InputTypeVariant.LN_URL_PAY,
     data: LnUrlPayRequestData
+    bip353Address?: string
 } | {
     type: InputTypeVariant.LN_URL_WITHDRAW,
     data: LnUrlWithdrawRequestData

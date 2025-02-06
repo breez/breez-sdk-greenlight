@@ -668,6 +668,7 @@ sealed class InputType with _$InputType {
   }) = InputType_Url;
   const factory InputType.lnUrlPay({
     required LnUrlPayRequestData data,
+    String? bip353Address,
   }) = InputType_LnUrlPay;
   const factory InputType.lnUrlWithdraw({
     required LnUrlWithdrawRequestData data,
@@ -3378,6 +3379,7 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       case 4:
         return InputType_LnUrlPay(
           data: _wire2api_box_autoadd_ln_url_pay_request_data(raw[1]),
+          bip353Address: _wire2api_opt_String(raw[2]),
         );
       case 5:
         return InputType_LnUrlWithdraw(

@@ -3964,6 +3964,7 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
         is InputType.LnUrlPay -> {
             pushToMap(map, "type", "lnUrlPay")
             pushToMap(map, "data", readableMapOf(inputType.data))
+            pushToMap(map, "bip353Address", inputType.bip353Address)
         }
         is InputType.LnUrlWithdraw -> {
             pushToMap(map, "type", "lnUrlWithdraw")

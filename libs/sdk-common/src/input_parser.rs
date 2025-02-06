@@ -3,7 +3,7 @@ use std::ops::Not;
 use std::str::FromStr;
 
 use ::bip21::Uri;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use hickory_resolver::config::{ResolverConfig, ResolverOpts};
@@ -117,11 +117,11 @@ lazy_static! {
 /// async fn main() -> Result<()> {
 ///     let lnurl_pay_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
 ///
-///     assert!(matches!( parse(lnurl_pay_url, None).await, Ok(LnUrlPay{data: _}) ));
+///     assert!(matches!( parse(lnurl_pay_url, None).await, Ok(LnUrlPay{data: _, bip353_address: _}) ));
 ///     // assert!(matches!( parse("lnurlp://domain.com/lnurl-pay?key=val").await, Ok(LnUrlPay{data: _}) ));
 ///     // assert!(matches!( parse("lightning@address.com").await, Ok(LnUrlPay{data: _}) ));
 ///
-///     if let Ok(LnUrlPay{data: pd}) = parse(lnurl_pay_url,None).await {
+///     if let Ok(LnUrlPay{data: pd, bip353_address}) = parse(lnurl_pay_url,None).await {
 ///         assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
 ///         assert_eq!(pd.max_sendable, 16000); // Max sendable amount, in msats
 ///         assert_eq!(pd.max_sendable_sats(), 16); // Max sendable amount, in sats
@@ -206,14 +206,29 @@ pub async fn parse(
     let input = input.trim();
 
     // Try to parse the destination as a bip353 address.
-    let input_parsed = match bip353_parse(input, &DNS_RESOLVER).await {
-        Some(value) => value,
-        None => input.to_string(),
+    let (bip353_parsed_input, is_bip353) = match bip353_parse(input, &DNS_RESOLVER).await {
+        Some(value) => (value, true),
+        None => (input.to_string(), false),
     };
 
-    let input = input_parsed.as_str();
+    if let Ok(input_type) = parse_core(&bip353_parsed_input).await {
+        let input_type = if is_bip353 {
+            match input_type {
+                #[cfg(feature = "liquid")]
+                InputType::Bolt12Offer { offer, .. } => InputType::Bolt12Offer {
+                    offer,
+                    bip353_address: Some(input.to_string()),
+                },
+                InputType::LnUrlPay { data, .. } => InputType::LnUrlPay {
+                    data,
+                    bip353_address: Some(input.to_string()),
+                },
+                i => bail!("Unexpected input type was resolved from a BIP353 address: {i:?}"),
+            }
+        } else {
+            input_type
+        };
 
-    if let Ok(input_type) = parse_core(input).await {
         return Ok(input_type);
     }
 
@@ -325,7 +340,10 @@ async fn parse_core(input: &str) -> Result<InputType> {
 
     #[cfg(feature = "liquid")]
     if let Ok(offer) = parse_bolt12_offer(input) {
-        return Ok(InputType::Bolt12Offer { offer });
+        return Ok(InputType::Bolt12Offer {
+            offer,
+            bip353_address: None,
+        });
     }
 
     if let Ok(invoice) = parse_invoice(input) {
@@ -412,8 +430,9 @@ async fn parse_external(
             let input_type = lnurl_data.into();
             let input_type = match input_type {
                 // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
-                InputType::LnUrlPay { data } => InputType::LnUrlPay {
+                InputType::LnUrlPay { data, .. } => InputType::LnUrlPay {
                     data: LnUrlPayRequestData { domain, ..data },
+                    bip353_address: None,
                 },
                 _ => input_type,
             };
@@ -588,12 +607,13 @@ async fn resolve_lnurl(
     let temp = lnurl_data.into();
     let temp = match temp {
         // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
-        InputType::LnUrlPay { data } => InputType::LnUrlPay {
+        InputType::LnUrlPay { data, .. } => InputType::LnUrlPay {
             data: LnUrlPayRequestData {
                 domain,
                 ln_address,
                 ..data
             },
+            bip353_address: None,
         },
         _ => temp,
     };
@@ -628,6 +648,8 @@ pub enum InputType {
     #[cfg(feature = "liquid")]
     Bolt12Offer {
         offer: LNOffer,
+        /// The BIP353 address in case one was resolved
+        bip353_address: Option<String>,
     },
     NodeId {
         node_id: String,
@@ -644,6 +666,8 @@ pub enum InputType {
     /// - LUD-17 Support for lnurlp prefix with non-bech32-encoded LNURL URLs
     LnUrlPay {
         data: LnUrlPayRequestData,
+        /// The BIP353 address in case one was resolved
+        bip353_address: Option<String>,
     },
 
     /// # Supported standards
@@ -705,7 +729,10 @@ pub enum LnUrlRequestData {
 impl From<LnUrlRequestData> for InputType {
     fn from(lnurl_data: LnUrlRequestData) -> Self {
         match lnurl_data {
-            PayRequest { data } => Self::LnUrlPay { data },
+            PayRequest { data } => Self::LnUrlPay {
+                data,
+                bip353_address: None,
+            },
             WithdrawRequest { data } => Self::LnUrlWithdraw { data },
             AuthRequest { data } => Self::LnUrlAuth { data },
             Error { data } => Self::LnUrlError { data },
@@ -1568,7 +1595,7 @@ pub(crate) mod tests {
             ("localhost".into(), format!("https://localhost{path}"), None)
         );
 
-        if let InputType::LnUrlPay { data: pd } = parse(lnurl_pay_encoded, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } = parse(lnurl_pay_encoded, None).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1608,7 +1635,7 @@ pub(crate) mod tests {
         ] {
             assert!(matches!(
                 parse(lnurl_pay, None).await?,
-                InputType::LnUrlPay { data: _ }
+                InputType::LnUrlPay { .. }
             ));
         }
         Ok(())
@@ -1622,7 +1649,7 @@ pub(crate) mod tests {
         let ln_address = "user@domain.net";
         let _m = mock_lnurl_ln_address_endpoint(ln_address, None)?;
 
-        if let InputType::LnUrlPay { data: pd } = parse(ln_address, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } = parse(ln_address, None).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1665,7 +1692,7 @@ pub(crate) mod tests {
         let server_ln_address = "user@domain.net";
         let _m = mock_lnurl_ln_address_endpoint(server_ln_address, None)?;
 
-        if let InputType::LnUrlPay { data: pd } = parse(ln_address, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } = parse(ln_address, None).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1871,7 +1898,7 @@ pub(crate) mod tests {
         let _m = mock_lnurl_pay_endpoint(pay_path, None);
 
         let lnurl_pay_url = format!("lnurlp://localhost{pay_path}");
-        if let InputType::LnUrlPay { data: pd } = parse(&lnurl_pay_url, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } = parse(&lnurl_pay_url, None).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -2007,7 +2034,7 @@ pub(crate) mod tests {
         }];
 
         let input_type = parse(input, Some(&parsers)).await?;
-        if let InputType::LnUrlPay { data } = input_type {
+        if let InputType::LnUrlPay { data, .. } = input_type {
             assert_eq!(data.callback, "callback_url");
             assert_eq!(data.max_sendable, 57000);
             assert_eq!(data.min_sendable, 57000);

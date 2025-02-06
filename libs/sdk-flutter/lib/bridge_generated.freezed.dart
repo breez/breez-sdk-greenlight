@@ -2182,7 +2182,7 @@ mixin _$InputType {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -2194,7 +2194,7 @@ mixin _$InputType {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -2206,7 +2206,7 @@ mixin _$InputType {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
@@ -2336,7 +2336,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -2351,7 +2351,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -2366,7 +2366,7 @@ class _$InputType_BitcoinAddressImpl implements InputType_BitcoinAddress {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
@@ -2505,7 +2505,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -2520,7 +2520,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -2535,7 +2535,7 @@ class _$InputType_Bolt11Impl implements InputType_Bolt11 {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
@@ -2672,7 +2672,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -2687,7 +2687,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -2702,7 +2702,7 @@ class _$InputType_NodeIdImpl implements InputType_NodeId {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
@@ -2837,7 +2837,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -2852,7 +2852,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -2867,7 +2867,7 @@ class _$InputType_UrlImpl implements InputType_Url {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
@@ -2943,7 +2943,7 @@ abstract class _$$InputType_LnUrlPayImplCopyWith<$Res> {
           _$InputType_LnUrlPayImpl value, $Res Function(_$InputType_LnUrlPayImpl) then) =
       __$$InputType_LnUrlPayImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({LnUrlPayRequestData data});
+  $Res call({LnUrlPayRequestData data, String? bip353Address});
 }
 
 /// @nodoc
@@ -2958,12 +2958,17 @@ class __$$InputType_LnUrlPayImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? data = null,
+    Object? bip353Address = freezed,
   }) {
     return _then(_$InputType_LnUrlPayImpl(
       data: null == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as LnUrlPayRequestData,
+      bip353Address: freezed == bip353Address
+          ? _value.bip353Address
+          : bip353Address // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -2971,14 +2976,16 @@ class __$$InputType_LnUrlPayImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
-  const _$InputType_LnUrlPayImpl({required this.data});
+  const _$InputType_LnUrlPayImpl({required this.data, this.bip353Address});
 
   @override
   final LnUrlPayRequestData data;
+  @override
+  final String? bip353Address;
 
   @override
   String toString() {
-    return 'InputType.lnUrlPay(data: $data)';
+    return 'InputType.lnUrlPay(data: $data, bip353Address: $bip353Address)';
   }
 
   @override
@@ -2986,11 +2993,12 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$InputType_LnUrlPayImpl &&
-            (identical(other.data, data) || other.data == data));
+            (identical(other.data, data) || other.data == data) &&
+            (identical(other.bip353Address, bip353Address) || other.bip353Address == bip353Address));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, data);
+  int get hashCode => Object.hash(runtimeType, data, bip353Address);
 
   @JsonKey(ignore: true)
   @override
@@ -3005,12 +3013,12 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
   }) {
-    return lnUrlPay(data);
+    return lnUrlPay(data, bip353Address);
   }
 
   @override
@@ -3020,12 +3028,12 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
   }) {
-    return lnUrlPay?.call(data);
+    return lnUrlPay?.call(data, bip353Address);
   }
 
   @override
@@ -3035,14 +3043,14 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
     required TResult orElse(),
   }) {
     if (lnUrlPay != null) {
-      return lnUrlPay(data);
+      return lnUrlPay(data, bip353Address);
     }
     return orElse();
   }
@@ -3098,9 +3106,11 @@ class _$InputType_LnUrlPayImpl implements InputType_LnUrlPay {
 }
 
 abstract class InputType_LnUrlPay implements InputType {
-  const factory InputType_LnUrlPay({required final LnUrlPayRequestData data}) = _$InputType_LnUrlPayImpl;
+  const factory InputType_LnUrlPay({required final LnUrlPayRequestData data, final String? bip353Address}) =
+      _$InputType_LnUrlPayImpl;
 
   LnUrlPayRequestData get data;
+  String? get bip353Address;
   @JsonKey(ignore: true)
   _$$InputType_LnUrlPayImplCopyWith<_$InputType_LnUrlPayImpl> get copyWith =>
       throw _privateConstructorUsedError;
@@ -3174,7 +3184,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -3189,7 +3199,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -3204,7 +3214,7 @@ class _$InputType_LnUrlWithdrawImpl implements InputType_LnUrlWithdraw {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
@@ -3344,7 +3354,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -3359,7 +3369,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -3374,7 +3384,7 @@ class _$InputType_LnUrlAuthImpl implements InputType_LnUrlAuth {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,
@@ -3513,7 +3523,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
     required TResult Function(LNInvoice invoice) bolt11,
     required TResult Function(String nodeId) nodeId,
     required TResult Function(String url) url,
-    required TResult Function(LnUrlPayRequestData data) lnUrlPay,
+    required TResult Function(LnUrlPayRequestData data, String? bip353Address) lnUrlPay,
     required TResult Function(LnUrlWithdrawRequestData data) lnUrlWithdraw,
     required TResult Function(LnUrlAuthRequestData data) lnUrlAuth,
     required TResult Function(LnUrlErrorData data) lnUrlError,
@@ -3528,7 +3538,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
     TResult? Function(LNInvoice invoice)? bolt11,
     TResult? Function(String nodeId)? nodeId,
     TResult? Function(String url)? url,
-    TResult? Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult? Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult? Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult? Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult? Function(LnUrlErrorData data)? lnUrlError,
@@ -3543,7 +3553,7 @@ class _$InputType_LnUrlErrorImpl implements InputType_LnUrlError {
     TResult Function(LNInvoice invoice)? bolt11,
     TResult Function(String nodeId)? nodeId,
     TResult Function(String url)? url,
-    TResult Function(LnUrlPayRequestData data)? lnUrlPay,
+    TResult Function(LnUrlPayRequestData data, String? bip353Address)? lnUrlPay,
     TResult Function(LnUrlWithdrawRequestData data)? lnUrlWithdraw,
     TResult Function(LnUrlAuthRequestData data)? lnUrlAuth,
     TResult Function(LnUrlErrorData data)? lnUrlError,

@@ -744,7 +744,7 @@ interface InputType {
     Bolt11(LNInvoice invoice);
     NodeId(string node_id);
     Url(string url);
-    LnUrlPay(LnUrlPayRequestData data);
+    LnUrlPay(LnUrlPayRequestData data, string? bip353_address);
     LnUrlWithdraw(LnUrlWithdrawRequestData data);
     LnUrlAuth(LnUrlAuthRequestData data);
     LnUrlError(LnUrlErrorData data);

@@ -160,14 +160,31 @@ pub struct _LnUrlWithdrawRequestData {
 
 #[frb(mirror(InputType))]
 pub enum _InputType {
-    BitcoinAddress { address: BitcoinAddressData },
-    Bolt11 { invoice: LNInvoice },
-    NodeId { node_id: String },
-    Url { url: String },
-    LnUrlPay { data: LnUrlPayRequestData },
-    LnUrlWithdraw { data: LnUrlWithdrawRequestData },
-    LnUrlAuth { data: LnUrlAuthRequestData },
-    LnUrlError { data: LnUrlErrorData },
+    BitcoinAddress {
+        address: BitcoinAddressData,
+    },
+    Bolt11 {
+        invoice: LNInvoice,
+    },
+    NodeId {
+        node_id: String,
+    },
+    Url {
+        url: String,
+    },
+    LnUrlPay {
+        data: LnUrlPayRequestData,
+        bip353_address: Option<String>,
+    },
+    LnUrlWithdraw {
+        data: LnUrlWithdrawRequestData,
+    },
+    LnUrlAuth {
+        data: LnUrlAuthRequestData,
+    },
+    LnUrlError {
+        data: LnUrlErrorData,
+    },
 }
 
 #[frb(mirror(BitcoinAddressData))]
