@@ -4763,11 +4763,12 @@ enum BreezSDKMapper {
             ]
 
         case let .lnUrlPay(
-            data
+            data, bip353Address
         ):
             return [
                 "type": "lnUrlPay",
                 "data": dictionaryOf(lnUrlPayRequestData: data),
+                "bip353Address": bip353Address == nil ? nil : bip353Address,
             ]
 
         case let .lnUrlWithdraw(

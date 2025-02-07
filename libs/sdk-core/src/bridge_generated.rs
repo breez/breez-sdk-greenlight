@@ -1009,8 +1009,12 @@ const _: fn() = || {
         InputType::Url { url } => {
             let _: String = url;
         }
-        InputType::LnUrlPay { data } => {
+        InputType::LnUrlPay {
+            data,
+            bip353_address,
+        } => {
             let _: LnUrlPayRequestData = data;
+            let _: Option<String> = bip353_address;
         }
         InputType::LnUrlWithdraw { data } => {
             let _: LnUrlWithdrawRequestData = data;
@@ -1608,7 +1612,14 @@ impl support::IntoDart for mirror_InputType {
                 vec![2.into_dart(), node_id.into_into_dart().into_dart()]
             }
             InputType::Url { url } => vec![3.into_dart(), url.into_into_dart().into_dart()],
-            InputType::LnUrlPay { data } => vec![4.into_dart(), data.into_into_dart().into_dart()],
+            InputType::LnUrlPay {
+                data,
+                bip353_address,
+            } => vec![
+                4.into_dart(),
+                data.into_into_dart().into_dart(),
+                bip353_address.into_dart(),
+            ],
             InputType::LnUrlWithdraw { data } => {
                 vec![5.into_dart(), data.into_into_dart().into_dart()]
             }

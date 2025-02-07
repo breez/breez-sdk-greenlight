@@ -467,7 +467,7 @@ pub(crate) async fn handle_command(
             validate_success_url,
             use_trampoline,
         } => match parse(&lnurl, None).await? {
-            LnUrlPay { data: pd } => {
+            LnUrlPay { data: pd, .. } => {
                 let prompt = format!(
                     "Amount to pay in millisatoshi (min {} msat, max {} msat: ",
                     pd.min_sendable, pd.max_sendable
