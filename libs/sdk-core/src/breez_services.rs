@@ -890,13 +890,15 @@ impl BreezServices {
     /// an individual reverse swap to be claimed.
     ///
     /// This is taken care of automatically in the context of typical SDK usage.
-    pub async fn claim_reverse_swap(&self, lockup_address: String) -> SdkResult<()> {
-        Ok(self
-            .btc_send_swapper
-            .claim_reverse_swap(lockup_address)
-            .await?)
-    }
 
+ //Fixat till denna del - <String>
+      pub async fn claim_reverse_swap(&self, lockup_address: String) -> SdkResult<String> {
+          Ok(self
+              .btc_send_swapper
+              .claim_reverse_swap(lockup_address)
+              .await?)
+      }
+// Ändring Klar
     /// Lookup the reverse swap fees (see [ReverseSwapServiceAPI::fetch_reverse_swap_fees]).
     ///
     /// If the request has the `send_amount_sat` set, the returned [ReverseSwapPairInfo] will have

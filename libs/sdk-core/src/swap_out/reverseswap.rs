@@ -79,6 +79,22 @@ impl From<&Option<OnchainTx>> for TxStatus {
 
 /// This struct is responsible for sending to an onchain address using lightning payments.
 /// It uses internally an implementation of [ReverseSwapServiceAPI] that represents Boltz reverse swapper service.
+
+
+//Fixat till denna del
+//This struct holds the dependencies and
+//configuration required for managing reverse swaps
+//config: Configuration settings for the application
+//reverse_swapper_api: An interface for interacting
+    //with a reverse swap routing service.
+//reverse_swap_service_api: An interface for
+   //interacting with the core reverse swap service (e.g., Boltz).
+//persister: An interface for persisting reverse swap data (e.g., to a database).
+//chain_service: An interface for interacting with the blockchain.
+//node_api: An interface for interacting with a Bitcoin node.
+//status_changes_notifier: A broadcast channel for notifying other
+   //parts of the application about reverse swap status changes.
+
 pub(crate) struct BTCSendSwap {
     config: Config,
     pub(crate) reverse_swapper_api: Arc<dyn ReverseSwapperRoutingAPI>,
@@ -89,6 +105,9 @@ pub(crate) struct BTCSendSwap {
     status_changes_notifier: broadcast::Sender<BreezEvent>,
 }
 
+//BTCSendSwap::new(): This is the constructor for the BTCSendSwap struct.
+   //It initializes the struct's fields, notably creating a broadcast
+    //channel for status updates.
 impl BTCSendSwap {
     pub(crate) fn new(
         config: Config,
@@ -98,46 +117,62 @@ impl BTCSendSwap {
         chain_service: Arc<dyn ChainService>,
         node_api: Arc<dyn NodeAPI>,
     ) -> Self {
-        let (status_changes_notifier, _) = broadcast::channel::<BreezEvent>(100);
-        Self {
-            config,
-            reverse_swapper_api,
-            reverse_swap_service_api,
-            persister,
-            chain_service,
-            node_api,
-            status_changes_notifier,
-        }
-    }
+           let (status_changes_notifier, _) = broadcast::channel::<BreezEvent>(100);
+                  Self {
+                      config,
+                      reverse_swapper_api,
+                      reverse_swap_service_api,
+                      persister,
+                      chain_service,
+                      node_api,
+                      status_changes_notifier,
+                  }
+              }
 
-    pub(crate) fn subscribe_status_changes(&self) -> broadcast::Receiver<BreezEvent> {
-        self.status_changes_notifier.subscribe()
-    }
+              //claim_reverse_swap(): This asynchronous function initiates
+                    //the claiming process for a reverse swap.
+                     //It takes the lockup_address as input.
+                //It retrieves a list of monitored reverse
+                   //swaps using self.list_monitored().await?.
+                //It filters this list to find the reverse
+                   //swap associated with the provided lockup_address.
+               //If no matching reverse swap is found, it returns an error:
+                  //ReverseSwapError::Generic("Reverse swap address ... was not found").
+               //If a match is found, it calls self.claim_reverse_swaps(rsis).await?
+                  //It then calculates the payment hash by hashing the preimage of the reverse swap.
+                  //Finally, it returns the payment hash as a hex-encoded string.
 
-    async fn emit_reverse_swap_updated(&self, id: &str) -> Result<()> {
-        let full_rsi = self
-            .persister
-            .get_reverse_swap(id)?
-            .ok_or_else(|| anyhow!(format!("reverse swap {} was not found", id)))?;
-        self.status_changes_notifier
-            .send(BreezEvent::ReverseSwapUpdated {
-                details: self.convert_reverse_swap_info(full_rsi).await?,
-            })
-            .map_err(anyhow::Error::msg)?;
-        Ok(())
-    }
-
-    pub(crate) async fn on_event(&self, e: BreezEvent) -> Result<()> {
-        match e {
-            BreezEvent::Synced => {
-                // Since this relies on the most up-to-date states of the reverse swap HODL invoice payments,
-                // a fresh [BreezServices::sync] *must* be called before this method.
-                // Therefore we specifically call this on the Synced event
-                self.process_monitored_reverse_swaps().await
+       pub(crate) async fn claim_reverse_swap(&self, lockup_address: String) -> Result<String> {
+              let rsis: Vec<FullReverseSwapInfo> = self
+                  .list_monitored()
+                  .await?
+                  .into_iter()
+                  .filter(|rev_swap| {
+                      lockup_address
+                          == rev_swap
+                              .get_lockup_address(self.config.network)
+                              .map(|a| a.to_string())
+                              .unwrap_or_default()
+                  })
+                  .collect();
+            match rsis.is_empty() {
+                true => Err(ReverseSwapError::Generic(format!(
+                    "Reverse swap address {} was not found",
+                    lockup_address
+                ))),
+                false => {
+                    self.claim_reverse_swaps(rsis).await?;
+                    // Compute payment hash from the preimage
+                    let rs = &rsis[0];
+                    let payment_hash = sha256::Hash::hash(&rs.preimage).to_hex();
+                    Ok(payment_hash)
+                }
             }
-            _ => Ok(()),
         }
     }
+    //Ändring Klar
+
+
 
     /// Validates the reverse swap arguments given by the user
     fn validate_recipient_address(claim_pubkey: &str) -> ReverseSwapResult<()> {
