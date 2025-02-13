@@ -964,10 +964,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@breeztech/react-native-breez-sdk@0.5.2":
-  version "0.5.2"
-  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.5.2.tgz#d3543ec4b61ea3f077ac22f7bf8c032862550f04"
-  integrity sha512-oK3CefKgNfFR8WdvHCEZGwX1Rn2G23sKfsJa9junRo/+bUkgZBemMr+fkgU6WJXSyeKPrvdwWhXJ1sCe8YTp2g==
+"@breeztech/react-native-breez-sdk@0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.6.2.tgz#fe6465e65a35ec15759b93b8ae7c9f0deb5ebdfe"
+  integrity sha512-g9N4z+lnfn3oxUnAFHGsqJy03BeL32Fi6Z6LI4g65GOZGQOkqAjRiOBla+z7Q6lCtJsP1L4kwX3fOObWjf7c/A==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -5434,9 +5434,9 @@ ms@2.1.3:
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
 
 nanoid@^3.1.23:
-  version "3.3.7"
-  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.7.tgz#d0c301a691bc8d54efa0a2226ccf3fe2fd656bd8"
-  integrity sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==
+  version "3.3.8"
+  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.8.tgz#b1be3030bee36aaff18bacb375e5cce521684baf"
+  integrity sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==
 
 nanomatch@^1.2.9:
   version "1.2.13"
