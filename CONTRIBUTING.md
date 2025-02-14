@@ -2,7 +2,7 @@
 
 Contributions are always welcome. The codebase is maintained using the "contributor workflow" where anyone can contribute proposals using [pull requests](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests).
 
-To contribution workflow is as follows:
+The contribution workflow is as follows:
 
 1. Fork the repository.
 2. Create a topic branch.
