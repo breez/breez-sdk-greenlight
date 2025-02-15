@@ -8,6 +8,7 @@ libs/sdk-react-native/ios/bindings-swift/**
 .envrc
 *.jar
 
+
 # Visual Studio Code
 .vscode/*
 !.vscode/settings.json
@@ -16,7 +17,6 @@ libs/sdk-flutter/ios/bindings-swift/
 
 # direnv
 .env
-.envrc
 
 # fenv
 libs/sdk-flutter/.flutter-version

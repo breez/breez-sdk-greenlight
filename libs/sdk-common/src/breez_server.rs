@@ -1,5 +1,4 @@
 use std::time::Duration;
-
 use anyhow::Result;
 use log::trace;
 use tokio::sync::Mutex;
@@ -10,13 +9,15 @@ use tonic::service::Interceptor;
 use tonic::transport::{Channel, Endpoint};
 use tonic::{Request, Status};
 
-use crate::grpc::channel_opener_client::ChannelOpenerClient;
-use crate::grpc::information_client::InformationClient;
-use crate::grpc::payment_notifier_client::PaymentNotifierClient;
-use crate::grpc::signer_client::SignerClient;
-use crate::grpc::support_client::SupportClient;
-use crate::grpc::swapper_client::SwapperClient;
-use crate::grpc::{ChainApiServersRequest, PingRequest};
+use crate::grpc::breez::{
+    channel_opener_client::ChannelOpenerClient,
+    information_client::InformationClient,
+    payment_notifier_client::PaymentNotifierClient,
+    signer_client::SignerClient,
+    support_client::SupportClient,
+    swapper_client::SwapperClient,
+    ChainApiServersRequest, PingRequest
+};
 use crate::prelude::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use crate::with_connection_retry;
 

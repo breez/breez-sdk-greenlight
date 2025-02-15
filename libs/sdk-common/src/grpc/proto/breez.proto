@@ -23,56 +23,44 @@ service Pos {
 service Information {
   rpc Ping(PingRequest) returns (PingReply) {}
   rpc Rates(RatesRequest) returns (RatesReply) {}
-  rpc BreezAppVersions(BreezAppVersionsRequest)
-      returns (BreezAppVersionsReply) {}
+  rpc BreezAppVersions(BreezAppVersionsRequest) returns (BreezAppVersionsReply) {}
   rpc ReceiverInfo(ReceiverInfoRequest) returns (ReceiverInfoReply) {}
   rpc ChainApiServers(ChainApiServersRequest) returns (ChainApiServersReply) {}
 }
 
 service ChannelOpener {
   rpc LSPList(LSPListRequest) returns (LSPListReply) {}
-
-  // Returns active and historical LSPs used by a node.
-  // In the response, the LSP with a non-empty fee list is active, the LSPs with an empty fee list are historical.
   rpc LSPFullList(LSPFullListRequest) returns (LSPFullListReply) {}
-
   rpc RegisterPayment(RegisterPaymentRequest) returns (RegisterPaymentReply) {}
   rpc CheckChannels(CheckChannelsRequest) returns (CheckChannelsReply) {}
 }
 
 service PublicChannelOpener {
-  rpc OpenPublicChannel(OpenPublicChannelRequest)
-      returns (OpenPublicChannelReply) {}
+  rpc OpenPublicChannel(OpenPublicChannelRequest) returns (OpenPublicChannelReply) {}
 }
 
 service FundManager {
   rpc OpenChannel(OpenChannelRequest) returns (OpenChannelReply) {}
-  rpc UpdateChannelPolicy(UpdateChannelPolicyRequest)
-      returns (UpdateChannelPolicyReply) {}
+  rpc UpdateChannelPolicy(UpdateChannelPolicyRequest) returns (UpdateChannelPolicyReply) {}
   rpc AddFundInit(AddFundInitRequest) returns (AddFundInitReply) {}
   rpc AddFundStatus(AddFundStatusRequest) returns (AddFundStatusReply) {}
   rpc RemoveFund(RemoveFundRequest) returns (RemoveFundReply) {}
-  rpc RedeemRemovedFunds(RedeemRemovedFundsRequest)
-      returns (RedeemRemovedFundsReply) {}
+  rpc RedeemRemovedFunds(RedeemRemovedFundsRequest) returns (RedeemRemovedFundsReply) {}
   rpc GetSwapPayment(GetSwapPaymentRequest) returns (GetSwapPaymentReply) {}
-  rpc RegisterTransactionConfirmation(RegisterTransactionConfirmationRequest)
-      returns (RegisterTransactionConfirmationResponse) {}
+  rpc RegisterTransactionConfirmation(RegisterTransactionConfirmationRequest) returns (RegisterTransactionConfirmationResponse) {}
 }
 
 service Swapper {
   rpc AddFundInit(AddFundInitRequest) returns (AddFundInitReply) {}
   rpc AddFundStatus(AddFundStatusRequest) returns (AddFundStatusReply) {}
   rpc GetSwapPayment(GetSwapPaymentRequest) returns (GetSwapPaymentReply) {}
-  rpc RedeemSwapPayment(RedeemSwapPaymentRequest)
-      returns (RedeemSwapPaymentReply) {}
-  rpc GetReverseRoutingNode(GetReverseRoutingNodeRequest)
-      returns (GetReverseRoutingNodeReply) {}
+  rpc RedeemSwapPayment(RedeemSwapPaymentRequest) returns (RedeemSwapPaymentReply) {}
+  rpc GetReverseRoutingNode(GetReverseRoutingNodeRequest) returns (GetReverseRoutingNodeReply) {}
 }
 
 service CTP {
   rpc JoinCTPSession(JoinCTPSessionRequest) returns (JoinCTPSessionResponse) {}
-  rpc TerminateCTPSession(TerminateCTPSessionRequest)
-      returns (TerminateCTPSessionResponse) {}
+  rpc TerminateCTPSession(TerminateCTPSessionRequest) returns (TerminateCTPSessionResponse) {}
 }
 
 service NodeInfo {
@@ -81,13 +69,11 @@ service NodeInfo {
 }
 
 service SyncNotifier {
-  rpc RegisterPeriodicSync(RegisterPeriodicSyncRequest)
-      returns (RegisterPeriodicSyncResponse) {}
+  rpc RegisterPeriodicSync(RegisterPeriodicSyncRequest) returns (RegisterPeriodicSyncResponse) {}
 }
 
 service PushTxNotifier {
-  rpc RegisterTxNotification(PushTxNotificationRequest)
-      returns (PushTxNotificationResponse) {}
+  rpc RegisterTxNotification(PushTxNotificationRequest) returns (PushTxNotificationResponse) {}
 }
 
 service InactiveNotifier {
@@ -108,17 +94,25 @@ service Support {
   rpc BreezStatus(BreezStatusRequest) returns (BreezStatusReply) {}
 }
 
-message SignUrlRequest {
-  string baseUrl = 1 [ json_name = "base_url" ];
-  string queryString = 2 [ json_name = "query_string" ];
+message Payment {
+  string payment_hash = 10; // Add new field
+  // Other fields can be added here as needed
 }
 
-message SignUrlResponse { string fullUrl = 1 [ json_name = "full_url" ]; }
+message SignUrlRequest {
+  string baseUrl = 1 [json_name = "base_url"];
+  string queryString = 2 [json_name = "query_string"];
+}
+
+message SignUrlResponse {
+  string fullUrl = 1 [json_name = "full_url"];
+}
 
 message InactiveNotifyRequest {
-  bytes pubkey = 1 [ json_name = "pubkey" ];
-  int32 days = 2 [ json_name = "days" ];
+  bytes pubkey = 1 [json_name = "pubkey"];
+  int32 days = 2 [json_name = "days"];
 }
+
 message InactiveNotifyResponse {}
 
 message RegisterPaymentNotificationRequest {
@@ -126,55 +120,54 @@ message RegisterPaymentNotificationRequest {
   bytes blob = 2;
 }
 
-message RegisterPaymentNotificationResponse {
-}
+message RegisterPaymentNotificationResponse {}
 
 message RemovePaymentNotificationRequest {
   string lsp_id = 1;
   bytes blob = 2;
 }
 
-message RemovePaymentNotificationResponse {
-}
+message RemovePaymentNotificationResponse {}
 
 message ReceiverInfoRequest {}
-message ReceiverInfoReply { string pubkey = 1 [ json_name = "pubkey" ]; }
+
+message ReceiverInfoReply {
+  string pubkey = 1 [json_name = "pubkey"];
+}
 
 message RatesRequest {}
+
 message Rate {
   string coin = 1;
   double value = 2;
 }
-message RatesReply { repeated Rate rates = 1; }
+
+message RatesReply {
+  repeated Rate rates = 1;
+}
 
 message LSPListRequest {
-  // The identity pubkey of the client
-  string pubkey = 2 [ json_name = "pubkey" ];
+  string pubkey = 2 [json_name = "pubkey"];
 }
 
 message LSPFullListRequest {
-  /// The identity pubkey of the client
   string pubkey = 1 [json_name = "pubkey"];
 }
+
 message LSPInformation {
-  string name = 1 [ json_name = "name" ];
-  string widget_url = 2 [ json_name = "widget_url" ];
-  string pubkey = 3 [ json_name = "pubkey" ];
-  string host = 4 [ json_name = "host" ];
-
-  int64 base_fee_msat = 7 [ json_name = "base_fee_msat" ];
-  double fee_rate = 8 [ json_name = "fee_rate" ];
-  uint32 time_lock_delta = 9 [ json_name = "time_lock_delta" ];
-  int64 min_htlc_msat = 10 [ json_name = "min_htlc_msat" ];
-
+  string name = 1 [json_name = "name"];
+  string widget_url = 2 [json_name = "widget_url"];
+  string pubkey = 3 [json_name = "pubkey"];
+  string host = 4 [json_name = "host"];
+  int64 base_fee_msat = 7 [json_name = "base_fee_msat"];
+  double fee_rate = 8 [json_name = "fee_rate"];
+  uint32 time_lock_delta = 9 [json_name = "time_lock_delta"];
+  int64 min_htlc_msat = 10 [json_name = "min_htlc_msat"];
   bytes lsp_pubkey = 12;
-
   repeated OpeningFeeParams opening_fee_params_menu = 15;
-
   string id = 16;
 }
 
-// Fee parameters for opening a channel, received from the LSP.
 message OpeningFeeParams {
   uint64 min_msat = 1;
   uint32 proportional = 2;
@@ -183,8 +176,9 @@ message OpeningFeeParams {
   uint32 max_client_to_self_delay = 5;
   string promise = 6;
 }
+
 message LSPListReply {
-  map<string, LSPInformation> lsps = 1; // The key is the lsp id
+  map<string, LSPInformation> lsps = 1;
 }
 
 message LSPFullListReply {
@@ -195,18 +189,23 @@ message RegisterPaymentRequest {
   string lsp_id = 1;
   bytes blob = 3;
 }
+
 message RegisterPaymentReply {}
 
 message CheckChannelsRequest {
   string lsp_id = 1;
   bytes blob = 2;
 }
-message CheckChannelsReply { bytes blob = 2; }
+
+message CheckChannelsReply {
+  bytes blob = 2;
+}
 
 message OpenLSPChannelRequest {
   string lsp_id = 1;
   string pubkey = 2;
 }
+
 message OpenLSPChannelReply {}
 
 message OpenChannelRequest {
@@ -216,7 +215,9 @@ message OpenChannelRequest {
 
 message OpenChannelReply {}
 
-message OpenPublicChannelRequest { string pubkey = 1; }
+message OpenPublicChannelRequest {
+  string pubkey = 1;
+}
 
 message OpenPublicChannelReply {}
 
@@ -225,7 +226,9 @@ message Captcha {
   bytes image = 2;
 }
 
-message UpdateChannelPolicyRequest { string pubKey = 1; }
+message UpdateChannelPolicyRequest {
+  string pubKey = 1;
+}
 
 message UpdateChannelPolicyReply {}
 
@@ -272,11 +275,17 @@ message RemoveFundReply {
   string errorMessage = 2;
 }
 
-message RedeemRemovedFundsRequest { string paymenthash = 1; }
+message RedeemRemovedFundsRequest {
+  string paymenthash = 1;
+}
 
-message RedeemRemovedFundsReply { string txid = 1; }
+message RedeemRemovedFundsReply {
+  string txid = 1;
+}
 
-message GetSwapPaymentRequest { string paymentRequest = 1; }
+message GetSwapPaymentRequest {
+  string paymentRequest = 1;
+}
 
 message GetSwapPaymentReply {
   enum SwapError {
@@ -288,35 +297,28 @@ message GetSwapPaymentReply {
   }
 
   string paymentError = 1;
-
-  // deprecated
   bool funds_exceeded_limit = 2;
-
   SwapError swap_error = 3;
 }
 
 message RedeemSwapPaymentRequest {
   bytes preimage = 1;
-
-  // The target number of blocks that the funding transaction should be
-  // confirmed by.
   int32 target_conf = 2;
-
-  // A manual fee rate set in sat/byte that should be used when crafting the
-  // funding transaction.
   int64 sat_per_byte = 3;
 }
 
-message RedeemSwapPaymentReply { string txid = 1; }
+message RedeemSwapPaymentReply {
+  string txid = 1;
+}
 
-// The request message containing the device id and lightning id
 message RegisterRequest {
   string deviceID = 1;
   string lightningID = 2;
 }
 
-// The response message containing the breez id
-message RegisterReply { string breezID = 1; }
+message RegisterReply {
+  string breezID = 1;
+}
 
 message PaymentRequest {
   string breezID = 1;
@@ -325,15 +327,23 @@ message PaymentRequest {
   int64 amount = 4;
 }
 
-message InvoiceReply { string Error = 1; }
+message InvoiceReply {
+  string Error = 1;
+}
 
-message UploadFileRequest { bytes content = 1; }
+message UploadFileRequest {
+  bytes content = 1;
+}
 
-message UploadFileReply { string url = 1; }
+message UploadFileReply {
+  string url = 1;
+}
 
 message PingRequest {}
 
-message PingReply { string version = 1; }
+message PingReply {
+  string version = 1;
+}
 
 message OrderRequest {
   string FullName = 1;
@@ -385,7 +395,9 @@ message JoinCTPSessionResponse {
   int64 expiry = 2;
 }
 
-message TerminateCTPSessionRequest { string sessionID = 1; }
+message TerminateCTPSessionRequest {
+  string sessionID = 1;
+}
 
 message TerminateCTPSessionResponse {}
 
@@ -402,7 +414,9 @@ message RegisterTransactionConfirmationRequest {
 
 message RegisterTransactionConfirmationResponse {}
 
-message RegisterPeriodicSyncRequest { string notificationToken = 1; }
+message RegisterPeriodicSyncRequest {
+  string notificationToken = 1;
+}
 
 message RegisterPeriodicSyncResponse {}
 
@@ -410,6 +424,7 @@ message BoltzReverseSwapLockupTx {
   string boltz_id = 1;
   uint32 timeout_block_height = 2;
 }
+
 message PushTxNotificationRequest {
   string device_id = 1;
   string title = 2;
@@ -417,35 +432,39 @@ message PushTxNotificationRequest {
   bytes tx_hash = 4;
   bytes script = 5;
   uint32 block_height_hint = 6;
-  oneof info { BoltzReverseSwapLockupTx boltz_reverse_swap_lockup_tx_info = 7; }
+  oneof info {
+    BoltzReverseSwapLockupTx boltz_reverse_swap_lockup_tx_info = 7;
+  }
 }
+
 message PushTxNotificationResponse {}
 
 message BreezAppVersionsRequest {}
-message BreezAppVersionsReply { repeated string version = 1; }
+
+message BreezAppVersionsReply {
+  repeated string version = 1;
+}
 
 message GetReverseRoutingNodeRequest {}
-message GetReverseRoutingNodeReply { bytes node_id = 1; }
+
+message GetReverseRoutingNodeReply {
+  bytes node_id = 1;
+}
 
 message ReportPaymentFailureRequest {
-  // The sdk build version
   string sdk_version = 1;
-  // The sdk build git hash
   string sdk_git_hash = 2;
-  // The node pubkey reporting the failure
   string node_id = 3;
-  // The currently used lsp id
   string lsp_id = 4;
-  // The ISO 8601 timestamp 
   string timestamp = 5;
-  // The optional comment/error response text
   string comment = 6;
-  // The JSON encoded report payload
   string report = 7;
 }
+
 message ReportPaymentFailureReply {}
 
 message BreezStatusRequest {}
+
 message BreezStatusReply {
   enum BreezStatus {
     OPERATIONAL = 0;
@@ -456,6 +475,7 @@ message BreezStatusReply {
 }
 
 message ChainApiServersRequest {}
+
 message ChainApiServersReply {
   message ChainAPIServer {
     string server_type = 1;
@@ -463,10 +483,6 @@ message ChainApiServersReply {
   }
   repeated ChainAPIServer servers = 1;
 }
-
-/////////////////////////////////////////////
-// From lspd.proto
-/////////////////////////////////////////////
 
 message PaymentInformation {
   bytes payment_hash = 1;
@@ -478,14 +494,9 @@ message PaymentInformation {
   OpeningFeeParams opening_fee_params = 7;
 }
 
-
-/////////////////////////////////////////////
-// From notifications.proto
-/////////////////////////////////////////////
-
 message SubscribeNotificationsRequest {
-    string url = 1;
-    string signature = 2;
+  string url = 1;
+  string signature = 2;
 }
 
 message SubscribeNotificationsReply {}
@@ -495,5 +506,4 @@ message UnsubscribeNotificationsRequest {
   string signature = 2;
 }
 
-message UnsubscribeNotificationsReply {
-}
+message UnsubscribeNotificationsReply {}

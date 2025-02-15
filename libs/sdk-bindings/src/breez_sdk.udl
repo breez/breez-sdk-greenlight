@@ -1,12 +1,12 @@
 dictionary RouteHintHop {
-     string src_node_id;
-     string short_channel_id;
-     u32 fees_base_msat;
-     u32 fees_proportional_millionths;
-     u64 cltv_expiry_delta;
-     u64? htlc_minimum_msat;
-     u64? htlc_maximum_msat;
- };
+    string src_node_id;
+    string short_channel_id;
+    u32 fees_base_msat;
+    u32 fees_proportional_millionths;
+    u64 cltv_expiry_delta;
+    u64? htlc_minimum_msat;
+    u64? htlc_maximum_msat;
+};
 
 [Error]
 enum SdkError {
@@ -99,8 +99,8 @@ enum SendPaymentError {
 };
 
 [Error]
-enum RedeemOnchainError {    
-    "Generic",    
+enum RedeemOnchainError {
+    "Generic",
     "ServiceConnectivity",
     "InsufficientFunds",
 };
@@ -602,7 +602,6 @@ dictionary PrepareOnchainPaymentResponse {
     f64 fees_percentage;
     u64 fees_lockup;
     u64 fees_claim;
-
     u64 sender_amount_sat;
     u64 recipient_amount_sat;
     u64 total_fees;
@@ -626,8 +625,9 @@ dictionary BitcoinAddressData {
 };
 
 dictionary LnUrlPaySuccessData {
-    SuccessActionProcessed? success_action;
     Payment payment;
+    Optional<SuccessActionProcessed> success_action;
+    string payment_hash;
 };
 
 dictionary LnUrlErrorData {
@@ -918,7 +918,7 @@ interface BlockingBreezServices {
 
    [Throws=SdkError]
    SwapInfo? in_progress_swap();
-  
+
    [Throws=SdkError]
    void rescan_swaps();
 
@@ -974,7 +974,7 @@ interface BlockingBreezServices {
    PrepareRedeemOnchainFundsResponse prepare_redeem_onchain_funds(PrepareRedeemOnchainFundsRequest req);
 };
 
-namespace breez_sdk {  
+namespace breez_sdk {
 
  [Throws=ConnectError]
  BlockingBreezServices connect(ConnectRequest req, EventListener listener);

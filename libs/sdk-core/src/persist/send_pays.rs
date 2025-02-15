@@ -14,13 +14,7 @@ pub(crate) enum SendPayStatus {
 pub(crate) struct SendPay {
     pub created_index: u64,
     pub updated_index: Option<u64>,
-
-    // The cln_grpc groupid (u64) can contain 64 bit values (e.g. > 2^63). This leads to errors when
-    // trying to persist them in an SQLite INTEGER column, which holds signed 64 bit numbers (63 bit
-    // value + 1 bit for the sign).
-    // To map the full range of u64 values in SQLite, we treat this field as String, stored as TEXT.
     pub groupid: String,
-
     pub partid: Option<u64>,
     pub payment_hash: Vec<u8>,
     pub status: SendPayStatus,
@@ -40,13 +34,13 @@ impl SqliteStorage {
     pub(crate) fn insert_send_pays(&self, send_pays: &[SendPay]) -> PersistResult<()> {
         let conn = self.get_connection()?;
         let mut stmt = conn.prepare(
-            r#"INSERT OR REPLACE INTO send_pays (created_index, updated_index, 
-                groupid, partid, payment_hash, status, amount_msat, 
-                destination, created_at, amount_sent_msat, label, bolt11, 
-                description, bolt12, payment_preimage, erroronion) 
-                VALUES (:created_index, :updated_index, 
-                    :groupid, :partid, :payment_hash, :status, :amount_msat, 
-                    :destination, :created_at, :amount_sent_msat, :label, :bolt11, 
+            r#"INSERT OR REPLACE INTO send_pays (created_index, updated_index,
+                groupid, partid, payment_hash, status, amount_msat,
+                destination, created_at, amount_sent_msat, label, bolt11,
+                description, bolt12, payment_preimage, erroronion)
+                VALUES (:created_index, :updated_index,
+                    :groupid, :partid, :payment_hash, :status, :amount_msat,
+                    :destination, :created_at, :amount_sent_msat, :label, :bolt11,
                     :description, :bolt12, :payment_preimage, :erroronion)"#,
         )?;
         for send_pay in send_pays {
@@ -84,9 +78,9 @@ impl SqliteStorage {
     ) -> PersistResult<Vec<SendPay>> {
         let conn = self.get_connection()?;
         let mut stmt = conn.prepare(
-            r#"SELECT created_index, updated_index, groupid, partid, 
-               payment_hash, status, amount_msat, destination, created_at, 
-               amount_sent_msat, label, bolt11, description, bolt12, 
+            r#"SELECT created_index, updated_index, groupid, partid,
+               payment_hash, status, amount_msat, destination, created_at,
+               amount_sent_msat, label, bolt11, description, bolt12,
                payment_preimage, erroronion
                FROM send_pays
                WHERE payment_hash = :payment_hash AND groupid = :groupid

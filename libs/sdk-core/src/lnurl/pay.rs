@@ -26,6 +26,7 @@ pub enum LnUrlPayResult {
 pub struct LnUrlPaySuccessData {
     pub payment: Payment,
     pub success_action: Option<SuccessActionProcessed>,
+    pub payment_hash: String, // Add payment_hash field
 }
 
 #[cfg(test)]
@@ -487,10 +488,11 @@ pub(crate) mod tests {
             })
             .await?
         {
-            LnUrlPayResult::EndpointSuccess { data } => match data.payment.id {
-                s if s == inv.payment_hash().to_hex() => Ok(()),
-                _ => Err(anyhow!("Unexpected payment hash")),
-            },
+            LnUrlPayResult::EndpointSuccess { data } => {
+                let expected_hash = inv.payment_hash().to_hex();
+                assert_eq!(data.payment_hash, expected_hash);
+                Ok(())
+            }
             _ => Err(anyhow!("Unexpected result")),
         }
     }
