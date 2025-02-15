@@ -1,10 +1,7 @@
 use std::sync::Arc;
-
 use anyhow::Result;
 use url::Url;
-
-use crate::{grpc::SignUrlRequest, prelude::BreezServer};
-
+use crate::{grpc::breez::SignUrlRequest, prelude::BreezServer};
 use super::BuyBitcoinProviderApi;
 
 #[derive(Clone)]
@@ -105,7 +102,6 @@ impl BuyBitcoinProviderApi for MoonpayProvider {
 #[cfg(test)]
 pub(crate) mod tests {
     use std::collections::HashMap;
-
     use crate::prelude::moonpay::{create_moonpay_url, moonpay_config};
 
     #[tokio::test]

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::grpc::RatesRequest;
+use crate::grpc::breez::RatesRequest;
 use crate::prelude::BreezServer;
 use crate::with_connection_retry;
 
