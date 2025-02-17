@@ -80,6 +80,10 @@ The tools folder contains a simple command line interface (sdk-cli) to the SDK.
 
 See the instructions in each sub-project readme on how to build, test, and run.
 
+## **Contributing**
+
+Contributions are always welcome. Please read our [contribution guide](CONTRIBUTING.md) to get started.
+
 ## SDK Development Roadmap
 
 - [x]  ‘On-the-fly’ channel creation

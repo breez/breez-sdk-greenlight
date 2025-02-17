@@ -1,5 +1,6 @@
 libs/sdk-bindings/*.sql
 .DS_Store
+*.sln
 .idea/
 
 libs/sdk-react-native/ios/breez_sdk.swift
