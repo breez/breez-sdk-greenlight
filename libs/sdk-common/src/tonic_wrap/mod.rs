@@ -16,8 +16,10 @@ impl Display for Status {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub struct TransportError(pub tonic::transport::Error);
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Display for TransportError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -31,6 +33,7 @@ impl Display for TransportError {
 
 /// Executes the given grpc call function. If an error is returned that
 /// indicates the connection broke, the call is tried again.
+#[cfg(not(target_arch = "wasm32"))]
 #[macro_export]
 macro_rules! with_connection_retry {
     ($f:expr) => {{
@@ -69,8 +72,39 @@ macro_rules! with_connection_retry {
 
             debug!(
                 "with_connection_fallback: got transport error with source '{}'.
-                Retrying fallback.",
+                    Retrying fallback.",
                 source.to_string()
+            );
+
+            $f.await
+        }
+    }};
+}
+
+#[cfg(target_arch = "wasm32")]
+#[macro_export]
+macro_rules! with_connection_retry {
+    ($f:expr) => {{
+        use log::debug;
+
+        async {
+            let res = $f.await;
+            let status = match res {
+                Ok(t) => return Ok(t),
+                Err(s) => s,
+            };
+            let status_str = status.to_string();
+
+            debug!("with_connection_fallback: initial call failed with: {status_str}");
+
+            if !status_str.contains("transport error") {
+                return Err(status);
+            }
+
+            debug!(
+                "with_connection_fallback: got transport error with source '{}'.
+                    Retrying fallback.",
+                status_str
             );
 
             $f.await

@@ -9,7 +9,11 @@ mod tests {
     use crate::input_parser::tests::get_bip21_rounding_test_vectors;
     use crate::prelude::*;
 
-    #[tokio::test]
+    #[cfg(target_arch = "wasm32")]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_liquid_address_bip21_rounding() -> Result<()> {
         let asset_id = AssetId::LIQUID_BTC.to_string();
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
@@ -28,7 +32,8 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_liquid_address_bip21_rounding_reverse() -> Result<()> {
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let data = LiquidAddressData {

@@ -107,6 +107,12 @@ fn format_short_channel_id(id: u64) -> String {
     format!("{block_num}x{tx_num}x{tx_out}")
 }
 
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Amount {
     Bitcoin {
@@ -141,6 +147,12 @@ impl TryFrom<lightning::offers::offer::Amount> for Amount {
     }
 }
 
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNOffer {
     /// String representation of the Bolt12 offer
@@ -157,6 +169,12 @@ pub struct LNOffer {
     pub paths: Vec<LnOfferBlindedPath>,
 }
 
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LnOfferBlindedPath {
     /// For each blinded hop, we store the node ID (pubkey as hex).
@@ -164,6 +182,12 @@ pub struct LnOfferBlindedPath {
 }
 
 /// Wrapper for a BOLT11 LN invoice
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {
     pub bolt11: String,
@@ -189,6 +213,12 @@ impl LNInvoice {
 }
 
 /// Details of a specific hop in a larger route hint
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
@@ -208,6 +238,12 @@ pub struct RouteHintHop {
 }
 
 /// A route hint for a LN payment
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHint {
     pub hops: Vec<RouteHintHop>,
@@ -446,7 +482,11 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
 mod tests {
     use crate::invoice::*;
 
-    #[test]
+    #[cfg(target_arch = "wasm32")]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_parse_invoice() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res = parse_invoice(&payreq).unwrap();
@@ -472,7 +512,8 @@ mod tests {
         print!("{encoded:?}");
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_parse_invoice_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res: LNInvoice = parse_invoice(&payreq).unwrap();
@@ -499,7 +540,8 @@ mod tests {
         print!("{encoded:?}");
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_parse_invoice_invalid_bitcoin_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res = parse_invoice(&payreq);
@@ -508,7 +550,8 @@ mod tests {
         assert!(validate_network(res.unwrap(), Network::Testnet).is_err());
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_parse_invoice_invalid_testnet_network() {
         let payreq = String::from("lntb15u1pj53l9tpp5p7kjsjcv3eqa39upytmj6k7ac8rqvdffyqr4um98pq5n4ppwxvnsdpzxysy2umswfjhxum0yppk76twypgxzmnwvyxqrrsscqp79qy9qsqsp53xw4x5ezpzvnheff9mrt0ju72u5a5dnxyh4rq6gtweufv9650d4qwqj3ds5xfg4pxc9h7a2g43fmntr4tt322jzujsycvuvury50u994kzr8539qf658hrp07hyz634qpvkeh378wnvf7lddp2x7yfgyk9cp7f7937");
         let res = parse_invoice(&payreq);
@@ -517,7 +560,8 @@ mod tests {
         assert!(validate_network(res.unwrap(), Network::Bitcoin).is_err());
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_format_short_channel_id() {
         let valid_short_channel_ids = vec![
             (0, "0x0x0"),
@@ -531,7 +575,8 @@ mod tests {
         }
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_parse_short_channel_id() {
         let valid_short_channel_ids = vec![
             ("0x0x0", 0),

@@ -34,6 +34,8 @@ pub async fn validate_lnurl_withdraw(
 
     // Send invoice to the LNURL-w endpoint via the callback
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
+    let callback_url = maybe_replace_host_with_mock_test_host(callback_url)?;
+
     let withdraw_status = match get_parse_and_log_response(&callback_url, false).await {
         Ok(LnUrlCallbackStatus::Ok) => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawSuccessData { invoice },
@@ -70,6 +72,12 @@ pub mod model {
 
     use crate::prelude::*;
 
+    #[cfg_attr(
+        target_arch = "wasm32",
+        derive(tsify_next::Tsify),
+        tsify(from_wasm_abi, into_wasm_abi),
+        serde(rename_all = "camelCase")
+    )]
     #[derive(Debug, Serialize, Deserialize)]
     pub struct LnUrlWithdrawRequest {
         /// Request data containing information on how to call the lnurl withdraw
@@ -91,6 +99,11 @@ pub mod model {
     /// It represents the endpoint's parameters for the LNURL workflow.
     ///
     /// See <https://github.com/lnurl/luds/blob/luds/03.md>
+    #[cfg_attr(
+        target_arch = "wasm32",
+        derive(tsify_next::Tsify),
+        tsify(from_wasm_abi, into_wasm_abi)
+    )]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct LnUrlWithdrawRequestData {
@@ -104,6 +117,11 @@ pub mod model {
     }
 
     /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
+    #[cfg_attr(
+        target_arch = "wasm32",
+        derive(tsify_next::Tsify),
+        tsify(into_wasm_abi)
+    )]
     #[derive(Clone, Serialize)]
     pub enum LnUrlWithdrawResult {
         Ok { data: LnUrlWithdrawSuccessData },
@@ -111,6 +129,11 @@ pub mod model {
         ErrorStatus { data: LnUrlErrorData },
     }
 
+    #[cfg_attr(
+        target_arch = "wasm32",
+        derive(tsify_next::Tsify),
+        tsify(into_wasm_abi)
+    )]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlWithdrawSuccessData {
         pub invoice: LNInvoice,
@@ -180,13 +203,16 @@ pub mod model {
 #[cfg(test)]
 mod tests {
     use anyhow::Result;
-    use mockito::Mock;
 
     use crate::input_parser::tests::MOCK_HTTP_SERVER;
     use crate::lnurl::tests::rand_string;
     use crate::prelude::*;
 
-    #[tokio::test]
+    #[cfg(target_arch = "wasm32")]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_withdraw_validate_amount_failure() -> Result<()> {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let invoice = crate::invoice::parse_invoice(invoice_str)?;
@@ -201,13 +227,13 @@ mod tests {
     }
 
     /// Mock an LNURL-withdraw endpoint that responds with an OK to a withdraw attempt
-    fn mock_lnurl_withdraw_callback(
+    async fn mock_lnurl_withdraw_callback(
         withdraw_req: &LnUrlWithdrawRequestData,
         invoice: &LNInvoice,
         error: Option<String>,
-    ) -> Result<Mock> {
-        let callback_url = build_withdraw_callback_url(withdraw_req, invoice)?;
-        let url = reqwest::Url::parse(&callback_url)?;
+    ) {
+        let callback_url = build_withdraw_callback_url(withdraw_req, invoice).unwrap();
+        let url = reqwest::Url::parse(&callback_url).unwrap();
         let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
 
         let expected_payload = r#"
@@ -222,11 +248,16 @@ mod tests {
             }
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        Ok(server
-            .mock("GET", mockito_path)
-            .with_body(response_body)
-            .create())
+        let _url = MOCK_HTTP_SERVER
+            .mock(
+                "GET",
+                mockito_path,
+                &response_body,
+                None,
+                None,
+                Some(&callback_url),
+            )
+            .await;
     }
 
     fn get_test_withdraw_req_data(min_sat: u64, max_sat: u64) -> LnUrlWithdrawRequestData {
@@ -239,13 +270,14 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_withdraw_success() -> Result<()> {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let req_invoice = crate::invoice::parse_invoice(invoice_str)?;
         let withdraw_req = get_test_withdraw_req_data(0, 100);
 
-        let _m = mock_lnurl_withdraw_callback(&withdraw_req, &req_invoice, None)?;
+        mock_lnurl_withdraw_callback(&withdraw_req, &req_invoice, None).await;
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, req_invoice.clone()).await?,
@@ -255,14 +287,15 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_withdraw_endpoint_failure() -> Result<()> {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let invoice = crate::invoice::parse_invoice(invoice_str)?;
         let withdraw_req = get_test_withdraw_req_data(0, 100);
 
         // Generic error reported by endpoint
-        let _m = mock_lnurl_withdraw_callback(&withdraw_req, &invoice, Some("error".parse()?))?;
+        mock_lnurl_withdraw_callback(&withdraw_req, &invoice, Some("error".parse()?)).await;
 
         assert!(matches!(
             validate_lnurl_withdraw(withdraw_req, invoice).await?,

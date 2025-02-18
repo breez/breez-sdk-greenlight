@@ -9,6 +9,11 @@ use serde::{Deserialize, Serialize};
 ///    description of the reason.
 ///
 /// Both cases are described in LUD-03 <https://github.com/lnurl/luds/blob/luds/03.md> & LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi)
+)]
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "UPPERCASE")]
 #[serde(tag = "status")]
@@ -24,6 +29,12 @@ pub enum LnUrlCallbackStatus {
 }
 
 /// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Deserialize, Debug, Serialize)]
 pub struct LnUrlErrorData {
     pub reason: String,

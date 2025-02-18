@@ -19,6 +19,7 @@ version = "0.6.2"
 [workspace.dependencies]
 aes = "0.8"
 anyhow = { version = "1.0.79", features = ["backtrace"] }
+async-trait = "0.1.86"
 base64 = "0.13.0"
 bitcoin = "=0.29.2" # Same version as used in gl-client
 hex = "0.4"
@@ -43,7 +44,7 @@ serde_json = "1.0"
 strum = "0.25"
 strum_macros = "0.25"
 thiserror = "1.0.56"
-tokio = { version = "1.41", features = ["full"] }
+tokio = "1.41"
 tonic = "^0.8"
 tonic-build = "^0.8"
 uniffi = "0.23.0"
