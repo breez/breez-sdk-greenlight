@@ -5,11 +5,13 @@ fmt:
 	cd tools/sdk-cli && cargo fmt
 
 clippy:
+	cd libs/sdk-common && just wasm-clippy
 	cd libs && cargo clippy -- -D warnings
 	cd libs && cargo clippy --tests -- -D warnings
 	cd tools/sdk-cli && cargo clippy -- -D warnings
 
 test:
+	cd libs/sdk-common && just wasm-test
 	cd libs && cargo test
 
 codegen: flutter-codegen react-native-codegen

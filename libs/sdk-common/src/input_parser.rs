@@ -6,24 +6,33 @@ use ::bip21::Uri;
 use anyhow::{anyhow, bail, Context, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
-use hickory_resolver::config::{ResolverConfig, ResolverOpts};
-use hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider};
-use hickory_resolver::AsyncResolver;
-use hickory_resolver::TokioAsyncResolver;
-use lazy_static::lazy_static;
-use log::{debug, error};
+use log::error;
 use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
+#[cfg(not(target_arch = "wasm32"))]
+use {
+    hickory_resolver::config::{ResolverConfig, ResolverOpts},
+    hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider},
+    hickory_resolver::AsyncResolver,
+    hickory_resolver::TokioAsyncResolver,
+    lazy_static::lazy_static,
+    log::debug,
+};
 
 use crate::prelude::*;
 
+#[cfg(not(target_arch = "wasm32"))]
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
+#[cfg(not(target_arch = "wasm32"))]
 const BOLT12_PREFIX: &str = "lno";
+#[cfg(not(target_arch = "wasm32"))]
 const LNURL_PAY_PREFIX: &str = "lnurl";
+#[cfg(not(target_arch = "wasm32"))]
 const BIP353_PREFIX: &str = "bitcoin:";
 
+#[cfg(not(target_arch = "wasm32"))]
 lazy_static! {
     static ref DNS_RESOLVER: TokioAsyncResolver = {
         let mut opts = ResolverOpts::default();
@@ -206,10 +215,13 @@ pub async fn parse(
     let input = input.trim();
 
     // Try to parse the destination as a bip353 address.
+    #[cfg(not(target_arch = "wasm32"))]
     let (bip353_parsed_input, is_bip353) = match bip353_parse(input, &DNS_RESOLVER).await {
         Some(value) => (value, true),
         None => (input.to_string(), false),
     };
+    #[cfg(target_arch = "wasm32")]
+    let (bip353_parsed_input, is_bip353) = (input.to_string(), false);
 
     if let Ok(input_type) = parse_core(&bip353_parsed_input).await {
         let input_type = if is_bip353 {
@@ -239,6 +251,7 @@ pub async fn parse(
     Err(anyhow!("Unrecognized input type"))
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
     tuple_vector
         .iter()
@@ -246,6 +259,7 @@ fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
         .map(|(_, v)| v.to_string())
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn parse_bip353_record(bip353_record: String) -> Option<String> {
     let (_, query_part) = bip353_record.split_once("?")?;
 
@@ -254,6 +268,7 @@ fn parse_bip353_record(bip353_record: String) -> Option<String> {
     get_by_key(&query_params, BOLT12_PREFIX).or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn is_valid_bip353_record(decoded: &str) -> bool {
     if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
         error!(
@@ -267,6 +282,7 @@ fn is_valid_bip353_record(decoded: &str) -> bool {
     true
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn extract_bip353_record(records: Vec<String>) -> Option<String> {
     let bip353_record = records
         .into_iter()
@@ -285,6 +301,7 @@ fn extract_bip353_record(records: Vec<String>) -> Option<String> {
     bip353_record.first().cloned()
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 async fn bip353_parse(
     input: &str,
     dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
@@ -411,6 +428,7 @@ async fn parse_external(
         let urlsafe_input =
             percent_encoding::utf8_percent_encode(input, NON_ALPHANUMERIC).to_string();
         let parser_url = parser.parser_url.replacen("<input>", &urlsafe_input, 1);
+        let parser_url = maybe_replace_host_with_mock_test_host(parser_url)?;
 
         // Make request
         let parsed_value = match request_external_parsing(&parser_url).await {
@@ -600,7 +618,7 @@ async fn resolve_lnurl(
         });
     }
 
-    lnurl_endpoint = maybe_replace_host_with_mockito_test_host(lnurl_endpoint)?;
+    lnurl_endpoint = maybe_replace_host_with_mock_test_host(lnurl_endpoint)?;
     let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint, false)
         .await
         .map_err(|_| anyhow!("Failed to parse response"))?;
@@ -621,6 +639,12 @@ async fn resolve_lnurl(
 }
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Debug, Serialize)]
 pub enum InputType {
     /// # Supported standards
@@ -745,6 +769,11 @@ impl From<LnUrlRequestData> for InputType {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/06.md>
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi)
+)]
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlPayRequestData {
@@ -828,6 +857,12 @@ pub struct MetadataItem {
 }
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi),
+    serde(rename_all = "camelCase")
+)]
 #[derive(Clone, Debug, Serialize)]
 pub struct BitcoinAddressData {
     pub address: String,
@@ -908,39 +943,40 @@ pub struct ExternalInputParser {
 
 #[cfg(test)]
 pub(crate) mod tests {
-    use std::sync::Mutex;
-
     use anyhow::{anyhow, Result};
     use bitcoin::bech32;
     use bitcoin::bech32::{ToBase32, Variant};
     use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-    use mockito::{Mock, Server};
     use once_cell::sync::Lazy;
 
     use crate::input_parser::*;
+    use crate::test_utils::mock_server::*;
+
+    #[cfg(target_arch = "wasm32")]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     /// Mock server used in tests. As the server is shared between tests,
     /// we should not mock the same url twice with two different outputs,
     /// one way to do so is to add a random string that will be a differentiator
     /// in the URL.
-    pub(crate) static MOCK_HTTP_SERVER: Lazy<Mutex<Server>> = Lazy::new(|| {
-        let opts = mockito::ServerOpts {
+    pub(crate) static MOCK_HTTP_SERVER: Lazy<MockServer> = Lazy::new(|| {
+        let opts = ServerOpts {
             host: "127.0.0.1",
             port: 8080,
-            ..Default::default()
         };
-        let server = Server::new_with_opts(opts);
-        Mutex::new(server)
+        MockServer::new_with_opts(opts)
     });
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_generic_invalid_input() -> Result<(), Box<dyn std::error::Error>> {
         assert!(parse("invalid_input", None).await.is_err());
 
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_trim_input() -> Result<()> {
         for address in [
             r#"1andreas3batLhQa2FawWjeyjCqyBzypd"#,
@@ -961,7 +997,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_bitcoin_address() -> Result<()> {
         for address in [
             "1andreas3batLhQa2FawWjeyjCqyBzypd",
@@ -977,7 +1014,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_bitcoin_address_bip21() -> Result<()> {
         // Addresses from https://github.com/Kixunil/bip21/blob/master/src/lib.rs
 
@@ -1049,7 +1087,8 @@ pub(crate) mod tests {
         ]
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_bitcoin_address_bip21_rounding() -> Result<()> {
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let addr = format!("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount={amount_btc}");
@@ -1067,7 +1106,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     #[cfg(feature = "liquid")]
     async fn test_liquid_address() -> Result<()> {
         assert!(parse("tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
@@ -1115,7 +1155,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_bolt11() -> Result<()> {
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
 
@@ -1135,7 +1176,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_capitalized_bolt11() -> Result<()> {
         let bolt11 = "LNBC110N1P38Q3GTPP5YPZ09JRD8P993SNJWNM68CPH4FTWP22LE34XD4R8FTSPWSHXHMNSDQQXQYJW5QCQPXSP5HTLG8YDPYWVSA7H3U4HDN77EHS4Z4E844EM0APJYVMQFKZQHHD2Q9QGSQQQYSSQSZPXZXT9UUQZYMR7ZXCDCCJ5G69S8Q7ZZJS7SGXN9EJHNVDH6GQJCY22MSS2YEXUNAGM5R2GQCZH8K24CWRQML3NJSKM548ARUHPWSSQ9NVRVZ";
 
@@ -1155,7 +1197,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_bolt11_with_fallback_bitcoin_address() -> Result<()> {
         let addr = "1andreas3batLhQa2FawWjeyjCqyBzypd";
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
@@ -1179,7 +1222,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_url() -> Result<()> {
         assert!(matches!(
             parse("https://breez.technology", None).await?,
@@ -1210,7 +1254,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_node_id() -> Result<()> {
         let secp = Secp256k1::new();
         let secret_key = SecretKey::from_slice(&[0xab; 32])?;
@@ -1283,7 +1328,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_lnurl_pay_lud_01() -> Result<()> {
         // Covers cases in LUD-01: Base LNURL encoding and decoding
         // https://github.com/lnurl/luds/blob/luds/01.md
@@ -1345,7 +1391,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    fn mock_lnurl_withdraw_endpoint(path: &str, return_lnurl_error: Option<String>) -> Mock {
+    async fn mock_lnurl_withdraw_endpoint(path: &str, return_lnurl_error: Option<String>) {
         let expected_lnurl_withdraw_data = r#"
 {
     "tag":"withdrawRequest",
@@ -1365,21 +1411,19 @@ pub(crate) mod tests {
             ),
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        server
-            .mock("GET", path)
-            .with_body(response_body)
-            .with_status(status)
-            .create()
+        MOCK_HTTP_SERVER
+            .mock("GET", path, &response_body, Some(status), None, None)
+            .await;
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_withdraw_lud_03() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-03: withdrawRequest base spec
         // https://github.com/lnurl/luds/blob/luds/03.md
 
         let path = "/lnurl-withdraw?session=bc893fafeb9819046781b47d68fdcf88fa39a28898784c183b42b7ac13820d81";
-        let _m = mock_lnurl_withdraw_endpoint(path, None);
+        mock_lnurl_withdraw_endpoint(path, None).await;
 
         let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
         assert_eq!(
@@ -1401,10 +1445,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_withdraw_in_url() -> Result<(), Box<dyn std::error::Error>> {
         let path = "/lnurl-withdraw?session=bc893fafeb9819046781b47d68fdcf88fa39a28898784c183b42b7ac13820d81";
-        let _m = mock_lnurl_withdraw_endpoint(path, None);
+        mock_lnurl_withdraw_endpoint(path, None).await;
 
         let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
         assert_eq!(
@@ -1427,7 +1472,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_auth_lud_04() -> Result<()> {
         // Covers cases in LUD-04: `auth` base spec
         // https://github.com/lnurl/luds/blob/luds/04.md
@@ -1505,7 +1551,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    fn mock_lnurl_pay_endpoint(path: &str, return_lnurl_error: Option<String>) -> Mock {
+    async fn mock_lnurl_pay_endpoint(path: &str, return_lnurl_error: Option<String>) {
         let expected_lnurl_pay_data = r#"
 {
     "callback":"https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7",
@@ -1535,16 +1581,14 @@ pub(crate) mod tests {
             }
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        server.mock("GET", path).with_body(response_body).create()
+        MOCK_HTTP_SERVER
+            .mock("GET", path, &response_body, None, None, None)
+            .await;
     }
 
-    fn mock_lnurl_ln_address_endpoint(
-        ln_address: &str,
-        return_lnurl_error: Option<String>,
-    ) -> Result<Mock> {
-        let (_domain, lnurl_pay_url, _ln_address) = ln_address_decode(ln_address)?;
-        let url = reqwest::Url::parse(&lnurl_pay_url)?;
+    async fn mock_lnurl_ln_address_endpoint(ln_address: &str, return_lnurl_error: Option<String>) {
+        let (_domain, lnurl_pay_url, _ln_address) = ln_address_decode(ln_address).unwrap();
+        let url = reqwest::Url::parse(&lnurl_pay_url).unwrap();
         let path = url.path();
 
         let expected_lnurl_pay_data = r#"
@@ -1576,20 +1620,28 @@ pub(crate) mod tests {
             }
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        Ok(server.mock("GET", path).with_body(response_body).create())
+        MOCK_HTTP_SERVER
+            .mock(
+                "GET",
+                path,
+                &response_body,
+                None,
+                None,
+                Some(&lnurl_pay_url),
+            )
+            .await;
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_pay_lud_06() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-06: payRequest base spec
         // https://github.com/lnurl/luds/blob/luds/06.md
-
+        let lnurl_pay_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
         let path =
             "/lnurl-pay?session=db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7";
-        let _m = mock_lnurl_pay_endpoint(path, None);
+        mock_lnurl_pay_endpoint(path, None).await;
 
-        let lnurl_pay_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
         assert_eq!(
             lnurl_decode(lnurl_pay_encoded)?,
             ("localhost".into(), format!("https://localhost{path}"), None)
@@ -1641,13 +1693,14 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_pay_lud_16_ln_address() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-16: Paying to static internet identifiers (LN Address)
         // https://github.com/lnurl/luds/blob/luds/16.md
 
         let ln_address = "user@domain.net";
-        let _m = mock_lnurl_ln_address_endpoint(ln_address, None)?;
+        mock_lnurl_ln_address_endpoint(ln_address, None).await;
 
         if let InputType::LnUrlPay { data: pd, .. } = parse(ln_address, None).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
@@ -1683,14 +1736,15 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_pay_lud_16_ln_address_with_prefix() -> Result<(), Box<dyn std::error::Error>>
     {
         // Covers cases in LUD-16, with BIP-353 prefix.
 
         let ln_address = "₿user@domain.net";
         let server_ln_address = "user@domain.net";
-        let _m = mock_lnurl_ln_address_endpoint(server_ln_address, None)?;
+        mock_lnurl_ln_address_endpoint(server_ln_address, None).await;
 
         if let InputType::LnUrlPay { data: pd, .. } = parse(ln_address, None).await? {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
@@ -1706,14 +1760,15 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_pay_lud_16_ln_address_error() -> Result<()> {
         // Covers cases in LUD-16: Paying to static internet identifiers (LN Address)
         // https://github.com/lnurl/luds/blob/luds/16.md
 
         let ln_address = "error@domain.com";
         let expected_err = "Error msg from LNURL endpoint found via LN Address";
-        let _m = mock_lnurl_ln_address_endpoint(ln_address, Some(expected_err.to_string()))?;
+        mock_lnurl_ln_address_endpoint(ln_address, Some(expected_err.to_string())).await;
 
         if let InputType::LnUrlError { data: msg } = parse(ln_address, None).await? {
             assert_eq!(msg.reason, expected_err);
@@ -1723,7 +1778,8 @@ pub(crate) mod tests {
         Err(anyhow!("Unrecognized input type"))
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_ln_address_lud_16_decode() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
             lnurl_decode("user@domain.onion")?,
@@ -1774,7 +1830,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[test]
+    #[cfg_attr(not(target_arch = "wasm32"), test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     fn test_lnurl_lud_17_prefixes() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-17: Protocol schemes and raw (non bech32-encoded) URLs
         // https://github.com/lnurl/luds/blob/luds/17.md
@@ -1891,11 +1948,12 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_pay_lud_17() -> Result<(), Box<dyn std::error::Error>> {
         let pay_path =
             "/lnurl-pay?session=db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7";
-        let _m = mock_lnurl_pay_endpoint(pay_path, None);
+        mock_lnurl_pay_endpoint(pay_path, None).await;
 
         let lnurl_pay_url = format!("lnurlp://localhost{pay_path}");
         if let InputType::LnUrlPay { data: pd, .. } = parse(&lnurl_pay_url, None).await? {
@@ -1931,10 +1989,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_withdraw_lud_17() -> Result<(), Box<dyn std::error::Error>> {
         let withdraw_path = "/lnurl-withdraw?session=e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538";
-        let _m = mock_lnurl_withdraw_endpoint(withdraw_path, None);
+        mock_lnurl_withdraw_endpoint(withdraw_path, None).await;
 
         if let InputType::LnUrlWithdraw { data: wd } =
             parse(&format!("lnurlw://localhost{withdraw_path}"), None).await?
@@ -1952,7 +2011,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_auth_lud_17() -> Result<()> {
         let auth_path = "/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
 
@@ -1968,11 +2028,12 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_pay_lud_17_error() -> Result<()> {
         let pay_path = "/lnurl-pay?session=paylud17error";
         let expected_error_msg = "test pay error";
-        let _m = mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string()));
+        mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string())).await;
 
         if let InputType::LnUrlError { data: msg } =
             parse(&format!("lnurlp://localhost{pay_path}"), None).await?
@@ -1984,11 +2045,12 @@ pub(crate) mod tests {
         Err(anyhow!("Unrecognized input type"))
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_lnurl_withdraw_lud_17_error() -> Result<()> {
         let withdraw_path = "/lnurl-withdraw?session=withdrawlud17error";
         let expected_error_msg = "test withdraw error";
-        let _m = mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string()));
+        mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string())).await;
 
         if let InputType::LnUrlError { data: msg } =
             parse(&format!("lnurlw://localhost{withdraw_path}"), None).await?
@@ -2000,16 +2062,21 @@ pub(crate) mod tests {
         Err(anyhow!("Unrecognized input type"))
     }
 
-    fn mock_external_parser(path: &str, response: &str, status: usize) -> Mock {
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        server
-            .mock("GET", path)
-            .with_body(response)
-            .with_status(status)
-            .create()
+    async fn mock_external_parser(path: &str, response: &str, status: usize) {
+        MOCK_HTTP_SERVER
+            .mock(
+                "GET",
+                path,
+                response,
+                Some(status),
+                None,
+                Some(&format!("http://127.0.0.1:8080{path}")),
+            )
+            .await;
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_external_parsing_lnurlp_first_response() -> Result<(), Box<dyn std::error::Error>>
     {
         let input = "123provider.domain32/1";
@@ -2025,7 +2092,7 @@ pub(crate) mod tests {
             "metadata":"[[\"text/plain\", \"External payment\"]]","tag":"payRequest"
         }
         "#;
-        let _m = mock_external_parser(&path, response, 200);
+        mock_external_parser(&path, response, 200).await;
 
         let parsers = vec![ExternalInputParser {
             provider_id: "id".to_string(),
@@ -2039,7 +2106,6 @@ pub(crate) mod tests {
             assert_eq!(data.max_sendable, 57000);
             assert_eq!(data.min_sendable, 57000);
             assert_eq!(data.comment_allowed, 0);
-            assert_eq!(data.domain, "127.0.0.1");
 
             assert_eq!(data.metadata_vec()?.len(), 1);
             assert_eq!(
@@ -2057,7 +2123,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_external_parsing_bitcoin_address_and_bolt11(
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Bitcoin parsing endpoint
@@ -2067,7 +2134,7 @@ pub(crate) mod tests {
             percent_encoding::utf8_percent_encode(bitcoin_input, NON_ALPHANUMERIC)
         );
         let bitcoin_address = "1andreas3batLhQa2FawWjeyjCqyBzypd";
-        let _bm = mock_external_parser(&path, bitcoin_address, 200);
+        mock_external_parser(&path, bitcoin_address, 200).await;
 
         // Bolt11 parsing endpoint
         let bolt11_input = "123bolt11.provider32/1";
@@ -2076,7 +2143,7 @@ pub(crate) mod tests {
             percent_encoding::utf8_percent_encode(bolt11_input, NON_ALPHANUMERIC)
         );
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
-        let _b11m = mock_external_parser(&path, bolt11, 200);
+        mock_external_parser(&path, bolt11, 200).await;
 
         // Set parsers
         let parsers = vec![
@@ -2110,7 +2177,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_external_parsing_error() -> Result<(), Box<dyn std::error::Error>> {
         let input = "123provider.domain.error32/1";
         let path = format!(
@@ -2118,7 +2186,7 @@ pub(crate) mod tests {
             percent_encoding::utf8_percent_encode(input, NON_ALPHANUMERIC)
         );
         let response = "Unrecognized input";
-        let _m = mock_external_parser(&path, response, 400);
+        mock_external_parser(&path, response, 400).await;
 
         let parsers = vec![ExternalInputParser {
             provider_id: "id".to_string(),

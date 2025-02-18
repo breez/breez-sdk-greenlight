@@ -2,6 +2,11 @@ use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
 /// The different supported bitcoin networks
+#[cfg_attr(
+    target_arch = "wasm32",
+    derive(tsify_next::Tsify),
+    tsify(into_wasm_abi)
+)]
 #[derive(Clone, Copy, Debug, Display, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Network {
     /// Mainnet

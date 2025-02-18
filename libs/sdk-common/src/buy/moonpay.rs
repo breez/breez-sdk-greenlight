@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use anyhow::Result;
+use async_trait::async_trait;
 use url::Url;
 
 use crate::{grpc::SignUrlRequest, prelude::BreezServer};
@@ -73,7 +74,8 @@ impl MoonpayProvider {
     }
 }
 
-#[tonic::async_trait]
+#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
+#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl BuyBitcoinProviderApi for MoonpayProvider {
     async fn buy_bitcoin(
         &self,
@@ -108,7 +110,8 @@ pub(crate) mod tests {
 
     use crate::prelude::moonpay::{create_moonpay_url, moonpay_config};
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_sign_moonpay_url() -> Result<(), Box<dyn std::error::Error>> {
         let wallet_address = "a wallet address".to_string();
         let quote_amount = "a quote amount".to_string();
@@ -138,7 +141,8 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
     async fn test_sign_moonpay_url_with_redirect() -> Result<(), Box<dyn std::error::Error>> {
         let wallet_address = "a wallet address".to_string();
         let quote_amount = "a quote amount".to_string();

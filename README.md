@@ -71,6 +71,7 @@ The Breez SDK - Native *(Greenlight implementation)* allows end-users to send an
 
 The libs folder contains three sub-folders and is a structured as a cargo workspace:
 
+- **sdk-common**: common SDK functionality for [Breez SDK - Native](https://github.com/breez/breez-sdk-greenlight) and [Breez SDK - Nodeless](https://github.com/breez/breez-sdk-liquid).
 - **sdk-core**: the core SDK rust library.
 - **sdk-bindings**: ffi bindings for Kotlin, Python, Swift, C#, and Go.
 - **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).

@@ -1,15 +1,20 @@
 use log::*;
 use reqwest::StatusCode;
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;
 
 use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 
 /// Creates an HTTP client with a built-in connection timeout
 pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError> {
-    reqwest::Client::builder()
+    #[cfg(not(target_arch = "wasm32"))]
+    let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
         .build()
-        .map_err(Into::into)
+        .map_err(Into::into);
+    #[cfg(target_arch = "wasm32")]
+    let client = reqwest::Client::builder().build().map_err(Into::into);
+    client
 }
 
 pub async fn post_and_log_response(
