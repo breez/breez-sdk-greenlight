@@ -16,7 +16,7 @@ lightning-125 = { package = "lightning", version = "0.0.125", default-features =
 lightning-invoice = { workspace = true }
 log = { workspace = true }
 querystring = "1"
-prost = "0.12"  # Explicit version instead of workspace
+prost = { workspace = true }
 regex = { workspace = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
@@ -24,7 +24,7 @@ serde_json = { workspace = true }
 strum_macros = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-tonic = { version = "0.10", features = [  # Fixed version with required features
+tonic = { workspace = true, features = [
     "tls",
     "transport",
     "tls-roots",
@@ -43,7 +43,7 @@ mockito = { workspace = true }
 once_cell = { workspace = true }
 
 [build-dependencies]
-tonic-build = { version = "0.10", features = ["prost"] }  # Match tonic version
+tonic-build = { workspace = true }
 
 [features]
 liquid = ["dep:elements", "dep:lightning-125"]
