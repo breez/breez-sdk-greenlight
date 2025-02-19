@@ -198,11 +198,13 @@ jobs:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run sdk-common tests
+      - name: Test sdk-common
         working-directory: libs/sdk-common
-        run: |
-          cargo test
-          wasm-pack test --headless --firefox
+        run: cargo test
+
+      - name: Test sdk-common WASM
+        working-directory: libs/sdk-common
+        run: wasm-pack test --headless --firefox
       
       - name: Check git status
         env: 
@@ -218,11 +220,13 @@ jobs:
             echo "No changes in git status"
           fi
 
-      - name: Run sdk-common tests with 'liquid' feature
+      - name: Test sdk-common liquid
         working-directory: libs/sdk-common
-        run: |
-          cargo test --features liquid
-          wasm-pack test --headless --firefox --features liquid
+        run: cargo test --features liquid
+
+      - name: Test sdk-common WASM/liquid
+        working-directory: libs/sdk-common
+        run: wasm-pack test --headless --firefox --features liquid
 
   clippy:
     name: Clippy
@@ -253,15 +257,17 @@ jobs:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: clippy
+      - name: Clippy
         run: |
-          cd libs/sdk-common
-          cargo clippy --target=wasm32-unknown-unknown -- -D warnings
-          cd ..
+          cd libs
           cargo clippy -- -D warnings
           cargo clippy --tests -- -D warnings
           cd ../tools/sdk-cli
           cargo clippy -- -D warnings
+
+      - name: Clippy WASM
+        working-directory: libs/sdk-common 
+        run: cargo clippy --target=wasm32-unknown-unknown -- -D warnings
   
   react-native:
     name: Check react native

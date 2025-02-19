@@ -3,7 +3,6 @@ This crate packages together common SDK functionality for [Breez SDK - Native](h
 
 ## Prerequisites
 * When building for WASM:
-  * Install [just](https://github.com/casey/just?tab=readme-ov-file#installation) command runner
   * Install [wasm-pack](https://rustwasm.github.io/docs/wasm-pack/): `cargo install wasm-pack`
   * (Mac Only) Install [llvm](https://llvm.org/): `brew install llvm`
 
@@ -11,4 +10,4 @@ This crate packages together common SDK functionality for [Breez SDK - Native](h
 `cargo test`
 
 When testing WASM:
-`just wasm-test`
+`make wasm-test`
