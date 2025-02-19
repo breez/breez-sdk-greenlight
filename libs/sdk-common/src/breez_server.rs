@@ -1,6 +1,3 @@
-#[cfg(not(target_arch = "wasm32"))]
-use std::time::Duration;
-
 use anyhow::Result;
 use log::trace;
 use tokio::sync::Mutex;
@@ -16,6 +13,7 @@ use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
+use crate::grpc::transport::{GrpcClient, Transport};
 use crate::grpc::{ChainApiServersRequest, PingRequest};
 use crate::prelude::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use crate::with_connection_retry;
@@ -26,36 +24,17 @@ pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443"
 pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bsw1.breez.technology";
 pub static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443";
 
-#[cfg(not(target_arch = "wasm32"))]
-type Transport = tonic::transport::Channel;
-#[cfg(target_arch = "wasm32")]
-type Transport = tonic_web_wasm_client::Client;
-
 pub struct BreezServer {
-    transport: Mutex<Transport>,
+    grpc_client: Mutex<GrpcClient>,
     api_key: Option<String>,
 }
 
 impl BreezServer {
     pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
         Ok(Self {
-            #[cfg(not(target_arch = "wasm32"))]
-            transport: Mutex::new(Self::create_endpoint(&server_url)?.connect_lazy()),
-            #[cfg(target_arch = "wasm32")]
-            transport: Mutex::new(tonic_web_wasm_client::Client::new(server_url)),
+            grpc_client: Mutex::new(GrpcClient::new(server_url)?),
             api_key,
         })
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    fn create_endpoint(server_url: &str) -> Result<tonic::transport::Endpoint> {
-        Ok(
-            tonic::transport::Endpoint::from_shared(server_url.to_string())?
-                .http2_keep_alive_interval(Duration::new(5, 0))
-                .tcp_keepalive(Some(Duration::from_secs(5)))
-                .keep_alive_timeout(Duration::from_secs(5))
-                .keep_alive_while_idle(true),
-        )
     }
 
     fn api_key_metadata(&self) -> Result<Option<MetadataValue<Ascii>>, ServiceConnectivityError> {
@@ -80,22 +59,22 @@ impl BreezServer {
     > {
         let api_key_metadata = self.api_key_metadata()?;
         let with_interceptor = ChannelOpenerClient::with_interceptor(
-            self.transport.lock().await.clone(),
+            self.grpc_client.lock().await.clone().into_inner(),
             ApiKeyInterceptor { api_key_metadata },
         );
         Ok(with_interceptor)
     }
 
     pub async fn get_payment_notifier_client(&self) -> PaymentNotifierClient<Transport> {
-        PaymentNotifierClient::new(self.transport.lock().await.clone())
+        PaymentNotifierClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
     pub async fn get_information_client(&self) -> InformationClient<Transport> {
-        InformationClient::new(self.transport.lock().await.clone())
+        InformationClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
     pub async fn get_signer_client(&self) -> SignerClient<Transport> {
-        SignerClient::new(self.transport.lock().await.clone())
+        SignerClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
     pub async fn get_support_client(
@@ -106,13 +85,13 @@ impl BreezServer {
     > {
         let api_key_metadata = self.api_key_metadata()?;
         Ok(SupportClient::with_interceptor(
-            self.transport.lock().await.clone(),
+            self.grpc_client.lock().await.clone().into_inner(),
             ApiKeyInterceptor { api_key_metadata },
         ))
     }
 
     pub async fn get_swapper_client(&self) -> SwapperClient<Transport> {
-        SwapperClient::new(self.transport.lock().await.clone())
+        SwapperClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
     pub async fn ping(&self) -> Result<String> {
