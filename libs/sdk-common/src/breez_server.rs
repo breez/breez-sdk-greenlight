@@ -8,11 +8,7 @@ use tonic::codegen::InterceptedService;
 use tonic::metadata::errors::InvalidMetadataValue;
 use tonic::metadata::{Ascii, MetadataValue};
 use tonic::service::Interceptor;
-#[cfg(not(target_arch = "wasm32"))]
-use tonic::transport::{Channel, Endpoint};
 use tonic::{Request, Status};
-#[cfg(target_arch = "wasm32")]
-use tonic_web_wasm_client::Client;
 
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
 use crate::grpc::information_client::InformationClient;
@@ -27,14 +23,16 @@ use crate::with_connection_retry;
 #[cfg(not(target_arch = "wasm32"))]
 pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443";
 #[cfg(target_arch = "wasm32")]
-pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bsw1.breez.technology:443";
+pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bsw1.breez.technology";
 pub static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443";
 
+#[cfg(not(target_arch = "wasm32"))]
+type Transport = tonic::transport::Channel;
+#[cfg(target_arch = "wasm32")]
+type Transport = tonic_web_wasm_client::Client;
+
 pub struct BreezServer {
-    #[cfg(not(target_arch = "wasm32"))]
-    grpc_channel: Mutex<Channel>,
-    #[cfg(target_arch = "wasm32")]
-    grpc_client: Mutex<Client>,
+    transport: Mutex<Transport>,
     api_key: Option<String>,
 }
 
@@ -42,20 +40,22 @@ impl BreezServer {
     pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
         Ok(Self {
             #[cfg(not(target_arch = "wasm32"))]
-            grpc_channel: Mutex::new(Self::create_endpoint(&server_url)?.connect_lazy()),
+            transport: Mutex::new(Self::create_endpoint(&server_url)?.connect_lazy()),
             #[cfg(target_arch = "wasm32")]
-            grpc_client: Mutex::new(tonic_web_wasm_client::Client::new(server_url)),
+            transport: Mutex::new(tonic_web_wasm_client::Client::new(server_url)),
             api_key,
         })
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    fn create_endpoint(server_url: &str) -> Result<Endpoint> {
-        Ok(Endpoint::from_shared(server_url.to_string())?
-            .http2_keep_alive_interval(Duration::new(5, 0))
-            .tcp_keepalive(Some(Duration::from_secs(5)))
-            .keep_alive_timeout(Duration::from_secs(5))
-            .keep_alive_while_idle(true))
+    fn create_endpoint(server_url: &str) -> Result<tonic::transport::Endpoint> {
+        Ok(
+            tonic::transport::Endpoint::from_shared(server_url.to_string())?
+                .http2_keep_alive_interval(Duration::new(5, 0))
+                .tcp_keepalive(Some(Duration::from_secs(5)))
+                .keep_alive_timeout(Duration::from_secs(5))
+                .keep_alive_while_idle(true),
+        )
     }
 
     fn api_key_metadata(&self) -> Result<Option<MetadataValue<Ascii>>, ServiceConnectivityError> {
@@ -72,102 +72,47 @@ impl BreezServer {
         }
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
     pub async fn get_channel_opener_client(
         &self,
     ) -> Result<
-        ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>,
+        ChannelOpenerClient<InterceptedService<Transport, ApiKeyInterceptor>>,
         ServiceConnectivityError,
     > {
         let api_key_metadata = self.api_key_metadata()?;
         let with_interceptor = ChannelOpenerClient::with_interceptor(
-            self.grpc_channel.lock().await.clone(),
+            self.transport.lock().await.clone(),
             ApiKeyInterceptor { api_key_metadata },
         );
         Ok(with_interceptor)
     }
 
-    #[cfg(target_arch = "wasm32")]
-    pub async fn get_channel_opener_client(
-        &self,
-    ) -> Result<
-        ChannelOpenerClient<InterceptedService<Client, ApiKeyInterceptor>>,
-        ServiceConnectivityError,
-    > {
-        let api_key_metadata = self.api_key_metadata()?;
-        let with_interceptor = ChannelOpenerClient::with_interceptor(
-            self.grpc_client.lock().await.clone(),
-            ApiKeyInterceptor { api_key_metadata },
-        );
-        Ok(with_interceptor)
+    pub async fn get_payment_notifier_client(&self) -> PaymentNotifierClient<Transport> {
+        PaymentNotifierClient::new(self.transport.lock().await.clone())
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    pub async fn get_payment_notifier_client(&self) -> PaymentNotifierClient<Channel> {
-        PaymentNotifierClient::new(self.grpc_channel.lock().await.clone())
+    pub async fn get_information_client(&self) -> InformationClient<Transport> {
+        InformationClient::new(self.transport.lock().await.clone())
     }
 
-    #[cfg(target_arch = "wasm32")]
-    pub async fn get_payment_notifier_client(&self) -> PaymentNotifierClient<Client> {
-        PaymentNotifierClient::new(self.grpc_client.lock().await.clone())
+    pub async fn get_signer_client(&self) -> SignerClient<Transport> {
+        SignerClient::new(self.transport.lock().await.clone())
     }
 
-    #[cfg(not(target_arch = "wasm32"))]
-    pub async fn get_information_client(&self) -> InformationClient<Channel> {
-        InformationClient::new(self.grpc_channel.lock().await.clone())
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub async fn get_information_client(&self) -> InformationClient<Client> {
-        InformationClient::new(self.grpc_client.lock().await.clone())
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pub async fn get_signer_client(&self) -> SignerClient<Channel> {
-        SignerClient::new(self.grpc_channel.lock().await.clone())
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub async fn get_signer_client(&self) -> SignerClient<Client> {
-        SignerClient::new(self.grpc_client.lock().await.clone())
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
     pub async fn get_support_client(
         &self,
     ) -> Result<
-        SupportClient<InterceptedService<Channel, ApiKeyInterceptor>>,
+        SupportClient<InterceptedService<Transport, ApiKeyInterceptor>>,
         ServiceConnectivityError,
     > {
         let api_key_metadata = self.api_key_metadata()?;
         Ok(SupportClient::with_interceptor(
-            self.grpc_channel.lock().await.clone(),
+            self.transport.lock().await.clone(),
             ApiKeyInterceptor { api_key_metadata },
         ))
     }
 
-    #[cfg(target_arch = "wasm32")]
-    pub async fn get_support_client(
-        &self,
-    ) -> Result<
-        SupportClient<InterceptedService<Client, ApiKeyInterceptor>>,
-        ServiceConnectivityError,
-    > {
-        let api_key_metadata = self.api_key_metadata()?;
-        Ok(SupportClient::with_interceptor(
-            self.grpc_client.lock().await.clone(),
-            ApiKeyInterceptor { api_key_metadata },
-        ))
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    pub async fn get_swapper_client(&self) -> SwapperClient<Channel> {
-        SwapperClient::new(self.grpc_channel.lock().await.clone())
-    }
-
-    #[cfg(target_arch = "wasm32")]
-    pub async fn get_swapper_client(&self) -> SwapperClient<Client> {
-        SwapperClient::new(self.grpc_client.lock().await.clone())
+    pub async fn get_swapper_client(&self) -> SwapperClient<Transport> {
+        SwapperClient::new(self.transport.lock().await.clone())
     }
 
     pub async fn ping(&self) -> Result<String> {
