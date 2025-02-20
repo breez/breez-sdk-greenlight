@@ -108,6 +108,55 @@ service Support {
   rpc BreezStatus(BreezStatusRequest) returns (BreezStatusReply) {}
 }
 
+service TaprootSwapper {
+    rpc CreateSwap (CreateSwapRequest) returns (CreateSwapResponse) {}
+    rpc PaySwap (PaySwapRequest) returns (PaySwapResponse) {}
+    rpc RefundSwap (RefundSwapRequest) returns (RefundSwapResponse) {}
+    rpc SwapParameters (SwapParametersRequest) returns (SwapParametersResponse) {}
+}
+
+message CreateSwapRequest {
+    bytes hash = 1;
+    bytes refund_pubkey = 2;
+}
+  
+message CreateSwapResponse {
+    string address = 1;
+    bytes claim_pubkey = 2;
+    uint32 lock_time = 3;
+    SwapParameters parameters = 4;
+}
+
+message PaySwapRequest {
+    string payment_request = 1;
+}
+
+message PaySwapResponse {}
+
+message RefundSwapRequest {
+    string address = 1;
+    bytes transaction = 2;
+    uint32 input_index = 3;
+    bytes pub_nonce = 4;
+}
+
+message RefundSwapResponse {
+    bytes pub_nonce = 1;
+    bytes partial_signature = 2;
+}
+
+message SwapParameters {
+    uint64 max_swap_amount_sat = 1;
+    uint64 min_swap_amount_sat = 2;
+    uint64 min_utxo_amount_sat = 3;
+}
+
+message SwapParametersRequest {}
+
+message SwapParametersResponse {
+    SwapParameters parameters = 1;
+}
+
 message SignUrlRequest {
   string baseUrl = 1 [ json_name = "base_url" ];
   string queryString = 2 [ json_name = "query_string" ];
