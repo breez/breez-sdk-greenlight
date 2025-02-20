@@ -318,6 +318,10 @@ impl NodeAPI for MockNodeAPI {
         Ok(invoice.bolt11)
     }
 
+    async fn delete_invoice(&self, _bolt11: String) -> NodeResult<()> {
+        Ok(())
+    }
+
     async fn pull_changed(
         &self,
         _sync_state: Option<Value>,
