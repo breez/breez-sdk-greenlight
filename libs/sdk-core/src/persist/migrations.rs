@@ -491,6 +491,35 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
            time INTEGER NOT NULL
         );
         INSERT INTO current_tip (tip, time) VALUES (0, 0);",
+       "
+       CREATE TABLE taproot_swap_cache (
+           address TEXT NOT NULL PRIMARY KEY
+       ,   bolt11 TEXT NULL
+       ,   last_payment_error TEXT NULL
+       ,   max_swap_amount_sat INTEGER NULL
+       ,   min_swap_amount_sat INTEGER NULL
+       ,   min_utxo_amount_sat INTEGER NULL
+       );
+
+       CREATE TABLE taproot_swap_txos (
+           tx_id TEXT NOT NULL
+       ,   output_index INTEGER NOT NULL
+       ,   address TEXT NOT NULL
+       ,   amount_sat INTEGER NOT NULL
+       ,   confirmed_at_height INTEGER NULL
+       ,   block_hash TEXT NULL
+       ,   PRIMARY KEY (tx_id, output_index)
+       );
+
+       CREATE TABLE taproot_swap_spends (
+           tx_id TEXT NOT NULL
+       ,   output_index INTEGER NOT NULL
+       ,   spending_tx_id TEXT NOT NULL
+       ,   spending_input_index INTEGER NOT NULL
+       ,   confirmed_at_height INTEGER NULL
+       ,   block_hash TEXT NULL
+       );
+       "
     ]
 }
 
@@ -676,5 +705,23 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         UPDATE swaps SET max_swapper_payable = max_allowed_deposit;
         ",
         "ALTER TABLE payments_external_info ADD COLUMN lnurl_pay_comment TEXT;",
+        "CREATE TABLE taproot_swaps (
+            address TEXT PRIMARY KEY NOT NULL,
+            claim_public_key BLOB NOT NULL,
+            created_at INTEGER NOT NULL,
+            lock_time INTEGER NOT NULL,
+            payment_hash TEXT NOT NULL UNIQUE,
+            preimage BLOB NOT NULL UNIQUE,
+            refund_private_key BLOB NOT NULL UNIQUE,
+            accepted_opening_fee_params TEXT NOT NULL
+        ) STRICT;
+
+         CREATE TABLE taproot_swap_refunds (
+            refund_tx_id TEXT NOT NULL,
+            spent_tx_id TEXT NOT NULL,
+            spent_output_index INTEGER NOT NULL,
+            PRIMARY KEY (spent_tx_id, spent_output_index, refund_tx_id)
+        ) STRICT;
+        "
 	]
 }
