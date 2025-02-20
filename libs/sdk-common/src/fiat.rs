@@ -9,8 +9,8 @@ use crate::prelude::BreezServer;
 use crate::with_connection_retry;
 
 /// Trait covering fiat-related functionality
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), async_trait)]
+#[cfg_attr(all(target_family = "wasm", target_os = "unknown"), async_trait(?Send))]
 pub trait FiatAPI: Send + Sync {
     /// List all supported fiat currencies for which there is a known exchange rate.
     async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
@@ -21,7 +21,7 @@ pub trait FiatAPI: Send + Sync {
 
 /// Settings for the symbol representation of a currency
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
@@ -35,7 +35,7 @@ pub struct Symbol {
 
 /// Locale-specific settings for the representation of a currency
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
@@ -48,7 +48,7 @@ pub struct LocaleOverrides {
 
 /// Localized name of a currency
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
@@ -60,7 +60,7 @@ pub struct LocalizedName {
 
 /// Details about a supported currency in the fiat rate feed
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
@@ -80,7 +80,7 @@ pub struct CurrencyInfo {
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
@@ -92,7 +92,7 @@ pub struct FiatCurrency {
 
 /// Denominator in an exchange rate
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(from_wasm_abi, into_wasm_abi)
 )]
@@ -106,8 +106,8 @@ fn convert_to_fiat_currency_with_id(id: String, info: CurrencyInfo) -> FiatCurre
     FiatCurrency { id, info }
 }
 
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), async_trait)]
+#[cfg_attr(all(target_family = "wasm", target_os = "unknown"), async_trait(?Send))]
 impl FiatAPI for BreezServer {
     async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         let known_rates = self.fetch_fiat_rates().await?;

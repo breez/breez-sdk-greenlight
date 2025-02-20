@@ -1,4 +1,7 @@
 #![cfg(test)]
 
-#[cfg_attr(target_arch = "wasm32", path = "mock_server_wasm.rs")]
+#[cfg_attr(
+    all(target_family = "wasm", target_os = "unknown"),
+    path = "mock_server_wasm.rs"
+)]
 pub(crate) mod mock_server;

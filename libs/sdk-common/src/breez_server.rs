@@ -18,9 +18,9 @@ use crate::grpc::{ChainApiServersRequest, PingRequest};
 use crate::prelude::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use crate::with_connection_retry;
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443";
-#[cfg(target_arch = "wasm32")]
+#[cfg(all(target_family = "wasm", target_os = "unknown"))]
 pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bsw1.breez.technology";
 pub static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443";
 

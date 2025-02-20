@@ -128,7 +128,7 @@ pub mod model {
 
     /// Represents a LNURL-pay request.
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -159,7 +159,7 @@ pub mod model {
     }
 
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -171,7 +171,7 @@ pub mod model {
     }
 
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -192,7 +192,7 @@ pub mod model {
     ///
     /// See [AesSuccessActionDataDecrypted] for a similar wrapper containing the decrypted payload
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -211,7 +211,7 @@ pub mod model {
 
     /// Result of decryption of [AesSuccessActionData] payload
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -223,7 +223,7 @@ pub mod model {
     }
 
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -239,7 +239,7 @@ pub mod model {
     }
 
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -250,7 +250,7 @@ pub mod model {
     }
 
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -274,7 +274,7 @@ pub mod model {
     ///
     /// Contents are identical to [SuccessAction], except for AES where the ciphertext is decrypted.
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi),
         serde(rename_all = "camelCase")
@@ -298,7 +298,7 @@ pub mod model {
     /// Receiving any other (unsupported) success action type will result in a failed parsing,
     /// which will abort the LNURL-pay workflow, as per LUD-09.
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(from_wasm_abi, into_wasm_abi)
     )]
@@ -541,7 +541,7 @@ pub(crate) mod tests {
     use crate::lnurl::specs::pay::*;
     use crate::lnurl::tests::rand_string;
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     fn get_test_pay_req_data(
@@ -562,8 +562,11 @@ pub(crate) mod tests {
         }
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_pay_validate_input() -> Result<()> {
         assert!(validate_user_input(100_000, &None, 0, 100_000, 0).is_ok());
         assert!(validate_user_input(100_000, &Some("test".into()), 0, 100_000, 5).is_ok());
@@ -575,8 +578,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_pay_success_action_deserialize() -> Result<()> {
         let aes_json_str = r#"{"tag":"aes","description":"short msg","ciphertext":"kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK","iv":"1234567890abcdef"}"#;
         let aes_deserialized_sa: SuccessAction = serde_json::from_str(aes_json_str)?;
@@ -588,9 +594,9 @@ pub(crate) mod tests {
         let message_serialized_sa = serde_json::to_string(&message_deserialized_sa)?;
         assert_eq!(message_json_str, message_serialized_sa);
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
         let url_json_str = r#"{"tag":"url","description":"short msg","url":"https://new-domain.com/test-url","matches_callback_domain":true}"#;
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(all(target_family = "wasm", target_os = "unknown"))]
         let url_json_str = r#"{"tag":"url","description":"short msg","url":"https://new-domain.com/test-url","matchesCallbackDomain":true}"#;
         let url_deserialized_sa: SuccessAction = serde_json::from_str(url_json_str)?;
         let url_serialized_sa = serde_json::to_string(&url_deserialized_sa)?;
@@ -599,8 +605,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_pay_validate_success_action_encrypt_decrypt() -> Result<()> {
         // Simulate a preimage, which will be the AES key
         let key = sha256::Hash::hash(&[0x42; 16]);
@@ -644,8 +653,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_pay_validate_success_action_aes() -> Result<()> {
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
@@ -712,8 +724,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_pay_validate_success_action_msg() -> Result<()> {
         assert!(MessageSuccessActionData {
             message: "short msg".into()
@@ -731,8 +746,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_pay_validate_success_url() -> Result<()> {
         let pay_req_data = get_test_pay_req_data(0, 100_000, 100);
 

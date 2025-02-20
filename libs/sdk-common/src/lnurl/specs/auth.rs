@@ -7,8 +7,8 @@ use reqwest::Url;
 
 use crate::prelude::*;
 
-#[cfg_attr(not(target_arch = "wasm32"), async_trait)]
-#[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
+#[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), async_trait)]
+#[cfg_attr(all(target_family = "wasm", target_os = "unknown"), async_trait(?Send))]
 pub trait LnurlAuthSigner {
     async fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
     async fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber])
@@ -142,7 +142,7 @@ pub mod model {
     ///
     /// See <https://github.com/lnurl/luds/blob/luds/04.md>
     #[cfg_attr(
-        target_arch = "wasm32",
+        all(target_family = "wasm", target_os = "unknown"),
         derive(tsify_next::Tsify),
         tsify(into_wasm_abi),
         serde(rename_all = "camelCase")

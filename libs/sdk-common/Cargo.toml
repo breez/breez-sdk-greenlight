@@ -30,7 +30,7 @@ tokio = { workspace = true, features = ["sync"] }
 url = "2.5.0"
 urlencoding = { version = "2.1.3" }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dependencies]
 hickory-resolver = { version = "0.24.2", features = ["dnssec-ring"] }
 prost = { workspace = true }
 tonic = { workspace = true, features = [
@@ -40,7 +40,7 @@ tonic = { workspace = true, features = [
     "tls-webpki-roots",
 ] }
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
 getrandom = { version = "0.2.14", features = ["js"] }
 prost = "^0.13"
 tonic = { version = "0.12", default-features = false, features = ["codegen", "prost"] }
@@ -52,11 +52,11 @@ wasm-bindgen = "0.2.100"
 bitcoin = { workspace = true, features = ["rand"] }
 once_cell = { workspace = true }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dev-dependencies]
 mockito = { workspace = true }
 tokio = { workspace = true, features = ["sync", "rt"] }
 
-[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dev-dependencies]
 js-sys = "0.3"
 wasm-bindgen-test = "0.3.33"
 wasm-bindgen-futures = "0.4"
@@ -68,10 +68,10 @@ web-sys = { version = "0.3", features = [
     "ServiceWorkerState",
 ] } 
 
-[target.'cfg(not(target_arch = "wasm32"))'.build-dependencies]
+[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.build-dependencies]
 tonic-build = { workspace = true }
 
-[target.'cfg(target_arch = "wasm32")'.build-dependencies]
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.build-dependencies]
 tonic-build = "0.12"
 
 [features]

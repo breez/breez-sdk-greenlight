@@ -3,7 +3,7 @@ use strum_macros::Display;
 
 /// The different supported bitcoin networks
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
