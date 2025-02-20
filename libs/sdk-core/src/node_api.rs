@@ -117,6 +117,7 @@ pub trait NodeAPI: Send + Sync {
     async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
     async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()>;
     async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String>;
+    async fn delete_invoice(&self, bolt11: String) -> NodeResult<()>;
     /// Fetches an existing BOLT11 invoice from the node
     async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>>;
     async fn pull_changed(

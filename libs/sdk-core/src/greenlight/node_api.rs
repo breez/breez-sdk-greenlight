@@ -13,13 +13,14 @@ use futures::{Future, Stream};
 use gl_client::credentials::{Device, Nobody};
 use gl_client::node;
 use gl_client::node::ClnClient;
+use gl_client::pb::cln::delinvoice_request::DelinvoiceStatus;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listinvoices_request::ListinvoicesIndex;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::listpeerchannels_channels::ListpeerchannelsChannelsState::*;
 use gl_client::pb::cln::listsendpays_request::ListsendpaysIndex;
 use gl_client::pb::cln::{
-    self, Amount, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
+    self, Amount, DelinvoiceRequest, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
     ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels, ListsendpaysPayments,
     PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
@@ -1082,6 +1083,35 @@ impl NodeAPI for Greenlight {
             .await?
             .into_inner();
         Ok(res.bolt11)
+    }
+
+    async fn delete_invoice(&self, bolt11: String) -> NodeResult<()> {
+        let mut client = self.get_node_client().await?;
+        let invoice_request = cln::ListinvoicesRequest {
+            invstring: Some(bolt11),
+            ..Default::default()
+        };
+        let invoice_result = with_connection_retry!(client.list_invoices(invoice_request.clone()))
+            .await?
+            .into_inner();
+        let invoice_result = invoice_result.invoices.first();
+        let result = match invoice_result {
+            Some(result) => result,
+            None => return Ok(()),
+        };
+
+        let status = match result.status() {
+            ListinvoicesInvoicesStatus::Unpaid => DelinvoiceStatus::Unpaid,
+            ListinvoicesInvoicesStatus::Paid => DelinvoiceStatus::Paid,
+            ListinvoicesInvoicesStatus::Expired => DelinvoiceStatus::Expired,
+        };
+        with_connection_retry!(client.del_invoice(DelinvoiceRequest {
+            label: result.label.clone(),
+            status: status.into(),
+            desconly: Some(false),
+        }))
+        .await?;
+        Ok(())
     }
 
     async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
