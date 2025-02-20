@@ -6,8 +6,7 @@ use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 
 /// Creates an HTTP client with a built-in connection timeout
 pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError> {
-    let client = reqwest::Client::builder().build().map_err(Into::into);
-    client
+    reqwest::Client::builder().build().map_err(Into::into)
 }
 
 pub async fn post_and_log_response(

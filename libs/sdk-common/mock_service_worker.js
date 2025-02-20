@@ -4,13 +4,15 @@ async function getDb() {
     if (db) {
         return db;
     } else {
-        return await new Promise((rs, rj) => {
+        return await new Promise((resolve, reject) => {
             const req = indexedDB.open("http_mock", 1);
-            req.onsuccess = (event) => rs(event.target.result);
-            req.onerror = rj;
+            req.onsuccess = (event) => resolve(event.target.result);
+            req.onerror = reject;
             req.onupgradeneeded = (event) => {
                 db = event.target.result;
-                db.createObjectStore("mocks", { keyPath: "nonce" });
+                if (!db.objectStoreNames.contains("mocks")) {
+                    db.createObjectStore("mocks", { keyPath: "nonce" });
+                }
             };
         })
     }
@@ -18,10 +20,10 @@ async function getDb() {
 
 async function setMock(mock) {
     const db = await getDb();
-    await new Promise((rs, rj) => {
+    await new Promise((resolve, reject) => {
         const transaction = db.transaction("mocks", "readwrite");
-        transaction.oncomplete = rs;
-        transaction.onerror = rj;
+        transaction.oncomplete = resolve;
+        transaction.onerror = reject;
         const store = transaction.objectStore("mocks");
         store.put(mock);
     })
@@ -29,12 +31,12 @@ async function setMock(mock) {
 
 async function getMock(nonce) {
     const db = await getDb();
-    return await new Promise((rs, rj) => {
+    return await new Promise((resolve, reject) => {
         const req = db.transaction("mocks")
             .objectStore("mocks")
             .get(nonce);
-        req.onsuccess = (event) => rs(event.target.result);
-        req.onerror = rj;
+        req.onsuccess = (event) => resolve(event.target.result);
+        req.onerror = reject;
     });
 }
 
@@ -68,7 +70,9 @@ self.addEventListener("fetch", (event) => {
                 }
                 for (const route of mock.routes) {
                     const partialPath = route.path.split('?')[0];
-                    if (request.method === route.method && (url.pathname === route.path || url.pathname === partialPath)) {
+                    // Replace only -.!~*'()
+                    const decodedPartialPath = route.path.replaceAll('%21', '!').replaceAll('%27', '\'').replaceAll('%28', '(').replaceAll('%29', ')').replaceAll('%2A', '*').replaceAll('%2D', '-').replaceAll('%2E', '.');
+                    if (request.method === route.method && (url.pathname === route.path || url.pathname === partialPath || url.pathname === decodedPartialPath)) {
                         route.hits += 1;
                         await setMock(mock);
                         return new Response(Uint8Array.from(route.body), { status: route.status_code, headers: { 'Content-Type': route.content_type || 'application/json' }});

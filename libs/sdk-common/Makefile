@@ -1,7 +1,7 @@
 UNAME := $(shell uname)
 
 ifeq ($(UNAME), Darwin)
-	CLANG_PREFIX += AR=/usr/local/opt/llvm/bin/llvm-ar CC=/usr/local/opt/llvm/bin/clang
+	CLANG_PREFIX += AR=$(shell brew --prefix llvm)/bin/llvm-ar CC=$(shell brew --prefix llvm)/bin/clang
 endif
 
 init:
@@ -22,3 +22,9 @@ wasm-clippy:
 
 wasm-test:
 	$(CLANG_PREFIX) wasm-pack test --headless --firefox
+
+wasm-test-chrome:
+	$(CLANG_PREFIX) wasm-pack test --headless --chrome
+
+wasm-test-safari:
+	$(CLANG_PREFIX) wasm-pack test --headless --safari
