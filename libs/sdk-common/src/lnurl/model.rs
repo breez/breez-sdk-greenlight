@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// Both cases are described in LUD-03 <https://github.com/lnurl/luds/blob/luds/03.md> & LUD-04: <https://github.com/lnurl/luds/blob/luds/04.md>
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
@@ -30,7 +30,7 @@ pub enum LnUrlCallbackStatus {
 
 /// Wrapped in a [LnUrlError], this represents a LNURL-endpoint error.
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi),
     serde(rename_all = "camelCase")

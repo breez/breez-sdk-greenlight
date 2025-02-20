@@ -16,10 +16,10 @@ impl Display for Status {
     }
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 pub struct TransportError(pub tonic::transport::Error);
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 impl Display for TransportError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(

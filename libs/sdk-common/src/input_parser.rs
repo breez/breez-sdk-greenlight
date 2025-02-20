@@ -11,7 +11,7 @@ use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 use {
     hickory_resolver::config::{ResolverConfig, ResolverOpts},
     hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider},
@@ -23,16 +23,16 @@ use {
 
 use crate::prelude::*;
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const BOLT12_PREFIX: &str = "lno";
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const LNURL_PAY_PREFIX: &str = "lnurl";
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const BIP353_PREFIX: &str = "bitcoin:";
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 lazy_static! {
     static ref DNS_RESOLVER: TokioAsyncResolver = {
         let mut opts = ResolverOpts::default();
@@ -215,12 +215,12 @@ pub async fn parse(
     let input = input.trim();
 
     // Try to parse the destination as a bip353 address.
-    #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
     let (bip353_parsed_input, is_bip353) = match bip353_parse(input, &DNS_RESOLVER).await {
         Some(value) => (value, true),
         None => (input.to_string(), false),
     };
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     let (bip353_parsed_input, is_bip353) = (input.to_string(), false);
 
     if let Ok(input_type) = parse_core(&bip353_parsed_input).await {
@@ -251,7 +251,7 @@ pub async fn parse(
     Err(anyhow!("Unrecognized input type"))
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
     tuple_vector
         .iter()
@@ -259,7 +259,7 @@ fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
         .map(|(_, v)| v.to_string())
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn parse_bip353_record(bip353_record: String) -> Option<String> {
     let (_, query_part) = bip353_record.split_once("?")?;
 
@@ -268,7 +268,7 @@ fn parse_bip353_record(bip353_record: String) -> Option<String> {
     get_by_key(&query_params, BOLT12_PREFIX).or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn is_valid_bip353_record(decoded: &str) -> bool {
     if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
         error!(
@@ -282,7 +282,7 @@ fn is_valid_bip353_record(decoded: &str) -> bool {
     true
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn extract_bip353_record(records: Vec<String>) -> Option<String> {
     let bip353_record = records
         .into_iter()
@@ -301,7 +301,7 @@ fn extract_bip353_record(records: Vec<String>) -> Option<String> {
     bip353_record.first().cloned()
 }
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 async fn bip353_parse(
     input: &str,
     dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
@@ -640,7 +640,7 @@ async fn resolve_lnurl(
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi),
     serde(rename_all = "camelCase")
@@ -770,7 +770,7 @@ impl From<LnUrlRequestData> for InputType {
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/06.md>
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi)
 )]
@@ -858,7 +858,7 @@ pub struct MetadataItem {
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 #[cfg_attr(
-    target_arch = "wasm32",
+    all(target_family = "wasm", target_os = "unknown"),
     derive(tsify_next::Tsify),
     tsify(into_wasm_abi),
     serde(rename_all = "camelCase")
@@ -952,7 +952,7 @@ pub(crate) mod tests {
     use crate::input_parser::*;
     use crate::test_utils::mock_server::*;
 
-    #[cfg(target_arch = "wasm32")]
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
     /// Mock server used in tests. As the server is shared between tests,
@@ -967,16 +967,22 @@ pub(crate) mod tests {
         MockServer::new_with_opts(opts)
     });
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_generic_invalid_input() -> Result<(), Box<dyn std::error::Error>> {
         assert!(parse("invalid_input", None).await.is_err());
 
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_trim_input() -> Result<()> {
         for address in [
             r#"1andreas3batLhQa2FawWjeyjCqyBzypd"#,
@@ -997,8 +1003,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_bitcoin_address() -> Result<()> {
         for address in [
             "1andreas3batLhQa2FawWjeyjCqyBzypd",
@@ -1014,8 +1023,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_bitcoin_address_bip21() -> Result<()> {
         // Addresses from https://github.com/Kixunil/bip21/blob/master/src/lib.rs
 
@@ -1087,8 +1099,11 @@ pub(crate) mod tests {
         ]
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_bitcoin_address_bip21_rounding() -> Result<()> {
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let addr = format!("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount={amount_btc}");
@@ -1106,8 +1121,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     #[cfg(feature = "liquid")]
     async fn test_liquid_address() -> Result<()> {
         assert!(parse("tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
@@ -1155,8 +1173,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_bolt11() -> Result<()> {
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
 
@@ -1176,8 +1197,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_capitalized_bolt11() -> Result<()> {
         let bolt11 = "LNBC110N1P38Q3GTPP5YPZ09JRD8P993SNJWNM68CPH4FTWP22LE34XD4R8FTSPWSHXHMNSDQQXQYJW5QCQPXSP5HTLG8YDPYWVSA7H3U4HDN77EHS4Z4E844EM0APJYVMQFKZQHHD2Q9QGSQQQYSSQSZPXZXT9UUQZYMR7ZXCDCCJ5G69S8Q7ZZJS7SGXN9EJHNVDH6GQJCY22MSS2YEXUNAGM5R2GQCZH8K24CWRQML3NJSKM548ARUHPWSSQ9NVRVZ";
 
@@ -1197,8 +1221,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_bolt11_with_fallback_bitcoin_address() -> Result<()> {
         let addr = "1andreas3batLhQa2FawWjeyjCqyBzypd";
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
@@ -1222,8 +1249,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_url() -> Result<()> {
         assert!(matches!(
             parse("https://breez.technology", None).await?,
@@ -1254,8 +1284,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_node_id() -> Result<()> {
         let secp = Secp256k1::new();
         let secret_key = SecretKey::from_slice(&[0xab; 32])?;
@@ -1328,8 +1361,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_pay_lud_01() -> Result<()> {
         // Covers cases in LUD-01: Base LNURL encoding and decoding
         // https://github.com/lnurl/luds/blob/luds/01.md
@@ -1416,8 +1452,11 @@ pub(crate) mod tests {
             .await;
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_withdraw_lud_03() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-03: withdrawRequest base spec
         // https://github.com/lnurl/luds/blob/luds/03.md
@@ -1445,8 +1484,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_withdraw_in_url() -> Result<(), Box<dyn std::error::Error>> {
         let path = "/lnurl-withdraw?session=bc893fafeb9819046781b47d68fdcf88fa39a28898784c183b42b7ac13820d81";
         mock_lnurl_withdraw_endpoint(path, None).await;
@@ -1472,8 +1514,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_auth_lud_04() -> Result<()> {
         // Covers cases in LUD-04: `auth` base spec
         // https://github.com/lnurl/luds/blob/luds/04.md
@@ -1632,8 +1677,11 @@ pub(crate) mod tests {
             .await;
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_pay_lud_06() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-06: payRequest base spec
         // https://github.com/lnurl/luds/blob/luds/06.md
@@ -1693,8 +1741,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_pay_lud_16_ln_address() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-16: Paying to static internet identifiers (LN Address)
         // https://github.com/lnurl/luds/blob/luds/16.md
@@ -1736,8 +1787,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_pay_lud_16_ln_address_with_prefix() -> Result<(), Box<dyn std::error::Error>>
     {
         // Covers cases in LUD-16, with BIP-353 prefix.
@@ -1760,8 +1814,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_pay_lud_16_ln_address_error() -> Result<()> {
         // Covers cases in LUD-16: Paying to static internet identifiers (LN Address)
         // https://github.com/lnurl/luds/blob/luds/16.md
@@ -1778,8 +1835,11 @@ pub(crate) mod tests {
         Err(anyhow!("Unrecognized input type"))
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_ln_address_lud_16_decode() -> Result<(), Box<dyn std::error::Error>> {
         assert_eq!(
             lnurl_decode("user@domain.onion")?,
@@ -1830,8 +1890,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     fn test_lnurl_lud_17_prefixes() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-17: Protocol schemes and raw (non bech32-encoded) URLs
         // https://github.com/lnurl/luds/blob/luds/17.md
@@ -1948,8 +2011,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_pay_lud_17() -> Result<(), Box<dyn std::error::Error>> {
         let pay_path =
             "/lnurl-pay?session=db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7";
@@ -1989,8 +2055,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_withdraw_lud_17() -> Result<(), Box<dyn std::error::Error>> {
         let withdraw_path = "/lnurl-withdraw?session=e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538";
         mock_lnurl_withdraw_endpoint(withdraw_path, None).await;
@@ -2011,8 +2080,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_auth_lud_17() -> Result<()> {
         let auth_path = "/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
 
@@ -2028,8 +2100,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_pay_lud_17_error() -> Result<()> {
         let pay_path = "/lnurl-pay?session=paylud17error";
         let expected_error_msg = "test pay error";
@@ -2045,8 +2120,11 @@ pub(crate) mod tests {
         Err(anyhow!("Unrecognized input type"))
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_lnurl_withdraw_lud_17_error() -> Result<()> {
         let withdraw_path = "/lnurl-withdraw?session=withdrawlud17error";
         let expected_error_msg = "test withdraw error";
@@ -2075,8 +2153,11 @@ pub(crate) mod tests {
             .await;
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_external_parsing_lnurlp_first_response() -> Result<(), Box<dyn std::error::Error>>
     {
         let input = "123provider.domain32/1";
@@ -2123,8 +2204,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_external_parsing_bitcoin_address_and_bolt11(
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Bitcoin parsing endpoint
@@ -2177,8 +2261,11 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(target_arch = "wasm32"), tokio::test)]
-    #[cfg_attr(target_arch = "wasm32", wasm_bindgen_test::wasm_bindgen_test)]
+    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
+    #[cfg_attr(
+        all(target_family = "wasm", target_os = "unknown"),
+        wasm_bindgen_test::wasm_bindgen_test
+    )]
     async fn test_external_parsing_error() -> Result<(), Box<dyn std::error::Error>> {
         let input = "123provider.domain.error32/1";
         let path = format!(
