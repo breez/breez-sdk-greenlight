@@ -1,4 +1,4 @@
-#[cfg_attr(target_arch = "wasm32", path = "tonic_wrap_wasm.rs")]
-mod tonic_wrap;
+#[cfg_attr(target_arch = "wasm32", path = "connection_retry_wasm.rs")]
+mod connection_retry;
 
-pub use tonic_wrap::*;
+pub use connection_retry::*;
