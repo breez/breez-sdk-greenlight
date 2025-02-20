@@ -1,18 +1,11 @@
 use log::*;
 use reqwest::StatusCode;
-#[cfg(not(target_arch = "wasm32"))]
 use std::time::Duration;
 
 use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 
 /// Creates an HTTP client with a built-in connection timeout
 pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError> {
-    #[cfg(not(target_arch = "wasm32"))]
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()
-        .map_err(Into::into);
-    #[cfg(target_arch = "wasm32")]
     let client = reqwest::Client::builder().build().map_err(Into::into);
     client
 }
@@ -23,7 +16,9 @@ pub async fn post_and_log_response(
 ) -> Result<String, ServiceConnectivityError> {
     debug!("Making POST request to: {url}");
 
-    let mut req = get_reqwest_client()?.post(url);
+    let mut req = get_reqwest_client()?
+        .post(url)
+        .timeout(Duration::from_secs(30));
     if let Some(body) = body {
         req = req.body(body);
     }
@@ -45,7 +40,11 @@ pub async fn get_and_log_response(
 ) -> Result<(String, StatusCode), ServiceConnectivityError> {
     debug!("Making GET request to: {url}");
 
-    let response = get_reqwest_client()?.get(url).send().await?;
+    let response = get_reqwest_client()?
+        .get(url)
+        .timeout(Duration::from_secs(30))
+        .send()
+        .await?;
     let status = response.status();
     let raw_body = response.text().await?;
     debug!("Received response, status: {status}");
