@@ -2542,6 +2542,7 @@ pub struct OpenChannelParams {
 
 #[tonic::async_trait]
 pub trait Receiver: Send + Sync {
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError>;
     async fn receive_payment(
         &self,
         req: ReceivePaymentRequest,
@@ -2563,17 +2564,21 @@ pub(crate) struct PaymentReceiver {
 
 #[tonic::async_trait]
 impl Receiver for PaymentReceiver {
-    async fn receive_payment(
-        &self,
-        req: ReceivePaymentRequest,
-    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
-        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError> {
         let node_state = self
             .persister
             .get_node_state()?
             .ok_or(ReceivePaymentError::Generic {
                 err: "Node info not found".into(),
             })?;
+        Ok(node_state.max_receivable_single_payment_amount_msat < amount_msat)
+    }
+
+    async fn receive_payment(
+        &self,
+        req: ReceivePaymentRequest,
+    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
+        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let expiry = req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
@@ -2588,8 +2593,7 @@ impl Receiver for PaymentReceiver {
         let mut channel_fees_msat = None;
 
         // check if we need to open channel
-        let open_channel_needed =
-            node_state.max_receivable_single_payment_amount_msat < req.amount_msat;
+        let open_channel_needed = self.open_channel_needed(req.amount_msat)?;
         if open_channel_needed {
             info!("We need to open a channel");
 

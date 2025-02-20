@@ -263,6 +263,9 @@ impl Default for MockReceiver {
 
 #[tonic::async_trait]
 impl Receiver for MockReceiver {
+    fn open_channel_needed(&self, _amount_msat: u64) -> Result<bool, ReceivePaymentError> {
+        Ok(true)
+    }
     async fn receive_payment(
         &self,
         _request: ReceivePaymentRequest,
