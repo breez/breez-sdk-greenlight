@@ -97,7 +97,7 @@ fn parse_short_channel_id(id_str: &str) -> InvoiceResult<u64> {
     let tx_num = parts[1].parse::<u64>()?;
     let tx_out = parts[2].parse::<u64>()?;
 
-    Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
+    Ok(((block_num & 0xFFFFFF) << 40) | ((tx_num & 0xFFFFFF) << 16) | (tx_out & 0xFFFF))
 }
 
 fn format_short_channel_id(id: u64) -> String {

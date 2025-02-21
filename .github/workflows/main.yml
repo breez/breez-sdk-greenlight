@@ -242,9 +242,8 @@ jobs:
       - name: clippy
         run: |
           cd libs
-          # Explicitly allow clippy::uninlined-format-args lint because it's present in the generated breez_sdk.uniffi.rs
-          cargo clippy -- -D warnings -A clippy::uninlined-format-args
-          cargo clippy --tests -- -D warnings -A clippy::uninlined-format-args
+          cargo clippy -- -D warnings
+          cargo clippy --tests -- -D warnings
           cd ../tools/sdk-cli
           cargo clippy -- -D warnings
   
