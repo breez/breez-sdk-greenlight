@@ -659,6 +659,7 @@ pub enum PaymentStatus {
 #[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
     pub id: String,
+    pub payment_hash: String, // Explicitly adding the payment_hash field
     pub payment_type: PaymentType,
     /// Epoch time, in seconds
     pub payment_time: i64,
