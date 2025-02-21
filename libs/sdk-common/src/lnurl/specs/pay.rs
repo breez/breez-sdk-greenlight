@@ -129,9 +129,7 @@ pub mod model {
     /// Represents a LNURL-pay request.
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct LnUrlPayRequest {
@@ -160,9 +158,7 @@ pub mod model {
 
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPayErrorData {
@@ -172,9 +168,7 @@ pub mod model {
 
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPaySuccessData {
@@ -193,9 +187,7 @@ pub mod model {
     /// See [AesSuccessActionDataDecrypted] for a similar wrapper containing the decrypted payload
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     pub struct AesSuccessActionData {
@@ -212,9 +204,7 @@ pub mod model {
     /// Result of decryption of [AesSuccessActionData] payload
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum AesSuccessActionDataResult {
@@ -224,9 +214,7 @@ pub mod model {
 
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     /// Wrapper for the decrypted [AesSuccessActionData] payload
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
@@ -240,9 +228,7 @@ pub mod model {
 
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct MessageSuccessActionData {
@@ -251,9 +237,7 @@ pub mod model {
 
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct UrlSuccessActionData {
@@ -275,9 +259,7 @@ pub mod model {
     /// Contents are identical to [SuccessAction], except for AES where the ciphertext is decrypted.
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum SuccessActionProcessed {
@@ -594,10 +576,7 @@ pub(crate) mod tests {
         let message_serialized_sa = serde_json::to_string(&message_deserialized_sa)?;
         assert_eq!(message_json_str, message_serialized_sa);
 
-        #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
         let url_json_str = r#"{"tag":"url","description":"short msg","url":"https://new-domain.com/test-url","matches_callback_domain":true}"#;
-        #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-        let url_json_str = r#"{"tag":"url","description":"short msg","url":"https://new-domain.com/test-url","matchesCallbackDomain":true}"#;
         let url_deserialized_sa: SuccessAction = serde_json::from_str(url_json_str)?;
         let url_serialized_sa = serde_json::to_string(&url_deserialized_sa)?;
         assert_eq!(url_json_str, url_serialized_sa);

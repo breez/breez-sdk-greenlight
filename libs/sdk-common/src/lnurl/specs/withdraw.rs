@@ -74,9 +74,7 @@ pub mod model {
 
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(Debug, Serialize, Deserialize)]
     pub struct LnUrlWithdrawRequest {
@@ -119,10 +117,9 @@ pub mod model {
     /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(into_wasm_abi)
+        derive(tsify_next::Tsify)
     )]
-    #[derive(Clone, Serialize)]
+    #[derive(Clone, Deserialize, Serialize)]
     pub enum LnUrlWithdrawResult {
         Ok { data: LnUrlWithdrawSuccessData },
         Timeout { data: LnUrlWithdrawSuccessData },
@@ -131,8 +128,7 @@ pub mod model {
 
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(into_wasm_abi)
+        derive(tsify_next::Tsify)
     )]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlWithdrawSuccessData {

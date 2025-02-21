@@ -109,9 +109,7 @@ fn format_short_channel_id(id: u64) -> String {
 
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Amount {
@@ -149,9 +147,7 @@ impl TryFrom<lightning::offers::offer::Amount> for Amount {
 
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNOffer {
@@ -171,9 +167,7 @@ pub struct LNOffer {
 
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LnOfferBlindedPath {
@@ -184,9 +178,7 @@ pub struct LnOfferBlindedPath {
 /// Wrapper for a BOLT11 LN invoice
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {
@@ -215,9 +207,7 @@ impl LNInvoice {
 /// Details of a specific hop in a larger route hint
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHintHop {
@@ -240,9 +230,7 @@ pub struct RouteHintHop {
 /// A route hint for a LN payment
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHint {
