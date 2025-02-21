@@ -641,11 +641,9 @@ async fn resolve_lnurl(
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum InputType {
     /// # Supported standards
     ///
@@ -771,8 +769,7 @@ impl From<LnUrlRequestData> for InputType {
 /// See <https://github.com/lnurl/luds/blob/luds/06.md>
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -859,11 +856,9 @@ pub struct MetadataItem {
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BitcoinAddressData {
     pub address: String,
     pub network: super::prelude::Network,

@@ -5,7 +5,7 @@ use elements::{
     hashes::hex::HexToArrayError,
     issuance::AssetId,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::{str::FromStr, string::FromUtf8Error};
 use urlencoding::decode;
@@ -14,11 +14,9 @@ use crate::prelude::{Network, URISerializationError};
 
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi),
-    serde(rename_all = "camelCase")
+    derive(tsify_next::Tsify)
 )]
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LiquidAddressData {
     pub address: String,
     pub network: Network,

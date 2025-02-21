@@ -4,8 +4,7 @@ use strum_macros::Display;
 /// The different supported bitcoin networks
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Copy, Debug, Display, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Network {

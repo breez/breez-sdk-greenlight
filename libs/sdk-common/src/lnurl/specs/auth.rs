@@ -143,9 +143,7 @@ pub mod model {
     /// See <https://github.com/lnurl/luds/blob/luds/04.md>
     #[cfg_attr(
         all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(into_wasm_abi),
-        serde(rename_all = "camelCase")
+        derive(tsify_next::Tsify)
     )]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlAuthRequestData {

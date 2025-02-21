@@ -22,8 +22,7 @@ pub trait FiatAPI: Send + Sync {
 /// Settings for the symbol representation of a currency
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Symbol {
@@ -36,8 +35,7 @@ pub struct Symbol {
 /// Locale-specific settings for the representation of a currency
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LocaleOverrides {
@@ -49,8 +47,7 @@ pub struct LocaleOverrides {
 /// Localized name of a currency
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LocalizedName {
@@ -61,8 +58,7 @@ pub struct LocalizedName {
 /// Details about a supported currency in the fiat rate feed
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -81,8 +77,7 @@ pub struct CurrencyInfo {
 /// Wrapper around the [CurrencyInfo] of a fiat currency
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FiatCurrency {
@@ -93,8 +88,7 @@ pub struct FiatCurrency {
 /// Denominator in an exchange rate
 #[cfg_attr(
     all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify),
-    tsify(from_wasm_abi, into_wasm_abi)
+    derive(tsify_next::Tsify)
 )]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Rate {
