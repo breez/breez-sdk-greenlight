@@ -1,10 +1,8 @@
 use anyhow::Result;
-use async_trait::async_trait;
 
 pub mod moonpay;
 
-#[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), async_trait)]
-#[cfg_attr(all(target_family = "wasm", target_os = "unknown"), async_trait(?Send))]
+#[sdk_macros::async_trait]
 pub trait BuyBitcoinProviderApi: Send + Sync {
     /// Configure buying Bitcoin and return a URL to continue
     async fn buy_bitcoin(

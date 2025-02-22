@@ -12,11 +12,7 @@ mod tests {
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::async_test_all]
     async fn test_liquid_address_bip21_rounding() -> Result<()> {
         let asset_id = AssetId::LIQUID_BTC.to_string();
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
@@ -35,11 +31,7 @@ mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::async_test_all]
     async fn test_liquid_address_bip21_rounding_reverse() -> Result<()> {
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let data = LiquidAddressData {

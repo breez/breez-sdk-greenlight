@@ -22,6 +22,7 @@ percent-encoding = "2.3.1"
 querystring = "1"
 regex = { workspace = true }
 reqwest = { workspace = true }
+sdk-macros = { path = "../sdk-macros" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 strum_macros = { workspace = true }

@@ -127,10 +127,7 @@ pub mod model {
     use crate::prelude::*;
 
     /// Represents a LNURL-pay request.
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct LnUrlPayRequest {
         /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
@@ -156,20 +153,14 @@ pub mod model {
         EndpointError { data: LnUrlErrorData },
     }
 
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPayErrorData {
         pub payment_hash: String,
         pub reason: String,
     }
 
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPaySuccessData {
         pub success_action: Option<SuccessActionProcessed>,
@@ -185,10 +176,7 @@ pub mod model {
     /// Payload of the AES success action, as received from the LNURL endpoint
     ///
     /// See [AesSuccessActionDataDecrypted] for a similar wrapper containing the decrypted payload
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     pub struct AesSuccessActionData {
         /// Contents description, up to 144 characters
@@ -202,20 +190,14 @@ pub mod model {
     }
 
     /// Result of decryption of [AesSuccessActionData] payload
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum AesSuccessActionDataResult {
         Decrypted { data: AesSuccessActionDataDecrypted },
         ErrorStatus { reason: String },
     }
 
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     /// Wrapper for the decrypted [AesSuccessActionData] payload
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct AesSuccessActionDataDecrypted {
@@ -226,19 +208,13 @@ pub mod model {
         pub plaintext: String,
     }
 
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct MessageSuccessActionData {
         pub message: String,
     }
 
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct UrlSuccessActionData {
         /// Contents description, up to 144 characters
@@ -257,10 +233,7 @@ pub mod model {
     /// [SuccessAction] where contents are ready to be consumed by the caller
     ///
     /// Contents are identical to [SuccessAction], except for AES where the ciphertext is decrypted.
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum SuccessActionProcessed {
         /// See [SuccessAction::Aes] for received payload
@@ -279,11 +252,7 @@ pub mod model {
     ///
     /// Receiving any other (unsupported) success action type will result in a failed parsing,
     /// which will abort the LNURL-pay workflow, as per LUD-09.
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     #[serde(tag = "tag")]
@@ -544,11 +513,7 @@ pub(crate) mod tests {
         }
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_input() -> Result<()> {
         assert!(validate_user_input(100_000, &None, 0, 100_000, 0).is_ok());
         assert!(validate_user_input(100_000, &Some("test".into()), 0, 100_000, 5).is_ok());
@@ -560,11 +525,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_success_action_deserialize() -> Result<()> {
         let aes_json_str = r#"{"tag":"aes","description":"short msg","ciphertext":"kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK","iv":"1234567890abcdef"}"#;
         let aes_deserialized_sa: SuccessAction = serde_json::from_str(aes_json_str)?;
@@ -584,11 +545,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_action_encrypt_decrypt() -> Result<()> {
         // Simulate a preimage, which will be the AES key
         let key = sha256::Hash::hash(&[0x42; 16]);
@@ -632,11 +589,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_action_aes() -> Result<()> {
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
@@ -703,11 +656,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_action_msg() -> Result<()> {
         assert!(MessageSuccessActionData {
             message: "short msg".into()
@@ -725,11 +674,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_url() -> Result<()> {
         let pay_req_data = get_test_pay_req_data(0, 100_000, 100);
 

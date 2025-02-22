@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
-use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 use crate::grpc::RatesRequest;
@@ -9,8 +8,7 @@ use crate::prelude::BreezServer;
 use crate::with_connection_retry;
 
 /// Trait covering fiat-related functionality
-#[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), async_trait)]
-#[cfg_attr(all(target_family = "wasm", target_os = "unknown"), async_trait(?Send))]
+#[sdk_macros::async_trait]
 pub trait FiatAPI: Send + Sync {
     /// List all supported fiat currencies for which there is a known exchange rate.
     async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
@@ -20,10 +18,7 @@ pub trait FiatAPI: Send + Sync {
 }
 
 /// Settings for the symbol representation of a currency
-#[cfg_attr(
-    all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify)
-)]
+#[sdk_macros::tsify_wasm]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct Symbol {
     pub grapheme: Option<String>,
@@ -33,10 +28,7 @@ pub struct Symbol {
 }
 
 /// Locale-specific settings for the representation of a currency
-#[cfg_attr(
-    all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify)
-)]
+#[sdk_macros::tsify_wasm]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LocaleOverrides {
     pub locale: String,
@@ -45,10 +37,7 @@ pub struct LocaleOverrides {
 }
 
 /// Localized name of a currency
-#[cfg_attr(
-    all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify)
-)]
+#[sdk_macros::tsify_wasm]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct LocalizedName {
     pub locale: String,
@@ -56,10 +45,7 @@ pub struct LocalizedName {
 }
 
 /// Details about a supported currency in the fiat rate feed
-#[cfg_attr(
-    all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify)
-)]
+#[sdk_macros::tsify_wasm]
 #[derive(Clone, Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CurrencyInfo {
@@ -75,10 +61,7 @@ pub struct CurrencyInfo {
 }
 
 /// Wrapper around the [CurrencyInfo] of a fiat currency
-#[cfg_attr(
-    all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify)
-)]
+#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct FiatCurrency {
     pub id: String,
@@ -86,10 +69,7 @@ pub struct FiatCurrency {
 }
 
 /// Denominator in an exchange rate
-#[cfg_attr(
-    all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify)
-)]
+#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Rate {
     pub coin: String,
@@ -100,8 +80,7 @@ fn convert_to_fiat_currency_with_id(id: String, info: CurrencyInfo) -> FiatCurre
     FiatCurrency { id, info }
 }
 
-#[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), async_trait)]
-#[cfg_attr(all(target_family = "wasm", target_os = "unknown"), async_trait(?Send))]
+#[sdk_macros::async_trait]
 impl FiatAPI for BreezServer {
     async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         let known_rates = self.fetch_fiat_rates().await?;
