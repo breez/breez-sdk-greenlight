@@ -10,6 +10,7 @@ members = [
   "sdk-bindings",
   "sdk-common",
   "sdk-core",
+  "sdk-macros",
 ]
 resolver = "2"
 

@@ -3823,6 +3823,7 @@ dependencies = [
  "querystring",
  "regex",
  "reqwest 0.12.12",
+ "sdk-macros",
  "serde",
  "serde_json",
  "strum_macros",
@@ -3840,6 +3841,14 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
  "web-sys",
+]
+
+[[package]]
+name = "sdk-macros"
+version = "0.6.2"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]

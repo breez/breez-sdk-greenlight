@@ -72,10 +72,7 @@ pub mod model {
 
     use crate::prelude::*;
 
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Debug, Serialize, Deserialize)]
     pub struct LnUrlWithdrawRequest {
         /// Request data containing information on how to call the lnurl withdraw
@@ -97,11 +94,7 @@ pub mod model {
     /// It represents the endpoint's parameters for the LNURL workflow.
     ///
     /// See <https://github.com/lnurl/luds/blob/luds/03.md>
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify),
-        tsify(from_wasm_abi, into_wasm_abi)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct LnUrlWithdrawRequestData {
@@ -115,10 +108,7 @@ pub mod model {
     }
 
     /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Serialize)]
     pub enum LnUrlWithdrawResult {
         Ok { data: LnUrlWithdrawSuccessData },
@@ -126,10 +116,7 @@ pub mod model {
         ErrorStatus { data: LnUrlErrorData },
     }
 
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        derive(tsify_next::Tsify)
-    )]
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlWithdrawSuccessData {
         pub invoice: LNInvoice,
@@ -207,11 +194,7 @@ mod tests {
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::async_test_all]
     async fn test_lnurl_withdraw_validate_amount_failure() -> Result<()> {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let invoice = crate::invoice::parse_invoice(invoice_str)?;
@@ -269,11 +252,7 @@ mod tests {
         }
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::async_test_all]
     async fn test_lnurl_withdraw_success() -> Result<()> {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let req_invoice = crate::invoice::parse_invoice(invoice_str)?;
@@ -289,11 +268,7 @@ mod tests {
         Ok(())
     }
 
-    #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)]
-    #[cfg_attr(
-        all(target_family = "wasm", target_os = "unknown"),
-        wasm_bindgen_test::wasm_bindgen_test
-    )]
+    #[sdk_macros::async_test_all]
     async fn test_lnurl_withdraw_endpoint_failure() -> Result<()> {
         let invoice_str = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
         let invoice = crate::invoice::parse_invoice(invoice_str)?;

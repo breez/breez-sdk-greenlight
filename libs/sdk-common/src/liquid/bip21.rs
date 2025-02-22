@@ -12,10 +12,7 @@ use urlencoding::decode;
 
 use crate::prelude::{Network, URISerializationError};
 
-#[cfg_attr(
-    all(target_family = "wasm", target_os = "unknown"),
-    derive(tsify_next::Tsify)
-)]
+#[sdk_macros::tsify_wasm]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LiquidAddressData {
     pub address: String,
