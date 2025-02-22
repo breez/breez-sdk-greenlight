@@ -5,14 +5,15 @@ use elements::{
     hashes::hex::HexToArrayError,
     issuance::AssetId,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::{str::FromStr, string::FromUtf8Error};
 use urlencoding::decode;
 
 use crate::prelude::{Network, URISerializationError};
 
-#[derive(Debug, Clone, Serialize)]
+#[sdk_macros::tsify_wasm]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct LiquidAddressData {
     pub address: String,
     pub network: Network,

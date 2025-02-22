@@ -9,6 +9,7 @@ pub mod invoice;
 pub mod liquid;
 mod lnurl;
 mod model;
+mod test_utils;
 pub mod tonic_wrap;
 mod utils;
 

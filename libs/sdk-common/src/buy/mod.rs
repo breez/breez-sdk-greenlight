@@ -2,7 +2,7 @@ use anyhow::Result;
 
 pub mod moonpay;
 
-#[tonic::async_trait]
+#[sdk_macros::async_trait]
 pub trait BuyBitcoinProviderApi: Send + Sync {
     /// Configure buying Bitcoin and return a URL to continue
     async fn buy_bitcoin(

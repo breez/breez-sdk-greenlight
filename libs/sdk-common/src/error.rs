@@ -33,7 +33,8 @@ impl ServiceConnectivityError {
 }
 impl From<reqwest::Error> for ServiceConnectivityError {
     fn from(err: reqwest::Error) -> Self {
-        let kind = if err.is_builder() {
+        #[allow(unused_mut)]
+        let mut kind = if err.is_builder() {
             ServiceConnectivityErrorKind::Builder
         } else if err.is_redirect() {
             ServiceConnectivityErrorKind::Redirect
@@ -43,8 +44,6 @@ impl From<reqwest::Error> for ServiceConnectivityError {
             ServiceConnectivityErrorKind::Timeout
         } else if err.is_request() {
             ServiceConnectivityErrorKind::Request
-        } else if err.is_connect() {
-            ServiceConnectivityErrorKind::Connect
         } else if err.is_body() {
             ServiceConnectivityErrorKind::Body
         } else if err.is_decode() {
@@ -52,6 +51,10 @@ impl From<reqwest::Error> for ServiceConnectivityError {
         } else {
             ServiceConnectivityErrorKind::Other
         };
+        #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
+        if err.is_connect() {
+            kind = ServiceConnectivityErrorKind::Connect
+        }
         Self {
             kind,
             err: err.to_string(),

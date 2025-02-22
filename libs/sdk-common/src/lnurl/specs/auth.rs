@@ -6,7 +6,7 @@ use reqwest::Url;
 
 use crate::prelude::*;
 
-#[tonic::async_trait]
+#[sdk_macros::async_trait]
 pub trait LnurlAuthSigner {
     async fn derive_bip32_pub_key(&self, derivation_path: &[ChildNumber]) -> LnUrlResult<Vec<u8>>;
     async fn sign_ecdsa(&self, msg: &[u8], derivation_path: &[ChildNumber])
@@ -139,6 +139,7 @@ pub mod model {
     /// It represents the endpoint's parameters for the LNURL workflow.
     ///
     /// See <https://github.com/lnurl/luds/blob/luds/04.md>
+    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlAuthRequestData {
         /// Hex encoded 32 bytes of challenge
