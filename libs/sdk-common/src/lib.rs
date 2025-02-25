@@ -1,5 +1,6 @@
 mod breez_server;
 mod buy;
+mod dns_resolver;
 mod error;
 mod fiat;
 pub mod grpc;

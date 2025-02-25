@@ -6,41 +6,18 @@ use ::bip21::Uri;
 use anyhow::{anyhow, bail, Context, Result};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
-use log::error;
+use log::{debug, error};
 use percent_encoding::NON_ALPHANUMERIC;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
-use {
-    hickory_resolver::config::{ResolverConfig, ResolverOpts},
-    hickory_resolver::name_server::{GenericConnector, TokioRuntimeProvider},
-    hickory_resolver::AsyncResolver,
-    hickory_resolver::TokioAsyncResolver,
-    lazy_static::lazy_static,
-    log::debug,
-};
 
 use crate::prelude::*;
 
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const BOLT12_PREFIX: &str = "lno";
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const LNURL_PAY_PREFIX: &str = "lnurl";
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 const BIP353_PREFIX: &str = "bitcoin:";
-
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
-lazy_static! {
-    static ref DNS_RESOLVER: TokioAsyncResolver = {
-        let mut opts = ResolverOpts::default();
-        opts.validate = true;
-
-        TokioAsyncResolver::tokio(ResolverConfig::default(), opts)
-    };
-}
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -215,13 +192,10 @@ pub async fn parse(
     let input = input.trim();
 
     // Try to parse the destination as a bip353 address.
-    #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
-    let (bip353_parsed_input, is_bip353) = match bip353_parse(input, &DNS_RESOLVER).await {
+    let (bip353_parsed_input, is_bip353) = match bip353_parse(input).await {
         Some(value) => (value, true),
         None => (input.to_string(), false),
     };
-    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-    let (bip353_parsed_input, is_bip353) = (input.to_string(), false);
 
     if let Ok(input_type) = parse_core(&bip353_parsed_input).await {
         let input_type = if is_bip353 {
@@ -251,7 +225,6 @@ pub async fn parse(
     Err(anyhow!("Unrecognized input type"))
 }
 
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
     tuple_vector
         .iter()
@@ -259,7 +232,6 @@ fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
         .map(|(_, v)| v.to_string())
 }
 
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn parse_bip353_record(bip353_record: String) -> Option<String> {
     let (_, query_part) = bip353_record.split_once("?")?;
 
@@ -268,7 +240,6 @@ fn parse_bip353_record(bip353_record: String) -> Option<String> {
     get_by_key(&query_params, BOLT12_PREFIX).or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
 }
 
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn is_valid_bip353_record(decoded: &str) -> bool {
     if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
         error!(
@@ -282,7 +253,6 @@ fn is_valid_bip353_record(decoded: &str) -> bool {
     true
 }
 
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 fn extract_bip353_record(records: Vec<String>) -> Option<String> {
     let bip353_record = records
         .into_iter()
@@ -301,21 +271,13 @@ fn extract_bip353_record(records: Vec<String>) -> Option<String> {
     bip353_record.first().cloned()
 }
 
-#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
-async fn bip353_parse(
-    input: &str,
-    dns_resolver: &AsyncResolver<GenericConnector<TokioRuntimeProvider>>,
-) -> Option<String> {
+async fn bip353_parse(input: &str) -> Option<String> {
     let (local_part, domain) = input.split_once('@')?;
     let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
 
     // Query for TXT records of a domain
-    let bip353_record = match dns_resolver.txt_lookup(dns_name).await {
-        Ok(records) => {
-            let decoded_records: Vec<String> = records.iter().map(|r| r.to_string()).collect();
-
-            extract_bip353_record(decoded_records)?
-        }
+    let bip353_record = match dns_resolver::txt_lookup(dns_name).await {
+        Ok(records) => extract_bip353_record(records)?,
         Err(e) => {
             debug!("No BIP353 TXT records found: {}", e);
             return None;
