@@ -639,7 +639,6 @@ async fn resolve_lnurl(
 }
 
 /// Different kinds of inputs supported by [parse], including any relevant details extracted from the input
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub enum InputType {
     /// # Supported standards
@@ -764,7 +763,6 @@ impl From<LnUrlRequestData> for InputType {
 /// It represents the endpoint's parameters for the LNURL workflow.
 ///
 /// See <https://github.com/lnurl/luds/blob/luds/06.md>
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Deserialize, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct LnUrlPayRequestData {
@@ -848,7 +846,6 @@ pub struct MetadataItem {
 }
 
 /// Wrapped in a [BitcoinAddress], this is the result of [parse] when given a plain or BIP-21 BTC address.
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct BitcoinAddressData {
     pub address: String,

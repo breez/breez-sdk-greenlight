@@ -107,7 +107,6 @@ fn format_short_channel_id(id: u64) -> String {
     format!("{block_num}x{tx_num}x{tx_out}")
 }
 
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum Amount {
     Bitcoin {
@@ -142,7 +141,6 @@ impl TryFrom<lightning::offers::offer::Amount> for Amount {
     }
 }
 
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNOffer {
     /// String representation of the Bolt12 offer
@@ -159,7 +157,6 @@ pub struct LNOffer {
     pub paths: Vec<LnOfferBlindedPath>,
 }
 
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LnOfferBlindedPath {
     /// For each blinded hop, we store the node ID (pubkey as hex).
@@ -167,7 +164,6 @@ pub struct LnOfferBlindedPath {
 }
 
 /// Wrapper for a BOLT11 LN invoice
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct LNInvoice {
     pub bolt11: String,
@@ -193,7 +189,6 @@ impl LNInvoice {
 }
 
 /// Details of a specific hop in a larger route hint
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHintHop {
     /// The node_id of the non-target end of the route
@@ -213,7 +208,6 @@ pub struct RouteHintHop {
 }
 
 /// A route hint for a LN payment
-#[sdk_macros::tsify_wasm]
 #[derive(Clone, Default, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RouteHint {
     pub hops: Vec<RouteHintHop>,

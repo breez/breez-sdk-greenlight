@@ -127,7 +127,6 @@ pub mod model {
     use crate::prelude::*;
 
     /// Represents a LNURL-pay request.
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Debug, Serialize, Deserialize)]
     pub struct LnUrlPayRequest {
         /// The [LnUrlPayRequestData] returned by [crate::input_parser::parse]
@@ -153,14 +152,12 @@ pub mod model {
         EndpointError { data: LnUrlErrorData },
     }
 
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPayErrorData {
         pub payment_hash: String,
         pub reason: String,
     }
 
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Serialize, Deserialize, Debug)]
     pub struct LnUrlPaySuccessData {
         pub success_action: Option<SuccessActionProcessed>,
@@ -176,7 +173,6 @@ pub mod model {
     /// Payload of the AES success action, as received from the LNURL endpoint
     ///
     /// See [AesSuccessActionDataDecrypted] for a similar wrapper containing the decrypted payload
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     pub struct AesSuccessActionData {
         /// Contents description, up to 144 characters
@@ -190,14 +186,12 @@ pub mod model {
     }
 
     /// Result of decryption of [AesSuccessActionData] payload
-    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum AesSuccessActionDataResult {
         Decrypted { data: AesSuccessActionDataDecrypted },
         ErrorStatus { reason: String },
     }
 
-    #[sdk_macros::tsify_wasm]
     /// Wrapper for the decrypted [AesSuccessActionData] payload
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct AesSuccessActionDataDecrypted {
@@ -208,13 +202,11 @@ pub mod model {
         pub plaintext: String,
     }
 
-    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct MessageSuccessActionData {
         pub message: String,
     }
 
-    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub struct UrlSuccessActionData {
         /// Contents description, up to 144 characters
@@ -233,7 +225,6 @@ pub mod model {
     /// [SuccessAction] where contents are ready to be consumed by the caller
     ///
     /// Contents are identical to [SuccessAction], except for AES where the ciphertext is decrypted.
-    #[sdk_macros::tsify_wasm]
     #[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
     pub enum SuccessActionProcessed {
         /// See [SuccessAction::Aes] for received payload
@@ -252,7 +243,6 @@ pub mod model {
     ///
     /// Receiving any other (unsupported) success action type will result in a failed parsing,
     /// which will abort the LNURL-pay workflow, as per LUD-09.
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
     #[serde(rename_all = "camelCase")]
     #[serde(tag = "tag")]

@@ -139,7 +139,6 @@ pub mod model {
     /// It represents the endpoint's parameters for the LNURL workflow.
     ///
     /// See <https://github.com/lnurl/luds/blob/luds/04.md>
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlAuthRequestData {
         /// Hex encoded 32 bytes of challenge

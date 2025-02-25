@@ -1,88 +1,54 @@
-extern crate proc_macro;
+mod async_trait;
+mod testing;
+mod wasm_bindgen;
 
-use proc_macro2::TokenStream;
-use quote::quote;
+use proc_macro::TokenStream;
 
 #[proc_macro_attribute]
-pub fn async_trait(
-    _args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    let mut out = TokenStream::new();
-    out.extend(quote! { #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), async_trait::async_trait)] });
-    out.extend(quote! { #[cfg_attr(all(target_family = "wasm", target_os = "unknown"), async_trait::async_trait(?Send))] });
-    out.extend(TokenStream::from(input));
-    out.into()
+pub fn async_trait(args: TokenStream, input: TokenStream) -> TokenStream {
+    async_trait::async_trait(args, input)
 }
 
 #[proc_macro_attribute]
-pub fn async_test(
-    _args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    let mut out = TokenStream::new();
-    out.extend(quote! { #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)] });
-    out.extend(TokenStream::from(input));
-    out.into()
+pub fn async_test(args: TokenStream, input: TokenStream) -> TokenStream {
+    testing::async_test(args, input)
 }
 
 #[proc_macro_attribute]
-pub fn async_test_only_wasm(
-    _args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    let mut out = TokenStream::new();
-    out.extend(quote! { #[cfg_attr(all(target_family = "wasm", target_os = "unknown"), wasm_bindgen_test::wasm_bindgen_test)] });
-    out.extend(TokenStream::from(input));
-    out.into()
+pub fn async_test_only_wasm(args: TokenStream, input: TokenStream) -> TokenStream {
+    testing::async_test_only_wasm(args, input)
 }
 
 #[proc_macro_attribute]
-pub fn async_test_all(
-    _args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    let mut out = TokenStream::new();
-    out.extend(quote! { #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), tokio::test)] });
-    out.extend(quote! { #[cfg_attr(all(target_family = "wasm", target_os = "unknown"), wasm_bindgen_test::wasm_bindgen_test)] });
-    out.extend(TokenStream::from(input));
-    out.into()
+pub fn async_test_all(args: TokenStream, input: TokenStream) -> TokenStream {
+    testing::async_test_all(args, input)
 }
 
 #[proc_macro_attribute]
-pub fn test(
-    _args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    let mut out = TokenStream::new();
-    out.extend(
-        quote! { #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)] },
-    );
-    out.extend(TokenStream::from(input));
-    out.into()
+pub fn test(args: TokenStream, input: TokenStream) -> TokenStream {
+    testing::test(args, input)
 }
 
 #[proc_macro_attribute]
-pub fn test_all(
-    _args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    let mut out = TokenStream::new();
-    out.extend(
-        quote! { #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)] },
-    );
-    out.extend(quote! { #[cfg_attr(all(target_family = "wasm", target_os = "unknown"), wasm_bindgen_test::wasm_bindgen_test)] });
-    out.extend(TokenStream::from(input));
-    out.into()
+pub fn test_all(args: TokenStream, input: TokenStream) -> TokenStream {
+    testing::test_all(args, input)
 }
 
+/// Attribute macro to mirror the external struct/enum in WASM
+///
+/// ```rust
+/// #[sdk_macros::extern_wasm_bindgen(sdk_common::prelude::RouteHint)]
+/// pub struct RouteHint {
+///     pub hops: Vec<RouteHintHop>,
+/// }
+/// ```
+/// Generates in WASM typescript:
+/// ```typescript
+/// export interface RouteHint {
+///     hops: RouteHintHop[];
+/// }
+/// ```
 #[proc_macro_attribute]
-pub fn tsify_wasm(
-    _args: proc_macro::TokenStream,
-    input: proc_macro::TokenStream,
-) -> proc_macro::TokenStream {
-    let mut out = TokenStream::new();
-    out.extend(quote! { #[cfg_attr(all(target_family = "wasm", target_os = "unknown"), derive(tsify_next::Tsify))] });
-    out.extend(TokenStream::from(input));
-    out.into()
+pub fn extern_wasm_bindgen(args: TokenStream, input: TokenStream) -> TokenStream {
+    wasm_bindgen::extern_wasm_bindgen(args, input)
 }

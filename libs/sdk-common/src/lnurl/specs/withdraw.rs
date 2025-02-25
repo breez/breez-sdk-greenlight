@@ -72,7 +72,6 @@ pub mod model {
 
     use crate::prelude::*;
 
-    #[sdk_macros::tsify_wasm]
     #[derive(Debug, Serialize, Deserialize)]
     pub struct LnUrlWithdrawRequest {
         /// Request data containing information on how to call the lnurl withdraw
@@ -94,7 +93,6 @@ pub mod model {
     /// It represents the endpoint's parameters for the LNURL workflow.
     ///
     /// See <https://github.com/lnurl/luds/blob/luds/03.md>
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     #[serde(rename_all = "camelCase")]
     pub struct LnUrlWithdrawRequestData {
@@ -108,7 +106,6 @@ pub mod model {
     }
 
     /// [LnUrlCallbackStatus] specific to LNURL-withdraw, where the success case contains the invoice.
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Serialize)]
     pub enum LnUrlWithdrawResult {
         Ok { data: LnUrlWithdrawSuccessData },
@@ -116,7 +113,6 @@ pub mod model {
         ErrorStatus { data: LnUrlErrorData },
     }
 
-    #[sdk_macros::tsify_wasm]
     #[derive(Clone, Deserialize, Debug, Serialize)]
     pub struct LnUrlWithdrawSuccessData {
         pub invoice: LNInvoice,
