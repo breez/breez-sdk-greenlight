@@ -13,6 +13,11 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+# Explicitly allow clippy warnings present in the generated breez_sdk.uniffi.rs
+[lints.clippy]
+uninlined-format-args = "allow"
+useless_conversion = "allow"
+
 [dependencies]
 anyhow = { workspace = true }
 breez-sdk-core = { path = "../sdk-core" }
