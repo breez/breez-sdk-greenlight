@@ -273,9 +273,14 @@ fn extract_bip353_record(records: Vec<String>) -> Option<String> {
 
 async fn bip353_parse(input: &str) -> Option<String> {
     let (local_part, domain) = input.split_once('@')?;
-    let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
-
+    // Validate both parts are within the DNS label size limit.
+    // See <https://datatracker.ietf.org/doc/html/rfc1035#section-2.3.4>
+    if local_part.len() > 63 || domain.len() > 63 {
+        return None;
+    }
+    
     // Query for TXT records of a domain
+    let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
     let bip353_record = match dns_resolver::txt_lookup(dns_name).await {
         Ok(records) => extract_bip353_record(records)?,
         Err(e) => {
