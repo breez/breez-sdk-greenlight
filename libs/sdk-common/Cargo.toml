@@ -42,6 +42,7 @@ tonic = { workspace = true, features = [
 ] }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
+dns-parser = "0.8.0"
 getrandom = { version = "0.2.14", features = ["js"] }
 prost = "^0.13"
 tonic = { version = "0.12", default-features = false, features = ["codegen", "prost"] }

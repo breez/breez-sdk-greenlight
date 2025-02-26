@@ -278,7 +278,7 @@ async fn bip353_parse(input: &str) -> Option<String> {
     if local_part.len() > 63 || domain.len() > 63 {
         return None;
     }
-    
+
     // Query for TXT records of a domain
     let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
     let bip353_record = match dns_resolver::txt_lookup(dns_name).await {
