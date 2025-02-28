@@ -37,10 +37,10 @@ pub async fn validate_lnurl_withdraw(
     // Send invoice to the LNURL-w endpoint via the callback
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
 
-    let (json, _) = rest_client
+    let response = rest_client
         .get_and_log_response(&callback_url, false)
         .await?;
-    let withdraw_status = match parse_json(&json) {
+    let withdraw_status = match parse_json(&response) {
         Ok(LnUrlCallbackStatus::Ok) => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawSuccessData { invoice },
         },

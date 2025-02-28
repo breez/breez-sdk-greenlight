@@ -49,7 +49,7 @@ impl RestClient for MockRestClient {
         &self,
         url: &str,
         enforce_status_check: bool,
-    ) -> Result<(String, StatusCode), ServiceConnectivityError> {
+    ) -> Result<String, ServiceConnectivityError> {
         let mut responses = self.responses.lock().unwrap();
         let response = responses.pop_front().unwrap();
         println!("Pop GET response: {response:?}");
@@ -63,7 +63,7 @@ impl RestClient for MockRestClient {
             ));
         }
 
-        Ok((raw_body, status))
+        Ok(raw_body)
     }
 
     async fn post_and_log_response(

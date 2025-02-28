@@ -52,10 +52,10 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
     callback_url
         .query_pairs_mut()
         .append_pair("key", &xpub.public_key.to_hex());
-    let (json, _) = rest_client
+    let response = rest_client
         .get_and_log_response(callback_url.as_ref(), false)
         .await?;
-    Ok(parse_json(&json)?)
+    Ok(parse_json(&response)?)
 }
 
 pub fn validate_request(

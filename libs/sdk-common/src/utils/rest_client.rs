@@ -1,5 +1,5 @@
 use log::*;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use std::{collections::HashMap, time::Duration};
 
 use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
@@ -19,7 +19,7 @@ pub trait RestClient: Send + Sync {
         &self,
         url: &str,
         enforce_status_check: bool,
-    ) -> Result<(String, StatusCode), ServiceConnectivityError>;
+    ) -> Result<String, ServiceConnectivityError>;
 
     /// Makes a POST request, and logs on DEBUG.
     /// ### Arguments
@@ -52,7 +52,7 @@ impl RestClient for ReqwestRestClient {
         &self,
         url: &str,
         enforce_status_check: bool,
-    ) -> Result<(String, StatusCode), ServiceConnectivityError> {
+    ) -> Result<String, ServiceConnectivityError> {
         debug!("Making GET request to: {url}");
 
         let response = self
@@ -74,7 +74,7 @@ impl RestClient for ReqwestRestClient {
             ));
         }
 
-        Ok((raw_body, status))
+        Ok(raw_body)
     }
 
     async fn post_and_log_response(

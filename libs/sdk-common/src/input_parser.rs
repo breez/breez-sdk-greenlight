@@ -33,7 +33,6 @@ const BIP353_PREFIX: &str = "bitcoin:";
 ///
 /// #[tokio::main]
 /// async fn main() {
-//
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd", None).await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000", None).await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello", None).await, Ok(BitcoinAddress{address: _}) ));
@@ -51,26 +50,24 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ## BOLT 11 invoices
 ///
 /// ```
-/// use std::sync::Arc;
-/// use sdk_common::prelude::{InputType::*, parse, ReqwestRestClient, RestClient};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
 ///     let invoice = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
 ///     assert!(matches!( parse(invoice, None).await, Ok(Bolt11{invoice: _}) ));
-///     assert!(matches!( parse(&format!("lightning:{}", invoice), None).await, Ok(Bolt11{invoice: _}) ));
+///     assert!(matches!( parse( &format!("lightning:{}", invoice), None).await, Ok(Bolt11{invoice: _}) ));
 ///
 ///     // BIP 21 with LN fallback parses to a LN invoice
 ///     let btc_address = "1andreas3batLhQa2FawWjeyjCqyBzypd";
-///     assert!(matches!( parse(&format!("bitcoin:{}?lightning={}", btc_address, invoice), None).await, Ok(Bolt11{invoice: _}) ));
+///     assert!(matches!( parse( &format!("bitcoin:{}?lightning={}", btc_address, invoice), None).await, Ok(Bolt11{invoice: _}) ));
 /// }
 /// ```
 ///
 /// ## Web URLs
 ///
 /// ```
-/// use std::sync::Arc;
-/// use sdk_common::prelude::{InputType::*, parse, ReqwestRestClient, RestClient};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -83,8 +80,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### Web URLs with `lightning` query param with an LNURL value.
 ///
 /// ```no_run
-/// use std::sync::Arc;
-/// use sdk_common::prelude::{InputType::*, parse, ReqwestRestClient, RestClient};
+/// use sdk_common::prelude::{InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -100,8 +96,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### LNURL pay request
 ///
 /// ```no_run
-/// use std::sync::Arc;
-/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse, ReqwestRestClient, RestClient};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 /// use anyhow::Result;
 ///
 /// #[tokio::main]
@@ -129,12 +124,13 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### LNURL withdraw request
 ///
 /// ```no_run
-/// use std::sync::Arc;
-/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse, ReqwestRestClient, RestClient};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
 ///     let lnurl_withdraw_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
+///
+///     assert!(matches!( parse(lnurl_withdraw_url, None).await, Ok(LnUrlWithdraw{data: _}) ));
 ///
 ///     if let Ok(LnUrlWithdraw{data: wd}) = parse(lnurl_withdraw_url, None).await {
 ///         assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
@@ -151,12 +147,13 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### LNURL auth request
 ///
 /// ```no_run
-/// use std::sync::Arc;
-/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse, ReqwestRestClient, RestClient};
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
 ///     let lnurl_auth_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgeqgntfgu";
+///
+///     assert!(matches!( parse(lnurl_auth_url, None).await, Ok(LnUrlAuth{data: _}) ));
 ///
 ///     if let Ok(LnUrlAuth{data: ad}) = parse(lnurl_auth_url, None).await {
 ///         assert_eq!(ad.k1, "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822");
@@ -167,8 +164,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ## External input parsing
 ///
 /// ```no_run
-/// use std::sync::Arc;
-/// use sdk_common::prelude::{ExternalInputParser, InputType::*, parse, ReqwestRestClient, RestClient};
+/// use sdk_common::prelude::{ExternalInputParser, InputType::*, parse};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -410,8 +406,8 @@ async fn parse_external(
         let parser_url = parser.parser_url.replacen("<input>", &urlsafe_input, 1);
 
         // Make request
-        let parsed_value = match rest_client.get_and_log_response(&parser_url, true).await {
-            Ok((t, _)) => t,
+        let response = match rest_client.get_and_log_response(&parser_url, true).await {
+            Ok(response) => response,
             Err(e) => {
                 error!("Request to external input parser {parser:?} failed: {e}");
                 continue;
@@ -419,7 +415,7 @@ async fn parse_external(
         };
 
         // Try to parse as LnUrlRequestData
-        if let Ok(lnurl_data) = serde_json::from_str::<LnUrlRequestData>(&parsed_value) {
+        if let Ok(lnurl_data) = serde_json::from_str::<LnUrlRequestData>(&response) {
             let domain = url::Url::parse(&parser_url)
                 .ok()
                 .and_then(|url| url.host_str().map(|s| s.to_string()))
@@ -437,7 +433,7 @@ async fn parse_external(
         }
 
         // Check other input types
-        if let Ok(input_type) = parse_core(rest_client.clone(), &parsed_value).await {
+        if let Ok(input_type) = parse_core(rest_client.clone(), &response).await {
             return Ok(input_type);
         }
     }
@@ -596,11 +592,11 @@ async fn resolve_lnurl(
         });
     }
 
-    let (json, _) = rest_client
+    let response = rest_client
         .get_and_log_response(&lnurl_endpoint, false)
         .await?;
     let lnurl_data: LnUrlRequestData =
-        parse_json(&json).map_err(|_| anyhow!("Failed to parse response"))?;
+        parse_json(&response).map_err(|_| anyhow!("Failed to parse response"))?;
     let temp = lnurl_data.into();
     let temp = match temp {
         // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint

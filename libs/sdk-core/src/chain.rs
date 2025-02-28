@@ -341,35 +341,35 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
-        let (json, _) = self
+        let response = self
             .rest_client
             .get_and_log_response(&format!("{}/v1/fees/recommended", self.base_url), true)
             .await?;
-        Ok(parse_json(&json)?)
+        Ok(parse_json(&response)?)
     }
 
     async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
-        let (json, _) = self
+        let response = self
             .rest_client
             .get_and_log_response(&format!("{}/address/{address}/txs", self.base_url), true)
             .await?;
-        Ok(parse_json(&json)?)
+        Ok(parse_json(&response)?)
     }
 
     async fn current_tip(&self) -> SdkResult<u32> {
-        let (json, _) = self
+        let response = self
             .rest_client
             .get_and_log_response(&format!("{}/blocks/tip/height", self.base_url), true)
             .await?;
-        Ok(parse_json(&json)?)
+        Ok(parse_json(&response)?)
     }
 
     async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
-        let (json, _) = self
+        let response = self
             .rest_client
             .get_and_log_response(&format!("{}/tx/{txid}/outspends", self.base_url), true)
             .await?;
-        Ok(parse_json(&json)?)
+        Ok(parse_json(&response)?)
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> SdkResult<String> {

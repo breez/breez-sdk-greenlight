@@ -226,11 +226,11 @@ impl BoltzApi {
     }
 
     pub async fn reverse_swap_pair_info(&self) -> ReverseSwapResult<ReverseSwapPairInfo> {
-        let (json, _) = self
+        let response = self
             .rest_client
             .get_and_log_response(GET_PAIRS_ENDPOINT, true)
             .await?;
-        let pairs: Pairs = parse_json(&json)?;
+        let pairs: Pairs = parse_json(&response)?;
         match pairs.pairs.get("BTC/BTC") {
             None => Err(ReverseSwapError::generic("BTC pair not found")),
             Some(btc_pair) => {
