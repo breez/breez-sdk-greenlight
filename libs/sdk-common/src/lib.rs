@@ -48,5 +48,7 @@ pub mod prelude {
     pub use crate::lnurl::specs::withdraw::*;
     pub use crate::lnurl::*;
     pub use crate::model::*;
+    #[cfg(feature = "test-utils")]
+    pub use crate::test_utils::mock_rest_client::*;
     pub use crate::utils::rest_client::*;
 }

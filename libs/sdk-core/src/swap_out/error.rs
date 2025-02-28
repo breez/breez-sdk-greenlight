@@ -1,3 +1,5 @@
+use sdk_common::prelude::ServiceConnectivityError;
+
 use crate::{
     bitcoin::{hashes, secp256k1},
     error::SdkError,
@@ -87,6 +89,12 @@ impl From<PersistError> for ReverseSwapError {
 impl From<reqwest::Error> for ReverseSwapError {
     fn from(err: reqwest::Error) -> Self {
         Self::Generic(err.to_string())
+    }
+}
+
+impl From<ServiceConnectivityError> for ReverseSwapError {
+    fn from(value: ServiceConnectivityError) -> Self {
+        Self::ServiceConnectivity(value.err)
     }
 }
 

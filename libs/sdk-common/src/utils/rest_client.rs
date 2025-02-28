@@ -1,84 +1,114 @@
 use log::*;
-use reqwest::StatusCode;
-use std::time::Duration;
+use reqwest::{Client, StatusCode};
+use std::{collections::HashMap, time::Duration};
 
 use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// Creates an HTTP client with a built-in connection timeout
-pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError> {
-    reqwest::Client::builder().build().map_err(Into::into)
+#[sdk_macros::async_trait]
+pub trait RestClient: Send + Sync {
+    /// Makes a GET request and logs on DEBUG.
+    /// ### Arguments
+    /// - `url`: the URL on which GET will be called
+    /// - `enforce_status_check`: if true, the HTTP status code is checked in addition to trying to
+    ///    parse the payload. In this case, an HTTP error code will automatically cause this function to
+    ///    return `Err`, regardless of the payload. If false, the result type will be determined only
+    ///    by the result of parsing the payload into the desired target type.
+    async fn get_and_log_response(
+        &self,
+        url: &str,
+        enforce_status_check: bool,
+    ) -> Result<(String, StatusCode), ServiceConnectivityError>;
+
+    /// Makes a POST request, and logs on DEBUG.
+    /// ### Arguments
+    /// - `url`: the URL on which POST will be called
+    /// - `headers`: the optional POST headers
+    /// - `body`: the optional POST body
+    async fn post_and_log_response(
+        &self,
+        url: &str,
+        headers: Option<HashMap<String, String>>,
+        body: Option<String>,
+    ) -> Result<String, ServiceConnectivityError>;
 }
 
-pub async fn post_and_log_response(
-    url: &str,
-    body: Option<String>,
-) -> Result<String, ServiceConnectivityError> {
-    debug!("Making POST request to: {url}");
-
-    let mut req = get_reqwest_client()?.post(url).timeout(REQUEST_TIMEOUT);
-    if let Some(body) = body {
-        req = req.body(body);
+pub struct ReqwestRestClient {
+    client: Client,
+}
+impl ReqwestRestClient {
+    pub fn new() -> Result<Self, ServiceConnectivityError> {
+        let client = Client::builder()
+            .build()
+            .map_err(Into::<ServiceConnectivityError>::into)?;
+        Ok(ReqwestRestClient { client })
     }
-    let response = req.send().await?;
-    let status = response.status();
-    let raw_body = response.text().await?;
-    debug!("Received response, status: {status}");
-    trace!("raw response body: {raw_body}");
-
-    Ok(raw_body)
 }
 
-/// Makes a GET request to the specified `url` and logs on DEBUG:
-/// - the URL
-/// - the raw response body
-/// - the response HTTP status code
-pub async fn get_and_log_response(
-    url: &str,
-) -> Result<(String, StatusCode), ServiceConnectivityError> {
-    debug!("Making GET request to: {url}");
+#[sdk_macros::async_trait]
+impl RestClient for ReqwestRestClient {
+    async fn get_and_log_response(
+        &self,
+        url: &str,
+        enforce_status_check: bool,
+    ) -> Result<(String, StatusCode), ServiceConnectivityError> {
+        debug!("Making GET request to: {url}");
 
-    let response = get_reqwest_client()?
-        .get(url)
-        .timeout(REQUEST_TIMEOUT)
-        .send()
-        .await?;
-    let status = response.status();
-    let raw_body = response.text().await?;
-    debug!("Received response, status: {status}");
-    trace!("raw response body: {raw_body}");
+        let response = self
+            .client
+            .get(url)
+            .timeout(REQUEST_TIMEOUT)
+            .send()
+            .await?;
+        let status = response.status();
+        let raw_body = response.text().await?;
+        debug!("Received response, status: {status}");
+        trace!("raw response body: {raw_body}");
+        if enforce_status_check && !status.is_success() {
+            let err = format!("GET request {url} failed with status: {status}");
+            error!("{err}");
+            return Err(ServiceConnectivityError::new(
+                ServiceConnectivityErrorKind::Status,
+                err,
+            ));
+        }
 
-    Ok((raw_body, status))
+        Ok((raw_body, status))
+    }
+
+    async fn post_and_log_response(
+        &self,
+        url: &str,
+        headers: Option<HashMap<String, String>>,
+        body: Option<String>,
+    ) -> Result<String, ServiceConnectivityError> {
+        debug!("Making POST request to: {url}");
+
+        let mut req = self.client.post(url).timeout(REQUEST_TIMEOUT);
+        if let Some(headers) = headers {
+            for (key, value) in headers.iter() {
+                req = req.header(key, value);
+            }
+        }
+        if let Some(body) = body {
+            req = req.body(body);
+        }
+        let response = req.send().await?;
+        let status = response.status();
+        let raw_body = response.text().await?;
+        debug!("Received response, status: {status}");
+        trace!("raw response body: {raw_body}");
+
+        Ok(raw_body)
+    }
 }
 
-/// Wrapper around [get_and_log_response] that, in addition, parses the payload into an expected type.
-///
-/// ### Arguments
-///
-/// - `url`: the URL on which GET will be called
-/// - `enforce_status_check`: if true, the HTTP status code is checked in addition to trying to
-///    parse the payload. In this case, an HTTP error code will automatically cause this function to
-///    return `Err`, regardless of the payload. If false, the result type will be determined only
-///    by the result of parsing the payload into the desired target type.
-pub async fn get_parse_and_log_response<T>(
-    url: &str,
-    enforce_status_check: bool,
-) -> Result<T, ServiceConnectivityError>
+pub fn parse_json<T>(json: &str) -> Result<T, ServiceConnectivityError>
 where
     for<'a> T: serde::de::Deserialize<'a>,
 {
-    let (raw_body, status) = get_and_log_response(url).await?;
-    if enforce_status_check && !status.is_success() {
-        let err = format!("GET request {url} failed with status: {status}");
-        error!("{err}");
-        return Err(ServiceConnectivityError::new(
-            ServiceConnectivityErrorKind::Status,
-            err,
-        ));
-    }
-
-    serde_json::from_str::<T>(&raw_body).map_err(|e| {
+    serde_json::from_str::<T>(json).map_err(|e| {
         ServiceConnectivityError::new(ServiceConnectivityErrorKind::Json, e.to_string())
     })
 }

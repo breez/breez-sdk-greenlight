@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use std::ops::Not;
 use std::str::FromStr;
+use std::{collections::HashMap, sync::Arc};
 
 use ::bip21::Uri;
 use anyhow::{anyhow, bail, Context, Result};
@@ -33,6 +33,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 ///
 /// #[tokio::main]
 /// async fn main() {
+//
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd", None).await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000", None).await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello", None).await, Ok(BitcoinAddress{address: _}) ));
@@ -50,24 +51,26 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ## BOLT 11 invoices
 ///
 /// ```
-/// use sdk_common::prelude::{InputType::*, parse};
+/// use std::sync::Arc;
+/// use sdk_common::prelude::{InputType::*, parse, ReqwestRestClient, RestClient};
 ///
 /// #[tokio::main]
 /// async fn main() {
 ///     let invoice = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
 ///     assert!(matches!( parse(invoice, None).await, Ok(Bolt11{invoice: _}) ));
-///     assert!(matches!( parse( &format!("lightning:{}", invoice), None).await, Ok(Bolt11{invoice: _}) ));
+///     assert!(matches!( parse(&format!("lightning:{}", invoice), None).await, Ok(Bolt11{invoice: _}) ));
 ///
 ///     // BIP 21 with LN fallback parses to a LN invoice
 ///     let btc_address = "1andreas3batLhQa2FawWjeyjCqyBzypd";
-///     assert!(matches!( parse( &format!("bitcoin:{}?lightning={}", btc_address, invoice), None).await, Ok(Bolt11{invoice: _}) ));
+///     assert!(matches!( parse(&format!("bitcoin:{}?lightning={}", btc_address, invoice), None).await, Ok(Bolt11{invoice: _}) ));
 /// }
 /// ```
 ///
 /// ## Web URLs
 ///
 /// ```
-/// use sdk_common::prelude::{InputType::*, parse};
+/// use std::sync::Arc;
+/// use sdk_common::prelude::{InputType::*, parse, ReqwestRestClient, RestClient};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -80,7 +83,8 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### Web URLs with `lightning` query param with an LNURL value.
 ///
 /// ```no_run
-/// use sdk_common::prelude::{InputType::*, parse};
+/// use std::sync::Arc;
+/// use sdk_common::prelude::{InputType::*, parse, ReqwestRestClient, RestClient};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -96,7 +100,8 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### LNURL pay request
 ///
 /// ```no_run
-/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
+/// use std::sync::Arc;
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse, ReqwestRestClient, RestClient};
 /// use anyhow::Result;
 ///
 /// #[tokio::main]
@@ -104,10 +109,10 @@ const BIP353_PREFIX: &str = "bitcoin:";
 ///     let lnurl_pay_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
 ///
 ///     assert!(matches!( parse(lnurl_pay_url, None).await, Ok(LnUrlPay{data: _, bip353_address: _}) ));
-///     // assert!(matches!( parse("lnurlp://domain.com/lnurl-pay?key=val").await, Ok(LnUrlPay{data: _}) ));
-///     // assert!(matches!( parse("lightning@address.com").await, Ok(LnUrlPay{data: _}) ));
+///     // assert!(matches!( parse("lnurlp://domain.com/lnurl-pay?key=val", None).await, Ok(LnUrlPay{data: _}) ));
+///     // assert!(matches!( parse("lightning@address.com", None).await, Ok(LnUrlPay{data: _}) ));
 ///
-///     if let Ok(LnUrlPay{data: pd, bip353_address}) = parse(lnurl_pay_url,None).await {
+///     if let Ok(LnUrlPay{data: pd, bip353_address}) = parse(lnurl_pay_url, None).await {
 ///         assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
 ///         assert_eq!(pd.max_sendable, 16000); // Max sendable amount, in msats
 ///         assert_eq!(pd.max_sendable_sats(), 16); // Max sendable amount, in sats
@@ -124,16 +129,14 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### LNURL withdraw request
 ///
 /// ```no_run
-/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
+/// use std::sync::Arc;
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse, ReqwestRestClient, RestClient};
 ///
 /// #[tokio::main]
 /// async fn main() {
 ///     let lnurl_withdraw_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
 ///
-///     assert!(matches!( parse(lnurl_withdraw_url, None).await, Ok(LnUrlWithdraw{data: _}) ));
-///     // assert!(matches!( parse("lnurlw://domain.com/lnurl-withdraw?key=val").await, Ok(LnUrlWithdraw{data: _} ));
-///
-///     if let Ok(LnUrlWithdraw{data: wd}) = parse(lnurl_withdraw_url,None).await {
+///     if let Ok(LnUrlWithdraw{data: wd}) = parse(lnurl_withdraw_url, None).await {
 ///         assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
 ///         assert_eq!(wd.k1, "37b4c919f871c090830cc47b92a544a30097f03430bc39670b8ec0da89f01a81");
 ///         assert_eq!(wd.min_withdrawable, 3000); // Min withdrawable amount, in msats
@@ -148,16 +151,14 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ### LNURL auth request
 ///
 /// ```no_run
-/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
+/// use std::sync::Arc;
+/// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse, ReqwestRestClient, RestClient};
 ///
 /// #[tokio::main]
 /// async fn main() {
 ///     let lnurl_auth_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgeqgntfgu";
 ///
-///     assert!(matches!( parse(lnurl_auth_url, None).await, Ok(LnUrlAuth{data: _}) ));
-///     // assert!(matches!( parse("keyauth://domain.com/auth?key=val").await, Ok(LnUrlAuth{data: _}) ));
-///
-///     if let Ok(LnUrlAuth{data: ad}) = parse(lnurl_auth_url,None).await {
+///     if let Ok(LnUrlAuth{data: ad}) = parse(lnurl_auth_url, None).await {
 ///         assert_eq!(ad.k1, "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822");
 ///     }
 /// }
@@ -166,7 +167,8 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ## External input parsing
 ///
 /// ```no_run
-/// use sdk_common::prelude::{InputType::*, parse, ExternalInputParser};
+/// use std::sync::Arc;
+/// use sdk_common::prelude::{ExternalInputParser, InputType::*, parse, ReqwestRestClient, RestClient};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -189,6 +191,15 @@ pub async fn parse(
     input: &str,
     external_input_parsers: Option<&[ExternalInputParser]>,
 ) -> Result<InputType> {
+    let rest_client: Arc<dyn RestClient> = Arc::new(ReqwestRestClient::new()?);
+    parse_with_rest_client(rest_client, input, external_input_parsers).await
+}
+
+pub async fn parse_with_rest_client(
+    rest_client: Arc<dyn RestClient>,
+    input: &str,
+    external_input_parsers: Option<&[ExternalInputParser]>,
+) -> Result<InputType> {
     let input = input.trim();
 
     // Try to parse the destination as a bip353 address.
@@ -197,7 +208,7 @@ pub async fn parse(
         None => (input.to_string(), false),
     };
 
-    if let Ok(input_type) = parse_core(&bip353_parsed_input).await {
+    if let Ok(input_type) = parse_core(rest_client.clone(), &bip353_parsed_input).await {
         let input_type = if is_bip353 {
             match input_type {
                 #[cfg(feature = "liquid")]
@@ -219,7 +230,7 @@ pub async fn parse(
     }
 
     if let Some(external_input_parsers) = external_input_parsers {
-        return parse_external(input, external_input_parsers).await;
+        return parse_external(rest_client.clone(), input, external_input_parsers).await;
     }
 
     Err(anyhow!("Unrecognized input type"))
@@ -293,7 +304,7 @@ async fn bip353_parse(input: &str) -> Option<String> {
 }
 
 /// Core parse implementation
-async fn parse_core(input: &str) -> Result<InputType> {
+async fn parse_core(rest_client: Arc<dyn RestClient>, input: &str) -> Result<InputType> {
     // Covers BIP 21 URIs and simple onchain BTC addresses (which are valid BIP 21 with the 'bitcoin:' prefix)
     if let Ok(bip21_uri) = prepend_if_missing("bitcoin:", input).parse::<Uri<'_>>() {
         let bitcoin_addr_data = bip21_uri.into();
@@ -357,7 +368,8 @@ async fn parse_core(input: &str) -> Result<InputType> {
                 .find(|p| p.0 == "lightning" || p.0 == "LIGHTNING")
             {
                 if let Ok((domain, lnurl_endpoint, ln_address)) = lnurl_decode(&value) {
-                    return resolve_lnurl(domain, lnurl_endpoint, ln_address).await;
+                    return resolve_lnurl(rest_client.clone(), domain, lnurl_endpoint, ln_address)
+                        .await;
                 }
             }
             return Ok(InputType::Url { url: input.into() });
@@ -370,7 +382,7 @@ async fn parse_core(input: &str) -> Result<InputType> {
         .or(input.strip_prefix("LIGHTNING:"))
         .unwrap_or(input);
     if let Ok((domain, lnurl_endpoint, ln_address)) = lnurl_decode(input) {
-        return resolve_lnurl(domain, lnurl_endpoint, ln_address).await;
+        return resolve_lnurl(rest_client, domain, lnurl_endpoint, ln_address).await;
     }
 
     Err(anyhow!("Unrecognized input type"))
@@ -378,6 +390,7 @@ async fn parse_core(input: &str) -> Result<InputType> {
 
 /// Parse input using provided external parsers.
 async fn parse_external(
+    rest_client: Arc<dyn RestClient>,
     input: &str,
     external_input_parsers: &[ExternalInputParser],
 ) -> Result<InputType> {
@@ -395,11 +408,10 @@ async fn parse_external(
         let urlsafe_input =
             percent_encoding::utf8_percent_encode(input, NON_ALPHANUMERIC).to_string();
         let parser_url = parser.parser_url.replacen("<input>", &urlsafe_input, 1);
-        let parser_url = maybe_replace_host_with_mock_test_host(parser_url)?;
 
         // Make request
-        let parsed_value = match request_external_parsing(&parser_url).await {
-            Ok(t) => t,
+        let parsed_value = match rest_client.get_and_log_response(&parser_url, true).await {
+            Ok((t, _)) => t,
             Err(e) => {
                 error!("Request to external input parser {parser:?} failed: {e}");
                 continue;
@@ -425,17 +437,12 @@ async fn parse_external(
         }
 
         // Check other input types
-        if let Ok(input_type) = parse_core(&parsed_value).await {
+        if let Ok(input_type) = parse_core(rest_client.clone(), &parsed_value).await {
             return Ok(input_type);
         }
     }
 
     Err(anyhow!("Unrecognized input type"))
-}
-
-async fn request_external_parsing(url: &str) -> reqwest::Result<String> {
-    let response = reqwest::get(url).await?.error_for_status()?;
-    response.text().await
 }
 
 /// Prepends the given prefix to the input, if the input doesn't already start with it
@@ -469,6 +476,9 @@ fn ln_address_decode(ln_address: &str) -> Result<(String, String, String)> {
         // It is safe to downcase the domains since they are case-insensitive.
         // https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2
         let domain = split[1].to_lowercase();
+        if !domain.contains('.') {
+            return Err(anyhow!("Invalid domain"));
+        }
 
         if !user
             .chars()
@@ -573,8 +583,9 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
 }
 
 async fn resolve_lnurl(
+    rest_client: Arc<dyn RestClient>,
     domain: String,
-    mut lnurl_endpoint: String,
+    lnurl_endpoint: String,
     ln_address: Option<String>,
 ) -> Result<InputType> {
     // For LNURL-auth links, their type is already known if the link contains the login tag
@@ -585,10 +596,11 @@ async fn resolve_lnurl(
         });
     }
 
-    lnurl_endpoint = maybe_replace_host_with_mock_test_host(lnurl_endpoint)?;
-    let lnurl_data: LnUrlRequestData = get_parse_and_log_response(&lnurl_endpoint, false)
-        .await
-        .map_err(|_| anyhow!("Failed to parse response"))?;
+    let (json, _) = rest_client
+        .get_and_log_response(&lnurl_endpoint, false)
+        .await?;
+    let lnurl_data: LnUrlRequestData =
+        parse_json(&json).map_err(|_| anyhow!("Failed to parse response"))?;
     let temp = lnurl_data.into();
     let temp = match temp {
         // Modify the LnUrlPay payload by adding the domain of the LNURL endpoint
@@ -897,35 +909,30 @@ pub(crate) mod tests {
     use bitcoin::bech32;
     use bitcoin::bech32::{ToBase32, Variant};
     use bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-    use once_cell::sync::Lazy;
+    use serde_json::json;
 
     use crate::input_parser::*;
-    use crate::test_utils::mock_server::*;
+    use crate::test_utils::mock_rest_client::{MockResponse, MockRestClient};
 
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
 
-    /// Mock server used in tests. As the server is shared between tests,
-    /// we should not mock the same url twice with two different outputs,
-    /// one way to do so is to add a random string that will be a differentiator
-    /// in the URL.
-    pub(crate) static MOCK_HTTP_SERVER: Lazy<MockServer> = Lazy::new(|| {
-        let opts = ServerOpts {
-            host: "127.0.0.1",
-            port: 8080,
-        };
-        MockServer::new_with_opts(opts)
-    });
-
     #[sdk_macros::async_test_all]
     async fn test_generic_invalid_input() -> Result<(), Box<dyn std::error::Error>> {
-        assert!(parse("invalid_input", None).await.is_err());
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+
+        assert!(parse_with_rest_client(rest_client, "invalid_input", None)
+            .await
+            .is_err());
 
         Ok(())
     }
 
     #[sdk_macros::async_test_all]
     async fn test_trim_input() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         for address in [
             r#"1andreas3batLhQa2FawWjeyjCqyBzypd"#,
             r#"1andreas3batLhQa2FawWjeyjCqyBzypd "#,
@@ -938,7 +945,7 @@ pub(crate) mod tests {
             "#,
         ] {
             assert!(matches!(
-                parse(address, None).await?,
+                parse_with_rest_client(rest_client.clone(), address, None).await?,
                 InputType::BitcoinAddress { address: _ }
             ));
         }
@@ -947,6 +954,8 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_bitcoin_address() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         for address in [
             "1andreas3batLhQa2FawWjeyjCqyBzypd",
             "12c6DSiU4Rq3P4ZxziKxzrL5LmMBrzjrJX",
@@ -954,7 +963,7 @@ pub(crate) mod tests {
             "3CJ7cNxChpcUykQztFSqKFrMVQDN4zTTsp",
         ] {
             assert!(matches!(
-                parse(address, None).await?,
+                parse_with_rest_client(rest_client.clone(), address, None).await?,
                 InputType::BitcoinAddress { address: _ }
             ));
         }
@@ -963,19 +972,29 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_bitcoin_address_bip21() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         // Addresses from https://github.com/Kixunil/bip21/blob/master/src/lib.rs
 
         // Valid address with the `bitcoin:` prefix
-        assert!(parse("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd", None)
-            .await
-            .is_ok());
-        assert!(parse("bitcoin:testinvalidaddress", None).await.is_err());
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
+            "bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd",
+            None
+        )
+        .await
+        .is_ok());
+        assert!(
+            parse_with_rest_client(rest_client.clone(), "bitcoin:testinvalidaddress", None)
+                .await
+                .is_err()
+        );
 
         let addr = "1andreas3batLhQa2FawWjeyjCqyBzypd";
 
         // Address with amount
         let addr_1 = format!("bitcoin:{addr}?amount=0.00002000");
-        match parse(&addr_1, None).await? {
+        match parse_with_rest_client(rest_client.clone(), &addr_1, None).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
@@ -991,7 +1010,7 @@ pub(crate) mod tests {
         // Address with amount and label
         let label = "test-label";
         let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&label={label}");
-        match parse(&addr_2, None).await? {
+        match parse_with_rest_client(rest_client.clone(), &addr_2, None).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
@@ -1007,7 +1026,7 @@ pub(crate) mod tests {
         // Address with amount, label and message
         let message = "test-message";
         let addr_3 = format!("bitcoin:{addr}?amount=0.00002000&label={label}&message={message}");
-        match parse(&addr_3, None).await? {
+        match parse_with_rest_client(rest_client.clone(), &addr_3, None).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
@@ -1035,10 +1054,12 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_bitcoin_address_bip21_rounding() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let addr = format!("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount={amount_btc}");
 
-            match parse(&addr, None).await? {
+            match parse_with_rest_client(rest_client.clone(), &addr, None).await? {
                 InputType::BitcoinAddress {
                     address: addr_with_amount_parsed,
                 } => {
@@ -1054,23 +1075,30 @@ pub(crate) mod tests {
     #[sdk_macros::async_test_all]
     #[cfg(feature = "liquid")]
     async fn test_liquid_address() -> Result<()> {
-        assert!(parse("tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+
+        assert!(parse_with_rest_client(rest_client.clone(), "tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
             .await
             .is_ok());
-        assert!(parse("liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
+        assert!(parse_with_rest_client(rest_client.clone(), "liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
             .await
             .is_ok());
-        assert!(parse("wrong-net:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None).await.is_err());
-        assert!(parse("liquidnetwork:testinvalidaddress", None)
-            .await
-            .is_err());
+        assert!(parse_with_rest_client(rest_client.clone(), "wrong-net:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None).await.is_err());
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
+            "liquidnetwork:testinvalidaddress",
+            None
+        )
+        .await
+        .is_err());
 
         let address: elements::Address = "tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk".parse()?;
         let amount_btc = 0.00001; // 1000 sats
         let label = "label";
         let message = "this%20is%20a%20message";
         let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
-        let output = parse(&format!(
+        let output = parse_with_rest_client(rest_client, &format!(
                     "liquidnetwork:{}?amount={amount_btc}&assetid={asset_id}&label={label}&message={message}",
                     address
                 ),
@@ -1101,18 +1129,20 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_bolt11() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
 
         // Invoice without prefix
         assert!(matches!(
-            parse(bolt11, None).await?,
+            parse_with_rest_client(rest_client.clone(), bolt11, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
         // Invoice with prefix
         let invoice_with_prefix = format!("lightning:{bolt11}");
         assert!(matches!(
-            parse(&invoice_with_prefix, None).await?,
+            parse_with_rest_client(rest_client, &invoice_with_prefix, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1121,18 +1151,20 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_capitalized_bolt11() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         let bolt11 = "LNBC110N1P38Q3GTPP5YPZ09JRD8P993SNJWNM68CPH4FTWP22LE34XD4R8FTSPWSHXHMNSDQQXQYJW5QCQPXSP5HTLG8YDPYWVSA7H3U4HDN77EHS4Z4E844EM0APJYVMQFKZQHHD2Q9QGSQQQYSSQSZPXZXT9UUQZYMR7ZXCDCCJ5G69S8Q7ZZJS7SGXN9EJHNVDH6GQJCY22MSS2YEXUNAGM5R2GQCZH8K24CWRQML3NJSKM548ARUHPWSSQ9NVRVZ";
 
         // Invoice without prefix
         assert!(matches!(
-            parse(bolt11, None).await?,
+            parse_with_rest_client(rest_client.clone(), bolt11, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
         // Invoice with prefix
         let invoice_with_prefix = format!("LIGHTNING:{bolt11}");
         assert!(matches!(
-            parse(&invoice_with_prefix, None).await?,
+            parse_with_rest_client(rest_client, &invoice_with_prefix, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1141,6 +1173,8 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_bolt11_with_fallback_bitcoin_address() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         let addr = "1andreas3batLhQa2FawWjeyjCqyBzypd";
         let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
 
@@ -1148,7 +1182,7 @@ pub(crate) mod tests {
         // BOLT11 is the first URI arg (preceded by '?')
         let addr_1 = format!("bitcoin:{addr}?lightning={bolt11}");
         assert!(matches!(
-            parse(&addr_1, None).await?,
+            parse_with_rest_client(rest_client.clone(), &addr_1, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1156,7 +1190,7 @@ pub(crate) mod tests {
         // BOLT11 is not the first URI arg (preceded by '&')
         let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&lightning={bolt11}");
         assert!(matches!(
-            parse(&addr_2, None).await?,
+            parse_with_rest_client(rest_client, &addr_2, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1165,20 +1199,28 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_url() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         assert!(matches!(
-            parse("https://breez.technology", None).await?,
+            parse_with_rest_client(rest_client.clone(), "https://breez.technology", None).await?,
             InputType::Url { url: _url }
         ));
         assert!(matches!(
-            parse("https://breez.technology/", None).await?,
+            parse_with_rest_client(rest_client.clone(), "https://breez.technology/", None).await?,
             InputType::Url { url: _url }
         ));
         assert!(matches!(
-            parse("https://breez.technology/test-path", None).await?,
+            parse_with_rest_client(
+                rest_client.clone(),
+                "https://breez.technology/test-path",
+                None
+            )
+            .await?,
             InputType::Url { url: _url }
         ));
         assert!(matches!(
-            parse(
+            parse_with_rest_client(
+                rest_client.clone(),
                 "https://breez.technology/test-path?arg1=val1&arg2=val2",
                 None
             )
@@ -1187,7 +1229,12 @@ pub(crate) mod tests {
         ));
         // `lightning` query param is not an LNURL.
         assert!(matches!(
-            parse("https://breez.technology?lightning=nonsense", None).await?,
+            parse_with_rest_client(
+                rest_client,
+                "https://breez.technology?lightning=nonsense",
+                None
+            )
+            .await?,
             InputType::Url { url: _url }
         ));
 
@@ -1196,11 +1243,15 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_node_id() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let secp = Secp256k1::new();
         let secret_key = SecretKey::from_slice(&[0xab; 32])?;
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
-        match parse(&public_key.to_string(), None).await? {
+        mock_external_parser(&mock_rest_client, "".to_string(), 400);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+
+        match parse_with_rest_client(rest_client.clone(), &public_key.to_string(), None).await? {
             InputType::NodeId { node_id } => {
                 assert_eq!(node_id, public_key.to_string());
             }
@@ -1208,36 +1259,49 @@ pub(crate) mod tests {
         }
 
         // Other formats and sizes
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
             "012345678901234567890123456789012345678901234567890123456789mnop",
             None
         )
         .await
         .is_err());
-        assert!(parse("0123456789", None).await.is_err());
-        assert!(parse("abcdefghij", None).await.is_err());
+        assert!(
+            parse_with_rest_client(rest_client.clone(), "0123456789", None)
+                .await
+                .is_err()
+        );
+        assert!(
+            parse_with_rest_client(rest_client.clone(), "abcdefghij", None)
+                .await
+                .is_err()
+        );
 
         // Plain Node ID
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f",
             None
         )
         .await
         .is_ok());
         // Plain Node ID (66 hex chars) with @ separator and any string afterwards
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@",
             None
         )
         .await
         .is_ok());
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@sdfsffs",
             None
         )
         .await
         .is_ok());
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@1.2.3.4:1234",
             None
         )
@@ -1245,19 +1309,22 @@ pub(crate) mod tests {
         .is_ok());
 
         // Invalid Node ID (66 chars ending in non-hex-chars) with @ separator and any string afterwards -> invalid
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@",
             None
         )
         .await
         .is_err());
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client.clone(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@sdfsffs",
             None
         )
         .await
         .is_err());
-        assert!(parse(
+        assert!(parse_with_rest_client(
+            rest_client,
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@1.2.3.4:1234",
             None
         )
@@ -1329,38 +1396,35 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    async fn mock_lnurl_withdraw_endpoint(path: &str, return_lnurl_error: Option<String>) {
-        let expected_lnurl_withdraw_data = r#"
-{
-    "tag":"withdrawRequest",
-    "callback":"https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538",
-    "k1":"37b4c919f871c090830cc47b92a544a30097f03430bc39670b8ec0da89f01a81",
-    "minWithdrawable":3000,
-    "maxWithdrawable":12000,
-    "defaultDescription":"sample withdraw"
-}
-        "#.replace('\n', "");
-
-        let (response_body, status) = match &return_lnurl_error {
-            None => (expected_lnurl_withdraw_data, 200),
-            Some(err_reason) => (
-                ["{\"status\": \"ERROR\", \"reason\": \"", err_reason, "\"}"].join(""),
-                400,
-            ),
+    fn mock_lnurl_withdraw_endpoint(mock_rest_client: &MockRestClient, error: Option<String>) {
+        let (response_body, status_code) = match error {
+            None => (json!({
+                "tag": "withdrawRequest",
+                "callback": "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538",
+                "k1": "37b4c919f871c090830cc47b92a544a30097f03430bc39670b8ec0da89f01a81",
+                "minWithdrawable": 3000,
+                "maxWithdrawable": 12000,
+                "defaultDescription": "sample withdraw",
+            }).to_string(), 200),
+            Some(err_reason) => (json!({
+                "status": "ERROR",
+                "reason": err_reason
+            })
+            .to_string(), 400),
         };
 
-        MOCK_HTTP_SERVER
-            .mock("GET", path, &response_body, Some(status), None, None)
-            .await;
+        mock_rest_client.add_response(MockResponse::new(status_code, response_body));
     }
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_withdraw_lud_03() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         // Covers cases in LUD-03: withdrawRequest base spec
         // https://github.com/lnurl/luds/blob/luds/03.md
 
         let path = "/lnurl-withdraw?session=bc893fafeb9819046781b47d68fdcf88fa39a28898784c183b42b7ac13820d81";
-        mock_lnurl_withdraw_endpoint(path, None).await;
+        mock_lnurl_withdraw_endpoint(&mock_rest_client, None);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
         assert_eq!(
@@ -1368,7 +1432,9 @@ pub(crate) mod tests {
             ("localhost".into(), format!("https://localhost{path}"), None,)
         );
 
-        if let InputType::LnUrlWithdraw { data: wd } = parse(lnurl_withdraw_encoded, None).await? {
+        if let InputType::LnUrlWithdraw { data: wd } =
+            parse_with_rest_client(rest_client, lnurl_withdraw_encoded, None).await?
+        {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
                 wd.k1,
@@ -1384,8 +1450,10 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_withdraw_in_url() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         let path = "/lnurl-withdraw?session=bc893fafeb9819046781b47d68fdcf88fa39a28898784c183b42b7ac13820d81";
-        mock_lnurl_withdraw_endpoint(path, None).await;
+        mock_lnurl_withdraw_endpoint(&mock_rest_client, None);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         let lnurl_withdraw_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
         assert_eq!(
@@ -1394,7 +1462,9 @@ pub(crate) mod tests {
         );
         let url = format!("https://bitcoin.org?lightning={lnurl_withdraw_encoded}");
 
-        if let InputType::LnUrlWithdraw { data: wd } = parse(&url, None).await? {
+        if let InputType::LnUrlWithdraw { data: wd } =
+            parse_with_rest_client(rest_client, &url, None).await?
+        {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
                 wd.k1,
@@ -1410,6 +1480,8 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_auth_lud_04() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         // Covers cases in LUD-04: `auth` base spec
         // https://github.com/lnurl/luds/blob/luds/04.md
 
@@ -1421,7 +1493,9 @@ pub(crate) mod tests {
             ("localhost".into(), decoded_url.into(), None)
         );
 
-        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded, None).await? {
+        if let InputType::LnUrlAuth { data: ad } =
+            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+        {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1433,7 +1507,9 @@ pub(crate) mod tests {
         // Action = register
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=register";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3awfjkw6tnw3jhys2umys";
-        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded, None).await? {
+        if let InputType::LnUrlAuth { data: ad } =
+            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+        {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1445,7 +1521,9 @@ pub(crate) mod tests {
         // Action = login
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=login";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad3hkw6tw2acjtx";
-        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded, None).await? {
+        if let InputType::LnUrlAuth { data: ad } =
+            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+        {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1457,7 +1535,9 @@ pub(crate) mod tests {
         // Action = link
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=link";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad35ku6cc8mvs6";
-        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded, None).await? {
+        if let InputType::LnUrlAuth { data: ad } =
+            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+        {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1469,7 +1549,9 @@ pub(crate) mod tests {
         // Action = auth
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=auth";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3av96hg6qmg6zgu";
-        if let InputType::LnUrlAuth { data: ad } = parse(lnurl_auth_encoded, None).await? {
+        if let InputType::LnUrlAuth { data: ad } =
+            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+        {
             assert_eq!(
                 ad.k1,
                 "1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822"
@@ -1481,107 +1563,70 @@ pub(crate) mod tests {
         // Action = another, invalid type
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=invalid";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad9h8vctvd9jq2s4vfw";
-        assert!(parse(lnurl_auth_encoded, None).await.is_err());
+        assert!(
+            parse_with_rest_client(rest_client, lnurl_auth_encoded, None)
+                .await
+                .is_err()
+        );
 
         Ok(())
     }
 
-    async fn mock_lnurl_pay_endpoint(path: &str, return_lnurl_error: Option<String>) {
-        let expected_lnurl_pay_data = r#"
-{
-    "callback":"https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7",
-    "tag":"payRequest",
-    "maxSendable":16000,
-    "minSendable":4000,
-    "metadata":"[
-        [\"text/plain\",\"WRhtV\"],
-        [\"text/long-desc\",\"MBTrTiLCFS\"],
-        [\"image/png;base64\",\"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\"]
-    ]",
-    "commentAllowed":0,
-    "payerData":{
-        "name":{"mandatory":false},
-        "pubkey":{"mandatory":false},
-        "identifier":{"mandatory":false},
-        "email":{"mandatory":false},
-        "auth":{"mandatory":false,"k1":"18ec6d5b96db6f219baed2f188aee7359fcf5bea11bb7d5b47157519474c2222"}
-    }
-}
-        "#.replace('\n', "");
-
-        let response_body = match return_lnurl_error {
-            None => expected_lnurl_pay_data,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+    fn mock_lnurl_pay_endpoint(mock_rest_client: &MockRestClient, error: Option<String>) {
+        let response_body = match error {
+            None => json!({
+                "callback":"https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7",
+                "tag": "payRequest",
+                "maxSendable": 16000,
+                "minSendable": 4000,
+                "metadata": "[
+                    [\"text/plain\",\"WRhtV\"],
+                    [\"text/long-desc\",\"MBTrTiLCFS\"],
+                    [\"image/png;base64\",\"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\"]
+                ]",
+                "commentAllowed": 0,
+                "payerData":{
+                    "name": { "mandatory":false },
+                    "pubkey": { "mandatory":false },
+                    "identifier": { "mandatory":false },
+                    "email":{ "mandatory":false },
+                    "auth": { "mandatory":false, "k1":"18ec6d5b96db6f219baed2f188aee7359fcf5bea11bb7d5b47157519474c2222" }
+                }
+            }).to_string(),
+            Some(err_reason) => json!({
+                "status": "ERROR",
+                "reason": err_reason
+            })
+            .to_string(),
         };
 
-        MOCK_HTTP_SERVER
-            .mock("GET", path, &response_body, None, None, None)
-            .await;
-    }
-
-    async fn mock_lnurl_ln_address_endpoint(ln_address: &str, return_lnurl_error: Option<String>) {
-        let (_domain, lnurl_pay_url, _ln_address) = ln_address_decode(ln_address).unwrap();
-        let url = reqwest::Url::parse(&lnurl_pay_url).unwrap();
-        let path = url.path();
-
-        let expected_lnurl_pay_data = r#"
-{
-    "callback":"https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7",
-    "tag":"payRequest",
-    "maxSendable":16000,
-    "minSendable":4000,
-    "metadata":"[
-        [\"text/plain\",\"WRhtV\"],
-        [\"text/long-desc\",\"MBTrTiLCFS\"],
-        [\"image/png;base64\",\"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\"]
-    ]",
-    "commentAllowed":0,
-    "payerData":{
-        "name":{"mandatory":false},
-        "pubkey":{"mandatory":false},
-        "identifier":{"mandatory":false},
-        "email":{"mandatory":false},
-        "auth":{"mandatory":false,"k1":"18ec6d5b96db6f219baed2f188aee7359fcf5bea11bb7d5b47157519474c2222"}
-    }
-}
-        "#.replace('\n', "");
-
-        let response_body = match return_lnurl_error {
-            None => expected_lnurl_pay_data,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
-        };
-
-        MOCK_HTTP_SERVER
-            .mock(
-                "GET",
-                path,
-                &response_body,
-                None,
-                None,
-                Some(&lnurl_pay_url),
-            )
-            .await;
+        mock_rest_client.add_response(MockResponse::new(200, response_body));
     }
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_pay_lud_06() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         // Covers cases in LUD-06: payRequest base spec
         // https://github.com/lnurl/luds/blob/luds/06.md
         let lnurl_pay_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
         let path =
             "/lnurl-pay?session=db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7";
-        mock_lnurl_pay_endpoint(path, None).await;
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         assert_eq!(
             lnurl_decode(lnurl_pay_encoded)?,
             ("localhost".into(), format!("https://localhost{path}"), None)
         );
 
-        if let InputType::LnUrlPay { data: pd, .. } = parse(lnurl_pay_encoded, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } =
+            parse_with_rest_client(rest_client.clone(), lnurl_pay_encoded, None).await?
+        {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1612,7 +1657,6 @@ pub(crate) mod tests {
         }
 
         for lnurl_pay in [
-            lnurl_pay_encoded,
             lnurl_pay_encoded.to_uppercase().as_str(),
             format!("lightning:{}", lnurl_pay_encoded).as_str(),
             format!("lightning:{}", lnurl_pay_encoded.to_uppercase()).as_str(),
@@ -1620,7 +1664,7 @@ pub(crate) mod tests {
             format!("LIGHTNING:{}", lnurl_pay_encoded.to_uppercase()).as_str(),
         ] {
             assert!(matches!(
-                parse(lnurl_pay, None).await?,
+                parse_with_rest_client(rest_client.clone(), lnurl_pay, None).await?,
                 InputType::LnUrlPay { .. }
             ));
         }
@@ -1629,13 +1673,17 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_pay_lud_16_ln_address() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         // Covers cases in LUD-16: Paying to static internet identifiers (LN Address)
         // https://github.com/lnurl/luds/blob/luds/16.md
 
         let ln_address = "user@domain.net";
-        mock_lnurl_ln_address_endpoint(ln_address, None).await;
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        if let InputType::LnUrlPay { data: pd, .. } = parse(ln_address, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } =
+            parse_with_rest_client(rest_client, ln_address, None).await?
+        {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1672,13 +1720,17 @@ pub(crate) mod tests {
     #[sdk_macros::async_test_all]
     async fn test_lnurl_pay_lud_16_ln_address_with_prefix() -> Result<(), Box<dyn std::error::Error>>
     {
+        let mock_rest_client = MockRestClient::new();
         // Covers cases in LUD-16, with BIP-353 prefix.
 
         let ln_address = "₿user@domain.net";
         let server_ln_address = "user@domain.net";
-        mock_lnurl_ln_address_endpoint(server_ln_address, None).await;
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        if let InputType::LnUrlPay { data: pd, .. } = parse(ln_address, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } =
+            parse_with_rest_client(rest_client, ln_address, None).await?
+        {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1694,14 +1746,18 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_pay_lud_16_ln_address_error() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         // Covers cases in LUD-16: Paying to static internet identifiers (LN Address)
         // https://github.com/lnurl/luds/blob/luds/16.md
 
         let ln_address = "error@domain.com";
         let expected_err = "Error msg from LNURL endpoint found via LN Address";
-        mock_lnurl_ln_address_endpoint(ln_address, Some(expected_err.to_string())).await;
+        mock_lnurl_pay_endpoint(&mock_rest_client, Some(expected_err.to_string()));
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        if let InputType::LnUrlError { data: msg } = parse(ln_address, None).await? {
+        if let InputType::LnUrlError { data: msg } =
+            parse_with_rest_client(rest_client, ln_address, None).await?
+        {
             assert_eq!(msg.reason, expected_err);
             return Ok(());
         }
@@ -1879,12 +1935,16 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_pay_lud_17() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         let pay_path =
             "/lnurl-pay?session=db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7";
-        mock_lnurl_pay_endpoint(pay_path, None).await;
+        mock_lnurl_pay_endpoint(&mock_rest_client, None);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         let lnurl_pay_url = format!("lnurlp://localhost{pay_path}");
-        if let InputType::LnUrlPay { data: pd, .. } = parse(&lnurl_pay_url, None).await? {
+        if let InputType::LnUrlPay { data: pd, .. } =
+            parse_with_rest_client(rest_client, &lnurl_pay_url, None).await?
+        {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
             assert_eq!(pd.min_sendable, 4000);
@@ -1919,11 +1979,17 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_withdraw_lud_17() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         let withdraw_path = "/lnurl-withdraw?session=e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538";
-        mock_lnurl_withdraw_endpoint(withdraw_path, None).await;
+        mock_lnurl_withdraw_endpoint(&mock_rest_client, None);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        if let InputType::LnUrlWithdraw { data: wd } =
-            parse(&format!("lnurlw://localhost{withdraw_path}"), None).await?
+        if let InputType::LnUrlWithdraw { data: wd } = parse_with_rest_client(
+            rest_client,
+            &format!("lnurlw://localhost{withdraw_path}"),
+            None,
+        )
+        .await?
         {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
@@ -1940,10 +2006,16 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_auth_lud_17() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         let auth_path = "/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
 
-        if let InputType::LnUrlAuth { data: ad } =
-            parse(&format!("keyauth://localhost{auth_path}"), None).await?
+        if let InputType::LnUrlAuth { data: ad } = parse_with_rest_client(
+            rest_client,
+            &format!("keyauth://localhost{auth_path}"),
+            None,
+        )
+        .await?
         {
             assert_eq!(
                 ad.k1,
@@ -1956,12 +2028,15 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_pay_lud_17_error() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let pay_path = "/lnurl-pay?session=paylud17error";
         let expected_error_msg = "test pay error";
-        mock_lnurl_pay_endpoint(pay_path, Some(expected_error_msg.to_string())).await;
+        mock_lnurl_pay_endpoint(&mock_rest_client, Some(expected_error_msg.to_string()));
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         if let InputType::LnUrlError { data: msg } =
-            parse(&format!("lnurlp://localhost{pay_path}"), None).await?
+            parse_with_rest_client(rest_client, &format!("lnurlp://localhost{pay_path}"), None)
+                .await?
         {
             assert_eq!(msg.reason, expected_error_msg);
             return Ok(());
@@ -1972,12 +2047,18 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_lnurl_withdraw_lud_17_error() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let withdraw_path = "/lnurl-withdraw?session=withdrawlud17error";
         let expected_error_msg = "test withdraw error";
-        mock_lnurl_withdraw_endpoint(withdraw_path, Some(expected_error_msg.to_string())).await;
+        mock_lnurl_withdraw_endpoint(&mock_rest_client, Some(expected_error_msg.to_string()));
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        if let InputType::LnUrlError { data: msg } =
-            parse(&format!("lnurlw://localhost{withdraw_path}"), None).await?
+        if let InputType::LnUrlError { data: msg } = parse_with_rest_client(
+            rest_client,
+            &format!("lnurlw://localhost{withdraw_path}"),
+            None,
+        )
+        .await?
         {
             assert_eq!(msg.reason, expected_error_msg);
             return Ok(());
@@ -1986,36 +2067,30 @@ pub(crate) mod tests {
         Err(anyhow!("Unrecognized input type"))
     }
 
-    async fn mock_external_parser(path: &str, response: &str, status: usize) {
-        MOCK_HTTP_SERVER
-            .mock(
-                "GET",
-                path,
-                response,
-                Some(status),
-                None,
-                Some(&format!("http://127.0.0.1:8080{path}")),
-            )
-            .await;
+    fn mock_external_parser(
+        mock_rest_client: &MockRestClient,
+        response_body: String,
+        status_code: u16,
+    ) {
+        mock_rest_client.add_response(MockResponse::new(status_code, response_body));
     }
 
     #[sdk_macros::async_test_all]
     async fn test_external_parsing_lnurlp_first_response() -> Result<(), Box<dyn std::error::Error>>
     {
+        let mock_rest_client = MockRestClient::new();
         let input = "123provider.domain32/1";
-        let path = format!(
-            "/{}",
-            percent_encoding::utf8_percent_encode(input, NON_ALPHANUMERIC)
-        );
-        let response = r#"
+        let response = json!(
         {
-            "callback":"callback_url",
-            "minSendable":57000,
-            "maxSendable":57000,
-            "metadata":"[[\"text/plain\", \"External payment\"]]","tag":"payRequest"
-        }
-        "#;
-        mock_external_parser(&path, response, 200).await;
+            "callback": "callback_url",
+            "minSendable": 57000,
+            "maxSendable": 57000,
+            "metadata": "[[\"text/plain\", \"External payment\"]]",
+            "tag": "payRequest"
+        })
+        .to_string();
+        mock_external_parser(&mock_rest_client, response, 200);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         let parsers = vec![ExternalInputParser {
             provider_id: "id".to_string(),
@@ -2023,7 +2098,7 @@ pub(crate) mod tests {
             parser_url: "http://127.0.0.1:8080/<input>".to_string(),
         }];
 
-        let input_type = parse(input, Some(&parsers)).await?;
+        let input_type = parse_with_rest_client(rest_client, input, Some(&parsers)).await?;
         if let InputType::LnUrlPay { data, .. } = input_type {
             assert_eq!(data.callback, "callback_url");
             assert_eq!(data.max_sendable, 57000);
@@ -2049,23 +2124,17 @@ pub(crate) mod tests {
     #[sdk_macros::async_test_all]
     async fn test_external_parsing_bitcoin_address_and_bolt11(
     ) -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         // Bitcoin parsing endpoint
         let bitcoin_input = "123bitcoin.address.provider32/1";
-        let path = format!(
-            "/{}",
-            percent_encoding::utf8_percent_encode(bitcoin_input, NON_ALPHANUMERIC)
-        );
-        let bitcoin_address = "1andreas3batLhQa2FawWjeyjCqyBzypd";
-        mock_external_parser(&path, bitcoin_address, 200).await;
+        let bitcoin_address = "1andreas3batLhQa2FawWjeyjCqyBzypd".to_string();
+        mock_external_parser(&mock_rest_client, bitcoin_address.clone(), 200);
 
         // Bolt11 parsing endpoint
         let bolt11_input = "123bolt11.provider32/1";
-        let path = format!(
-            "/{}",
-            percent_encoding::utf8_percent_encode(bolt11_input, NON_ALPHANUMERIC)
-        );
-        let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
-        mock_external_parser(&path, bolt11, 200).await;
+        let bolt11 = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz".to_string();
+        mock_external_parser(&mock_rest_client, bolt11.clone(), 200);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         // Set parsers
         let parsers = vec![
@@ -2082,14 +2151,15 @@ pub(crate) mod tests {
         ];
 
         // Parse and check results
-        let input_type = parse(bitcoin_input, Some(&parsers)).await?;
+        let input_type =
+            parse_with_rest_client(rest_client.clone(), bitcoin_input, Some(&parsers)).await?;
         if let InputType::BitcoinAddress { address } = input_type {
             assert_eq!(address.address, bitcoin_address);
         } else {
             panic!("Expected BitcoinAddress, got {:?}", input_type);
         }
 
-        let input_type = parse(bolt11_input, Some(&parsers)).await?;
+        let input_type = parse_with_rest_client(rest_client, bolt11_input, Some(&parsers)).await?;
         if let InputType::Bolt11 { invoice } = input_type {
             assert_eq!(invoice.bolt11, bolt11);
         } else {
@@ -2101,13 +2171,11 @@ pub(crate) mod tests {
 
     #[sdk_macros::async_test_all]
     async fn test_external_parsing_error() -> Result<(), Box<dyn std::error::Error>> {
+        let mock_rest_client = MockRestClient::new();
         let input = "123provider.domain.error32/1";
-        let path = format!(
-            "/{}",
-            percent_encoding::utf8_percent_encode(input, NON_ALPHANUMERIC)
-        );
-        let response = "Unrecognized input";
-        mock_external_parser(&path, response, 400).await;
+        let response = "Unrecognized input".to_string();
+        mock_external_parser(&mock_rest_client, response, 400);
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         let parsers = vec![ExternalInputParser {
             provider_id: "id".to_string(),
@@ -2115,7 +2183,7 @@ pub(crate) mod tests {
             parser_url: "http://127.0.0.1:8080/<input>".to_string(),
         }];
 
-        let result = parse(input, Some(&parsers)).await;
+        let result = parse_with_rest_client(rest_client, input, Some(&parsers)).await;
 
         assert!(matches!(result, Err(e) if e.to_string() == "Unrecognized input type"));
 

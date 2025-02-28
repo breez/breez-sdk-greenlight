@@ -1,0 +1,82 @@
+use std::{
+    collections::{HashMap, VecDeque},
+    sync::Mutex,
+};
+
+use reqwest::StatusCode;
+
+use crate::{
+    error::{ServiceConnectivityError, ServiceConnectivityErrorKind},
+    prelude::RestClient,
+};
+
+#[derive(Debug)]
+pub struct MockResponse {
+    pub(crate) status_code: StatusCode,
+    pub(crate) text: String,
+}
+
+impl MockResponse {
+    pub fn new(status_code: u16, text: String) -> Self {
+        MockResponse {
+            status_code: StatusCode::from_u16(status_code).unwrap(),
+            text,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct MockRestClient {
+    responses: Mutex<VecDeque<MockResponse>>,
+}
+
+impl MockRestClient {
+    pub fn new() -> Self {
+        MockRestClient::default()
+    }
+
+    pub fn add_response(&self, response: MockResponse) -> &Self {
+        println!("Push response: {response:?}");
+        let mut responses = self.responses.lock().unwrap();
+        responses.push_back(response);
+        self
+    }
+}
+
+#[sdk_macros::async_trait]
+impl RestClient for MockRestClient {
+    async fn get_and_log_response(
+        &self,
+        url: &str,
+        enforce_status_check: bool,
+    ) -> Result<(String, StatusCode), ServiceConnectivityError> {
+        let mut responses = self.responses.lock().unwrap();
+        let response = responses.pop_front().unwrap();
+        println!("Pop GET response: {response:?}");
+        let status = response.status_code;
+        let raw_body = response.text;
+        if enforce_status_check && !status.is_success() {
+            let err = format!("GET request {url} failed with status: {status}");
+            return Err(ServiceConnectivityError::new(
+                ServiceConnectivityErrorKind::Status,
+                err,
+            ));
+        }
+
+        Ok((raw_body, status))
+    }
+
+    async fn post_and_log_response(
+        &self,
+        _url: &str,
+        _headers: Option<HashMap<String, String>>,
+        _body: Option<String>,
+    ) -> Result<String, ServiceConnectivityError> {
+        let mut responses = self.responses.lock().unwrap();
+        let response = responses.pop_front().unwrap();
+        println!("Pop POST response: {response:?}");
+        let raw_body = response.text;
+
+        Ok(raw_body)
+    }
+}

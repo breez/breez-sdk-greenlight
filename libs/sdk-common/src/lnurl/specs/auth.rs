@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::sync::Arc;
 
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
@@ -26,6 +27,7 @@ pub trait LnurlAuthSigner {
 ///
 /// See the [parse] docs for more detail on the full workflow.
 pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
+    rest_client: Arc<dyn RestClient>,
     req_data: &LnUrlAuthRequestData,
     signer: &S,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
@@ -50,10 +52,10 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
     callback_url
         .query_pairs_mut()
         .append_pair("key", &xpub.public_key.to_hex());
-
-    get_parse_and_log_response(callback_url.as_ref(), false)
-        .await
-        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
+    let (json, _) = rest_client
+        .get_and_log_response(callback_url.as_ref(), false)
+        .await?;
+    Ok(parse_json(&json)?)
 }
 
 pub fn validate_request(

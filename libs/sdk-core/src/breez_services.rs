@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
@@ -13,7 +14,6 @@ use chrono::Local;
 use futures::TryFutureExt;
 use gl_client::pb::incoming_payment;
 use log::{LevelFilter, Metadata, Record};
-use reqwest::{header::CONTENT_TYPE, Body};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde::Serialize;
@@ -161,6 +161,7 @@ pub struct BreezServices {
     support_api: Arc<dyn SupportAPI>,
     chain_service: Arc<dyn ChainService>,
     persister: Arc<SqliteStorage>,
+    rest_client: Arc<dyn RestClient>,
     payment_receiver: Arc<PaymentReceiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
@@ -427,6 +428,7 @@ impl BreezServices {
     /// This method will return an [anyhow::Error] when any validation check fails.
     pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
         match validate_lnurl_pay(
+            self.rest_client.clone(),
             req.amount_msat,
             &req.comment,
             &req.data,
@@ -547,7 +549,7 @@ impl BreezServices {
             .ln_invoice;
 
         let lnurl_w_endpoint = req.data.callback.clone();
-        let res = validate_lnurl_withdraw(req.data, invoice).await?;
+        let res = validate_lnurl_withdraw(self.rest_client.clone(), req.data, invoice).await?;
 
         if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
@@ -578,7 +580,12 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
-        Ok(perform_lnurl_auth(&req_data, &SdkLnurlAuthSigner::new(self.node_api.clone())).await?)
+        Ok(perform_lnurl_auth(
+            self.rest_client.clone(),
+            &req_data,
+            &SdkLnurlAuthSigner::new(self.node_api.clone()),
+        )
+        .await?)
     }
 
     /// Creates an bolt11 payment request.
@@ -2129,17 +2136,15 @@ impl BreezServices {
         address: &str,
         webhook_url: &str,
     ) -> SdkResult<()> {
-        get_reqwest_client()?
-            .post(format!("{}/api/v1/register", self.config.chainnotifier_url))
-            .header(CONTENT_TYPE, "application/json")
-            .body(Body::from(
-                json!({
-                    "address": address,
-                    "webhook": webhook_url
-                })
-                .to_string(),
-            ))
-            .send()
+        let url = format!("{}/api/v1/register", self.config.chainnotifier_url);
+        let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+        let body = json!({
+            "address": address,
+            "webhook": webhook_url
+        })
+        .to_string();
+        self.rest_client
+            .post_and_log_response(&url, Some(headers), Some(body))
             .await
             .map(|_| ())
             .map_err(|e| SdkError::ServiceConnectivity {
@@ -2149,19 +2154,14 @@ impl BreezServices {
 
     /// Unregisters all onchain tx notifications for the `webhook_url`.
     async fn unregister_onchain_tx_notifications(&self, webhook_url: &str) -> SdkResult<()> {
-        get_reqwest_client()?
-            .post(format!(
-                "{}/api/v1/unregister",
-                self.config.chainnotifier_url
-            ))
-            .header(CONTENT_TYPE, "application/json")
-            .body(Body::from(
-                json!({
-                    "webhook": webhook_url
-                })
-                .to_string(),
-            ))
-            .send()
+        let url = format!("{}/api/v1/unregister", self.config.chainnotifier_url);
+        let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+        let body = json!({
+            "webhook": webhook_url
+        })
+        .to_string();
+        self.rest_client
+            .post_and_log_response(&url, Some(headers), Some(body))
             .await
             .map(|_| ())
             .map_err(|e| SdkError::ServiceConnectivity {
@@ -2239,6 +2239,7 @@ struct BreezServicesBuilder {
     lsp_api: Option<Arc<dyn LspAPI>>,
     fiat_api: Option<Arc<dyn FiatAPI>>,
     persister: Option<Arc<SqliteStorage>>,
+    rest_client: Option<Arc<dyn RestClient>>,
     support_api: Option<Arc<dyn SupportAPI>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
@@ -2258,6 +2259,7 @@ impl BreezServicesBuilder {
             lsp_api: None,
             fiat_api: None,
             persister: None,
+            rest_client: None,
             support_api: None,
             swapper_api: None,
             reverse_swapper_api: None,
@@ -2294,6 +2296,11 @@ impl BreezServicesBuilder {
 
     pub fn support_api(&mut self, support_api: Arc<dyn SupportAPI>) -> &mut Self {
         self.support_api = Some(support_api.clone());
+        self
+    }
+
+    pub fn rest_client(&mut self, rest_client: Arc<dyn RestClient>) -> &mut Self {
+        self.rest_client = Some(rest_client.clone());
         self
     }
 
@@ -2424,6 +2431,11 @@ impl BreezServicesBuilder {
             persister: persister.clone(),
         });
 
+        let rest_client: Arc<dyn RestClient> = match self.rest_client.clone() {
+            Some(rest_client) => rest_client,
+            None => Arc::new(ReqwestRestClient::new()?),
+        };
+
         // mempool space is used to monitor the chain
         let mempoolspace_urls = match self.config.mempoolspace_url.clone() {
             None => {
@@ -2444,7 +2456,10 @@ impl BreezServicesBuilder {
             }
             Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
         };
-        let chain_service = Arc::new(RedundantChainService::from_base_urls(mempoolspace_urls));
+        let chain_service = Arc::new(RedundantChainService::from_base_urls(
+            rest_client.clone(),
+            mempoolspace_urls,
+        ));
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
             self.config.network.into(),
@@ -2464,7 +2479,7 @@ impl BreezServicesBuilder {
                 .unwrap_or_else(|| breez_server.clone()),
             self.reverse_swap_service_api
                 .clone()
-                .unwrap_or_else(|| Arc::new(BoltzApi {})),
+                .unwrap_or_else(|| Arc::new(BoltzApi::new(rest_client.clone()))),
             persister.clone(),
             chain_service.clone(),
             unwrapped_node_api.clone(),
@@ -2495,6 +2510,7 @@ impl BreezServicesBuilder {
             buy_bitcoin_api,
             chain_service,
             persister: persister.clone(),
+            rest_client,
             btc_receive_swapper,
             btc_send_swapper,
             payment_receiver,
@@ -3299,8 +3315,13 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
-        let breez_services = breez_services().await?;
+        let mock_rest_client = MockRestClient::new();
+        mock_rest_client.add_response(MockResponse::new(200, "800000".to_string()));
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+
+        let breez_services = breez_services_with(None, Some(rest_client.clone()), vec![]).await?;
         breez_services.sync().await?;
+
         let moonpay_url = breez_services
             .buy_bitcoin(BuyBitcoinRequest {
                 provider: BuyBitcoinProvider::Moonpay,
@@ -3315,7 +3336,8 @@ pub(crate) mod tests {
         assert_eq!(parsed.host_str(), Some("mock.moonpay"));
         assert_eq!(parsed.path(), "/");
 
-        let wallet_address = parse(query_pairs.get("wa").unwrap(), None).await?;
+        let wallet_address =
+            parse_with_rest_client(rest_client, query_pairs.get("wa").unwrap(), None).await?;
         assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
 
         let max_amount = query_pairs.get("ma").unwrap();
@@ -3326,16 +3348,19 @@ pub(crate) mod tests {
 
     /// Build node service for tests
     pub(crate) async fn breez_services() -> Result<Arc<BreezServices>> {
-        breez_services_with(None, vec![]).await
+        breez_services_with(None, None, vec![]).await
     }
 
     /// Build node service for tests with a list of known payments
     pub(crate) async fn breez_services_with(
         node_api: Option<Arc<dyn NodeAPI>>,
+        rest_client: Option<Arc<dyn RestClient>>,
         known_payments: Vec<Payment>,
     ) -> Result<Arc<BreezServices>> {
         let node_api =
             node_api.unwrap_or_else(|| Arc::new(MockNodeAPI::new(get_dummy_node_state())));
+        let rest_client: Arc<dyn RestClient> =
+            rest_client.unwrap_or_else(|| Arc::new(MockRestClient::new()));
 
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
@@ -3351,6 +3376,7 @@ pub(crate) mod tests {
             .buy_bitcoin_api(Arc::new(MockBuyBitcoinService {}))
             .persister(persister)
             .node_api(node_api)
+            .rest_client(rest_client)
             .backup_transport(Arc::new(MockBackupTransport::new()))
             .build(None, None)
             .await?;

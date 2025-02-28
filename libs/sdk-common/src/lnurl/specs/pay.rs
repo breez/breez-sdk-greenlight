@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, sync::Arc};
 
 use crate::prelude::*;
 
@@ -10,6 +10,7 @@ pub type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 ///
 /// See the [parse] docs for more detail on the full workflow.
 pub async fn validate_lnurl_pay(
+    rest_client: Arc<dyn RestClient>,
     user_amount_msat: u64,
     comment: &Option<String>,
     req_data: &LnUrlPayRequestData,
@@ -25,10 +26,9 @@ pub async fn validate_lnurl_pay(
     )?;
 
     let callback_url = build_pay_callback_url(user_amount_msat, comment, req_data)?;
-    let (callback_resp_text, _) = get_and_log_response(&callback_url)
-        .await
-        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))?;
-
+    let (callback_resp_text, _) = rest_client
+        .get_and_log_response(&callback_url, false)
+        .await?;
     if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })
     } else {
