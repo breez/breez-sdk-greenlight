@@ -55,12 +55,7 @@ impl RestClient for ReqwestRestClient {
     ) -> Result<String, ServiceConnectivityError> {
         debug!("Making GET request to: {url}");
 
-        let response = self
-            .client
-            .get(url)
-            .timeout(REQUEST_TIMEOUT)
-            .send()
-            .await?;
+        let response = self.client.get(url).timeout(REQUEST_TIMEOUT).send().await?;
         let status = response.status();
         let raw_body = response.text().await?;
         debug!("Received response, status: {status}");
