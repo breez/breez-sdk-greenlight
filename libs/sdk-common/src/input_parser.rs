@@ -471,9 +471,6 @@ fn ln_address_decode(ln_address: &str) -> Result<(String, String, String)> {
         // It is safe to downcase the domains since they are case-insensitive.
         // https://www.rfc-editor.org/rfc/rfc3986#section-3.2.2
         let domain = split[1].to_lowercase();
-        if !domain.contains('.') {
-            return Err(anyhow!("Invalid domain"));
-        }
 
         if !user
             .chars()
@@ -1245,6 +1242,8 @@ pub(crate) mod tests {
         let secret_key = SecretKey::from_slice(&[0xab; 32])?;
         let public_key = PublicKey::from_secret_key(&secp, &secret_key);
 
+        mock_external_parser(&mock_rest_client, "".to_string(), 400);
+        mock_external_parser(&mock_rest_client, "".to_string(), 400);
         mock_external_parser(&mock_rest_client, "".to_string(), 400);
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
