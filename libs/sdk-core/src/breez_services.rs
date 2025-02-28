@@ -428,7 +428,7 @@ impl BreezServices {
     /// This method will return an [anyhow::Error] when any validation check fails.
     pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
         match validate_lnurl_pay(
-            self.rest_client.clone(),
+            self.rest_client.as_ref(),
             req.amount_msat,
             &req.comment,
             &req.data,
@@ -549,7 +549,7 @@ impl BreezServices {
             .ln_invoice;
 
         let lnurl_w_endpoint = req.data.callback.clone();
-        let res = validate_lnurl_withdraw(self.rest_client.clone(), req.data, invoice).await?;
+        let res = validate_lnurl_withdraw(self.rest_client.as_ref(), req.data, invoice).await?;
 
         if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
@@ -581,7 +581,7 @@ impl BreezServices {
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
         Ok(perform_lnurl_auth(
-            self.rest_client.clone(),
+            self.rest_client.as_ref(),
             &req_data,
             &SdkLnurlAuthSigner::new(self.node_api.clone()),
         )
@@ -3337,7 +3337,8 @@ pub(crate) mod tests {
         assert_eq!(parsed.path(), "/");
 
         let wallet_address =
-            parse_with_rest_client(rest_client, query_pairs.get("wa").unwrap(), None).await?;
+            parse_with_rest_client(rest_client.as_ref(), query_pairs.get("wa").unwrap(), None)
+                .await?;
         assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
 
         let max_amount = query_pairs.get("ma").unwrap();

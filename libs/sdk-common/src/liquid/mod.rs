@@ -23,7 +23,7 @@ mod tests {
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let addr = format!("liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk?amount={amount_btc}&assetid={asset_id}");
 
-            match parse_with_rest_client(rest_client.clone(), &addr, None).await? {
+            match parse_with_rest_client(rest_client.as_ref(), &addr, None).await? {
                 InputType::LiquidAddress {
                     address: addr_with_amount_parsed,
                 } => {

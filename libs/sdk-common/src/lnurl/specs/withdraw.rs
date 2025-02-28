@@ -1,5 +1,4 @@
 use std::str::FromStr;
-use std::sync::Arc;
 
 use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use crate::prelude::*;
@@ -12,8 +11,8 @@ use crate::prelude::*;
 /// Note that the invoice amount has to respect two separate min/max limits:
 /// * those in the [LnUrlWithdrawRequestData] showing the limits of the LNURL endpoint, and
 /// * those of the current node, depending on the LSP settings and LN channel conditions
-pub async fn validate_lnurl_withdraw(
-    rest_client: Arc<dyn RestClient>,
+pub async fn validate_lnurl_withdraw<C: RestClient + ?Sized>(
+    rest_client: &C,
     req_data: LnUrlWithdrawRequestData,
     invoice: LNInvoice,
 ) -> LnUrlResult<LnUrlWithdrawResult> {
@@ -208,9 +207,11 @@ mod tests {
         let withdraw_req = get_test_withdraw_req_data(0, 1);
 
         // Fail validation before even calling the endpoint (no mock needed)
-        assert!(validate_lnurl_withdraw(rest_client, withdraw_req, invoice)
-            .await
-            .is_err());
+        assert!(
+            validate_lnurl_withdraw(rest_client.as_ref(), withdraw_req, invoice)
+                .await
+                .is_err()
+        );
 
         Ok(())
     }
@@ -250,7 +251,7 @@ mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         assert!(matches!(
-            validate_lnurl_withdraw(rest_client, withdraw_req, req_invoice.clone()).await?,
+            validate_lnurl_withdraw(rest_client.as_ref(), withdraw_req, req_invoice.clone()).await?,
             LnUrlWithdrawResult::Ok { data: LnUrlWithdrawSuccessData { invoice } } if invoice == req_invoice
         ));
 
@@ -269,7 +270,7 @@ mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         assert!(matches!(
-            validate_lnurl_withdraw(rest_client, withdraw_req, invoice).await?,
+            validate_lnurl_withdraw(rest_client.as_ref(), withdraw_req, invoice).await?,
             LnUrlWithdrawResult::ErrorStatus { data: _ }
         ));
 

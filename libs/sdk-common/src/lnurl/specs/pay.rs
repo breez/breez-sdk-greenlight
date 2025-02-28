@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
 use crate::prelude::*;
 
@@ -9,8 +9,8 @@ pub type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 /// <https://github.com/lnurl/luds/blob/luds/06.md>
 ///
 /// See the [parse] docs for more detail on the full workflow.
-pub async fn validate_lnurl_pay(
-    rest_client: Arc<dyn RestClient>,
+pub async fn validate_lnurl_pay<C: RestClient + ?Sized>(
+    rest_client: &C,
     user_amount_msat: u64,
     comment: &Option<String>,
     req_data: &LnUrlPayRequestData,

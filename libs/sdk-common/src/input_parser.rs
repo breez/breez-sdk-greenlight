@@ -188,11 +188,11 @@ pub async fn parse(
     external_input_parsers: Option<&[ExternalInputParser]>,
 ) -> Result<InputType> {
     let rest_client: Arc<dyn RestClient> = Arc::new(ReqwestRestClient::new()?);
-    parse_with_rest_client(rest_client, input, external_input_parsers).await
+    parse_with_rest_client(rest_client.as_ref(), input, external_input_parsers).await
 }
 
-pub async fn parse_with_rest_client(
-    rest_client: Arc<dyn RestClient>,
+pub async fn parse_with_rest_client<C: RestClient + ?Sized>(
+    rest_client: &C,
     input: &str,
     external_input_parsers: Option<&[ExternalInputParser]>,
 ) -> Result<InputType> {
@@ -204,7 +204,7 @@ pub async fn parse_with_rest_client(
         None => (input.to_string(), false),
     };
 
-    if let Ok(input_type) = parse_core(rest_client.clone(), &bip353_parsed_input).await {
+    if let Ok(input_type) = parse_core(rest_client, &bip353_parsed_input).await {
         let input_type = if is_bip353 {
             match input_type {
                 #[cfg(feature = "liquid")]
@@ -226,7 +226,7 @@ pub async fn parse_with_rest_client(
     }
 
     if let Some(external_input_parsers) = external_input_parsers {
-        return parse_external(rest_client.clone(), input, external_input_parsers).await;
+        return parse_external(rest_client, input, external_input_parsers).await;
     }
 
     Err(anyhow!("Unrecognized input type"))
@@ -300,7 +300,7 @@ async fn bip353_parse(input: &str) -> Option<String> {
 }
 
 /// Core parse implementation
-async fn parse_core(rest_client: Arc<dyn RestClient>, input: &str) -> Result<InputType> {
+async fn parse_core<C: RestClient + ?Sized>(rest_client: &C, input: &str) -> Result<InputType> {
     // Covers BIP 21 URIs and simple onchain BTC addresses (which are valid BIP 21 with the 'bitcoin:' prefix)
     if let Ok(bip21_uri) = prepend_if_missing("bitcoin:", input).parse::<Uri<'_>>() {
         let bitcoin_addr_data = bip21_uri.into();
@@ -364,8 +364,7 @@ async fn parse_core(rest_client: Arc<dyn RestClient>, input: &str) -> Result<Inp
                 .find(|p| p.0 == "lightning" || p.0 == "LIGHTNING")
             {
                 if let Ok((domain, lnurl_endpoint, ln_address)) = lnurl_decode(&value) {
-                    return resolve_lnurl(rest_client.clone(), domain, lnurl_endpoint, ln_address)
-                        .await;
+                    return resolve_lnurl(rest_client, domain, lnurl_endpoint, ln_address).await;
                 }
             }
             return Ok(InputType::Url { url: input.into() });
@@ -385,8 +384,8 @@ async fn parse_core(rest_client: Arc<dyn RestClient>, input: &str) -> Result<Inp
 }
 
 /// Parse input using provided external parsers.
-async fn parse_external(
-    rest_client: Arc<dyn RestClient>,
+async fn parse_external<C: RestClient + ?Sized>(
+    rest_client: &C,
     input: &str,
     external_input_parsers: &[ExternalInputParser],
 ) -> Result<InputType> {
@@ -433,7 +432,7 @@ async fn parse_external(
         }
 
         // Check other input types
-        if let Ok(input_type) = parse_core(rest_client.clone(), &response).await {
+        if let Ok(input_type) = parse_core(rest_client, &response).await {
             return Ok(input_type);
         }
     }
@@ -578,8 +577,8 @@ fn lnurl_decode(encoded: &str) -> LnUrlResult<(String, String, Option<String>)> 
     }
 }
 
-async fn resolve_lnurl(
-    rest_client: Arc<dyn RestClient>,
+async fn resolve_lnurl<C: RestClient + ?Sized>(
+    rest_client: &C,
     domain: String,
     lnurl_endpoint: String,
     ln_address: Option<String>,
@@ -918,9 +917,11 @@ pub(crate) mod tests {
         let mock_rest_client = MockRestClient::new();
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        assert!(parse_with_rest_client(rest_client, "invalid_input", None)
-            .await
-            .is_err());
+        assert!(
+            parse_with_rest_client(rest_client.as_ref(), "invalid_input", None)
+                .await
+                .is_err()
+        );
 
         Ok(())
     }
@@ -941,7 +942,7 @@ pub(crate) mod tests {
             "#,
         ] {
             assert!(matches!(
-                parse_with_rest_client(rest_client.clone(), address, None).await?,
+                parse_with_rest_client(rest_client.as_ref(), address, None).await?,
                 InputType::BitcoinAddress { address: _ }
             ));
         }
@@ -959,7 +960,7 @@ pub(crate) mod tests {
             "3CJ7cNxChpcUykQztFSqKFrMVQDN4zTTsp",
         ] {
             assert!(matches!(
-                parse_with_rest_client(rest_client.clone(), address, None).await?,
+                parse_with_rest_client(rest_client.as_ref(), address, None).await?,
                 InputType::BitcoinAddress { address: _ }
             ));
         }
@@ -974,14 +975,14 @@ pub(crate) mod tests {
 
         // Valid address with the `bitcoin:` prefix
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd",
             None
         )
         .await
         .is_ok());
         assert!(
-            parse_with_rest_client(rest_client.clone(), "bitcoin:testinvalidaddress", None)
+            parse_with_rest_client(rest_client.as_ref(), "bitcoin:testinvalidaddress", None)
                 .await
                 .is_err()
         );
@@ -990,7 +991,7 @@ pub(crate) mod tests {
 
         // Address with amount
         let addr_1 = format!("bitcoin:{addr}?amount=0.00002000");
-        match parse_with_rest_client(rest_client.clone(), &addr_1, None).await? {
+        match parse_with_rest_client(rest_client.as_ref(), &addr_1, None).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
@@ -1006,7 +1007,7 @@ pub(crate) mod tests {
         // Address with amount and label
         let label = "test-label";
         let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&label={label}");
-        match parse_with_rest_client(rest_client.clone(), &addr_2, None).await? {
+        match parse_with_rest_client(rest_client.as_ref(), &addr_2, None).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
@@ -1022,7 +1023,7 @@ pub(crate) mod tests {
         // Address with amount, label and message
         let message = "test-message";
         let addr_3 = format!("bitcoin:{addr}?amount=0.00002000&label={label}&message={message}");
-        match parse_with_rest_client(rest_client.clone(), &addr_3, None).await? {
+        match parse_with_rest_client(rest_client.as_ref(), &addr_3, None).await? {
             InputType::BitcoinAddress {
                 address: addr_with_amount_parsed,
             } => {
@@ -1055,7 +1056,7 @@ pub(crate) mod tests {
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let addr = format!("bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount={amount_btc}");
 
-            match parse_with_rest_client(rest_client.clone(), &addr, None).await? {
+            match parse_with_rest_client(rest_client.as_ref(), &addr, None).await? {
                 InputType::BitcoinAddress {
                     address: addr_with_amount_parsed,
                 } => {
@@ -1074,15 +1075,15 @@ pub(crate) mod tests {
         let mock_rest_client = MockRestClient::new();
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        assert!(parse_with_rest_client(rest_client.clone(), "tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
+        assert!(parse_with_rest_client(rest_client.as_ref(), "tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
             .await
             .is_ok());
-        assert!(parse_with_rest_client(rest_client.clone(), "liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
+        assert!(parse_with_rest_client(rest_client.as_ref(), "liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None)
             .await
             .is_ok());
-        assert!(parse_with_rest_client(rest_client.clone(), "wrong-net:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None).await.is_err());
+        assert!(parse_with_rest_client(rest_client.as_ref(), "wrong-net:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk", None).await.is_err());
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "liquidnetwork:testinvalidaddress",
             None
         )
@@ -1094,7 +1095,7 @@ pub(crate) mod tests {
         let label = "label";
         let message = "this%20is%20a%20message";
         let asset_id = elements::issuance::AssetId::LIQUID_BTC.to_string();
-        let output = parse_with_rest_client(rest_client, &format!(
+        let output = parse_with_rest_client(rest_client.as_ref(), &format!(
                     "liquidnetwork:{}?amount={amount_btc}&assetid={asset_id}&label={label}&message={message}",
                     address
                 ),
@@ -1131,14 +1132,14 @@ pub(crate) mod tests {
 
         // Invoice without prefix
         assert!(matches!(
-            parse_with_rest_client(rest_client.clone(), bolt11, None).await?,
+            parse_with_rest_client(rest_client.as_ref(), bolt11, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
         // Invoice with prefix
         let invoice_with_prefix = format!("lightning:{bolt11}");
         assert!(matches!(
-            parse_with_rest_client(rest_client, &invoice_with_prefix, None).await?,
+            parse_with_rest_client(rest_client.as_ref(), &invoice_with_prefix, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1153,14 +1154,14 @@ pub(crate) mod tests {
 
         // Invoice without prefix
         assert!(matches!(
-            parse_with_rest_client(rest_client.clone(), bolt11, None).await?,
+            parse_with_rest_client(rest_client.as_ref(), bolt11, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
         // Invoice with prefix
         let invoice_with_prefix = format!("LIGHTNING:{bolt11}");
         assert!(matches!(
-            parse_with_rest_client(rest_client, &invoice_with_prefix, None).await?,
+            parse_with_rest_client(rest_client.as_ref(), &invoice_with_prefix, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1178,7 +1179,7 @@ pub(crate) mod tests {
         // BOLT11 is the first URI arg (preceded by '?')
         let addr_1 = format!("bitcoin:{addr}?lightning={bolt11}");
         assert!(matches!(
-            parse_with_rest_client(rest_client.clone(), &addr_1, None).await?,
+            parse_with_rest_client(rest_client.as_ref(), &addr_1, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1186,7 +1187,7 @@ pub(crate) mod tests {
         // BOLT11 is not the first URI arg (preceded by '&')
         let addr_2 = format!("bitcoin:{addr}?amount=0.00002000&lightning={bolt11}");
         assert!(matches!(
-            parse_with_rest_client(rest_client, &addr_2, None).await?,
+            parse_with_rest_client(rest_client.as_ref(), &addr_2, None).await?,
             InputType::Bolt11 { invoice: _invoice }
         ));
 
@@ -1198,16 +1199,16 @@ pub(crate) mod tests {
         let mock_rest_client = MockRestClient::new();
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         assert!(matches!(
-            parse_with_rest_client(rest_client.clone(), "https://breez.technology", None).await?,
+            parse_with_rest_client(rest_client.as_ref(), "https://breez.technology", None).await?,
             InputType::Url { url: _url }
         ));
         assert!(matches!(
-            parse_with_rest_client(rest_client.clone(), "https://breez.technology/", None).await?,
+            parse_with_rest_client(rest_client.as_ref(), "https://breez.technology/", None).await?,
             InputType::Url { url: _url }
         ));
         assert!(matches!(
             parse_with_rest_client(
-                rest_client.clone(),
+                rest_client.as_ref(),
                 "https://breez.technology/test-path",
                 None
             )
@@ -1216,7 +1217,7 @@ pub(crate) mod tests {
         ));
         assert!(matches!(
             parse_with_rest_client(
-                rest_client.clone(),
+                rest_client.as_ref(),
                 "https://breez.technology/test-path?arg1=val1&arg2=val2",
                 None
             )
@@ -1226,7 +1227,7 @@ pub(crate) mod tests {
         // `lightning` query param is not an LNURL.
         assert!(matches!(
             parse_with_rest_client(
-                rest_client,
+                rest_client.as_ref(),
                 "https://breez.technology?lightning=nonsense",
                 None
             )
@@ -1247,7 +1248,7 @@ pub(crate) mod tests {
         mock_external_parser(&mock_rest_client, "".to_string(), 400);
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        match parse_with_rest_client(rest_client.clone(), &public_key.to_string(), None).await? {
+        match parse_with_rest_client(rest_client.as_ref(), &public_key.to_string(), None).await? {
             InputType::NodeId { node_id } => {
                 assert_eq!(node_id, public_key.to_string());
             }
@@ -1256,26 +1257,26 @@ pub(crate) mod tests {
 
         // Other formats and sizes
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "012345678901234567890123456789012345678901234567890123456789mnop",
             None
         )
         .await
         .is_err());
         assert!(
-            parse_with_rest_client(rest_client.clone(), "0123456789", None)
+            parse_with_rest_client(rest_client.as_ref(), "0123456789", None)
                 .await
                 .is_err()
         );
         assert!(
-            parse_with_rest_client(rest_client.clone(), "abcdefghij", None)
+            parse_with_rest_client(rest_client.as_ref(), "abcdefghij", None)
                 .await
                 .is_err()
         );
 
         // Plain Node ID
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f",
             None
         )
@@ -1283,21 +1284,21 @@ pub(crate) mod tests {
         .is_ok());
         // Plain Node ID (66 hex chars) with @ separator and any string afterwards
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@",
             None
         )
         .await
         .is_ok());
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@sdfsffs",
             None
         )
         .await
         .is_ok());
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f@1.2.3.4:1234",
             None
         )
@@ -1306,21 +1307,21 @@ pub(crate) mod tests {
 
         // Invalid Node ID (66 chars ending in non-hex-chars) with @ separator and any string afterwards -> invalid
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@",
             None
         )
         .await
         .is_err());
         assert!(parse_with_rest_client(
-            rest_client.clone(),
+            rest_client.as_ref(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@sdfsffs",
             None
         )
         .await
         .is_err());
         assert!(parse_with_rest_client(
-            rest_client,
+            rest_client.as_ref(),
             "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3zzz@1.2.3.4:1234",
             None
         )
@@ -1429,7 +1430,7 @@ pub(crate) mod tests {
         );
 
         if let InputType::LnUrlWithdraw { data: wd } =
-            parse_with_rest_client(rest_client, lnurl_withdraw_encoded, None).await?
+            parse_with_rest_client(rest_client.as_ref(), lnurl_withdraw_encoded, None).await?
         {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
@@ -1459,7 +1460,7 @@ pub(crate) mod tests {
         let url = format!("https://bitcoin.org?lightning={lnurl_withdraw_encoded}");
 
         if let InputType::LnUrlWithdraw { data: wd } =
-            parse_with_rest_client(rest_client, &url, None).await?
+            parse_with_rest_client(rest_client.as_ref(), &url, None).await?
         {
             assert_eq!(wd.callback, "https://localhost/lnurl-withdraw/callback/e464f841c44dbdd86cee4f09f4ccd3ced58d2e24f148730ec192748317b74538");
             assert_eq!(
@@ -1490,7 +1491,7 @@ pub(crate) mod tests {
         );
 
         if let InputType::LnUrlAuth { data: ad } =
-            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+            parse_with_rest_client(rest_client.as_ref(), lnurl_auth_encoded, None).await?
         {
             assert_eq!(
                 ad.k1,
@@ -1504,7 +1505,7 @@ pub(crate) mod tests {
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=register";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3awfjkw6tnw3jhys2umys";
         if let InputType::LnUrlAuth { data: ad } =
-            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+            parse_with_rest_client(rest_client.as_ref(), lnurl_auth_encoded, None).await?
         {
             assert_eq!(
                 ad.k1,
@@ -1518,7 +1519,7 @@ pub(crate) mod tests {
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=login";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad3hkw6tw2acjtx";
         if let InputType::LnUrlAuth { data: ad } =
-            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+            parse_with_rest_client(rest_client.as_ref(), lnurl_auth_encoded, None).await?
         {
             assert_eq!(
                 ad.k1,
@@ -1532,7 +1533,7 @@ pub(crate) mod tests {
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=link";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad35ku6cc8mvs6";
         if let InputType::LnUrlAuth { data: ad } =
-            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+            parse_with_rest_client(rest_client.as_ref(), lnurl_auth_encoded, None).await?
         {
             assert_eq!(
                 ad.k1,
@@ -1546,7 +1547,7 @@ pub(crate) mod tests {
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=auth";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3av96hg6qmg6zgu";
         if let InputType::LnUrlAuth { data: ad } =
-            parse_with_rest_client(rest_client.clone(), lnurl_auth_encoded, None).await?
+            parse_with_rest_client(rest_client.as_ref(), lnurl_auth_encoded, None).await?
         {
             assert_eq!(
                 ad.k1,
@@ -1560,7 +1561,7 @@ pub(crate) mod tests {
         let _decoded_url = "https://localhost/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822&action=invalid";
         let lnurl_auth_encoded = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgezvctrw35k7m3ad9h8vctvd9jq2s4vfw";
         assert!(
-            parse_with_rest_client(rest_client, lnurl_auth_encoded, None)
+            parse_with_rest_client(rest_client.as_ref(), lnurl_auth_encoded, None)
                 .await
                 .is_err()
         );
@@ -1621,7 +1622,7 @@ pub(crate) mod tests {
         );
 
         if let InputType::LnUrlPay { data: pd, .. } =
-            parse_with_rest_client(rest_client.clone(), lnurl_pay_encoded, None).await?
+            parse_with_rest_client(rest_client.as_ref(), lnurl_pay_encoded, None).await?
         {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
@@ -1660,7 +1661,7 @@ pub(crate) mod tests {
             format!("LIGHTNING:{}", lnurl_pay_encoded.to_uppercase()).as_str(),
         ] {
             assert!(matches!(
-                parse_with_rest_client(rest_client.clone(), lnurl_pay, None).await?,
+                parse_with_rest_client(rest_client.as_ref(), lnurl_pay, None).await?,
                 InputType::LnUrlPay { .. }
             ));
         }
@@ -1678,7 +1679,7 @@ pub(crate) mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         if let InputType::LnUrlPay { data: pd, .. } =
-            parse_with_rest_client(rest_client, ln_address, None).await?
+            parse_with_rest_client(rest_client.as_ref(), ln_address, None).await?
         {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
@@ -1725,7 +1726,7 @@ pub(crate) mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         if let InputType::LnUrlPay { data: pd, .. } =
-            parse_with_rest_client(rest_client, ln_address, None).await?
+            parse_with_rest_client(rest_client.as_ref(), ln_address, None).await?
         {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
@@ -1752,7 +1753,7 @@ pub(crate) mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         if let InputType::LnUrlError { data: msg } =
-            parse_with_rest_client(rest_client, ln_address, None).await?
+            parse_with_rest_client(rest_client.as_ref(), ln_address, None).await?
         {
             assert_eq!(msg.reason, expected_err);
             return Ok(());
@@ -1939,7 +1940,7 @@ pub(crate) mod tests {
 
         let lnurl_pay_url = format!("lnurlp://localhost{pay_path}");
         if let InputType::LnUrlPay { data: pd, .. } =
-            parse_with_rest_client(rest_client, &lnurl_pay_url, None).await?
+            parse_with_rest_client(rest_client.as_ref(), &lnurl_pay_url, None).await?
         {
             assert_eq!(pd.callback, "https://localhost/lnurl-pay/callback/db945b624265fc7f5a8d77f269f7589d789a771bdfd20e91a3cf6f50382a98d7");
             assert_eq!(pd.max_sendable, 16000);
@@ -1981,7 +1982,7 @@ pub(crate) mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         if let InputType::LnUrlWithdraw { data: wd } = parse_with_rest_client(
-            rest_client,
+            rest_client.as_ref(),
             &format!("lnurlw://localhost{withdraw_path}"),
             None,
         )
@@ -2007,7 +2008,7 @@ pub(crate) mod tests {
         let auth_path = "/lnurl-login?tag=login&k1=1a855505699c3e01be41bddd32007bfcc5ff93505dec0cbca64b4b8ff590b822";
 
         if let InputType::LnUrlAuth { data: ad } = parse_with_rest_client(
-            rest_client,
+            rest_client.as_ref(),
             &format!("keyauth://localhost{auth_path}"),
             None,
         )
@@ -2030,9 +2031,12 @@ pub(crate) mod tests {
         mock_lnurl_pay_endpoint(&mock_rest_client, Some(expected_error_msg.to_string()));
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
-        if let InputType::LnUrlError { data: msg } =
-            parse_with_rest_client(rest_client, &format!("lnurlp://localhost{pay_path}"), None)
-                .await?
+        if let InputType::LnUrlError { data: msg } = parse_with_rest_client(
+            rest_client.as_ref(),
+            &format!("lnurlp://localhost{pay_path}"),
+            None,
+        )
+        .await?
         {
             assert_eq!(msg.reason, expected_error_msg);
             return Ok(());
@@ -2050,7 +2054,7 @@ pub(crate) mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         if let InputType::LnUrlError { data: msg } = parse_with_rest_client(
-            rest_client,
+            rest_client.as_ref(),
             &format!("lnurlw://localhost{withdraw_path}"),
             None,
         )
@@ -2094,7 +2098,8 @@ pub(crate) mod tests {
             parser_url: "http://127.0.0.1:8080/<input>".to_string(),
         }];
 
-        let input_type = parse_with_rest_client(rest_client, input, Some(&parsers)).await?;
+        let input_type =
+            parse_with_rest_client(rest_client.as_ref(), input, Some(&parsers)).await?;
         if let InputType::LnUrlPay { data, .. } = input_type {
             assert_eq!(data.callback, "callback_url");
             assert_eq!(data.max_sendable, 57000);
@@ -2148,14 +2153,15 @@ pub(crate) mod tests {
 
         // Parse and check results
         let input_type =
-            parse_with_rest_client(rest_client.clone(), bitcoin_input, Some(&parsers)).await?;
+            parse_with_rest_client(rest_client.as_ref(), bitcoin_input, Some(&parsers)).await?;
         if let InputType::BitcoinAddress { address } = input_type {
             assert_eq!(address.address, bitcoin_address);
         } else {
             panic!("Expected BitcoinAddress, got {:?}", input_type);
         }
 
-        let input_type = parse_with_rest_client(rest_client, bolt11_input, Some(&parsers)).await?;
+        let input_type =
+            parse_with_rest_client(rest_client.as_ref(), bolt11_input, Some(&parsers)).await?;
         if let InputType::Bolt11 { invoice } = input_type {
             assert_eq!(invoice.bolt11, bolt11);
         } else {
@@ -2179,7 +2185,7 @@ pub(crate) mod tests {
             parser_url: "http://127.0.0.1:8080/<input>".to_string(),
         }];
 
-        let result = parse_with_rest_client(rest_client, input, Some(&parsers)).await;
+        let result = parse_with_rest_client(rest_client.as_ref(), input, Some(&parsers)).await;
 
         assert!(matches!(result, Err(e) if e.to_string() == "Unrecognized input type"));
 
