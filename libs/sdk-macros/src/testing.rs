@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub fn async_test(
+pub fn async_test_not_wasm(
     _args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -11,7 +11,7 @@ pub fn async_test(
     out.into()
 }
 
-pub fn async_test_only_wasm(
+pub fn async_test_wasm(
     _args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
@@ -32,13 +32,25 @@ pub fn async_test_all(
     out.into()
 }
 
-pub fn test(
+pub fn test_not_wasm(
     _args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let mut out = TokenStream::new();
     out.extend(
         quote! { #[cfg_attr(not(all(target_family = "wasm", target_os = "unknown")), test)] },
+    );
+    out.extend(TokenStream::from(input));
+    out.into()
+}
+
+pub fn test_wasm(
+    _args: proc_macro::TokenStream,
+    input: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    let mut out = TokenStream::new();
+    out.extend(
+        quote! { #[cfg_attr(all(target_family = "wasm", target_os = "unknown"), wasm_bindgen_test::wasm_bindgen_test)] },
     );
     out.extend(TokenStream::from(input));
     out.into()

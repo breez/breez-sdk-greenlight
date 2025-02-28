@@ -31,7 +31,7 @@ mockito = "1"
 once_cell = "1"
 prost = "^0.11"
 regex = "1.8.1"
-# Pin to commit until 0.12.12 is released
+# Pin to commit until https://github.com/seanmonstar/reqwest/pull/1760 is released
 reqwest = { git = "https://github.com/seanmonstar/reqwest", rev = "1e7e9653e5b7ee3175131052c097a8d9a07ecbcd", features = ["json"] }
 rusqlite = { version = "0.29", features = [
   "serde_json",

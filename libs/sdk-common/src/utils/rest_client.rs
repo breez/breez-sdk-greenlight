@@ -4,6 +4,8 @@ use std::time::Duration;
 
 use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+
 /// Creates an HTTP client with a built-in connection timeout
 pub fn get_reqwest_client() -> Result<reqwest::Client, ServiceConnectivityError> {
     reqwest::Client::builder().build().map_err(Into::into)
@@ -15,9 +17,7 @@ pub async fn post_and_log_response(
 ) -> Result<String, ServiceConnectivityError> {
     debug!("Making POST request to: {url}");
 
-    let mut req = get_reqwest_client()?
-        .post(url)
-        .timeout(Duration::from_secs(30));
+    let mut req = get_reqwest_client()?.post(url).timeout(REQUEST_TIMEOUT);
     if let Some(body) = body {
         req = req.body(body);
     }
@@ -41,7 +41,7 @@ pub async fn get_and_log_response(
 
     let response = get_reqwest_client()?
         .get(url)
-        .timeout(Duration::from_secs(30))
+        .timeout(REQUEST_TIMEOUT)
         .send()
         .await?;
     let status = response.status();
