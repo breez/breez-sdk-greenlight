@@ -39,8 +39,9 @@ pub async fn validate_lnurl_withdraw(
 
     let response = rest_client
         .get_and_log_response(&callback_url, false)
-        .await?;
-    let withdraw_status = match parse_json(&response) {
+        .await
+        .and_then(|response| parse_json(&response));
+    let withdraw_status = match response {
         Ok(LnUrlCallbackStatus::Ok) => LnUrlWithdrawResult::Ok {
             data: LnUrlWithdrawSuccessData { invoice },
         },
