@@ -849,7 +849,7 @@ impl BreezServices {
     /// Returns an optional in-progress [SwapInfo].
     /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
-        let tip = self.chain_service.current_tip().await?;
+        let tip = self.chain_service.current_tip(true).await?;
         self.segwit_receive_swapper
             .rescan_monitored_swaps(tip)
             .await?;
@@ -863,7 +863,7 @@ impl BreezServices {
     /// Iterate all historical swap addresses and fetch their current status from the blockchain.
     /// The status is then updated in the persistent storage.
     pub async fn rescan_swaps(&self) -> SdkResult<()> {
-        let tip = self.chain_service.current_tip().await?;
+        let tip = self.chain_service.current_tip(false).await?;
         self.segwit_receive_swapper.rescan_swaps(tip).await?;
         Ok(())
     }
@@ -875,7 +875,7 @@ impl BreezServices {
     ///
     /// This is taken care of automatically in the context of typical SDK usage.
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
-        let tip = self.chain_service.current_tip().await?;
+        let tip = self.chain_service.current_tip(true).await?;
         self.segwit_receive_swapper
             .refresh_swap_on_chain_status(swap_address.clone(), tip)
             .await?;
@@ -1752,7 +1752,7 @@ impl BreezServices {
                     }
                 }
 
-                let next_block = match cloned.chain_service.current_tip().await {
+                let next_block = match cloned.chain_service.current_tip(false).await {
                     Ok(next_block) => next_block,
                     Err(e) => {
                         error!("failed to fetch next block {}", e);
@@ -2457,7 +2457,9 @@ impl BreezServicesBuilder {
             }
             Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
         };
+
         let chain_service = Arc::new(RedundantChainService::from_base_urls(
+            persister.clone(),
             rest_client.clone(),
             mempoolspace_urls,
         ));

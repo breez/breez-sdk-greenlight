@@ -1,3 +1,5 @@
+use std::time::SystemTimeError;
+
 pub type PersistResult<T, E = PersistError> = Result<T, E>;
 
 #[derive(Debug, thiserror::Error)]
@@ -45,5 +47,11 @@ impl From<rusqlite_migration::Error> for PersistError {
 impl From<serde_json::Error> for PersistError {
     fn from(err: serde_json::Error) -> Self {
         Self::Generic(err.to_string())
+    }
+}
+
+impl From<SystemTimeError> for PersistError {
+    fn from(_value: SystemTimeError) -> Self {
+        Self::generic("invalid system time")
     }
 }

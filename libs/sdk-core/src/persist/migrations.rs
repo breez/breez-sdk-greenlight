@@ -485,7 +485,12 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "ALTER TABLE payments ADD COLUMN is_pseudo INTEGER DEFAULT 0 NOT NULL;
         DELETE FROM payments;
         DELETE FROM cached_items WHERE key = 'sync_state';
-       "
+       ",
+       "CREATE TABLE current_tip (
+           tip INTEGER NOT NULL,
+           time INTEGER NOT NULL
+        );
+        INSERT INTO current_tip (tip, time) VALUES (0, 0);",
     ]
 }
 

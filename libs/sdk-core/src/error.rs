@@ -474,6 +474,12 @@ impl From<SendPaymentError> for SdkError {
     }
 }
 
+impl From<SystemTimeError> for SdkError {
+    fn from(_value: SystemTimeError) -> Self {
+        Self::generic("invalid system time")
+    }
+}
+
 /// Error returned by [crate::breez_services::BreezServices::send_onchain]
 #[derive(Debug, Error)]
 pub enum SendOnchainError {

@@ -204,7 +204,7 @@ impl ChainService for MockChainService {
             .clone())
     }
 
-    async fn current_tip(&self) -> SdkResult<u32> {
+    async fn current_tip(&self, _cache: bool) -> SdkResult<u32> {
         Ok(self.tip)
     }
 

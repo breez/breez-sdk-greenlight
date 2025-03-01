@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::Result;
 use sdk_common::prelude::*;
@@ -7,8 +8,14 @@ use serde::{Deserialize, Serialize};
 use crate::bitcoin::hashes::hex::FromHex;
 use crate::bitcoin::{OutPoint, Txid};
 use crate::error::{SdkError, SdkResult};
+use crate::persist::db::SqliteStorage;
 
 pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";
+
+// Cache validity for the current tip is 15 minutes. It should be refreshed in the background
+// every 30 seconds. With 15 minutes on average this could be 1 or 2 blocks behind. If that's
+// too much, the cache shouldn't be used.
+const CURRENT_TIP_CACHE_DURATION: Duration = Duration::from_secs(15 * 60);
 
 #[tonic::async_trait]
 pub trait ChainService: Send + Sync {
@@ -17,7 +24,7 @@ pub trait ChainService: Send + Sync {
     ///
     /// See <https://mempool.space/docs/api/rest#get-address-transactions>
     async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>>;
-    async fn current_tip(&self) -> SdkResult<u32>;
+    async fn current_tip(&self, cache: bool) -> SdkResult<u32>;
     /// Gets the spending status of all tx outputs for this tx.
     ///
     /// See <https://mempool.space/docs/api/rest#get-transaction-outspends>
@@ -27,16 +34,26 @@ pub trait ChainService: Send + Sync {
 }
 
 pub trait RedundantChainServiceTrait: ChainService {
-    fn from_base_urls(rest_client: Arc<dyn RestClient>, base_urls: Vec<String>) -> Self;
+    fn from_base_urls(
+        persister: Arc<SqliteStorage>,
+        rest_client: Arc<dyn RestClient>,
+        base_urls: Vec<String>,
+    ) -> Self;
 }
 
 #[derive(Clone)]
 pub struct RedundantChainService {
+    persister: Arc<SqliteStorage>,
     instances: Vec<MempoolSpace>,
 }
 impl RedundantChainServiceTrait for RedundantChainService {
-    fn from_base_urls(rest_client: Arc<dyn RestClient>, base_urls: Vec<String>) -> Self {
+    fn from_base_urls(
+        persister: Arc<SqliteStorage>,
+        rest_client: Arc<dyn RestClient>,
+        base_urls: Vec<String>,
+    ) -> Self {
         Self {
+            persister,
             instances: base_urls
                 .iter()
                 .map(|url: &String| url.trim_end_matches('/'))
@@ -76,11 +93,22 @@ impl ChainService for RedundantChainService {
         ))
     }
 
-    async fn current_tip(&self) -> SdkResult<u32> {
+    async fn current_tip(&self, cache: bool) -> SdkResult<u32> {
+        if cache {
+            if let Some((tip, time)) = self.persister.get_current_tip()? {
+                if time.elapsed()? < CURRENT_TIP_CACHE_DURATION {
+                    return Ok(tip);
+                }
+            }
+        }
+
         for inst in &self.instances {
-            match inst.current_tip().await {
-                Ok(res) => {
-                    return Ok(res);
+            match inst.current_tip(false).await {
+                Ok(tip) => {
+                    if let Err(e) = self.persister.set_current_tip(tip) {
+                        error!("Failed to set current tip: {e}");
+                    }
+                    return Ok(tip);
                 }
                 Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
             }
@@ -358,7 +386,7 @@ impl ChainService for MempoolSpace {
         Ok(parse_json(&response)?)
     }
 
-    async fn current_tip(&self) -> SdkResult<u32> {
+    async fn current_tip(&self, _cache: bool) -> SdkResult<u32> {
         let (response, _) = get_and_check_success(
             self.rest_client.as_ref(),
             &format!("{}/blocks/tip/height", self.base_url),
@@ -400,6 +428,7 @@ mod tests {
     use crate::{
         chain::{MempoolSpace, OnchainTx, RedundantChainService, RedundantChainServiceTrait},
         error::SdkError,
+        persist::db::SqliteStorage,
     };
     use anyhow::Result;
     use sdk_common::prelude::{MockResponse, MockRestClient, RestClient};
@@ -476,14 +505,17 @@ mod tests {
         mock_rest_client.add_response(MockResponse::new(200, response_body.to_string()));
 
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let storage = Arc::new(SqliteStorage::new("".to_string()));
 
         let ms = RedundantChainService::from_base_urls(
+            storage.clone(),
             rest_client.clone(),
             vec!["https://mempool-url-unreachable.space/api/".into()],
         );
         assert!(ms.recommended_fees().await.is_err());
 
         let ms = RedundantChainService::from_base_urls(
+            storage.clone(),
             rest_client.clone(),
             vec![
                 "https://mempool-url-unreachable.space/api/".into(),
@@ -493,6 +525,7 @@ mod tests {
         assert!(ms.recommended_fees().await.is_ok());
 
         let ms = RedundantChainService::from_base_urls(
+            storage.clone(),
             rest_client.clone(),
             vec![
                 "https://mempool-url-unreachable.space/api/".into(),
@@ -502,6 +535,7 @@ mod tests {
         assert!(ms.recommended_fees().await.is_err());
 
         let ms = RedundantChainService::from_base_urls(
+            storage.clone(),
             rest_client,
             vec![
                 "https://mempool-url-unreachable.space/api/".into(),
