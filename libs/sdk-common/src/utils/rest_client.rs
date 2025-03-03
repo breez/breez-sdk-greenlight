@@ -11,14 +11,15 @@ pub trait RestClient: Send + Sync {
     /// Makes a GET request and logs on DEBUG.
     /// ### Arguments
     /// - `url`: the URL on which GET will be called
-    /// - `enforce_status_check`: if true, the HTTP status code is checked in addition to trying to
-    ///    parse the payload. In this case, an HTTP error code will automatically cause this function to
-    ///    return `Err`, regardless of the payload. If false, the result type will be determined only
-    ///    by the result of parsing the payload into the desired target type.
-    async fn get(
+    async fn get(&self, url: &str) -> Result<(String, u16), ServiceConnectivityError>;
+
+    /// Makes a GET request and logs on DEBUG. Checks the response HTTP status code
+    /// is within the success range (200 - 299)
+    /// ### Arguments
+    /// - `url`: the URL on which GET will be called
+    async fn get_and_check_success(
         &self,
         url: &str,
-        enforce_status_check: bool,
     ) -> Result<(String, u16), ServiceConnectivityError>;
 
     /// Makes a POST request, and logs on DEBUG.
@@ -48,20 +49,25 @@ impl ReqwestRestClient {
 
 #[sdk_macros::async_trait]
 impl RestClient for ReqwestRestClient {
-    async fn get(
-        &self,
-        url: &str,
-        enforce_status_check: bool,
-    ) -> Result<(String, u16), ServiceConnectivityError> {
+    async fn get(&self, url: &str) -> Result<(String, u16), ServiceConnectivityError> {
         debug!("Making GET request to: {url}");
         let response = self.client.get(url).timeout(REQUEST_TIMEOUT).send().await?;
-        let status = response.status();
-        let status_code = status.into();
+        let status = response.status().into();
         let raw_body = response.text().await?;
         debug!("Received response, status: {status}");
         trace!("raw response body: {raw_body}");
-        if enforce_status_check && !status.is_success() {
-            let err = format!("GET request {url} failed with status: {status_code}");
+
+        Ok((raw_body, status))
+    }
+
+    async fn get_and_check_success(
+        &self,
+        url: &str,
+    ) -> Result<(String, u16), ServiceConnectivityError> {
+        let (raw_body, status) = self.get(url).await?;
+        #[allow(clippy::manual_range_contains)]
+        if status < 200 || status >= 300 {
+            let err = format!("GET request {url} failed with status: {status}");
             error!("{err}");
             return Err(ServiceConnectivityError::new(
                 ServiceConnectivityErrorKind::Status,
@@ -69,7 +75,7 @@ impl RestClient for ReqwestRestClient {
             ));
         }
 
-        Ok((raw_body, status_code))
+        Ok((raw_body, status))
     }
 
     async fn post(

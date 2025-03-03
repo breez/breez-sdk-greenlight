@@ -343,7 +343,7 @@ impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
         let (response, _) = self
             .rest_client
-            .get(&format!("{}/v1/fees/recommended", self.base_url), true)
+            .get_and_check_success(&format!("{}/v1/fees/recommended", self.base_url))
             .await?;
         Ok(parse_json(&response)?)
     }
@@ -351,7 +351,7 @@ impl ChainService for MempoolSpace {
     async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
         let (response, _) = self
             .rest_client
-            .get(&format!("{}/address/{address}/txs", self.base_url), true)
+            .get_and_check_success(&format!("{}/address/{address}/txs", self.base_url))
             .await?;
         Ok(parse_json(&response)?)
     }
@@ -359,7 +359,7 @@ impl ChainService for MempoolSpace {
     async fn current_tip(&self) -> SdkResult<u32> {
         let (response, _) = self
             .rest_client
-            .get(&format!("{}/blocks/tip/height", self.base_url), true)
+            .get_and_check_success(&format!("{}/blocks/tip/height", self.base_url))
             .await?;
         Ok(parse_json(&response)?)
     }
@@ -367,7 +367,7 @@ impl ChainService for MempoolSpace {
     async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
         let (response, _) = self
             .rest_client
-            .get(&format!("{}/tx/{txid}/outspends", self.base_url), true)
+            .get_and_check_success(&format!("{}/tx/{txid}/outspends", self.base_url))
             .await?;
         Ok(parse_json(&response)?)
     }

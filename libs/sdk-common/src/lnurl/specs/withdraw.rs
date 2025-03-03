@@ -37,7 +37,7 @@ pub async fn validate_lnurl_withdraw<C: RestClient + ?Sized>(
     let callback_url = build_withdraw_callback_url(&req_data, &invoice)?;
 
     let response = rest_client
-        .get(&callback_url, false)
+        .get(&callback_url)
         .await
         .and_then(|(response, _)| parse_json(&response));
     let withdraw_status = match response {

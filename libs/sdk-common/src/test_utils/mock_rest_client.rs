@@ -40,17 +40,23 @@ impl MockRestClient {
 
 #[sdk_macros::async_trait]
 impl RestClient for MockRestClient {
-    async fn get(
-        &self,
-        url: &str,
-        enforce_status_check: bool,
-    ) -> Result<(String, u16), ServiceConnectivityError> {
+    async fn get(&self, _url: &str) -> Result<(String, u16), ServiceConnectivityError> {
         let mut responses = self.responses.lock().unwrap();
         let response = responses.pop_front().unwrap();
         println!("Pop GET response: {response:?}");
         let status = response.status_code;
         let raw_body = response.text;
-        if enforce_status_check && status != 200 {
+
+        Ok((raw_body, status))
+    }
+
+    async fn get_and_check_success(
+        &self,
+        url: &str,
+    ) -> Result<(String, u16), ServiceConnectivityError> {
+        let (raw_body, status) = self.get(url).await?;
+        #[allow(clippy::manual_range_contains)]
+        if status < 200 || status >= 300 {
             let err = format!("GET request {url} failed with status: {status}");
             return Err(ServiceConnectivityError::new(
                 ServiceConnectivityErrorKind::Status,
