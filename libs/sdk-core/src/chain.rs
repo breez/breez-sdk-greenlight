@@ -341,34 +341,38 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
-        let (response, _) = self
-            .rest_client
-            .get_and_check_success(&format!("{}/v1/fees/recommended", self.base_url))
-            .await?;
+        let (response, _) = get_and_check_success(
+            self.rest_client.as_ref(),
+            &format!("{}/v1/fees/recommended", self.base_url),
+        )
+        .await?;
         Ok(parse_json(&response)?)
     }
 
     async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
-        let (response, _) = self
-            .rest_client
-            .get_and_check_success(&format!("{}/address/{address}/txs", self.base_url))
-            .await?;
+        let (response, _) = get_and_check_success(
+            self.rest_client.as_ref(),
+            &format!("{}/address/{address}/txs", self.base_url),
+        )
+        .await?;
         Ok(parse_json(&response)?)
     }
 
     async fn current_tip(&self) -> SdkResult<u32> {
-        let (response, _) = self
-            .rest_client
-            .get_and_check_success(&format!("{}/blocks/tip/height", self.base_url))
-            .await?;
+        let (response, _) = get_and_check_success(
+            self.rest_client.as_ref(),
+            &format!("{}/blocks/tip/height", self.base_url),
+        )
+        .await?;
         Ok(parse_json(&response)?)
     }
 
     async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
-        let (response, _) = self
-            .rest_client
-            .get_and_check_success(&format!("{}/tx/{txid}/outspends", self.base_url))
-            .await?;
+        let (response, _) = get_and_check_success(
+            self.rest_client.as_ref(),
+            &format!("{}/tx/{txid}/outspends", self.base_url),
+        )
+        .await?;
         Ok(parse_json(&response)?)
     }
 

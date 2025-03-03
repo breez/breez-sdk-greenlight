@@ -3,10 +3,7 @@ use std::{
     sync::Mutex,
 };
 
-use crate::{
-    error::{ServiceConnectivityError, ServiceConnectivityErrorKind},
-    prelude::RestClient,
-};
+use crate::{error::ServiceConnectivityError, prelude::RestClient};
 
 #[derive(Debug)]
 pub struct MockResponse {
@@ -46,23 +43,6 @@ impl RestClient for MockRestClient {
         println!("Pop GET response: {response:?}");
         let status = response.status_code;
         let raw_body = response.text;
-
-        Ok((raw_body, status))
-    }
-
-    async fn get_and_check_success(
-        &self,
-        url: &str,
-    ) -> Result<(String, u16), ServiceConnectivityError> {
-        let (raw_body, status) = self.get(url).await?;
-        #[allow(clippy::manual_range_contains)]
-        if status < 200 || status >= 300 {
-            let err = format!("GET request {url} failed with status: {status}");
-            return Err(ServiceConnectivityError::new(
-                ServiceConnectivityErrorKind::Status,
-                err,
-            ));
-        }
 
         Ok((raw_body, status))
     }

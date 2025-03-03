@@ -13,15 +13,6 @@ pub trait RestClient: Send + Sync {
     /// - `url`: the URL on which GET will be called
     async fn get(&self, url: &str) -> Result<(String, u16), ServiceConnectivityError>;
 
-    /// Makes a GET request and logs on DEBUG. Checks the response HTTP status code
-    /// is within the success range (200 - 299)
-    /// ### Arguments
-    /// - `url`: the URL on which GET will be called
-    async fn get_and_check_success(
-        &self,
-        url: &str,
-    ) -> Result<(String, u16), ServiceConnectivityError>;
-
     /// Makes a POST request, and logs on DEBUG.
     /// ### Arguments
     /// - `url`: the URL on which POST will be called
@@ -60,24 +51,6 @@ impl RestClient for ReqwestRestClient {
         Ok((raw_body, status))
     }
 
-    async fn get_and_check_success(
-        &self,
-        url: &str,
-    ) -> Result<(String, u16), ServiceConnectivityError> {
-        let (raw_body, status) = self.get(url).await?;
-        #[allow(clippy::manual_range_contains)]
-        if status < 200 || status >= 300 {
-            let err = format!("GET request {url} failed with status: {status}");
-            error!("{err}");
-            return Err(ServiceConnectivityError::new(
-                ServiceConnectivityErrorKind::Status,
-                err,
-            ));
-        }
-
-        Ok((raw_body, status))
-    }
-
     async fn post(
         &self,
         url: &str,
@@ -111,4 +84,22 @@ where
     serde_json::from_str::<T>(json).map_err(|e| {
         ServiceConnectivityError::new(ServiceConnectivityErrorKind::Json, e.to_string())
     })
+}
+
+pub async fn get_and_check_success<C: RestClient + ?Sized>(
+    rest_client: &C,
+    url: &str,
+) -> Result<(String, u16), ServiceConnectivityError> {
+    let (raw_body, status) = rest_client.get(url).await?;
+    #[allow(clippy::manual_range_contains)]
+    if status < 200 || status >= 300 {
+        let err = format!("GET request {url} failed with status: {status}");
+        error!("{err}");
+        return Err(ServiceConnectivityError::new(
+            ServiceConnectivityErrorKind::Status,
+            err,
+        ));
+    }
+
+    Ok((raw_body, status))
 }

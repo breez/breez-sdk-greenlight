@@ -405,7 +405,7 @@ async fn parse_external<C: RestClient + ?Sized>(
         let parser_url = parser.parser_url.replacen("<input>", &urlsafe_input, 1);
 
         // Make request
-        let (response, _) = match rest_client.get_and_check_success(&parser_url).await {
+        let (response, _) = match get_and_check_success(rest_client, &parser_url).await {
             Ok(response) => response,
             Err(e) => {
                 error!("Request to external input parser {parser:?} failed: {e}");
