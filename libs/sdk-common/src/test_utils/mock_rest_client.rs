@@ -3,8 +3,6 @@ use std::{
     sync::Mutex,
 };
 
-use reqwest::StatusCode;
-
 use crate::{
     error::{ServiceConnectivityError, ServiceConnectivityErrorKind},
     prelude::RestClient,
@@ -12,16 +10,13 @@ use crate::{
 
 #[derive(Debug)]
 pub struct MockResponse {
-    pub(crate) status_code: StatusCode,
+    pub(crate) status_code: u16,
     pub(crate) text: String,
 }
 
 impl MockResponse {
     pub fn new(status_code: u16, text: String) -> Self {
-        MockResponse {
-            status_code: StatusCode::from_u16(status_code).unwrap(),
-            text,
-        }
+        MockResponse { status_code, text }
     }
 }
 
@@ -45,17 +40,17 @@ impl MockRestClient {
 
 #[sdk_macros::async_trait]
 impl RestClient for MockRestClient {
-    async fn get_and_log_response(
+    async fn get(
         &self,
         url: &str,
         enforce_status_check: bool,
-    ) -> Result<String, ServiceConnectivityError> {
+    ) -> Result<(String, u16), ServiceConnectivityError> {
         let mut responses = self.responses.lock().unwrap();
         let response = responses.pop_front().unwrap();
         println!("Pop GET response: {response:?}");
         let status = response.status_code;
         let raw_body = response.text;
-        if enforce_status_check && !status.is_success() {
+        if enforce_status_check && status != 200 {
             let err = format!("GET request {url} failed with status: {status}");
             return Err(ServiceConnectivityError::new(
                 ServiceConnectivityErrorKind::Status,
@@ -63,20 +58,21 @@ impl RestClient for MockRestClient {
             ));
         }
 
-        Ok(raw_body)
+        Ok((raw_body, status))
     }
 
-    async fn post_and_log_response(
+    async fn post(
         &self,
         _url: &str,
         _headers: Option<HashMap<String, String>>,
         _body: Option<String>,
-    ) -> Result<String, ServiceConnectivityError> {
+    ) -> Result<(String, u16), ServiceConnectivityError> {
         let mut responses = self.responses.lock().unwrap();
         let response = responses.pop_front().unwrap();
         println!("Pop POST response: {response:?}");
+        let status = response.status_code;
         let raw_body = response.text;
 
-        Ok(raw_body)
+        Ok((raw_body, status))
     }
 }

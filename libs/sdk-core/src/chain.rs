@@ -341,41 +341,41 @@ impl MempoolSpace {
 #[tonic::async_trait]
 impl ChainService for MempoolSpace {
     async fn recommended_fees(&self) -> SdkResult<RecommendedFees> {
-        let response = self
+        let (response, _) = self
             .rest_client
-            .get_and_log_response(&format!("{}/v1/fees/recommended", self.base_url), true)
+            .get(&format!("{}/v1/fees/recommended", self.base_url), true)
             .await?;
         Ok(parse_json(&response)?)
     }
 
     async fn address_transactions(&self, address: String) -> SdkResult<Vec<OnchainTx>> {
-        let response = self
+        let (response, _) = self
             .rest_client
-            .get_and_log_response(&format!("{}/address/{address}/txs", self.base_url), true)
+            .get(&format!("{}/address/{address}/txs", self.base_url), true)
             .await?;
         Ok(parse_json(&response)?)
     }
 
     async fn current_tip(&self) -> SdkResult<u32> {
-        let response = self
+        let (response, _) = self
             .rest_client
-            .get_and_log_response(&format!("{}/blocks/tip/height", self.base_url), true)
+            .get(&format!("{}/blocks/tip/height", self.base_url), true)
             .await?;
         Ok(parse_json(&response)?)
     }
 
     async fn transaction_outspends(&self, txid: String) -> SdkResult<Vec<Outspend>> {
-        let response = self
+        let (response, _) = self
             .rest_client
-            .get_and_log_response(&format!("{}/tx/{txid}/outspends", self.base_url), true)
+            .get(&format!("{}/tx/{txid}/outspends", self.base_url), true)
             .await?;
         Ok(parse_json(&response)?)
     }
 
     async fn broadcast_transaction(&self, tx: Vec<u8>) -> SdkResult<String> {
-        let txid_or_error = self
+        let (txid_or_error, _) = self
             .rest_client
-            .post_and_log_response(
+            .post(
                 &format!("{}/tx", self.base_url),
                 None,
                 Some(hex::encode(tx)),
@@ -557,7 +557,7 @@ mod tests {
             Ok(_) => panic!("Expected an error"),
             Err(e) => match e {
                 SdkError::ServiceConnectivity { err } => {
-                    assert_eq!(err, "GET request https://mempool.space/api/tx/07c9d3fbffc20f96ea7c93ef3bcdf346c8a8456c25850ea76be62b24a7cf6901/outspends failed with status: 404 Not Found")
+                    assert_eq!(err, "GET request https://mempool.space/api/tx/07c9d3fbffc20f96ea7c93ef3bcdf346c8a8456c25850ea76be62b24a7cf6901/outspends failed with status: 404")
                 }
                 _ => panic!("Expected a service connectivity error"),
             },

@@ -15,23 +15,23 @@ pub trait RestClient: Send + Sync {
     ///    parse the payload. In this case, an HTTP error code will automatically cause this function to
     ///    return `Err`, regardless of the payload. If false, the result type will be determined only
     ///    by the result of parsing the payload into the desired target type.
-    async fn get_and_log_response(
+    async fn get(
         &self,
         url: &str,
         enforce_status_check: bool,
-    ) -> Result<String, ServiceConnectivityError>;
+    ) -> Result<(String, u16), ServiceConnectivityError>;
 
     /// Makes a POST request, and logs on DEBUG.
     /// ### Arguments
     /// - `url`: the URL on which POST will be called
     /// - `headers`: the optional POST headers
     /// - `body`: the optional POST body
-    async fn post_and_log_response(
+    async fn post(
         &self,
         url: &str,
         headers: Option<HashMap<String, String>>,
         body: Option<String>,
-    ) -> Result<String, ServiceConnectivityError>;
+    ) -> Result<(String, u16), ServiceConnectivityError>;
 }
 
 pub struct ReqwestRestClient {
@@ -48,20 +48,20 @@ impl ReqwestRestClient {
 
 #[sdk_macros::async_trait]
 impl RestClient for ReqwestRestClient {
-    async fn get_and_log_response(
+    async fn get(
         &self,
         url: &str,
         enforce_status_check: bool,
-    ) -> Result<String, ServiceConnectivityError> {
+    ) -> Result<(String, u16), ServiceConnectivityError> {
         debug!("Making GET request to: {url}");
-
         let response = self.client.get(url).timeout(REQUEST_TIMEOUT).send().await?;
         let status = response.status();
+        let status_code = status.into();
         let raw_body = response.text().await?;
         debug!("Received response, status: {status}");
         trace!("raw response body: {raw_body}");
         if enforce_status_check && !status.is_success() {
-            let err = format!("GET request {url} failed with status: {status}");
+            let err = format!("GET request {url} failed with status: {status_code}");
             error!("{err}");
             return Err(ServiceConnectivityError::new(
                 ServiceConnectivityErrorKind::Status,
@@ -69,17 +69,16 @@ impl RestClient for ReqwestRestClient {
             ));
         }
 
-        Ok(raw_body)
+        Ok((raw_body, status_code))
     }
 
-    async fn post_and_log_response(
+    async fn post(
         &self,
         url: &str,
         headers: Option<HashMap<String, String>>,
         body: Option<String>,
-    ) -> Result<String, ServiceConnectivityError> {
+    ) -> Result<(String, u16), ServiceConnectivityError> {
         debug!("Making POST request to: {url}");
-
         let mut req = self.client.post(url).timeout(REQUEST_TIMEOUT);
         if let Some(headers) = headers {
             for (key, value) in headers.iter() {
@@ -95,7 +94,7 @@ impl RestClient for ReqwestRestClient {
         debug!("Received response, status: {status}");
         trace!("raw response body: {raw_body}");
 
-        Ok(raw_body)
+        Ok((raw_body, status.into()))
     }
 }
 

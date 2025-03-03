@@ -2144,7 +2144,7 @@ impl BreezServices {
         })
         .to_string();
         self.rest_client
-            .post_and_log_response(&url, Some(headers), Some(body))
+            .post(&url, Some(headers), Some(body))
             .await
             .map(|_| ())
             .map_err(|e| SdkError::ServiceConnectivity {
@@ -2161,7 +2161,7 @@ impl BreezServices {
         })
         .to_string();
         self.rest_client
-            .post_and_log_response(&url, Some(headers), Some(body))
+            .post(&url, Some(headers), Some(body))
             .await
             .map(|_| ())
             .map_err(|e| SdkError::ServiceConnectivity {

@@ -405,7 +405,7 @@ async fn parse_external<C: RestClient + ?Sized>(
         let parser_url = parser.parser_url.replacen("<input>", &urlsafe_input, 1);
 
         // Make request
-        let response = match rest_client.get_and_log_response(&parser_url, true).await {
+        let (response, _) = match rest_client.get(&parser_url, true).await {
             Ok(response) => response,
             Err(e) => {
                 error!("Request to external input parser {parser:?} failed: {e}");
@@ -588,9 +588,7 @@ async fn resolve_lnurl<C: RestClient + ?Sized>(
         });
     }
 
-    let response = rest_client
-        .get_and_log_response(&lnurl_endpoint, false)
-        .await?;
+    let (response, _) = rest_client.get(&lnurl_endpoint, false).await?;
     let lnurl_data: LnUrlRequestData =
         parse_json(&response).map_err(|_| anyhow!("Failed to parse response"))?;
     let temp = lnurl_data.into();
