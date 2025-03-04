@@ -3761,7 +3761,6 @@ dependencies = [
  "getrandom",
  "hex",
  "hickory-resolver",
- "js-sys",
  "lazy_static",
  "lightning 0.0.118",
  "lightning 0.0.125",
@@ -3787,9 +3786,7 @@ dependencies = [
  "url",
  "urlencoding",
  "wasm-bindgen",
- "wasm-bindgen-futures",
  "wasm-bindgen-test",
- "web-sys",
 ]
 
 [[package]]
