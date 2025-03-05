@@ -446,7 +446,10 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
 mod tests {
     use crate::invoice::*;
 
-    #[test]
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    #[sdk_macros::test_all]
     fn test_parse_invoice() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res = parse_invoice(&payreq).unwrap();
@@ -472,7 +475,7 @@ mod tests {
         print!("{encoded:?}");
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_invoice_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res: LNInvoice = parse_invoice(&payreq).unwrap();
@@ -499,7 +502,7 @@ mod tests {
         print!("{encoded:?}");
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_invoice_invalid_bitcoin_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res = parse_invoice(&payreq);
@@ -508,7 +511,7 @@ mod tests {
         assert!(validate_network(res.unwrap(), Network::Testnet).is_err());
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_invoice_invalid_testnet_network() {
         let payreq = String::from("lntb15u1pj53l9tpp5p7kjsjcv3eqa39upytmj6k7ac8rqvdffyqr4um98pq5n4ppwxvnsdpzxysy2umswfjhxum0yppk76twypgxzmnwvyxqrrsscqp79qy9qsqsp53xw4x5ezpzvnheff9mrt0ju72u5a5dnxyh4rq6gtweufv9650d4qwqj3ds5xfg4pxc9h7a2g43fmntr4tt322jzujsycvuvury50u994kzr8539qf658hrp07hyz634qpvkeh378wnvf7lddp2x7yfgyk9cp7f7937");
         let res = parse_invoice(&payreq);
@@ -517,7 +520,7 @@ mod tests {
         assert!(validate_network(res.unwrap(), Network::Bitcoin).is_err());
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_format_short_channel_id() {
         let valid_short_channel_ids = vec![
             (0, "0x0x0"),
@@ -531,7 +534,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_short_channel_id() {
         let valid_short_channel_ids = vec![
             ("0x0x0", 0),

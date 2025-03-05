@@ -182,6 +182,11 @@ jobs:
         run: |
           rustup set auto-self-update disable
           rustup toolchain install stable --profile minimal
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: |
+          cargo install wasm-pack
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -193,9 +198,13 @@ jobs:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run sdk-common tests
+      - name: Test sdk-common
         working-directory: libs/sdk-common
-        run: cargo test --features liquid
+        run: cargo test
+
+      - name: Test sdk-common WASM
+        working-directory: libs/sdk-common
+        run: wasm-pack test --headless --firefox
       
       - name: Check git status
         env: 
@@ -211,9 +220,13 @@ jobs:
             echo "No changes in git status"
           fi
 
-      - name: Run sdk-common tests with 'liquid' feature
+      - name: Test sdk-common liquid
         working-directory: libs/sdk-common
-        run: cargo test --features=liquid
+        run: cargo test --features liquid
+
+      - name: Test sdk-common WASM/liquid
+        working-directory: libs/sdk-common
+        run: wasm-pack test --headless --firefox --features liquid
 
   clippy:
     name: Clippy
@@ -226,6 +239,11 @@ jobs:
         run: |
           rustup set auto-self-update disable
           rustup toolchain install stable --profile minimal
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: |
+          cargo install wasm-pack
 
       - uses: Swatinem/rust-cache@v2
         with:
@@ -239,13 +257,17 @@ jobs:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: clippy
+      - name: Clippy
         run: |
           cd libs
           cargo clippy -- -D warnings
           cargo clippy --tests -- -D warnings
           cd ../tools/sdk-cli
           cargo clippy -- -D warnings
+
+      - name: Clippy WASM
+        working-directory: libs/sdk-common 
+        run: cargo clippy --target=wasm32-unknown-unknown -- -D warnings
   
   react-native:
     name: Check react native
@@ -397,3 +419,44 @@ jobs:
           cargo add --path ../libs/sdk-core breez-sdk-core
           
           cargo clippy -- -D warnings
+
+  check-wasm-sdk-common:
+    name: Check sdk-common as a WASM dependancy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+          rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-pack
+        run: |
+          cargo install wasm-pack
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            libs -> target
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "27.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create project
+        run: |
+          wasm-pack new wasm-project
+          cd wasm-project
+                    
+          sed -i.bak -e 's/edition = .*/edition = "2021"/' Cargo.toml
+          rm Cargo.toml.bak
+
+          # In this test, we reference the checked out repo (e.g. this PR branch)
+          cargo add --path ../libs/sdk-common sdk-common
+
+          wasm-pack build --target web

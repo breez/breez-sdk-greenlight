@@ -1,5 +1,6 @@
 mod breez_server;
 mod buy;
+mod dns_resolver;
 mod error;
 mod fiat;
 pub mod grpc;
@@ -9,6 +10,7 @@ pub mod invoice;
 pub mod liquid;
 mod lnurl;
 mod model;
+mod test_utils;
 pub mod tonic_wrap;
 mod utils;
 

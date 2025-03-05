@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use anyhow::Result;
 use log::trace;
 use tokio::sync::Mutex;
@@ -7,7 +5,6 @@ use tonic::codegen::InterceptedService;
 use tonic::metadata::errors::InvalidMetadataValue;
 use tonic::metadata::{Ascii, MetadataValue};
 use tonic::service::Interceptor;
-use tonic::transport::{Channel, Endpoint};
 use tonic::{Request, Status};
 
 use crate::grpc::channel_opener_client::ChannelOpenerClient;
@@ -16,32 +13,28 @@ use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
+use crate::grpc::transport::{GrpcClient, Transport};
 use crate::grpc::{ChainApiServersRequest, PingRequest};
 use crate::prelude::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use crate::with_connection_retry;
 
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443";
+#[cfg(all(target_family = "wasm", target_os = "unknown"))]
+pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bsw1.breez.technology";
 pub static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443";
 
 pub struct BreezServer {
-    grpc_channel: Mutex<Channel>,
+    grpc_client: Mutex<GrpcClient>,
     api_key: Option<String>,
 }
 
 impl BreezServer {
     pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
         Ok(Self {
-            grpc_channel: Mutex::new(Self::create_endpoint(&server_url)?.connect_lazy()),
+            grpc_client: Mutex::new(GrpcClient::new(server_url)?),
             api_key,
         })
-    }
-
-    fn create_endpoint(server_url: &str) -> Result<Endpoint> {
-        Ok(Endpoint::from_shared(server_url.to_string())?
-            .http2_keep_alive_interval(Duration::new(5, 0))
-            .tcp_keepalive(Some(Duration::from_secs(5)))
-            .keep_alive_timeout(Duration::from_secs(5))
-            .keep_alive_while_idle(true))
     }
 
     fn api_key_metadata(&self) -> Result<Option<MetadataValue<Ascii>>, ServiceConnectivityError> {
@@ -61,44 +54,44 @@ impl BreezServer {
     pub async fn get_channel_opener_client(
         &self,
     ) -> Result<
-        ChannelOpenerClient<InterceptedService<Channel, ApiKeyInterceptor>>,
+        ChannelOpenerClient<InterceptedService<Transport, ApiKeyInterceptor>>,
         ServiceConnectivityError,
     > {
         let api_key_metadata = self.api_key_metadata()?;
         let with_interceptor = ChannelOpenerClient::with_interceptor(
-            self.grpc_channel.lock().await.clone(),
+            self.grpc_client.lock().await.clone().into_inner(),
             ApiKeyInterceptor { api_key_metadata },
         );
         Ok(with_interceptor)
     }
 
-    pub async fn get_payment_notifier_client(&self) -> PaymentNotifierClient<Channel> {
-        PaymentNotifierClient::new(self.grpc_channel.lock().await.clone())
+    pub async fn get_payment_notifier_client(&self) -> PaymentNotifierClient<Transport> {
+        PaymentNotifierClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
-    pub async fn get_information_client(&self) -> InformationClient<Channel> {
-        InformationClient::new(self.grpc_channel.lock().await.clone())
+    pub async fn get_information_client(&self) -> InformationClient<Transport> {
+        InformationClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
-    pub async fn get_signer_client(&self) -> SignerClient<Channel> {
-        SignerClient::new(self.grpc_channel.lock().await.clone())
+    pub async fn get_signer_client(&self) -> SignerClient<Transport> {
+        SignerClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
     pub async fn get_support_client(
         &self,
     ) -> Result<
-        SupportClient<InterceptedService<Channel, ApiKeyInterceptor>>,
+        SupportClient<InterceptedService<Transport, ApiKeyInterceptor>>,
         ServiceConnectivityError,
     > {
         let api_key_metadata = self.api_key_metadata()?;
         Ok(SupportClient::with_interceptor(
-            self.grpc_channel.lock().await.clone(),
+            self.grpc_client.lock().await.clone().into_inner(),
             ApiKeyInterceptor { api_key_metadata },
         ))
     }
 
-    pub async fn get_swapper_client(&self) -> SwapperClient<Channel> {
-        SwapperClient::new(self.grpc_channel.lock().await.clone())
+    pub async fn get_swapper_client(&self) -> SwapperClient<Transport> {
+        SwapperClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
     pub async fn ping(&self) -> Result<String> {
