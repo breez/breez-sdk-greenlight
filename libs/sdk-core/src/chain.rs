@@ -426,11 +426,11 @@ mod tests {
 
         let ms = MempoolSpace::new(rest_client);
         let fees = ms.recommended_fees().await?;
-        assert!(fees.economy_fee > 0);
-        assert!(fees.fastest_fee > 0);
-        assert!(fees.half_hour_fee > 0);
-        assert!(fees.hour_fee > 0);
-        assert!(fees.minimum_fee > 0);
+        assert_eq!(fees.economy_fee, 2);
+        assert_eq!(fees.fastest_fee, 3);
+        assert_eq!(fees.half_hour_fee, 2);
+        assert_eq!(fees.hour_fee, 2);
+        assert_eq!(fees.minimum_fee, 1);
 
         Ok(())
     }
@@ -533,10 +533,9 @@ mod tests {
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         let ms = MempoolSpace::new(rest_client);
-        let mut txs = ms
+        let txs = ms
             .address_transactions("bc1qvhykeqcpdzu0pdvy99xnh9ckhwzcfskct6h6l2".to_string())
             .await?;
-        txs.sort_unstable_by(|tx_a, tx_b| tx_b.txid.cmp(&tx_a.txid));
         let serialized_res = serde_json::to_string(&txs)?;
 
         let expected_txs: Vec<OnchainTx> =
