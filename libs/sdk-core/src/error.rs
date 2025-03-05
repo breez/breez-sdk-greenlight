@@ -57,6 +57,12 @@ impl From<PersistError> for ConnectError {
     }
 }
 
+impl From<ServiceConnectivityError> for ConnectError {
+    fn from(value: ServiceConnectivityError) -> Self {
+        Self::ServiceConnectivity { err: value.err }
+    }
+}
+
 impl From<SdkError> for ConnectError {
     fn from(value: SdkError) -> Self {
         match value {

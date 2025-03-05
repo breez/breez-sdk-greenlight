@@ -9,7 +9,8 @@ pub type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 /// <https://github.com/lnurl/luds/blob/luds/06.md>
 ///
 /// See the [parse] docs for more detail on the full workflow.
-pub async fn validate_lnurl_pay(
+pub async fn validate_lnurl_pay<C: RestClient + ?Sized>(
+    rest_client: &C,
     user_amount_msat: u64,
     comment: &Option<String>,
     req_data: &LnUrlPayRequestData,
@@ -25,14 +26,11 @@ pub async fn validate_lnurl_pay(
     )?;
 
     let callback_url = build_pay_callback_url(user_amount_msat, comment, req_data)?;
-    let (callback_resp_text, _) = get_and_log_response(&callback_url)
-        .await
-        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))?;
-
-    if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
+    let (response, _) = rest_client.get(&callback_url).await?;
+    if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&response) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })
     } else {
-        let mut callback_resp: CallbackResponse = serde_json::from_str(&callback_resp_text)?;
+        let mut callback_resp: CallbackResponse = serde_json::from_str(&response)?;
         if let Some(ref sa) = callback_resp.success_action {
             match sa {
                 SuccessAction::Aes { data } => data.validate()?,

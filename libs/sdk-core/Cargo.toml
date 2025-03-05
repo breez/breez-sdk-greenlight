@@ -54,4 +54,4 @@ regex = { workspace = true }
 ryu = "1.0.18"
 
 [dev-dependencies]
-mockito = { workspace = true }
+sdk-common = { path = "../sdk-common", features = ["test-utils"] }

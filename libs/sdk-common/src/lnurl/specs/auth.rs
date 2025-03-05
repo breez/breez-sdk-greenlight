@@ -25,7 +25,8 @@ pub trait LnurlAuthSigner {
 /// https://github.com/lnurl/luds/blob/luds/05.md
 ///
 /// See the [parse] docs for more detail on the full workflow.
-pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
+pub async fn perform_lnurl_auth<C: RestClient + ?Sized, S: LnurlAuthSigner>(
+    rest_client: &C,
     req_data: &LnUrlAuthRequestData,
     signer: &S,
 ) -> LnUrlResult<LnUrlCallbackStatus> {
@@ -50,10 +51,8 @@ pub async fn perform_lnurl_auth<S: LnurlAuthSigner>(
     callback_url
         .query_pairs_mut()
         .append_pair("key", &xpub.public_key.to_hex());
-
-    get_parse_and_log_response(callback_url.as_ref(), false)
-        .await
-        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))
+    let (response, _) = rest_client.get(callback_url.as_ref()).await?;
+    Ok(parse_json(&response)?)
 }
 
 pub fn validate_request(

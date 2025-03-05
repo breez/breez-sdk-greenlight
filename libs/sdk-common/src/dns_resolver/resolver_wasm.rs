@@ -1,8 +1,7 @@
 use anyhow::{anyhow, Result};
 use dns_parser::{Builder, Packet, RData, ResponseCode};
 use dns_parser::{QueryClass, QueryType};
-
-use crate::utils::rest_client;
+use reqwest::Client;
 
 pub(crate) async fn txt_lookup(dns_name: String) -> Result<Vec<String>> {
     let mut builder = Builder::new_query(1, true);
@@ -10,7 +9,7 @@ pub(crate) async fn txt_lookup(dns_name: String) -> Result<Vec<String>> {
     let req_bytes = builder
         .build()
         .map_err(|_| anyhow!("Error building DNS query"))?;
-    let client = rest_client::get_reqwest_client()?;
+    let client = Client::builder().build()?;
     let res_bytes = client
         .post("https://cloudflare-dns.com/dns-query")
         .body(req_bytes)

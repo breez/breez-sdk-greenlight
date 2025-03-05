@@ -2,7 +2,7 @@ use std::{array::TryFromSliceError, string::FromUtf8Error};
 
 use bitcoin::{bech32, secp256k1, util::bip32};
 
-use crate::prelude::InvoiceError;
+use crate::prelude::{InvoiceError, ServiceConnectivityError};
 
 pub type LnUrlResult<T, E = LnUrlError> = Result<T, E>;
 
@@ -76,6 +76,12 @@ impl From<secp256k1::Error> for LnUrlError {
 impl From<serde_json::Error> for LnUrlError {
     fn from(err: serde_json::Error) -> Self {
         Self::ServiceConnectivity(err.to_string())
+    }
+}
+
+impl From<ServiceConnectivityError> for LnUrlError {
+    fn from(value: ServiceConnectivityError) -> Self {
+        LnUrlError::ServiceConnectivity(value.err)
     }
 }
 
