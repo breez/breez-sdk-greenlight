@@ -249,7 +249,6 @@ impl SqliteStorage {
         offset: u32,
         limit: u32,
     ) -> PersistResult<String> {
-        // TODO: Do something here with taproot swap fields.
         let swap_fields = self.select_swap_fields("swaps_");
         let swap_query = self.select_swap_query("true", "swaps_");
         let rev_swap_fields = self.select_reverse_swap_fields("revswaps_");

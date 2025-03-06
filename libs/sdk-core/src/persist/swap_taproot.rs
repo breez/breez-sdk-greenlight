@@ -45,14 +45,6 @@ impl SqliteStorage {
             },
         )?;
 
-        tx.execute(
-            "INSERT INTO taproot_swap_states (address, state)
-             VALUES (:address, 'initial')",
-            named_params! {
-                ":address": swap.address,
-            },
-        )?;
-
         tx.commit()?;
         Ok(())
     }
@@ -215,7 +207,7 @@ impl SqliteStorage {
                 ON sp.spending_tx_id = r.refund_tx_id 
                 AND sp.tx_id = r.spent_tx_id 
                 AND sp.output_index = r.spent_output_index
-            LEFT JOIN payments p ON s.payment_hash = p.payment_hash
+            LEFT JOIN payments p ON s.payment_hash = p.id
             LEFT JOIN sync.open_channel_payment_info o ON s.payment_hash = o.payment_hash
             LEFT JOIN taproot_swap_cache c ON s.address = c.address
             ") + where_clause + 

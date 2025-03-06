@@ -46,7 +46,7 @@ use crate::models::{
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
 use crate::swap_in_segwit::swap::SegwitReceiveSwap;
-use crate::swap_in_taproot::TaprootSwapError;
+use crate::swap_in_taproot::{TaprootSwapError, TaprootSwapperAPI};
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -2390,6 +2390,7 @@ struct BreezServicesBuilder {
     rest_client: Option<Arc<dyn RestClient>>,
     support_api: Option<Arc<dyn SupportAPI>>,
     swapper_api: Option<Arc<dyn SegwitSwapperAPI>>,
+    taproot_swapper_api: Option<Arc<dyn TaprootSwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
@@ -2410,6 +2411,7 @@ impl BreezServicesBuilder {
             rest_client: None,
             support_api: None,
             swapper_api: None,
+            taproot_swapper_api: None,
             reverse_swapper_api: None,
             reverse_swap_service_api: None,
             buy_bitcoin_api: None,
@@ -2454,6 +2456,11 @@ impl BreezServicesBuilder {
 
     pub fn swapper_api(&mut self, swapper_api: Arc<dyn SegwitSwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
+        self
+    }
+
+    pub fn taproot_swapper_api(&mut self, swapper_api: Arc<dyn TaprootSwapperAPI>) -> &mut Self {
+        self.taproot_swapper_api = Some(swapper_api.clone());
         self
     }
 
@@ -2622,7 +2629,9 @@ impl BreezServicesBuilder {
         ));
 
         let taproot_receive_swapper = Arc::new(TaprootReceiveSwap::new(
-            breez_server.clone(),
+            self.taproot_swapper_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
             chain_service.clone(),
             self.config.network.into(),
             unwrapped_node_api.clone(),
@@ -3536,6 +3545,7 @@ pub(crate) mod tests {
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .taproot_swapper_api(Arc::new(MockBreezServer {}))
             .reverse_swap_service_api(Arc::new(MockReverseSwapperAPI {}))
             .buy_bitcoin_api(Arc::new(MockBuyBitcoinService {}))
             .persister(persister)
