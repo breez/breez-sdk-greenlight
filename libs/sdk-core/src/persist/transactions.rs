@@ -180,7 +180,7 @@ impl SqliteStorage {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
-        INSERT OR IGNORE INTO sync.open_channel_payment_info (
+        INSERT OR REPLACE INTO sync.open_channel_payment_info (
           payment_hash,
           payer_amount_msat,
           open_channel_bolt11
@@ -249,6 +249,7 @@ impl SqliteStorage {
         offset: u32,
         limit: u32,
     ) -> PersistResult<String> {
+        // TODO: Do something here with taproot swap fields.
         let swap_fields = self.select_swap_fields("swaps_");
         let swap_query = self.select_swap_query("true", "swaps_");
         let rev_swap_fields = self.select_reverse_swap_fields("revswaps_");

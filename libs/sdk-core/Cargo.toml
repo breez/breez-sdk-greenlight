@@ -52,6 +52,7 @@ tokio-stream = "0.1.14"
 serde_with = "3.3.0"
 regex = { workspace = true }
 ryu = "1.0.18"
+secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1", rev = "1cc7410df436b73d06db3c8ff7cbb29a78916b06"}
 
 [dev-dependencies]
 sdk-common = { path = "../sdk-common", features = ["test-utils"] }

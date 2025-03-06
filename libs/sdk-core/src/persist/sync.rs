@@ -219,7 +219,7 @@ impl SqliteStorage {
         // sync remote swap_refunds table
         tx.execute(
             "
-        INSERT INTO sync.open_channel_payment_info
+        INSERT OR REPLACE INTO sync.open_channel_payment_info
          SELECT
           payment_hash,
           payer_amount_msat,
@@ -232,6 +232,34 @@ impl SqliteStorage {
         // Sync remote swaps_fees table, which contains dynamic fees used in swaps
         // created_at is used to settle conflicts, since we assume small variations in the client local times
         Self::sync_swaps_fees_local(&tx)?;
+
+        // Sync taproot swaps. This data is static/insert only.
+        // TODO: What about the opening_fee_params? They could be updated in either the remote or local db.
+        tx.execute(
+            "
+            INSERT OR IGNORE INTO sync.taproot_swaps
+            SELECT address
+            ,      claim_public_key
+            ,      created_at
+            ,      lock_time
+            ,      payment_hash
+            ,      preimage
+            ,      refund_private_key
+            ,      accepted_opening_fee_params
+            FROM remote_sync.taproot_swaps;",
+            [],
+        )?;
+
+        // Sync taproot swap refund transactions. As refund transactions cannot be distinguished from regular transactions onchain.
+        tx.execute(
+            "
+            INSERT OR IGNORE INTO sync.taproot_swap_refunds
+            SELECT refund_tx_id
+            ,      spent_tx_id
+            ,      spent_output_index
+            FROM remote_sync.taproot_swap_refunds;",
+            [],
+        )?;
 
         tx.commit()?;
         con.execute("DETACH DATABASE remote_sync", [])?;

@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use crate::{
     bitcoin::util::bip32, node_api::NodeError, persist::error::PersistError,
-    swap_out::error::ReverseSwapError,
+    swap_in_taproot::TaprootSwapError, swap_out::error::ReverseSwapError,
 };
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
@@ -184,6 +184,17 @@ impl From<SdkError> for ReceiveOnchainError {
         match value {
             SdkError::Generic { err } => Self::Generic { err },
             SdkError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+        }
+    }
+}
+
+impl From<TaprootSwapError> for ReceiveOnchainError {
+    fn from(value: TaprootSwapError) -> Self {
+        match value {
+            TaprootSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
         }
     }
 }
@@ -480,6 +491,17 @@ impl From<SystemTimeError> for SdkError {
     }
 }
 
+impl From<TaprootSwapError> for SdkError {
+    fn from(value: TaprootSwapError) -> Self {
+        Self::generic(&value.to_string())
+    }
+}
+
+impl From<sdk_common::bitcoin::util::address::Error> for SdkError {
+    fn from(_value: sdk_common::bitcoin::util::address::Error) -> Self {
+        SdkError::generic("invalid address")
+    }
+}
 /// Error returned by [crate::breez_services::BreezServices::send_onchain]
 #[derive(Debug, Error)]
 pub enum SendOnchainError {

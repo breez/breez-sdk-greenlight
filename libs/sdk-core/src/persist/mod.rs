@@ -8,6 +8,7 @@ pub(crate) mod reverseswap;
 pub(crate) mod send_pays;
 pub(crate) mod settings;
 pub(crate) mod swap_segwit;
+pub(crate) mod swap_taproot;
 pub(crate) mod sync;
 pub(crate) mod transactions;
 

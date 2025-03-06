@@ -24,6 +24,9 @@ use crate::bitcoin::{Address, Script};
 use crate::error::SdkResult;
 use crate::lsp::LspInformation;
 use crate::persist::swap_segwit::SwapChainInfo;
+use crate::swap_in_taproot::FullTaprootSwapData;
+use crate::swap_in_taproot::TaprootSwap;
+use crate::swap_in_taproot::TaprootSwapParameters;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 
@@ -1038,12 +1041,14 @@ pub struct PrepareRefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+    pub unilateral: Option<bool>,
 }
 
 pub struct RefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+    pub unilateral: Option<bool>,
 }
 
 pub struct PrepareRefundResponse {
@@ -1059,7 +1064,7 @@ pub struct RefundResponse {
 ///
 /// After they are received, the client shouldn't change them when calling LSP methods,
 /// otherwise the LSP may reject the call.
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Default)]
 pub struct OpeningFeeParams {
     /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
     pub min_msat: u64,
@@ -1462,6 +1467,131 @@ impl SwapInfo {
             (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
             _ => SwapStatus::Initial,
         }
+    }
+}
+
+impl TaprootSwap {
+    pub(crate) fn to_swap_info(&self) -> SwapInfo {
+        let public_key = match self.refund_public_key() {
+            Ok(pk) => pk.serialize().to_vec(),
+            Err(_) => Vec::new(),
+        };
+
+        SwapInfo {
+            bitcoin_address: self.address.clone(),
+            bolt11: None,
+            channel_opening_fees: Some(self.accepted_opening_fee_params.clone()),
+            confirmed_at: None,
+            confirmed_sats: 0,
+            confirmed_tx_ids: Vec::new(),
+            created_at: self.created_at as i64,
+            last_redeem_error: None,
+            lock_height: self.lock_time as i64,
+            max_allowed_deposit: 0,
+            max_swapper_payable: 0,
+            min_allowed_deposit: 0,
+            paid_msat: 0,
+            payment_hash: self.payment_hash.clone(),
+            preimage: self.preimage.clone(),
+            private_key: self.refund_private_key.clone(),
+            public_key,
+            refund_tx_ids: Vec::new(),
+            script: Vec::new(),
+            status: SwapStatus::Initial,
+            swapper_public_key: self.claim_public_key.clone(),
+            total_incoming_txs: 0,
+            unconfirmed_sats: 0,
+            unconfirmed_tx_ids: Vec::new(),
+        }
+    }
+}
+
+impl SwapInfo {
+    fn with_optional_taproot_swap_parameters(
+        self,
+        parameters: &Option<TaprootSwapParameters>,
+        node_state: &NodeState,
+    ) -> SwapInfo {
+        let parameters = match parameters {
+            Some(p) => p,
+            None => return self,
+        };
+        self.with_taproot_swap_parameters(parameters, node_state)
+    }
+
+    fn with_taproot_swap_parameters(
+        self,
+        parameters: &TaprootSwapParameters,
+        node_state: &NodeState,
+    ) -> SwapInfo {
+        let max_allowed_deposit = std::cmp::min(
+            (node_state.max_receivable_msat / 1000) as i64,
+            parameters.max_swap_amount_sat as i64,
+        );
+        SwapInfo {
+            max_allowed_deposit,
+            min_allowed_deposit: parameters.min_swap_amount_sat as i64,
+            max_swapper_payable: parameters.max_swap_amount_sat as i64,
+            ..self
+        }
+    }
+}
+
+impl FullTaprootSwapData {
+    pub(crate) fn to_swap_info(&self, node_state: &NodeState, current_tip: u32) -> SwapInfo {
+        let confirmed_at = self.min_confirmation_height();
+        let confirmed_sats = self.confirmed_unspent_amount_sat();
+        let confirmed_tx_ids = self
+            .confirmed_utxos()
+            .iter()
+            .map(|tx| tx.tx_id.clone())
+            .collect();
+        let status = self.to_swap_status(current_tip);
+        let unconfirmed_sats = self.unconfirmed_amount_sat();
+        let unconfirmed_tx_ids = self
+            .unconfirmed_outputs()
+            .iter()
+            .map(|tx| tx.tx_id.clone())
+            .collect();
+        SwapInfo {
+            bolt11: self.bolt11.clone(),
+            confirmed_at,
+            confirmed_sats,
+            confirmed_tx_ids,
+            last_redeem_error: self.last_payment_error.clone(),
+            paid_msat: self.paid_amount_msat.unwrap_or(0),
+            refund_tx_ids: self.refund_transactions.clone(),
+            status,
+            total_incoming_txs: self.outputs.len() as u64,
+            unconfirmed_sats,
+            unconfirmed_tx_ids,
+            ..self.swap.to_swap_info()
+        }
+        .with_optional_taproot_swap_parameters(&self.parameters, node_state)
+    }
+
+    pub(crate) fn to_swap_status(&self, current_tip: u32) -> SwapStatus {
+        if self.outputs.is_empty() {
+            return SwapStatus::Initial;
+        }
+
+        if self.outputs.iter().all(|o| o.confirmed_at_height.is_none()) {
+            return SwapStatus::WaitingConfirmation;
+        }
+
+        if self.paid_amount_msat.is_some() {
+            return SwapStatus::Redeemed;
+        }
+
+        if self.is_payable(current_tip) {
+            return SwapStatus::Redeemable;
+        }
+
+        if self.is_marked_refundable(current_tip) {
+            return SwapStatus::Refundable;
+        }
+
+        SwapStatus::Completed
     }
 }
 
