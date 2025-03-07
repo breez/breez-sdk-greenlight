@@ -12,10 +12,9 @@ use super::{db::SqliteStorage, error::PersistError};
 
 impl SqliteStorage {
     pub(crate) fn add_taproot_swap(&self, swap: &TaprootSwap) -> Result<(), PersistError> {
-        let mut conn = self.get_connection()?;
-        let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let conn = self.get_connection()?;
         let opening_fee_params = serde_json::to_string(&swap.accepted_opening_fee_params)?;
-        tx.execute(
+        conn.execute(
             "INSERT INTO sync.taproot_swaps (
                 address,
                 claim_public_key,
@@ -46,7 +45,6 @@ impl SqliteStorage {
             },
         )?;
 
-        tx.commit()?;
         Ok(())
     }
 
@@ -95,9 +93,8 @@ impl SqliteStorage {
         &self,
         refund: TaprootSwapRefund,
     ) -> Result<(), PersistError> {
-        let mut conn = self.get_connection()?;
-        let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute(
+        let conn = self.get_connection()?;
+        conn.execute(
             "INSERT OR IGNORE INTO taproot_swap_txos (
                 refund_tx_id
             ,   spent_tx_id
@@ -114,7 +111,6 @@ impl SqliteStorage {
             },
         )?;
 
-        tx.commit()?;
         Ok(())
     }
 
@@ -387,9 +383,8 @@ impl SqliteStorage {
         address: &str,
         bolt11: &str,
     ) -> Result<(), PersistError> {
-        let mut conn = self.get_connection()?;
-        let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute(
+        let conn = self.get_connection()?;
+        conn.execute(
             "INSERT INTO taproot_swap_cache (
             address
         ,   bolt11
@@ -403,7 +398,6 @@ impl SqliteStorage {
                 ":bolt11": bolt11,
             },
         )?;
-        tx.commit()?;
         Ok(())
     }
 
@@ -412,9 +406,8 @@ impl SqliteStorage {
         address: &str,
         last_payment_error: &str,
     ) -> Result<(), PersistError> {
-        let mut conn = self.get_connection()?;
-        let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute(
+        let conn = self.get_connection()?;
+        conn.execute(
             "INSERT INTO taproot_swap_cache (
             address
         ,   last_payment_error
@@ -428,7 +421,6 @@ impl SqliteStorage {
                 ":last_payment_error": last_payment_error,
             },
         )?;
-        tx.commit()?;
         Ok(())
     }
 
@@ -437,9 +429,8 @@ impl SqliteStorage {
         address: &str,
         parameters: &TaprootSwapParameters,
     ) -> Result<(), PersistError> {
-        let mut conn = self.get_connection()?;
-        let tx = conn.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute(
+        let conn = self.get_connection()?;
+        conn.execute(
             "INSERT INTO taproot_swap_cache (
             address
         ,   max_swap_amount_sat
@@ -461,7 +452,6 @@ impl SqliteStorage {
                 ":min_utxo_amount_sat": parameters.min_utxo_amount_sat,
             },
         )?;
-        tx.commit()?;
         Ok(())
     }
 }
