@@ -486,11 +486,6 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
         DELETE FROM payments;
         DELETE FROM cached_items WHERE key = 'sync_state';
        ",
-       "CREATE TABLE current_tip (
-           tip INTEGER NOT NULL,
-           time INTEGER NOT NULL
-        );
-        INSERT INTO current_tip (tip, time) VALUES (0, 0);",
        "
        CREATE TABLE taproot_swap_cache (
            address TEXT NOT NULL PRIMARY KEY
