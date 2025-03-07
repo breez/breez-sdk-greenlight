@@ -44,6 +44,7 @@ use crate::models::{
     SegwitSwapperAPI, SwapInfo, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
+use crate::payments::PaymentService;
 use crate::persist::db::SqliteStorage;
 use crate::swap_in_segwit::swap::SegwitReceiveSwap;
 use crate::swap_in_taproot::{TaprootSwapError, TaprootSwapperAPI};
@@ -173,6 +174,7 @@ pub struct BreezServices {
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
+    payment_service: Arc<PaymentService>,
 }
 
 impl BreezServices {
@@ -613,8 +615,9 @@ impl BreezServices {
             Some(node_state) => match req {
                 ReportIssueRequest::PaymentFailure { data } => {
                     let payment = self
-                        .persister
-                        .get_payment_by_hash(&data.payment_hash)?
+                        .payment_service
+                        .get_payment_by_hash(&data.payment_hash)
+                        .await?
                         .ok_or(SdkError::Generic {
                             err: "Payment not found".into(),
                         })?;
@@ -690,12 +693,12 @@ impl BreezServices {
 
     /// List payments matching the given filters, as retrieved from persistent storage
     pub async fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
-        Ok(self.persister.list_payments(req)?)
+        self.payment_service.list_payments(req).await
     }
 
     /// Fetch a specific payment by its hash.
     pub async fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {
-        Ok(self.persister.get_payment_by_hash(&hash)?)
+        self.payment_service.get_payment_by_hash(&hash).await
     }
 
     /// Set the external metadata of a payment as a valid JSON string
@@ -2323,8 +2326,9 @@ impl BreezServices {
         let state = crate::serializer::value::to_value(&self.persister.get_node_state()?)?;
         let payments = crate::serializer::value::to_value(
             &self
-                .persister
-                .list_payments(ListPaymentsRequest::default())?,
+                .payment_service
+                .list_payments(ListPaymentsRequest::default())
+                .await?,
         )?;
         let channels = crate::serializer::value::to_value(&self.persister.list_channels()?)?;
         let settings = crate::serializer::value::to_value(&self.persister.list_settings()?)?;
@@ -2660,6 +2664,10 @@ impl BreezServicesBuilder {
             .clone()
             .unwrap_or_else(|| Arc::new(BuyBitcoinService::new(breez_server.clone())));
 
+        let payment_service = Arc::new(PaymentService::new(
+            chain_service.clone(),
+            persister.clone(),
+        ));
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             config: self.config.clone(),
@@ -2686,6 +2694,7 @@ impl BreezServicesBuilder {
             backup_watcher: Arc::new(backup_watcher),
             shutdown_sender,
             shutdown_receiver,
+            payment_service,
         });
 
         Ok(breez_services)
@@ -3488,6 +3497,7 @@ pub(crate) mod tests {
     #[tokio::test]
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
         let mock_rest_client = MockRestClient::new();
+        mock_rest_client.add_response(MockResponse::new(200, "800000".to_string()));
         mock_rest_client.add_response(MockResponse::new(200, "800000".to_string()));
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 

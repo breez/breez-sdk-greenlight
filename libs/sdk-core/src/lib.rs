@@ -178,6 +178,7 @@ mod lsp;
 mod lsps0;
 mod lsps2;
 mod models;
+mod payments;
 mod persist;
 mod serializer;
 mod support;

@@ -1,6 +1,7 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
-use rusqlite::{named_params, Row, Rows, ToSql, TransactionBehavior};
+use hex::FromHexError;
+use rusqlite::{named_params, types::Value, Params, Row, Rows, TransactionBehavior};
 
 use crate::swap_in_taproot::{
     FullTaprootSwapData, TaprootSwap, TaprootSwapOutput, TaprootSwapParameters, TaprootSwapRefund,
@@ -169,10 +170,22 @@ impl SqliteStorage {
         Ok(swaps.first().cloned())
     }
 
-    fn get_full_taproot_swaps(
+    pub(crate) fn get_full_taproot_swap_by_hash(
+        &self,
+        hash: &str,
+    ) -> Result<Option<FullTaprootSwapData>, PersistError> {
+        let hash = hex::decode(hash)?;
+        let swaps = self.get_full_taproot_swaps(
+            " WHERE s.payment_hash = :hash",
+            named_params! { ":hash": hash },
+        )?;
+        Ok(swaps.first().cloned())
+    }
+
+    fn get_full_taproot_swaps<P: Params>(
         &self,
         where_clause: &str,
-        params: &[(&str, &dyn ToSql)],
+        params: P,
     ) -> Result<Vec<FullTaprootSwapData>, PersistError> {
         let conn = self.get_connection()?;
         let mut query = conn.prepare(
@@ -341,11 +354,32 @@ impl SqliteStorage {
     pub(crate) fn list_unused_taproot_swaps(
         &self,
     ) -> Result<Vec<FullTaprootSwapData>, PersistError> {
-        self.get_full_taproot_swaps(" WHERE t.tx_id IS NULL", &[])
+        self.get_full_taproot_swaps(" WHERE t.tx_id IS NULL", [])
     }
 
     pub(crate) fn list_taproot_swaps(&self) -> Result<Vec<FullTaprootSwapData>, PersistError> {
-        self.get_full_taproot_swaps("", &[])
+        self.get_full_taproot_swaps("", [])
+    }
+
+    pub(crate) fn list_taproot_swaps_by_hash(
+        &self,
+        hashes: &[String],
+    ) -> Result<Vec<FullTaprootSwapData>, PersistError> {
+        let hashes = Rc::new(
+            hashes
+                .iter()
+                .map(hex::decode)
+                .collect::<Result<Vec<_>, FromHexError>>()?
+                .into_iter()
+                .map(Value::from)
+                .collect::<Vec<Value>>(),
+        );
+        self.get_full_taproot_swaps(
+            " WHERE s.payment_hash IN rarray(:hashes)",
+            named_params! {
+                ":hashes": hashes
+            },
+        )
     }
 
     pub(crate) fn set_taproot_swap_bolt11(

@@ -68,6 +68,7 @@ impl SqliteStorage {
 
     pub(crate) fn get_connection(&self) -> PersistResult<Connection> {
         let con = Connection::open(self.main_db_file.clone())?;
+        rusqlite::vtab::array::load_module(&con)?;
         let sql = "ATTACH DATABASE ? AS sync;";
         con.execute(sql, [self.sync_db_file.clone()])?;
         // We want to notify any subscribers with hook events.
