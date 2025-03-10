@@ -12,6 +12,7 @@ use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::TryFutureExt;
+use gl_client::bitcoin::{Address, AddressType};
 use gl_client::pb::incoming_payment;
 use log::{LevelFilter, Metadata, Record};
 use sdk_common::grpc;
@@ -19,6 +20,7 @@ use sdk_common::prelude::*;
 use serde::Serialize;
 use serde_json::{json, Value};
 use strum_macros::EnumString;
+use swap_in_taproot::TaprootReceiveSwap;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, MissedTickBehavior};
 
@@ -39,11 +41,13 @@ use crate::lsp::LspInformation;
 use crate::models::{
     sanitize::*, ChannelState, ClosedChannelPaymentDetails, Config, EnvironmentType, LspAPI,
     NodeState, Payment, PaymentDetails, PaymentType, ReverseSwapPairInfo, ReverseSwapServiceAPI,
-    SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
+    SegwitSwapperAPI, SwapInfo, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
+use crate::payments::PaymentService;
 use crate::persist::db::SqliteStorage;
-use crate::swap_in::swap::BTCReceiveSwap;
+use crate::swap_in_segwit::swap::SegwitReceiveSwap;
+use crate::swap_in_taproot::{TaprootSwapError, TaprootSwapperAPI};
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -163,12 +167,14 @@ pub struct BreezServices {
     persister: Arc<SqliteStorage>,
     rest_client: Arc<dyn RestClient>,
     payment_receiver: Arc<PaymentReceiver>,
-    btc_receive_swapper: Arc<BTCReceiveSwap>,
+    segwit_receive_swapper: Arc<SegwitReceiveSwap>,
+    taproot_receive_swapper: Arc<TaprootReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
     backup_watcher: Arc<BackupWatcher>,
     shutdown_sender: watch::Sender<()>,
     shutdown_receiver: watch::Receiver<()>,
+    payment_service: Arc<PaymentService>,
 }
 
 impl BreezServices {
@@ -609,8 +615,9 @@ impl BreezServices {
             Some(node_state) => match req {
                 ReportIssueRequest::PaymentFailure { data } => {
                     let payment = self
-                        .persister
-                        .get_payment_by_hash(&data.payment_hash)?
+                        .payment_service
+                        .get_payment_by_hash(&data.payment_hash)
+                        .await?
                         .ok_or(SdkError::Generic {
                             err: "Payment not found".into(),
                         })?;
@@ -686,12 +693,12 @@ impl BreezServices {
 
     /// List payments matching the given filters, as retrieved from persistent storage
     pub async fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
-        Ok(self.persister.list_payments(req)?)
+        self.payment_service.list_payments(req).await
     }
 
     /// Fetch a specific payment by its hash.
     pub async fn payment_by_hash(&self, hash: String) -> SdkResult<Option<Payment>> {
-        Ok(self.persister.get_payment_by_hash(&hash)?)
+        self.payment_service.get_payment_by_hash(&hash).await
     }
 
     /// Set the external metadata of a payment as a valid JSON string
@@ -837,24 +844,40 @@ impl BreezServices {
         );
 
         let swap_info = self
-            .btc_receive_swapper
+            .taproot_receive_swapper
             .create_swap_address(channel_opening_fees)
             .await?;
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
-            let address = &swap_info.bitcoin_address;
-            info!("Registering for onchain tx notification for address {address}");
-            self.register_onchain_tx_notification(address, &webhook_url)
+            info!(
+                "Registering for onchain tx notification for swap address {}",
+                &swap_info.swap.address
+            );
+            self.register_onchain_tx_notification(&swap_info.swap.address, &webhook_url)
                 .await?;
         }
-        Ok(swap_info)
+
+        let node_state = self.node_info()?;
+        let current_tip = self.chain_service.current_tip(true).await?;
+        Ok(swap_info.to_swap_info(&node_state, current_tip))
     }
 
     /// Returns an optional in-progress [SwapInfo].
     /// A [SwapInfo] is in-progress if it is waiting for confirmation to be redeemed and complete the swap.
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
-        let tip = self.chain_service.current_tip().await?;
-        self.btc_receive_swapper.rescan_monitored_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress()?;
+        let tip = self.chain_service.current_tip(true).await?;
+        let active_taproot_swaps = self.taproot_receive_swapper.active_swaps(tip)?;
+        if !active_taproot_swaps.is_empty() {
+            let node_state = self.node_info()?;
+            return Ok(active_taproot_swaps
+                .into_iter()
+                .nth(0)
+                .map(|s| s.to_swap_info(&node_state, tip)));
+        }
+
+        self.segwit_receive_swapper
+            .rescan_monitored_swaps(tip)
+            .await?;
+        let in_progress = self.segwit_receive_swapper.list_in_progress()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }
@@ -864,8 +887,9 @@ impl BreezServices {
     /// Iterate all historical swap addresses and fetch their current status from the blockchain.
     /// The status is then updated in the persistent storage.
     pub async fn rescan_swaps(&self) -> SdkResult<()> {
-        let tip = self.chain_service.current_tip().await?;
-        self.btc_receive_swapper.rescan_swaps(tip).await?;
+        let tip = self.chain_service.current_tip(false).await?;
+        self.taproot_receive_swapper.rescan_swaps().await?;
+        self.segwit_receive_swapper.rescan_swaps(tip).await?;
         Ok(())
     }
 
@@ -876,11 +900,30 @@ impl BreezServices {
     ///
     /// This is taken care of automatically in the context of typical SDK usage.
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
-        let tip = self.chain_service.current_tip().await?;
-        self.btc_receive_swapper
-            .refresh_swap_on_chain_status(swap_address.clone(), tip)
-            .await?;
-        self.btc_receive_swapper.redeem_swap(swap_address).await?;
+        let current_tip = self.chain_service.current_tip(true).await?;
+        let parsed_address: Address = swap_address.parse()?;
+        match parsed_address.address_type() {
+            Some(AddressType::P2wsh) => {
+                self.segwit_receive_swapper
+                    .refresh_swap_on_chain_status(swap_address.clone(), current_tip)
+                    .await?;
+                self.segwit_receive_swapper
+                    .redeem_swap(swap_address)
+                    .await?;
+            }
+            Some(AddressType::P2tr) => {
+                let mut taproot_swap = self
+                    .persister
+                    .get_full_taproot_swap(&swap_address)?
+                    .ok_or(SdkError::generic("swap not found"))?;
+
+                self.taproot_receive_swapper
+                    .check_active_swap(&mut taproot_swap, current_tip)
+                    .await?;
+            }
+            _ => return Err(SdkError::generic("invalid swap address")),
+        }
+
         Ok(())
     }
 
@@ -888,7 +931,40 @@ impl BreezServices {
     ///
     /// Swaps can be filtered based on creation time and status.
     pub async fn list_swaps(&self, req: ListSwapsRequest) -> SdkResult<Vec<SwapInfo>> {
-        Ok(self.persister.list_swaps(req)?)
+        let current_tip = self.chain_service.current_tip(true).await?;
+        let (taproot_swaps, taproot_swaps_len) =
+            self.taproot_receive_swapper.list_swaps(&req).await?;
+        let node_state = self.node_info()?;
+        let taproot_swaps: Vec<_> = taproot_swaps
+            .into_iter()
+            .map(|s| s.to_swap_info(&node_state, current_tip))
+            .collect();
+
+        // Get new offset and limit to query segwit swaps with, reducing with the taproot swap amounts.
+        let limit = match req.limit {
+            Some(limit) => {
+                let limit = limit.saturating_sub(taproot_swaps.len() as u32);
+                if limit == 0 {
+                    return Ok(taproot_swaps);
+                }
+                Some(limit)
+            }
+            None => None,
+        };
+        let offset = req
+            .offset
+            .map(|offset| offset.saturating_sub(taproot_swaps_len as u32));
+
+        let segwit_swaps = self.persister.list_swaps(ListSwapsRequest {
+            limit,
+            offset,
+            ..req
+        })?;
+
+        Ok(taproot_swaps
+            .into_iter()
+            .chain(segwit_swaps.into_iter())
+            .collect())
     }
 
     /// Claims an individual reverse swap.
@@ -971,7 +1047,18 @@ impl BreezServices {
 
     /// list non-completed expired swaps that should be refunded by calling [BreezServices::refund]
     pub async fn list_refundables(&self) -> SdkResult<Vec<SwapInfo>> {
-        Ok(self.btc_receive_swapper.list_refundables()?)
+        let segwit_refundables = self.segwit_receive_swapper.list_refundables()?;
+        let taproot_refundables = self.taproot_receive_swapper.list_refundables().await?;
+        let current_tip = self.chain_service.current_tip(true).await?;
+        let node_state = self.node_info()?;
+        Ok(segwit_refundables
+            .into_iter()
+            .chain(
+                taproot_refundables
+                    .into_iter()
+                    .map(|s| s.to_swap_info(&node_state, current_tip)),
+            )
+            .collect())
     }
 
     /// Prepares a refund transaction for a failed/expired swap.
@@ -982,14 +1069,41 @@ impl BreezServices {
         &self,
         req: PrepareRefundRequest,
     ) -> SdkResult<PrepareRefundResponse> {
-        Ok(self.btc_receive_swapper.prepare_refund_swap(req).await?)
+        let result = match req.unilateral {
+            Some(true) => {
+                self.taproot_receive_swapper
+                    .prepare_unilateral_refund(&req)
+                    .await
+            }
+            _ => {
+                self.taproot_receive_swapper
+                    .prepare_cooperative_refund(&req)
+                    .await
+            }
+        };
+        match result {
+            Ok(response) => return Ok(response),
+            Err(TaprootSwapError::NotFound) => {}
+            Err(e) => return Err(e.into()),
+        }
+
+        Ok(self.segwit_receive_swapper.prepare_refund_swap(req).await?)
     }
 
     /// Construct and broadcast a refund transaction for a failed/expired swap
     ///
     /// Returns the txid of the refund transaction.
     pub async fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
-        Ok(self.btc_receive_swapper.refund_swap(req).await?)
+        let result = match req.unilateral {
+            Some(true) => self.taproot_receive_swapper.refund_unilateral(&req).await,
+            _ => self.taproot_receive_swapper.refund_cooperative(&req).await,
+        };
+        match result {
+            Ok(response) => return Ok(response),
+            Err(TaprootSwapError::NotFound) => {}
+            Err(e) => return Err(e.into()),
+        }
+        Ok(self.segwit_receive_swapper.refund_swap(req).await?)
     }
 
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
@@ -1355,9 +1469,15 @@ impl BreezServices {
     }
 
     async fn notify_event_listeners(&self, e: BreezEvent) -> Result<()> {
-        if let Err(err) = self.btc_receive_swapper.on_event(e.clone()).await {
+        if let Err(err) = self.taproot_receive_swapper.on_event(e.clone()).await {
             debug!(
-                "btc_receive_swapper failed to process event {:?}: {:?}",
+                "taproot_receive_swapper failed to process event {:?}: {:?}",
+                e, err
+            )
+        };
+        if let Err(err) = self.segwit_receive_swapper.on_event(e.clone()).await {
+            debug!(
+                "segwit_receive_swapper failed to process event {:?}: {:?}",
                 e, err
             )
         };
@@ -1578,15 +1698,46 @@ impl BreezServices {
     async fn track_swap_events(self: &Arc<BreezServices>) {
         let cloned = self.clone();
         tokio::spawn(async move {
-            let mut swap_events_stream = cloned.btc_receive_swapper.subscribe_status_changes();
+            let mut taproot_swap_events_stream =
+                cloned.taproot_receive_swapper.subscribe_status_changes();
+            let mut segwit_swap_events_stream =
+                cloned.segwit_receive_swapper.subscribe_status_changes();
             let mut rev_swap_events_stream = cloned.btc_send_swapper.subscribe_status_changes();
             let mut shutdown_receiver = cloned.shutdown_receiver.clone();
             loop {
                 tokio::select! {
-                    swap_event = swap_events_stream.recv() => {
-                        if let Ok(e) = swap_event {
+                    taproot_swap_event = taproot_swap_events_stream.recv() => {
+                        let event = match taproot_swap_event {
+                            Ok(e) => e,
+                            Err(_) => continue,
+                        };
+
+                        let current_tip = match cloned.chain_service.current_tip(true).await {
+                            Ok(t) => t,
+                            Err(e) => {
+                                error!("Failed to get current tip to notify about taproot swap event: {:?}", e);
+                                continue;
+                            }
+                        };
+
+                        let node_info = match cloned.node_info() {
+                            Ok(i) => i,
+                            Err(e) => {
+                                error!("Failed to get node info to notify about taproot swap event: {:?}", e);
+                                continue;
+                            }
+                        };
+
+                        if let Err(err) = cloned.notify_event_listeners(
+                            BreezEvent::SwapUpdated { details: event.to_swap_info(&node_info, current_tip) }
+                        ).await {
+                            error!("error handling taproot swap event: {:?}", err);
+                        }
+                    },
+                    segwit_swap_event = segwit_swap_events_stream.recv() => {
+                        if let Ok(e) = segwit_swap_event {
                             if let Err(err) = cloned.notify_event_listeners(e).await {
-                                error!("error handling swap event: {:?}", err);
+                                error!("error handling segwit swap event: {:?}", err);
                             }
                         }
                     },
@@ -1751,7 +1902,7 @@ impl BreezServices {
                     }
                 }
 
-                let next_block = match cloned.chain_service.current_tip().await {
+                let next_block = match cloned.chain_service.current_tip(false).await {
                     Ok(next_block) => next_block,
                     Err(e) => {
                         error!("failed to fetch next block {}", e);
@@ -2175,8 +2326,9 @@ impl BreezServices {
         let state = crate::serializer::value::to_value(&self.persister.get_node_state()?)?;
         let payments = crate::serializer::value::to_value(
             &self
-                .persister
-                .list_payments(ListPaymentsRequest::default())?,
+                .payment_service
+                .list_payments(ListPaymentsRequest::default())
+                .await?,
         )?;
         let channels = crate::serializer::value::to_value(&self.persister.list_channels()?)?;
         let settings = crate::serializer::value::to_value(&self.persister.list_settings()?)?;
@@ -2241,7 +2393,8 @@ struct BreezServicesBuilder {
     persister: Option<Arc<SqliteStorage>>,
     rest_client: Option<Arc<dyn RestClient>>,
     support_api: Option<Arc<dyn SupportAPI>>,
-    swapper_api: Option<Arc<dyn SwapperAPI>>,
+    swapper_api: Option<Arc<dyn SegwitSwapperAPI>>,
+    taproot_swapper_api: Option<Arc<dyn TaprootSwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
@@ -2262,6 +2415,7 @@ impl BreezServicesBuilder {
             rest_client: None,
             support_api: None,
             swapper_api: None,
+            taproot_swapper_api: None,
             reverse_swapper_api: None,
             reverse_swap_service_api: None,
             buy_bitcoin_api: None,
@@ -2304,8 +2458,13 @@ impl BreezServicesBuilder {
         self
     }
 
-    pub fn swapper_api(&mut self, swapper_api: Arc<dyn SwapperAPI>) -> &mut Self {
+    pub fn swapper_api(&mut self, swapper_api: Arc<dyn SegwitSwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
+        self
+    }
+
+    pub fn taproot_swapper_api(&mut self, swapper_api: Arc<dyn TaprootSwapperAPI>) -> &mut Self {
+        self.taproot_swapper_api = Some(swapper_api.clone());
         self
     }
 
@@ -2456,13 +2615,14 @@ impl BreezServicesBuilder {
             }
             Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
         };
+
         let chain_service = Arc::new(RedundantChainService::from_base_urls(
+            persister.clone(),
             rest_client.clone(),
             mempoolspace_urls,
         ));
 
-        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
-            self.config.network.into(),
+        let segwit_receive_swapper = Arc::new(SegwitReceiveSwap::new(
             unwrapped_node_api.clone(),
             self.swapper_api
                 .clone()
@@ -2470,6 +2630,17 @@ impl BreezServicesBuilder {
             persister.clone(),
             chain_service.clone(),
             payment_receiver.clone(),
+        ));
+
+        let taproot_receive_swapper = Arc::new(TaprootReceiveSwap::new(
+            self.taproot_swapper_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
+            chain_service.clone(),
+            self.config.network.into(),
+            unwrapped_node_api.clone(),
+            payment_receiver.clone(),
+            persister.clone(),
         ));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
@@ -2493,6 +2664,10 @@ impl BreezServicesBuilder {
             .clone()
             .unwrap_or_else(|| Arc::new(BuyBitcoinService::new(breez_server.clone())));
 
+        let payment_service = Arc::new(PaymentService::new(
+            chain_service.clone(),
+            persister.clone(),
+        ));
         // Create the node services and it them statically
         let breez_services = Arc::new(BreezServices {
             config: self.config.clone(),
@@ -2511,13 +2686,15 @@ impl BreezServicesBuilder {
             chain_service,
             persister: persister.clone(),
             rest_client,
-            btc_receive_swapper,
+            segwit_receive_swapper,
+            taproot_receive_swapper,
             btc_send_swapper,
             payment_receiver,
             event_listener,
             backup_watcher: Arc::new(backup_watcher),
             shutdown_sender,
             shutdown_receiver,
+            payment_service,
         });
 
         Ok(breez_services)
@@ -2540,6 +2717,7 @@ pub struct OpenChannelParams {
 
 #[tonic::async_trait]
 pub trait Receiver: Send + Sync {
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError>;
     async fn receive_payment(
         &self,
         req: ReceivePaymentRequest,
@@ -2561,17 +2739,21 @@ pub(crate) struct PaymentReceiver {
 
 #[tonic::async_trait]
 impl Receiver for PaymentReceiver {
-    async fn receive_payment(
-        &self,
-        req: ReceivePaymentRequest,
-    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
-        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError> {
         let node_state = self
             .persister
             .get_node_state()?
             .ok_or(ReceivePaymentError::Generic {
                 err: "Node info not found".into(),
             })?;
+        Ok(node_state.max_receivable_single_payment_amount_msat < amount_msat)
+    }
+
+    async fn receive_payment(
+        &self,
+        req: ReceivePaymentRequest,
+    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
+        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let expiry = req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
@@ -2586,8 +2768,7 @@ impl Receiver for PaymentReceiver {
         let mut channel_fees_msat = None;
 
         // check if we need to open channel
-        let open_channel_needed =
-            node_state.max_receivable_single_payment_amount_msat < req.amount_msat;
+        let open_channel_needed = self.open_channel_needed(req.amount_msat)?;
         if open_channel_needed {
             info!("We need to open a channel");
 
@@ -3317,6 +3498,7 @@ pub(crate) mod tests {
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
         let mock_rest_client = MockRestClient::new();
         mock_rest_client.add_response(MockResponse::new(200, "800000".to_string()));
+        mock_rest_client.add_response(MockResponse::new(200, "800000".to_string()));
         let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
 
         let breez_services = breez_services_with(None, Some(rest_client.clone()), vec![]).await?;
@@ -3373,6 +3555,7 @@ pub(crate) mod tests {
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .taproot_swapper_api(Arc::new(MockBreezServer {}))
             .reverse_swap_service_api(Arc::new(MockReverseSwapperAPI {}))
             .buy_bitcoin_api(Arc::new(MockBuyBitcoinService {}))
             .persister(persister)

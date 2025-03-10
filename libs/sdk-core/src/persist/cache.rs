@@ -1,8 +1,14 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::models::NodeState;
 
-use super::{db::SqliteStorage, error::PersistResult};
+use super::{
+    db::SqliteStorage,
+    error::{PersistError, PersistResult},
+};
 
 const KEY_GL_CREDENTIALS: &str = "gl_credentials";
 const KEY_LAST_BACKUP_TIME: &str = "last_backup_time";
@@ -11,6 +17,7 @@ const KEY_NODE_STATE: &str = "node_state";
 const KEY_STATIC_BACKUP: &str = "static_backup";
 const KEY_WEBHOOK_URL: &str = "webhook_url";
 const KEY_MEMPOOLSPACE_BASE_URLS: &str = "mempoolspace_base_urls";
+const KEY_CURRENT_TIP: &str = "current_tip";
 
 impl SqliteStorage {
     pub fn get_cached_item(&self, key: &str) -> PersistResult<Option<String>> {
@@ -128,6 +135,34 @@ impl SqliteStorage {
 
         Ok(res)
     }
+
+    pub(crate) fn get_current_tip(&self) -> PersistResult<Option<(u32, SystemTime)>> {
+        let current_tip = match self.get_cached_item(KEY_CURRENT_TIP)? {
+            Some(t) => t,
+            None => return Ok(None),
+        };
+
+        let current_tip: CurrentTip = serde_json::from_str(&current_tip)?;
+        let time = SystemTime::UNIX_EPOCH
+            .checked_add(Duration::from_secs(current_tip.time))
+            .ok_or(PersistError::generic("invalid system time"))?;
+        Ok(Some((current_tip.tip, time)))
+    }
+
+    pub(crate) fn set_current_tip(&self, tip: u32) -> PersistResult<()> {
+        let tip = CurrentTip {
+            tip,
+            time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs(),
+        };
+        let serialized = serde_json::to_string(&tip)?;
+        self.update_cached_item(KEY_CURRENT_TIP, serialized)
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+struct CurrentTip {
+    pub tip: u32,
+    pub time: u64,
 }
 
 #[test]

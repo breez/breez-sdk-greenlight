@@ -2393,10 +2393,12 @@ fun asPrepareRefundRequest(prepareRefundRequest: ReadableMap): PrepareRefundRequ
     val swapAddress = prepareRefundRequest.getString("swapAddress")!!
     val toAddress = prepareRefundRequest.getString("toAddress")!!
     val satPerVbyte = prepareRefundRequest.getInt("satPerVbyte").toUInt()
+    val unilateral = if (hasNonNullKey(prepareRefundRequest, "unilateral")) prepareRefundRequest.getBoolean("unilateral") else null
     return PrepareRefundRequest(
         swapAddress,
         toAddress,
         satPerVbyte,
+        unilateral,
     )
 }
 
@@ -2405,6 +2407,7 @@ fun readableMapOf(prepareRefundRequest: PrepareRefundRequest): ReadableMap =
         "swapAddress" to prepareRefundRequest.swapAddress,
         "toAddress" to prepareRefundRequest.toAddress,
         "satPerVbyte" to prepareRefundRequest.satPerVbyte,
+        "unilateral" to prepareRefundRequest.unilateral,
     )
 
 fun asPrepareRefundRequestList(arr: ReadableArray): List<PrepareRefundRequest> {
@@ -2798,10 +2801,12 @@ fun asRefundRequest(refundRequest: ReadableMap): RefundRequest? {
     val swapAddress = refundRequest.getString("swapAddress")!!
     val toAddress = refundRequest.getString("toAddress")!!
     val satPerVbyte = refundRequest.getInt("satPerVbyte").toUInt()
+    val unilateral = if (hasNonNullKey(refundRequest, "unilateral")) refundRequest.getBoolean("unilateral") else null
     return RefundRequest(
         swapAddress,
         toAddress,
         satPerVbyte,
+        unilateral,
     )
 }
 
@@ -2810,6 +2815,7 @@ fun readableMapOf(refundRequest: RefundRequest): ReadableMap =
         "swapAddress" to refundRequest.swapAddress,
         "toAddress" to refundRequest.toAddress,
         "satPerVbyte" to refundRequest.satPerVbyte,
+        "unilateral" to refundRequest.unilateral,
     )
 
 fun asRefundRequestList(arr: ReadableArray): List<RefundRequest> {

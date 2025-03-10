@@ -24,7 +24,7 @@ use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx, Utxo};
 use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
-use crate::swap_in::swap::create_swap_keys;
+use crate::swap_in_segwit::swap::create_swap_keys;
 use crate::{
     ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
     ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
@@ -330,7 +330,7 @@ impl BTCSendSwap {
         match boltz_response {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
-                    created_at_block_height: self.chain_service.current_tip().await?,
+                    created_at_block_height: self.chain_service.current_tip(false).await?,
                     claim_pubkey: req.recipient_address,
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
@@ -574,7 +574,7 @@ impl BTCSendSwap {
             },
             InProgress => match claim_tx_status {
                 TxStatus::Unknown => {
-                    let block_height = self.chain_service.current_tip().await?;
+                    let block_height = self.chain_service.current_tip(false).await?;
                     match block_height >= rsi.timeout_block_height {
                         true => {
                             warn!("Reverse swap {} crossed the timeout block height", rsi.id);

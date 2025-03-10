@@ -180,7 +180,7 @@ impl SqliteStorage {
         let con = self.get_connection()?;
         let mut prep_statement = con.prepare(
             "
-        INSERT OR IGNORE INTO sync.open_channel_payment_info (
+        INSERT OR REPLACE INTO sync.open_channel_payment_info (
           payment_hash,
           payer_amount_msat,
           open_channel_bolt11
