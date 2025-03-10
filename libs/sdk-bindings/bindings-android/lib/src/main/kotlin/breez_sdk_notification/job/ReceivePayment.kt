@@ -36,7 +36,7 @@ class ReceivePaymentJob(
 
     override fun start(breezSDK: BlockingBreezServices) {
         try {
-            val request = Json.decodeFromString(ReceivePaymentRequest.serializer(), payload)
+            val request = Json.decodeFromString<ReceivePaymentRequest>(ReceivePaymentRequest.serializer(), payload)
             val payment = breezSDK.paymentByHash(request.paymentHash)
             if (payment != null) {
                 this.receivedPayment = payment
