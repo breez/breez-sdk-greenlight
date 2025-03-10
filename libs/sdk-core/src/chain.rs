@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, UNIX_EPOCH};
 
 use anyhow::Result;
 use sdk_common::prelude::*;
@@ -94,13 +94,19 @@ impl ChainService for RedundantChainService {
     }
 
     async fn current_tip(&self, cache: bool) -> SdkResult<u32> {
-        if cache {
-            if let Some((tip, time)) = self.persister.get_current_tip()? {
-                if time.elapsed()? < CURRENT_TIP_CACHE_DURATION {
-                    return Ok(tip);
+        let cached_tip = match cache {
+            true => match self.persister.get_current_tip()? {
+                Some((tip, time)) => {
+                    if time.elapsed()? < CURRENT_TIP_CACHE_DURATION {
+                        return Ok(tip);
+                    }
+
+                    Some((tip, time))
                 }
-            }
-        }
+                None => None,
+            },
+            false => None,
+        };
 
         for inst in &self.instances {
             match inst.current_tip(false).await {
@@ -113,6 +119,16 @@ impl ChainService for RedundantChainService {
                 Err(e) => error!("Call to chain service {} failed: {e}", inst.base_url),
             }
         }
+
+        if let Some((tip, time)) = cached_tip {
+            let unix_time = match time.duration_since(UNIX_EPOCH) {
+                Ok(time) => time.as_secs(),
+                Err(_) => 0,
+            };
+            debug!("Current tip cache expired: {unix_time}. All network calls failed. Using cached tip anyway: {tip}");
+            return Ok(tip);
+        }
+
         Err(SdkError::service_connectivity(
             "All chain service instances failed",
         ))
