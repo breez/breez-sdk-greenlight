@@ -603,7 +603,7 @@ impl TaprootReceiveSwap {
         &self,
         swap: &FullTaprootSwapData,
         current_tip: u32,
-    ) -> Result<String, GetPaymentRequestError> {
+    ) -> Result<(String, bool), GetPaymentRequestError> {
         match self.get_payment_request_inner(swap, current_tip).await {
             Ok(s) => return Ok(s),
             Err(e) => match e {
@@ -621,7 +621,7 @@ impl TaprootReceiveSwap {
         &self,
         swap: &FullTaprootSwapData,
         current_tip: u32,
-    ) -> Result<String, GetPaymentRequestError> {
+    ) -> Result<(String, bool), GetPaymentRequestError> {
         let maybe_bolt11_result = self
             .node
             .fetch_bolt11(swap.swap.payment_hash.clone())
@@ -642,7 +642,7 @@ impl TaprootReceiveSwap {
                 .check_existing_payment_request(swap, bolt11_result)
                 .await?;
             if let Some(bolt11) = maybe_bolt11 {
-                return Ok(bolt11);
+                return Ok((bolt11, false));
             }
         };
 
@@ -683,7 +683,7 @@ impl TaprootReceiveSwap {
                 }
 
                 // TODO: Save the new opening_fee_params? Like 'last' opening_fee_params?
-                return Ok(resp.ln_invoice.bolt11);
+                return Ok((resp.ln_invoice.bolt11, true));
             }
             Err(e) => match e {
                 ReceivePaymentError::InvoicePreimageAlreadyExists { err: _ } => {
@@ -700,9 +700,13 @@ impl TaprootReceiveSwap {
 
     async fn get_swap_payment(&self, swap: &FullTaprootSwapData, current_tip: u32) -> Result<()> {
         // TODO: Handle NeedsNewFeeParams here
-        let payment_request = self.get_payment_request(swap, current_tip).await?;
+        let (payment_request, is_new_payment_request) =
+            self.get_payment_request(swap, current_tip).await?;
         self.persister
             .set_taproot_swap_bolt11(&swap.swap.address, &payment_request)?;
+        if is_new_payment_request {
+            self.emit_swap_updated(&swap.swap.address)?;
+        }
         let resp = self.swapper_api.pay_swap(payment_request.clone()).await;
         let status = match resp {
             Ok(_) => {
@@ -729,8 +733,10 @@ impl TaprootReceiveSwap {
             }
             _ => tonic_wrap::Status(status).to_string(),
         };
+        debug!("Error getting paid for taproot swap: {}", error_message);
         self.persister
             .set_taproot_swap_last_payment_error(&swap.swap.address, &error_message)?;
+        self.emit_swap_updated(&swap.swap.address)?;
         Err(anyhow!(error_message))
     }
 
@@ -1073,7 +1079,7 @@ impl TaprootReceiveSwap {
         }
 
         let refund_tx_id = self.broadcast_and_persist_refund(tx, &utxos).await?;
-
+        self.emit_swap_updated(&swap_info.swap.address)?;
         Ok(RefundResponse { refund_tx_id })
     }
 
@@ -1170,6 +1176,7 @@ impl TaprootReceiveSwap {
         }
 
         let refund_tx_id = self.broadcast_and_persist_refund(tx, &utxos).await?;
+        self.emit_swap_updated(&swap_info.swap.address)?;
 
         Ok(RefundResponse { refund_tx_id })
     }
@@ -1300,16 +1307,24 @@ impl TaprootReceiveSwap {
             }
         }
 
+        let mut changed = false;
         if !new_outputs.is_empty() {
             self.persister.add_taproot_swap_outputs(&new_outputs)?;
+            changed = true;
         }
 
         if !changed_outputs.is_empty() {
             self.persister.add_taproot_swap_outputs(&changed_outputs)?;
+            changed = true;
         }
 
         if !spends.is_empty() {
             self.persister.add_taproot_swap_spends(&spends)?;
+            changed = true;
+        }
+
+        if changed {
+            self.emit_swap_updated(&swap.swap.address)?;
         }
 
         Ok(())

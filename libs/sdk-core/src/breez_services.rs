@@ -85,7 +85,7 @@ pub enum BreezEvent {
     ReverseSwapUpdated { details: ReverseSwapInfo },
     /// Indicates that a swap has been updated which may also
     /// include a status change
-    SwapUpdated { details: SwapInfo }, // TODO: trigger swap updated from taproot swaps
+    SwapUpdated { details: SwapInfo },
 }
 
 #[derive(Clone, Debug, PartialEq)]
