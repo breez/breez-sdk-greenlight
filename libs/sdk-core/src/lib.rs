@@ -182,8 +182,7 @@ mod payments;
 mod persist;
 mod serializer;
 mod support;
-mod swap_in_segwit;
-mod swap_in_taproot;
+mod swap_in;
 mod swap_out;
 #[allow(clippy::all)]
 #[allow(unused_mut)]
