@@ -1404,34 +1404,6 @@ pub struct SwapInfo {
 }
 
 impl SwapInfo {
-    pub(crate) fn with_chain_info(&self, onchain_info: SwapChainInfo, tip: u32) -> Self {
-        let new_info = Self {
-            confirmed_sats: onchain_info.confirmed_sats,
-            unconfirmed_sats: onchain_info.unconfirmed_sats,
-            confirmed_tx_ids: onchain_info.confirmed_tx_ids,
-            unconfirmed_tx_ids: onchain_info.unconfirmed_tx_ids,
-            confirmed_at: onchain_info.confirmed_at,
-            ..self.clone()
-        };
-
-        Self {
-            status: new_info.calculate_status(tip),
-            ..new_info
-        }
-    }
-
-    pub(crate) fn with_paid_amount(&self, paid_msat: u64, tip: u32) -> Self {
-        let new_info = Self {
-            paid_msat,
-            ..self.clone()
-        };
-
-        Self {
-            status: new_info.calculate_status(tip),
-            ..new_info
-        }
-    }
-
     fn calculate_status(&self, tip: u32) -> SwapStatus {
         let mut passed_timelock = false;
         if let Some(confirmed_at) = self.confirmed_at {

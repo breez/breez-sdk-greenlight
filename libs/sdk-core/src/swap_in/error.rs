@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Error)]
-pub enum ReceiveSwapperError {
+pub enum ReceiveSwapError {
     Generic(String),
     InvalidAddressType,
     NoUtxos,
@@ -9,12 +9,12 @@ pub enum ReceiveSwapperError {
     SwapNotFound(String),
 }
 
-impl ReceiveSwapperError {
+impl ReceiveSwapError {
     pub fn generic(msg: impl Into<String>) -> Self {
         Self::Generic(msg.into())
     }
 }
-pub type ReceiveSwapperResult<T, E = ReceiveSwapperError> = Result<T, E>;
+pub type ReceiveSwapResult<T, E = ReceiveSwapError> = Result<T, E>;
 
 #[derive(Clone, Debug, Error)]
 pub(super) enum GetPaymentRequestError {

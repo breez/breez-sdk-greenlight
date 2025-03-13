@@ -1,6 +1,6 @@
 mod error;
-mod swap;
 mod segwit;
+mod swap;
 mod taproot;
 
-pub use swap::SwapChainData;
+pub(crate) use swap::{SwapChainData, SwapChainInfo};

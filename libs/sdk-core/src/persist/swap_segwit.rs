@@ -102,14 +102,12 @@ impl SqliteStorage {
         &self,
         bitcoin_address: String,
         paid_msat: u64,
-        status: SwapStatus,
     ) -> PersistResult<()> {
         self.get_connection()?.execute(
-            "UPDATE swaps_info SET paid_msat=:paid_msat, status=:status where bitcoin_address=:bitcoin_address",
+            "UPDATE swaps_info SET paid_msat=:paid_msat where bitcoin_address=:bitcoin_address",
             named_params! {
              ":paid_msat": paid_msat,
              ":bitcoin_address": bitcoin_address,
-             ":status": status as u32,
             },
         )?;
         Ok(())
