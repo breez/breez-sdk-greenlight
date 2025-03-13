@@ -199,7 +199,7 @@ impl SqliteStorage {
         refund_tx_id: String,
     ) -> PersistResult<()> {
         self.get_connection()?.execute(
-            "INSERT INTO sync.swap_refunds (bitcoin_address, refund_tx_id) VALUES(:bitcoin_address, :refund_tx_id)",
+            "INSERT OR IGNORE INTO sync.swap_refunds (bitcoin_address, refund_tx_id) VALUES(:bitcoin_address, :refund_tx_id)",
             named_params! {
              ":bitcoin_address": bitcoin_address,
              ":refund_tx_id": refund_tx_id,

@@ -151,12 +151,11 @@ impl SqliteStorage {
         // sync remote swap_refunds table
         tx.execute(
             "
-        INSERT INTO sync.swap_refunds
+        INSERT OR IGNORE INTO sync.swap_refunds
          SELECT
           bitcoin_address,
           refund_tx_id
-         FROM remote_sync.swap_refunds
-         WHERE bitcoin_address NOT IN (SELECT bitcoin_address FROM sync.swap_refunds);",
+         FROM remote_sync.swap_refunds;",
             [],
         )?;
 
