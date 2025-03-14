@@ -684,6 +684,7 @@ dependencies = [
  "rusqlite_migration",
  "ryu",
  "sdk-common",
+ "secp256k1 0.30.0",
  "serde",
  "serde_json",
  "serde_with",
@@ -3930,6 +3931,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "secp256k1"
+version = "0.30.0"
+source = "git+https://github.com/rust-bitcoin/rust-secp256k1?rev=1cc7410df436b73d06db3c8ff7cbb29a78916b06#1cc7410df436b73d06db3c8ff7cbb29a78916b06"
+dependencies = [
+ "bitcoin_hashes 0.14.0",
+ "rand",
+ "secp256k1-sys 0.11.0",
+]
+
+[[package]]
 name = "secp256k1-sys"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3952,6 +3963,14 @@ name = "secp256k1-sys"
 version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4387882333d3aa8cb20530a17c69a3752e97837832f34f6dccc760e715001d9"
+dependencies = [
+ "cc",
+]
+
+[[package]]
+name = "secp256k1-sys"
+version = "0.11.0"
+source = "git+https://github.com/rust-bitcoin/rust-secp256k1?rev=1cc7410df436b73d06db3c8ff7cbb29a78916b06#1cc7410df436b73d06db3c8ff7cbb29a78916b06"
 dependencies = [
  "cc",
 ]
