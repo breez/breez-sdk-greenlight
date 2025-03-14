@@ -806,6 +806,7 @@ dictionary PrepareRefundRequest {
     string swap_address;
     string to_address;
     u32 sat_per_vbyte;
+    boolean? unilateral = null;
 };
 
 dictionary PrepareRefundResponse {
@@ -817,6 +818,7 @@ dictionary RefundRequest {
     string swap_address;
     string to_address;
     u32 sat_per_vbyte;
+    boolean? unilateral = null;
 };
 
 dictionary RefundResponse {

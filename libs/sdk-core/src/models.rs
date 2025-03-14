@@ -1046,12 +1046,14 @@ pub struct PrepareRefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+    pub unilateral: Option<bool>,
 }
 
 pub struct RefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+    pub unilateral: Option<bool>,
 }
 
 pub struct PrepareRefundResponse {

@@ -1385,11 +1385,13 @@ class PrepareRefundRequest {
   final String swapAddress;
   final String toAddress;
   final int satPerVbyte;
+  final bool? unilateral;
 
   const PrepareRefundRequest({
     required this.swapAddress,
     required this.toAddress,
     required this.satPerVbyte,
+    this.unilateral,
   });
 }
 
@@ -1518,11 +1520,13 @@ class RefundRequest {
   final String swapAddress;
   final String toAddress;
   final int satPerVbyte;
+  final bool? unilateral;
 
   const RefundRequest({
     required this.swapAddress,
     required this.toAddress,
     required this.satPerVbyte,
+    this.unilateral,
   });
 }
 
@@ -4907,6 +4911,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.swap_address = api2wire_String(apiObj.swapAddress);
     wireObj.to_address = api2wire_String(apiObj.toAddress);
     wireObj.sat_per_vbyte = api2wire_u32(apiObj.satPerVbyte);
+    wireObj.unilateral = api2wire_opt_box_autoadd_bool(apiObj.unilateral);
   }
 
   void _api_fill_to_wire_receive_onchain_request(
@@ -4935,6 +4940,7 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
     wireObj.swap_address = api2wire_String(apiObj.swapAddress);
     wireObj.to_address = api2wire_String(apiObj.toAddress);
     wireObj.sat_per_vbyte = api2wire_u32(apiObj.satPerVbyte);
+    wireObj.unilateral = api2wire_opt_box_autoadd_bool(apiObj.unilateral);
   }
 
   void _api_fill_to_wire_report_issue_request(ReportIssueRequest apiObj, wire_ReportIssueRequest wireObj) {
@@ -6751,6 +6757,8 @@ final class wire_PrepareRefundRequest extends ffi.Struct {
 
   @ffi.Uint32()
   external int sat_per_vbyte;
+
+  external ffi.Pointer<ffi.Bool> unilateral;
 }
 
 final class wire_RefundRequest extends ffi.Struct {
@@ -6760,6 +6768,8 @@ final class wire_RefundRequest extends ffi.Struct {
 
   @ffi.Uint32()
   external int sat_per_vbyte;
+
+  external ffi.Pointer<ffi.Bool> unilateral;
 }
 
 final class wire_list_swap_status extends ffi.Struct {

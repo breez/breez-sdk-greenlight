@@ -254,12 +254,14 @@ typedef struct wire_PrepareRefundRequest {
   struct wire_uint_8_list *swap_address;
   struct wire_uint_8_list *to_address;
   uint32_t sat_per_vbyte;
+  bool *unilateral;
 } wire_PrepareRefundRequest;
 
 typedef struct wire_RefundRequest {
   struct wire_uint_8_list *swap_address;
   struct wire_uint_8_list *to_address;
   uint32_t sat_per_vbyte;
+  bool *unilateral;
 } wire_RefundRequest;
 
 typedef struct wire_list_swap_status {
