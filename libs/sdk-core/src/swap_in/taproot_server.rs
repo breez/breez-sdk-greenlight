@@ -25,6 +25,8 @@ pub(crate) trait TaprootSwapperAPI: Send + Sync {
         pub_nonce: Vec<u8>,
         transaction: Vec<u8>,
     ) -> SdkResult<RefundSwapResponse>;
+
+    #[allow(unused)]
     async fn swap_parameters(&self) -> SdkResult<Option<SwapParameters>>;
 }
 

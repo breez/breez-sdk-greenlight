@@ -282,7 +282,7 @@ mod tests {
         local_storage.init()?;
 
         let local_swap_info = create_test_swap_info();
-        local_storage.insert_swap(local_swap_info.clone())?;
+        local_storage.insert_swap(&local_swap_info)?;
 
         let mut remote_swap_info = local_swap_info;
         remote_swap_info.bitcoin_address = "2".into();
@@ -295,7 +295,7 @@ mod tests {
 
         let remote_storage = SqliteStorage::new(test_utils::create_test_sql_dir());
         remote_storage.init()?;
-        remote_storage.insert_swap(remote_swap_info)?;
+        remote_storage.insert_swap(&remote_swap_info)?;
 
         remote_storage.insert_open_channel_payment_info("123", 100000, "")?;
 
@@ -325,14 +325,14 @@ mod tests {
 
         // Swap is created with initial dynamic fee
         let local_swap_info = create_test_swap_info();
-        local_storage.insert_swap(local_swap_info.clone())?;
+        local_storage.insert_swap(&local_swap_info)?;
 
         // Sleep to cause a change in created_at
         tokio::time::sleep(Duration::from_secs(2)).await;
 
         // Swap address is re-used later with different (newer) dynamic fee
         let new_fees: crate::OpeningFeeParams = get_test_ofp_48h(10, 10).into();
-        local_storage.update_swap_fees(local_swap_info.bitcoin_address, new_fees.clone())?;
+        local_storage.update_swap_fees(&local_swap_info.bitcoin_address, &new_fees)?;
 
         let local_swaps = local_storage.list_swaps(ListSwapsRequest::default())?;
         assert_eq!(local_swaps.len(), 1);
@@ -373,15 +373,15 @@ mod tests {
         // - Local swap L2  (created_at +1s)
         // - Local swap L3  (created_at +1s)
         // - Remote swap R2 (created_at +1s)
-        remote_storage.insert_swap(pre_sync_r1.clone())?; // R1
+        remote_storage.insert_swap(&pre_sync_r1)?; // R1
         tokio::time::sleep(Duration::from_secs(1)).await;
-        local_storage.insert_swap(pre_sync_l1.clone())?; // L1
+        local_storage.insert_swap(&pre_sync_l1)?; // L1
         tokio::time::sleep(Duration::from_secs(1)).await;
-        local_storage.insert_swap(pre_sync_l2.clone())?; // L2
+        local_storage.insert_swap(&pre_sync_l2)?; // L2
         tokio::time::sleep(Duration::from_secs(1)).await;
-        local_storage.insert_swap(pre_sync_l3.clone())?; // L3
+        local_storage.insert_swap(&pre_sync_l3)?; // L3
         tokio::time::sleep(Duration::from_secs(1)).await;
-        remote_storage.insert_swap(pre_sync_r2.clone())?; // R2
+        remote_storage.insert_swap(&pre_sync_r2)?; // R2
 
         // The swap fees created_at are in this order: R1 < L1 < L2 < L3 < R2
 
