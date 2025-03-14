@@ -44,6 +44,7 @@ use crate::models::{
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
 use crate::swap_in::swap::BTCReceiveSwap;
+use crate::swap_in::TaprootSwapperAPI;
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -2242,6 +2243,7 @@ struct BreezServicesBuilder {
     rest_client: Option<Arc<dyn RestClient>>,
     support_api: Option<Arc<dyn SupportAPI>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
+    taproot_swapper_api: Option<Arc<dyn TaprootSwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
@@ -2262,6 +2264,7 @@ impl BreezServicesBuilder {
             rest_client: None,
             support_api: None,
             swapper_api: None,
+            taproot_swapper_api: None,
             reverse_swapper_api: None,
             reverse_swap_service_api: None,
             buy_bitcoin_api: None,
@@ -2306,6 +2309,11 @@ impl BreezServicesBuilder {
 
     pub fn swapper_api(&mut self, swapper_api: Arc<dyn SwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
+        self
+    }
+
+    pub fn taproot_swapper_api(&mut self, swapper_api: Arc<dyn TaprootSwapperAPI>) -> &mut Self {
+        self.taproot_swapper_api = Some(swapper_api.clone());
         self
     }
 
