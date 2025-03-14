@@ -130,6 +130,7 @@ pub(crate) enum Commands {
         swap_address: String,
         to_address: String,
         sat_per_vbyte: u32,
+        unilateral: Option<bool>,
     },
 
     /// [swap-in] Broadcast a refund transaction for an incomplete swap
@@ -137,6 +138,7 @@ pub(crate) enum Commands {
         swap_address: String,
         to_address: String,
         sat_per_vbyte: u32,
+        unilateral: Option<bool>,
     },
 
     ListSwaps {
