@@ -317,6 +317,7 @@ impl SqliteStorage {
     }
 
     /// Look up a modified open channel bolt11 by hash.
+    #[allow(unused)]
     pub(crate) fn get_open_channel_bolt11_by_hash(
         &self,
         hash: &str,
@@ -804,7 +805,7 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
             attempted_error: None,
         },
     )?;
-    storage.insert_swap(swap_info.clone())?;
+    storage.insert_swap(&swap_info)?;
     storage.update_swap_bolt11(
         swap_info.bitcoin_address.clone(),
         swap_info.bolt11.clone().unwrap(),
