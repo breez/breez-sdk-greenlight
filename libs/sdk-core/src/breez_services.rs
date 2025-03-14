@@ -43,8 +43,7 @@ use crate::models::{
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::db::SqliteStorage;
-use crate::swap_in::swap::BTCReceiveSwap;
-use crate::swap_in::TaprootSwapperAPI;
+use crate::swap_in::{BTCReceiveSwap, TaprootSwapperAPI};
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -849,7 +848,7 @@ impl BreezServices {
 
         let swap_info = self
             .btc_receive_swapper
-            .create_swap_address(channel_opening_fees)
+            .create_swap(channel_opening_fees)
             .await?;
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
             let address = &swap_info.bitcoin_address;
@@ -865,7 +864,7 @@ impl BreezServices {
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper.rescan_monitored_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress()?;
+        let in_progress = self.btc_receive_swapper.list_in_progress_swaps()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }
@@ -889,7 +888,7 @@ impl BreezServices {
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper
-            .refresh_swap_on_chain_status(swap_address.clone(), tip)
+            .rescan_swap(&swap_address, tip)
             .await?;
         self.btc_receive_swapper.redeem_swap(swap_address).await?;
         Ok(())
@@ -993,14 +992,14 @@ impl BreezServices {
         &self,
         req: PrepareRefundRequest,
     ) -> SdkResult<PrepareRefundResponse> {
-        Ok(self.btc_receive_swapper.prepare_refund_swap(req).await?)
+        Ok(self.btc_receive_swapper.prepare_refund(req).await?)
     }
 
     /// Construct and broadcast a refund transaction for a failed/expired swap
     ///
     /// Returns the txid of the refund transaction.
     pub async fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
-        Ok(self.btc_receive_swapper.refund_swap(req).await?)
+        Ok(self.btc_receive_swapper.refund(req).await?)
     }
 
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
@@ -2480,14 +2479,17 @@ impl BreezServicesBuilder {
         ));
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
+            chain_service.clone(),
             self.config.network.into(),
             unwrapped_node_api.clone(),
+            payment_receiver.clone(),
+            persister.clone(),
             self.swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
-            persister.clone(),
-            chain_service.clone(),
-            payment_receiver.clone(),
+            self.taproot_swapper_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
         ));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
@@ -3191,7 +3193,7 @@ pub(crate) mod tests {
                 attempted_error: None,
             },
         )?;
-        persister.insert_swap(swap_info.clone())?;
+        persister.insert_swap(&swap_info)?;
         persister.update_swap_bolt11(
             swap_info.bitcoin_address.clone(),
             swap_info.bolt11.clone().unwrap(),
@@ -3402,6 +3404,7 @@ pub(crate) mod tests {
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .taproot_swapper_api(Arc::new(MockBreezServer {}))
             .reverse_swap_service_api(Arc::new(MockReverseSwapperAPI {}))
             .buy_bitcoin_api(Arc::new(MockBuyBitcoinService {}))
             .persister(persister)

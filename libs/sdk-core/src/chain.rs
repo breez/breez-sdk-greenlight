@@ -128,37 +128,10 @@ pub struct Utxo {
 
 #[derive(Clone)]
 pub struct AddressUtxos {
-    pub unconfirmed: Vec<Utxo>,
     pub confirmed: Vec<Utxo>,
 }
 
 impl AddressUtxos {
-    pub(crate) fn unconfirmed_sats(&self) -> u64 {
-        self.unconfirmed
-            .iter()
-            .fold(0, |accum, item| accum + item.value)
-    }
-
-    pub(crate) fn unconfirmed_tx_ids(&self) -> Vec<String> {
-        self.unconfirmed
-            .iter()
-            .map(|c| c.out.txid.to_string())
-            .collect()
-    }
-
-    pub(crate) fn confirmed_sats(&self) -> u64 {
-        self.confirmed
-            .iter()
-            .fold(0, |accum, item| accum + item.value)
-    }
-
-    pub(crate) fn confirmed_tx_ids(&self) -> Vec<String> {
-        self.confirmed
-            .iter()
-            .map(|c| c.out.txid.to_string())
-            .collect()
-    }
-
     /// Get the highest block height of all confirmed transactions that paid to the given onchain address
     pub(crate) fn _confirmed_block(&self) -> u32 {
         self.confirmed.iter().fold(0, |b, item| {
@@ -213,11 +186,6 @@ pub(crate) fn get_utxos(
         }
     }
     let address_utxos = AddressUtxos {
-        unconfirmed: utxos
-            .clone()
-            .into_iter()
-            .filter(|u| u.block_height.is_none())
-            .collect(),
         confirmed: utxos
             .clone()
             .into_iter()
@@ -225,21 +193,6 @@ pub(crate) fn get_utxos(
             .collect(),
     };
     Ok(address_utxos)
-}
-
-/// Get the total count of transactions that have been sent to the given onchain address
-pub(crate) fn get_total_incoming_txs(address: String, transactions: Vec<OnchainTx>) -> u64 {
-    let mut total_incoming_txs = 0;
-    for tx in transactions.iter() {
-        if tx.status.confirmed {
-            for vout in tx.vout.iter() {
-                if vout.scriptpubkey_address == address {
-                    total_incoming_txs += 1;
-                }
-            }
-        }
-    }
-    total_incoming_txs
 }
 
 #[derive(Clone)]

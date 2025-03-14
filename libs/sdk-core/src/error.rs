@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use crate::{
     bitcoin::util::bip32, node_api::NodeError, persist::error::PersistError,
-    swap_in::error::SwapError, swap_out::error::ReverseSwapError,
+    swap_in::ReceiveSwapError, swap_out::error::ReverseSwapError,
 };
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
@@ -189,10 +189,10 @@ impl From<SdkError> for ReceiveOnchainError {
     }
 }
 
-impl From<SwapError> for ReceiveOnchainError {
-    fn from(value: SwapError) -> Self {
+impl From<ReceiveSwapError> for ReceiveOnchainError {
+    fn from(value: ReceiveSwapError) -> Self {
         match value {
-            SwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            ReceiveSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -483,6 +483,17 @@ impl From<SendPaymentError> for SdkError {
             | SendPaymentError::RouteTooExpensive { err }
             | SendPaymentError::InsufficientBalance { err } => Self::Generic { err },
             SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+        }
+    }
+}
+
+impl From<ReceiveSwapError> for SdkError {
+    fn from(value: ReceiveSwapError) -> Self {
+        match value {
+            ReceiveSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
         }
     }
 }

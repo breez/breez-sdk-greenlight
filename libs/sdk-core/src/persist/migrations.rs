@@ -485,7 +485,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "ALTER TABLE payments ADD COLUMN is_pseudo INTEGER DEFAULT 0 NOT NULL;
         DELETE FROM payments;
         DELETE FROM cached_items WHERE key = 'sync_state';
-       "
+       ",
+       "ALTER TABLE swaps_info ADD COLUMN chain_data TEXT;"
     ]
 }
 

@@ -788,7 +788,7 @@ mod tests {
             channel_opening_fees: Some(get_test_ofp_48h(1, 1).into()),
             confirmed_at: Some(555),
         };
-        persister.insert_swap(tested_swap_info).unwrap();
+        persister.insert_swap(&tested_swap_info).unwrap();
     }
 
     async fn wait_for_backup_success(mut subscription: Receiver<BreezEvent>) {
