@@ -7,6 +7,7 @@ pub enum ReceiveSwapError {
     NoUtxos,
     PaymentError(String),
     SwapNotFound(String),
+    OutputValueBelowDust,
 }
 
 impl ReceiveSwapError {

@@ -448,35 +448,8 @@ impl SegwitReceiveSwap {
     }
 }
 
-pub(crate) struct SwapKeys {
-    pub(crate) priv_key: Vec<u8>,
-    pub(crate) preimage: Vec<u8>,
-}
 
-impl SwapKeys {
-    pub(crate) fn secret_key(&self) -> Result<SecretKey> {
-        Ok(SecretKey::from_slice(&self.priv_key)?)
-    }
 
-    pub(crate) fn public_key(&self) -> Result<PublicKey> {
-        Ok(PublicKey::from_secret_key(
-            &Secp256k1::new(),
-            &self.secret_key()?,
-        ))
-    }
-
-    pub(crate) fn preimage_hash_bytes(&self) -> Vec<u8> {
-        Message::from_hashed_data::<sha256::Hash>(&self.preimage[..])
-            .as_ref()
-            .to_vec()
-    }
-}
-
-pub(crate) fn create_swap_keys() -> Result<SwapKeys> {
-    let priv_key = rand::thread_rng().gen::<[u8; 32]>().to_vec();
-    let preimage = rand::thread_rng().gen::<[u8; 32]>().to_vec();
-    Ok(SwapKeys { priv_key, preimage })
-}
 
 pub(crate) fn create_submarine_swap_script(
     invoice_hash: Vec<u8>,

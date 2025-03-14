@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use gl_client::{
     bitcoin::{
-        blockdata::constants::WITNESS_SCALE_FACTOR, consensus::encode, Address, AddressType, OutPoint, Script, Sequence, TxIn, Witness
+        blockdata::constants::WITNESS_SCALE_FACTOR, consensus::encode, hashes::sha256, secp256k1::{Message, PublicKey, Secp256k1, SecretKey}, Address, AddressType, OutPoint, Script, Sequence, TxIn, Witness
     },
     lightning_invoice::Bolt11Invoice,
 };
@@ -21,16 +21,47 @@ use crate::{
 use super::{
     error::{GetPaymentRequestError, ReceiveSwapError, ReceiveSwapResult},
     segwit::SegwitReceiveSwap,
-    taproot::TaprootReceiveSwap,
+    taproot::{TaprootReceiveSwap, TaprootSwapperAPI},
 };
 
 const EXPIRY_SECONDS_PER_BLOCK: u32 = 600;
 const MIN_INVOICE_EXPIRY_SECONDS: u64 = 1800;
 const MIN_OPENING_FEE_PARAMS_VALIDITY_SECONDS: u32 = 1800;
 
+pub(crate) fn create_swap_keys() -> anyhow::Result<SwapKeys> {
+    let priv_key = rand::thread_rng().gen::<[u8; 32]>().to_vec();
+    let preimage = rand::thread_rng().gen::<[u8; 32]>().to_vec();
+    Ok(SwapKeys { priv_key, preimage })
+}
+
+
+pub(crate) struct SwapKeys {
+    pub(crate) priv_key: Vec<u8>,
+    pub(crate) preimage: Vec<u8>,
+}
+
+impl SwapKeys {
+    pub(crate) fn secret_key(&self) -> Result<SecretKey> {
+        Ok(SecretKey::from_slice(&self.priv_key)?)
+    }
+
+    pub(crate) fn public_key(&self) -> Result<PublicKey> {
+        Ok(PublicKey::from_secret_key(
+            &Secp256k1::new(),
+            &self.secret_key()?,
+        ))
+    }
+
+    pub(crate) fn preimage_hash_bytes(&self) -> Vec<u8> {
+        Message::from_hashed_data::<sha256::Hash>(&self.preimage[..])
+            .as_ref()
+            .to_vec()
+    }
+}
+
 enum SwapAddress {
-    Segwit(String),
-    Taproot(String),
+    Segwit(Address),
+    Taproot(Address),
 }
 
 pub(crate) struct SwapChainData {
@@ -185,11 +216,12 @@ impl ReceiveSwap {
         chain_service: Arc<dyn ChainService>,
         payment_receiver: Arc<dyn Receiver>,
         persister: Arc<SqliteStorage>,
-        swapper_api: Arc<dyn SegwitSwapperAPI>,
+        segwit_swapper_api: Arc<dyn SegwitSwapperAPI>,
+        taproot_swapper_api: Arc<dyn TaprootSwapperAPI>,
     ) -> Self {
         ReceiveSwap {
-            segwit: SegwitReceiveSwap::new(),
-            taproot: TaprootReceiveSwap::new(),
+            segwit: SegwitReceiveSwap::new(segwit_swapper_api),
+            taproot: TaprootReceiveSwap::new(taproot_swapper_api),
             chain_service,
             persister,
             status_changes_notifier: broadcast::channel(100).0,
@@ -198,11 +230,14 @@ impl ReceiveSwap {
 }
 
 impl ReceiveSwap {
-    pub(crate) async fn create_swap_address(
+    pub(crate) async fn create_swap(
         &self,
         opening_fee_params: OpeningFeeParams,
-    ) -> ReceiveSwapResult<String> {
-        self.taproot.create_swap_address(opening_fee_params).await
+    ) -> ReceiveSwapResult<SwapInfo> {
+        let node_state = self.persister.get_node_state()?;
+        let swap_info = self.taproot.create_swap(&node_state, opening_fee_params).await?;
+        self.persister.insert_swap_info(&swap_info)?;
+        Ok(swap_info)
     }
 
     pub(crate) async fn list_swaps(
@@ -232,7 +267,7 @@ impl ReceiveSwap {
         &self,
         req: PrepareRefundRequest,
     ) -> ReceiveSwapResult<PrepareRefundResponse> {
-        let address = parse_address(&req.address)?;
+        let address = parse_address(&req.swap_address)?;
         let swap_info = self
             .persister
             .get_swap_info_by_address(req.swap_address.clone())?
@@ -250,17 +285,18 @@ impl ReceiveSwap {
                 .then(a.output_index.cmp(&b.output_index))
         });
 
+        let destination_address = req.to_address.parse()?;
         let tx = match address {
-            SwapAddress::Segwit(_) => self.segwit.create_fake_refund_tx(&swap_info, &utxos).await,
+            SwapAddress::Segwit(_) => self.segwit.create_fake_refund_tx(&swap_info, &utxos, &destination_address).await,
             SwapAddress::Taproot(_) => match req.unilateral {
                 Some(true) => {
                     self.taproot
-                        .create_fake_unilateral_refund_tx(&swap_info, &utxos)
+                        .create_fake_unilateral_refund_tx(&swap_info, &utxos, &destination_address)
                         .await
                 }
                 _ => {
                     self.taproot
-                        .create_fake_cooperative_refund_tx(&swap_info, &utxos)
+                        .create_fake_cooperative_refund_tx(&swap_info, &utxos, &destination_address)
                         .await
                 }
             },
@@ -296,16 +332,16 @@ impl ReceiveSwap {
         });
 
         let tx = match address {
-            SwapAddress::Segwit(_) => self.segwit.create_refund_tx(&swap_info, &utxos).await,
+            SwapAddress::Segwit(_) => self.segwit.create_refund_tx(&swap_info, &utxos, req.swap_address, req.sat_per_vbyte).await,
             SwapAddress::Taproot(_) => match req.unilateral {
                 Some(true) => {
                     self.taproot
-                        .create_unilateral_refund_tx(&swap_info, &utxos)
+                        .create_unilateral_refund_tx(&swap_info, &utxos, req.swap_address, req.sat_per_vbyte)
                         .await
                 }
                 _ => {
                     self.taproot
-                        .create_cooperative_refund_tx(&swap_info, &utxos)
+                        .create_cooperative_refund_tx(&swap_info, &utxos, req.swap_address, req.sat_per_vbyte)
                         .await
                 }
             },
@@ -386,7 +422,9 @@ impl ReceiveSwap {
     ) -> SwapStatus {
         let chain_data = match chain_data {
             Some(cd) => cd,
-            None => return self.calculate_status_without_chain_data(swap_info, address, current_tip),
+            None => {
+                return self.calculate_status_without_chain_data(swap_info, address, current_tip)
+            }
         };
 
         // No unconfirmed or confirmed outputs at all means initial state.
@@ -578,10 +616,7 @@ impl ReceiveSwap {
         Ok(Some(bolt11_result.bolt11))
     }
 
-    async fn fetch_swap_onchain_data(
-        &self,
-        swap: &SwapInfo,
-    ) -> ReceiveSwapResult<SwapChainData> {
+    async fn fetch_swap_onchain_data(&self, swap: &SwapInfo) -> ReceiveSwapResult<SwapChainData> {
         let txs = self
             .chain_service
             .address_transactions(swap.bitcoin_address.clone())
@@ -736,11 +771,7 @@ impl ReceiveSwap {
         Err(GetPaymentRequestError::InvoiceAlreadyExists)
     }
 
-    async fn refresh_swap(
-        &self,
-        swap_info: &SwapInfo,
-        current_tip: u32,
-    ) -> ReceiveSwapResult<()> {
+    async fn refresh_swap(&self, swap_info: &SwapInfo, current_tip: u32) -> ReceiveSwapResult<()> {
         let (new_swap_info, new_chain_data) =
             match self.refresh_swap_onchain_data(swap_info, current_tip).await {
                 Ok(s) => &s,
@@ -864,8 +895,12 @@ impl ReceiveSwap {
 fn parse_address(address: &str) -> ReceiveSwapResult<SwapAddress> {
     let address: Address = address.parse()?;
     match address.address_type() {
-        Some(AddressType::P2tr) => Ok(SwapAddress::Taproot(address.to_string())),
-        Some(AddressType::P2wsh) => Ok(SwapAddress::Segwit(address.to_string())),
+        Some(AddressType::P2tr) => Ok(SwapAddress::Taproot(address)),
+        Some(AddressType::P2wsh) => Ok(SwapAddress::Segwit(address)),
         _ => Err(ReceiveSwapError::InvalidAddressType),
     }
+}
+
+pub(super) fn compute_tx_fee(tx_weight: u32, sat_per_vbyte: u32) -> u64 {
+    (tx_weight * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64
 }

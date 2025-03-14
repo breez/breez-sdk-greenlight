@@ -18,28 +18,7 @@ impl PaymentService {
     }
 
     pub(crate) async fn get_payment_by_hash(&self, hash: &String) -> SdkResult<Option<Payment>> {
-        let payment = self.persister.get_payment_by_hash(hash)?;
-        let mut payment = match payment {
-            Some(payment) => payment,
-            None => return Ok(None),
-        };
-
-        if let PaymentDetails::Ln { data } = &mut payment.details {
-            let swap = self.persister.get_full_taproot_swap_by_hash(hash)?;
-            let swap = match swap {
-                Some(swap) => swap,
-                None => return Ok(Some(payment)),
-            };
-
-            let current_tip = self.chain.current_tip(true).await?;
-            let node_state = self.persister.get_node_state()?.ok_or(SdkError::Generic {
-                err: "Node info not found".into(),
-            })?;
-
-            data.swap_info = Some(swap.to_swap_info(&node_state, current_tip))
-        }
-
-        Ok(Some(payment))
+        Ok(self.persister.get_payment_by_hash(hash)?)
     }
 
     pub(crate) async fn list_payments(&self, req: ListPaymentsRequest) -> SdkResult<Vec<Payment>> {
