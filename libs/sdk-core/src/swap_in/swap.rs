@@ -1,4 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::Arc,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
 
 use gl_client::{
     bitcoin::{
@@ -35,6 +39,7 @@ use super::{
 const EXPIRY_SECONDS_PER_BLOCK: u32 = 600;
 const MIN_INVOICE_EXPIRY_SECONDS: u64 = 1800;
 const MIN_OPENING_FEE_PARAMS_VALIDITY_SECONDS: u32 = 1800;
+const MONITOR_EXPIRED_SWAP_BLOCKS: u32 = 144 * 28;
 
 pub(crate) fn create_swap_keys() -> anyhow::Result<SwapKeys> {
     let priv_key = rand::thread_rng().gen::<[u8; 32]>().to_vec();
@@ -277,10 +282,34 @@ impl BTCReceiveSwap {
     }
 
     pub fn list_monitored(&self) -> ReceiveSwapResult<Vec<SwapInfo>> {
-        self.list_swaps(ListSwapsRequest {
+        let monitored = self.list_swaps(ListSwapsRequest {
             status: Some(SwapStatus::monitored()),
             ..Default::default()
-        })
+        })?;
+        let recent = self.list_swaps(ListSwapsRequest {
+            from_timestamp: Some(
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)?
+                    .saturating_sub(Duration::from_secs(
+                        MONITOR_EXPIRED_SWAP_BLOCKS as u64 * EXPIRY_SECONDS_PER_BLOCK as u64,
+                    ))
+                    .as_secs() as i64,
+            ),
+            ..Default::default()
+        })?;
+
+        let mut result = HashMap::new();
+        for monitored in monitored {
+            result.insert(monitored.bitcoin_address.clone(), monitored);
+        }
+
+        for recent in recent {
+            result.insert(recent.bitcoin_address.clone(), recent);
+        }
+
+        let mut result: Vec<_> = result.into_values().collect();
+        result.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+        Ok(result)
     }
 
     #[allow(dead_code)]
