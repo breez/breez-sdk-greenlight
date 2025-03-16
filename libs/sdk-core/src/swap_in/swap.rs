@@ -679,6 +679,19 @@ impl BTCReceiveSwap {
                     .iter()
                     .all(|po| po.tx_id != o.tx_id || po.output_index != o.output_index)
             })
+            .filter(|o| match address_type {
+                // segwit utxos are refundable after the locktime expires.
+                SwapAddressType::Segwit => o
+                    .confirmed_at_height
+                    .map(|height| {
+                        current_tip
+                            .saturating_sub(height.saturating_add(swap_info.lock_height as u32))
+                            == 0
+                    })
+                    .unwrap_or(false),
+                // Taproot utxos are always refundable.
+                SwapAddressType::Taproot => true,
+            })
             .collect();
 
         if refundable_utxos.is_empty() {
