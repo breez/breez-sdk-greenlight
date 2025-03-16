@@ -894,6 +894,9 @@ impl BTCReceiveSwap {
         Ok(chain_data)
     }
 
+    /// Gets or creates a payment request for the current swap, given the passed timeout in blocks.
+    /// The first return value is the payment request, the second a value indicating whether this payment
+    /// request was newly created.
     async fn get_payment_request(
         &self,
         swap: &SwapInfo,
@@ -912,6 +915,9 @@ impl BTCReceiveSwap {
         self.get_payment_request_inner(swap, blocks).await
     }
 
+    /// Gets or creates a payment request for the current swap, given the passed timeout in blocks.
+    /// The first return value is the payment request, the second a value indicating whether this payment
+    /// request was newly created.
     async fn get_payment_request_inner(
         &self,
         swap_info: &SwapInfo,
