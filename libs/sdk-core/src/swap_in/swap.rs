@@ -339,7 +339,9 @@ impl BTCReceiveSwap {
             BreezEvent::NewBlock { block: tip } => {
                 debug!("got chain event {:?}", e);
                 self.set_tip(tip).await;
-                _ = self.execute_pending_swaps(tip).await;
+                if let Err(e) = self.execute_pending_swaps(tip).await {
+                    error!("Failed to execute pending swaps: {}", e);
+                }
             }
 
             // When invoice is paid we lookup for a swap that matches the same hash.
@@ -835,11 +837,15 @@ impl BTCReceiveSwap {
     }
 
     async fn execute_pending_swaps(&self, tip: u32) -> ReceiveSwapResult<()> {
+        let monitored_swaps = self.list_monitored()?;
+        debug!("Refreshing {} monitored swaps", monitored_swaps.len());
+
         // first refresh all swaps we monitor
-        self.refresh_swaps(self.list_monitored()?, tip).await?;
+        self.refresh_swaps(monitored_swaps, tip).await?;
 
         // redeem swaps
         let redeemable_swaps = self.list_redeemables()?;
+        debug!("Processing {} redeemable swaps", redeemable_swaps.len());
         for s in redeemable_swaps {
             let swap_address = s.bitcoin_address;
             let bolt11 = s.bolt11.unwrap_or_default();
@@ -1041,7 +1047,10 @@ impl BTCReceiveSwap {
 
     async fn refresh_swaps(&self, swaps: Vec<SwapInfo>, tip: u32) -> ReceiveSwapResult<()> {
         for s in swaps {
-            self.refresh_swap(&s, tip).await?;
+            match self.refresh_swap(&s, tip).await {
+                Ok(_) => debug!("refreshed swap {}", s.bitcoin_address),
+                Err(e) => error!("failed to refresh swap {}: {}", s.bitcoin_address, e),
+            };
         }
         Ok(())
     }
