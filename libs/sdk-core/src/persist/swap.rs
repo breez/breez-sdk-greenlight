@@ -19,7 +19,7 @@ impl SqliteStorage {
         let con = self.get_connection()?;
         let mut stmt = con
             .prepare("SELECT chain_data FROM swaps_info WHERE bitcoin_address=:bitcoin_address")?;
-        let rows: Vec<String> = stmt
+        let rows: Vec<Option<String>> = stmt
             .query_map(
                 named_params! {
                     ":bitcoin_address": bitcoin_address,
@@ -29,6 +29,11 @@ impl SqliteStorage {
             .collect::<Result<_, _>>()?;
 
         let row = match rows.first() {
+            Some(row) => row,
+            None => return Ok(None),
+        };
+
+        let row = match row {
             Some(row) => row,
             None => return Ok(None),
         };
@@ -386,11 +391,11 @@ impl SqliteStorage {
         }
 
         if let Some(from_timestamp) = req.from_timestamp {
-            where_clauses.push(format!("created_at >= {}", from_timestamp));
+            where_clauses.push(format!("swaps.created_at >= {}", from_timestamp));
         }
 
         if let Some(to_timestamp) = req.to_timestamp {
-            where_clauses.push(format!("created_at < {}", to_timestamp));
+            where_clauses.push(format!("swaps.created_at < {}", to_timestamp));
         }
 
         let where_clause = match where_clauses.is_empty() {
