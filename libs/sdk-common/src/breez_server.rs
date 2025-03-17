@@ -122,9 +122,9 @@ impl BreezServer {
         trace!("Received chain_api_servers: {chain_api_servers:?}");
 
         let mempoolspace_urls = chain_api_servers
-            .iter()
+            .into_iter()
             .filter(|s| s.server_type == "MEMPOOL_SPACE")
-            .map(|s| s.server_base_url.clone())
+            .map(|s| s.server_base_url)
             .collect();
         trace!("Received mempoolspace_urls: {mempoolspace_urls:?}");
 
@@ -148,9 +148,9 @@ impl BreezServer {
         trace!("Received chain_api_servers: {chain_api_servers:?}");
 
         let boltz_swapper_urls = chain_api_servers
-            .iter()
+            .into_iter()
             .filter(|s| s.server_type == "BOLTZ_SWAPPER")
-            .map(|s| s.server_base_url.clone())
+            .map(|s| s.server_base_url)
             .collect();
         trace!("Received boltz_swapper_urls: {boltz_swapper_urls:?}");
 
@@ -165,9 +165,9 @@ pub struct ApiKeyInterceptor {
 
 impl Interceptor for ApiKeyInterceptor {
     fn call(&mut self, mut req: Request<()>) -> Result<Request<()>, Status> {
-        if self.api_key_metadata.clone().is_some() {
+        if let Some(api_key_metadata) = &self.api_key_metadata {
             req.metadata_mut()
-                .insert("authorization", self.api_key_metadata.clone().unwrap());
+                .insert("authorization", api_key_metadata.clone());
         }
         Ok(req)
     }
