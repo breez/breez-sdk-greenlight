@@ -830,6 +830,7 @@ impl BTCReceiveSwap {
             .ok_or_else(|| {
                 anyhow::anyhow!(format!("swap address {} was not found", bitcoin_address))
             })?;
+        debug!("Emitting swap updated event");
         self.status_changes_notifier
             .send(BreezEvent::SwapUpdated { details: swap_info })
             .map_err(anyhow::Error::msg)?;
