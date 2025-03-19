@@ -95,8 +95,17 @@ impl BreezServer {
         SwapperClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
-    pub async fn get_taproot_swapper_client(&self) -> TaprootSwapperClient<Transport> {
-        TaprootSwapperClient::new(self.grpc_client.lock().await.clone().into_inner())
+    pub async fn get_taproot_swapper_client(
+        &self,
+    ) -> Result<
+        TaprootSwapperClient<InterceptedService<Transport, ApiKeyInterceptor>>,
+        ServiceConnectivityError,
+    > {
+        let api_key_metadata = self.api_key_metadata()?;
+        Ok(TaprootSwapperClient::with_interceptor(
+            self.grpc_client.lock().await.clone().into_inner(),
+            ApiKeyInterceptor { api_key_metadata },
+        ))
     }
 
     pub async fn ping(&self) -> Result<String> {
