@@ -63,6 +63,9 @@ pub enum NodeError {
 
     #[error("{0}")]
     InsufficientFunds(String),
+
+    #[error("invoice already paid")]
+    InvoiceAlreadyPaid,
 }
 
 impl NodeError {

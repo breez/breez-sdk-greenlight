@@ -1083,7 +1083,7 @@ impl NodeAPI for Greenlight {
 
         let status = match result.status() {
             ListinvoicesInvoicesStatus::Unpaid => DelinvoiceStatus::Unpaid,
-            ListinvoicesInvoicesStatus::Paid => DelinvoiceStatus::Paid,
+            ListinvoicesInvoicesStatus::Paid => return Err(NodeError::InvoiceAlreadyPaid),
             ListinvoicesInvoicesStatus::Expired => DelinvoiceStatus::Expired,
         };
         with_connection_retry!(client.del_invoice(DelinvoiceRequest {
