@@ -673,7 +673,7 @@ impl BTCReceiveSwap {
             })
             .collect();
 
-        let refundable_utxos: Vec<_> = chain_data
+        let unpaid_utxos: Vec<_> = chain_data
             .utxos()
             .into_iter()
             .filter(|o| {
@@ -681,6 +681,16 @@ impl BTCReceiveSwap {
                     .iter()
                     .all(|po| po.tx_id != o.tx_id || po.output_index != o.output_index)
             })
+            .collect();
+
+        // If all utxos were used for payment, that means the swap server hasn't claimed them yet.
+        // There are no pending utxos, so the swap has completed.
+        if unpaid_utxos.is_empty() {
+            return SwapStatus::Completed;
+        }
+
+        let refundable_utxos: Vec<_> = unpaid_utxos
+            .iter()
             .filter(|o| match address_type {
                 // segwit utxos are refundable after the locktime expires.
                 SwapAddressType::Segwit => o
@@ -696,10 +706,12 @@ impl BTCReceiveSwap {
             })
             .collect();
 
+        // There are utxos left, but they are not refundable yet. Mark the status as 'Redeemed' in that case.
         if refundable_utxos.is_empty() {
-            return SwapStatus::Completed;
+            return SwapStatus::Redeemed;
         }
 
+        // There are refundable utxos.
         SwapStatus::Refundable
     }
 
