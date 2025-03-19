@@ -142,11 +142,7 @@ impl SegwitReceiveSwap {
         Ok(tx)
     }
 
-    pub async fn get_swap_payment(
-        &self,
-        _swap_info: &SwapInfo,
-        payment_request: String,
-    ) -> ReceiveSwapResult<()> {
+    pub async fn get_swap_payment(&self, payment_request: String) -> ReceiveSwapResult<()> {
         self.swapper_api
             .complete_swap(payment_request)
             .await
