@@ -37,7 +37,7 @@ impl TaprootSwapperAPI for BreezServer {
         hash: Vec<u8>,
         refund_pubkey: Vec<u8>,
     ) -> SdkResult<CreateSwapResponse> {
-        let mut client = self.get_taproot_swapper_client().await;
+        let mut client = self.get_taproot_swapper_client().await?;
         let req = CreateSwapRequest {
             hash,
             refund_pubkey,
@@ -47,7 +47,10 @@ impl TaprootSwapperAPI for BreezServer {
             .into_inner())
     }
     async fn pay_swap(&self, payment_request: String) -> Result<PaySwapResponse, Status> {
-        let mut client = self.get_taproot_swapper_client().await;
+        let mut client = match self.get_taproot_swapper_client().await {
+            Ok(client) => client,
+            Err(e) => return Err(Status::unknown(e.to_string())),
+        };
         let req = PaySwapRequest { payment_request };
         Ok(with_connection_retry!(client.pay_swap(req.clone()))
             .await?
@@ -60,7 +63,7 @@ impl TaprootSwapperAPI for BreezServer {
         pub_nonce: Vec<u8>,
         transaction: Vec<u8>,
     ) -> SdkResult<RefundSwapResponse> {
-        let mut client = self.get_taproot_swapper_client().await;
+        let mut client = self.get_taproot_swapper_client().await?;
         let req = RefundSwapRequest {
             address,
             input_index,
@@ -72,7 +75,7 @@ impl TaprootSwapperAPI for BreezServer {
             .into_inner())
     }
     async fn swap_parameters(&self) -> SdkResult<Option<SwapParameters>> {
-        let mut client = self.get_taproot_swapper_client().await;
+        let mut client = self.get_taproot_swapper_client().await?;
 
         Ok(
             with_connection_retry!(client.swap_parameters(SwapParametersRequest {}))
