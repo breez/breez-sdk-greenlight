@@ -4,4 +4,4 @@ tonic::include_proto!("breez");
     all(target_family = "wasm", target_os = "unknown"),
     path = "transport_wasm.rs"
 )]
-pub(crate) mod transport;
+pub mod transport;
