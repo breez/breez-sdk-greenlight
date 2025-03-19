@@ -538,12 +538,8 @@ impl BTCReceiveSwap {
         }
 
         let resp = match address_type {
-            SwapAddressType::Segwit => self.segwit.get_swap_payment(payment_request).await,
-            SwapAddressType::Taproot => {
-                self.taproot
-                    .get_swap_payment(&swap_info, payment_request)
-                    .await
-            }
+            SwapAddressType::Segwit => self.segwit.payout_swap(payment_request).await,
+            SwapAddressType::Taproot => self.taproot.payout_swap(&swap_info, payment_request).await,
         };
 
         let message = match resp {
