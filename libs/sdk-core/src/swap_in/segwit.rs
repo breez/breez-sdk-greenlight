@@ -40,7 +40,6 @@ impl SegwitReceiveSwap {
 
     pub fn create_fake_refund_tx(
         &self,
-        _swap_info: &SwapInfo,
         utxos: &[SwapOutput],
         destination_address: &Address,
     ) -> ReceiveSwapResult<Transaction> {
@@ -75,7 +74,7 @@ impl SegwitReceiveSwap {
         sat_per_vbyte: u32,
     ) -> ReceiveSwapResult<Transaction> {
         let weight = self
-            .create_fake_refund_tx(swap_info, utxos, destination_address)?
+            .create_fake_refund_tx(utxos, destination_address)?
             .weight();
         let fee = compute_tx_fee(weight, sat_per_vbyte);
         let value: u64 = utxos
