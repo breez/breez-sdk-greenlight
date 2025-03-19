@@ -16,6 +16,9 @@ use super::{
     swap::{compute_tx_fee, SwapOutput},
 };
 
+const MAX_ECDSA_SIGNATURE_SIZE: usize = 73;
+const SEGWIT_SWAP_SCRIPT_SIZE: usize = 100;
+
 pub(super) struct SegwitReceiveSwap {
     swapper_api: Arc<dyn SwapperAPI>,
 }
@@ -49,9 +52,9 @@ impl SegwitReceiveSwap {
                 .map(|utxo| {
                     Ok(TxIn {
                         witness: Witness::from_vec(vec![
-                            [1; 73].to_vec(),
+                            [1; MAX_ECDSA_SIGNATURE_SIZE].to_vec(),
                             Vec::new(),
-                            [1; 100].to_vec(),
+                            [1; SEGWIT_SWAP_SCRIPT_SIZE].to_vec(),
                         ]),
                         ..utxo.try_into()?
                     })
