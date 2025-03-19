@@ -418,10 +418,9 @@ impl BTCReceiveSwap {
 
         let destination_address = req.to_address.parse()?;
         let tx = match address_type {
-            SwapAddressType::Segwit => {
-                self.segwit
-                    .create_fake_refund_tx(&swap_info, &utxos, &destination_address)
-            }
+            SwapAddressType::Segwit => self
+                .segwit
+                .create_fake_refund_tx(&utxos, &destination_address),
             SwapAddressType::Taproot => match req.unilateral {
                 Some(true) => self.taproot.create_fake_unilateral_refund_tx(
                     &swap_info,
