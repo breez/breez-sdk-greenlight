@@ -399,7 +399,7 @@ impl TaprootReceiveSwap {
         Ok(tx)
     }
 
-    pub async fn get_swap_payment(
+    pub async fn payout_swap(
         &self,
         swap_info: &SwapInfo,
         payment_request: String,
