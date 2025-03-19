@@ -34,6 +34,9 @@ use super::{
     taproot_server::TaprootSwapperAPI,
 };
 
+const SCHNORR_SIGNATURE_SIZE: usize = 64;
+const TAPROOT_REFUND_SCRIPT_SIZE: usize = 65;
+const TAPROOT_CONTROL_BLOCK_SIZE: usize = 37;
 const PAYOUT_VALIDITY_BLOCKS: u32 = 360;
 
 pub(super) struct TaprootReceiveSwap {
@@ -154,7 +157,7 @@ impl TaprootReceiveSwap {
                 .iter()
                 .map(|utxo| {
                     Ok(TxIn {
-                        witness: Witness::from_vec(vec![[1; 64].to_vec()]),
+                        witness: Witness::from_vec(vec![[1; SCHNORR_SIGNATURE_SIZE].to_vec()]),
                         ..utxo.try_into()?
                     })
                 })
@@ -180,9 +183,9 @@ impl TaprootReceiveSwap {
                 .map(|utxo| {
                     Ok(TxIn {
                         witness: Witness::from_vec(vec![
-                            [1; 64].to_vec(),
-                            [1; 65].to_vec(),
-                            [1; 37].to_vec(),
+                            [1; SCHNORR_SIGNATURE_SIZE].to_vec(),
+                            [1; TAPROOT_REFUND_SCRIPT_SIZE].to_vec(),
+                            [1; TAPROOT_CONTROL_BLOCK_SIZE].to_vec(),
                         ]),
                         ..utxo.try_into()?
                     })
