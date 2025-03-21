@@ -220,7 +220,7 @@ pub struct RecommendedFees {
     pub minimum_fee: u64,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct OnchainTx {
     pub txid: String,
     pub version: u32,
@@ -233,7 +233,7 @@ pub struct OnchainTx {
     pub status: TxStatus,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct TxStatus {
     pub confirmed: bool,
     pub block_height: Option<u32>,
@@ -241,7 +241,7 @@ pub struct TxStatus {
     pub block_time: Option<u64>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct Vout {
     pub scriptpubkey: String,
     pub scriptpubkey_asm: String,
@@ -250,7 +250,7 @@ pub struct Vout {
     pub value: u64,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Default, Deserialize, Serialize, Clone, Debug)]
 pub struct Vin {
     pub txid: String,
     pub vout: u32,

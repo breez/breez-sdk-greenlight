@@ -79,7 +79,7 @@ enum SwapAddressType {
     Taproot,
 }
 
-#[derive(PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
+#[derive(Default, PartialEq, Eq, Clone, Debug, Serialize, Deserialize)]
 pub(crate) struct SwapChainData {
     pub outputs: Vec<SwapOutput>,
 }
@@ -102,7 +102,7 @@ impl SwapChainData {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub(crate) struct SwapOutput {
     pub address: String,
     pub amount_sat: u64,
@@ -457,6 +457,7 @@ impl BTCReceiveSwap {
     }
 
     pub(crate) async fn refund(&self, req: RefundRequest) -> ReceiveSwapResult<RefundResponse> {
+        let current_tip = self.chain_service.current_tip().await?;
         let address_type = parse_address(&req.swap_address)?;
         let swap_info = self
             .swap_storage
@@ -474,11 +475,8 @@ impl BTCReceiveSwap {
                 chain_data
             }
         };
-        let mut utxos: Vec<_> = chain_data
-            .outputs
-            .into_iter()
-            .filter(|o| o.spend.is_none())
-            .collect();
+        let mut utxos: Vec<_> =
+            refundable_utxos(&swap_info, &chain_data, current_tip, &address_type);
         if utxos.is_empty() {
             return Err(ReceiveSwapError::NoUtxos);
         }
@@ -662,31 +660,7 @@ impl BTCReceiveSwap {
 
         // The swap is not redeemable. And there are confirmed or unconfirmed outputs.
 
-        // Deduce the paid outputs by assuming the first confirmed outputs are the ones belonging to the payment.
-        let mut all_outputs = chain_data.outputs.clone();
-        all_outputs.sort_by(|a, b| a.confirmed_at_height.cmp(&b.confirmed_at_height));
-        let mut sum = 0;
-        let paid_outputs: Vec<_> = all_outputs
-            .iter()
-            .take_while(|o| {
-                if sum >= swap_info.paid_msat {
-                    return false;
-                }
-
-                sum += o.amount_sat * 1000;
-                true
-            })
-            .collect();
-
-        let unpaid_utxos: Vec<_> = chain_data
-            .utxos()
-            .into_iter()
-            .filter(|o| {
-                paid_outputs
-                    .iter()
-                    .all(|po| po.tx_id != o.tx_id || po.output_index != o.output_index)
-            })
-            .collect();
+        let unpaid_utxos = unpaid_utxos(swap_info, chain_data);
 
         // If all utxos were used for payment, that means the swap server hasn't claimed them yet.
         // There are no pending utxos, so the swap has completed.
@@ -694,22 +668,7 @@ impl BTCReceiveSwap {
             return SwapStatus::Completed;
         }
 
-        let refundable_utxos: Vec<_> = unpaid_utxos
-            .iter()
-            .filter(|o| match address_type {
-                // segwit utxos are refundable after the locktime expires.
-                SwapAddressType::Segwit => o
-                    .confirmed_at_height
-                    .map(|height| {
-                        current_tip
-                            .saturating_sub(height.saturating_add(swap_info.lock_height as u32))
-                            == 0
-                    })
-                    .unwrap_or(false),
-                // Taproot utxos are always refundable.
-                SwapAddressType::Taproot => true,
-            })
-            .collect();
+        let refundable_utxos = refundable_utxos(swap_info, chain_data, current_tip, address_type);
 
         // There are utxos left, but they are not refundable yet. Mark the status as 'Redeemed' in that case.
         if refundable_utxos.is_empty() {
@@ -1028,7 +987,11 @@ impl BTCReceiveSwap {
         Err(GetPaymentRequestError::InvoiceAlreadyExists)
     }
 
-    async fn refresh_swap(&self, swap_info: &SwapInfo, current_tip: u32) -> ReceiveSwapResult<()> {
+    async fn refresh_swap(
+        &self,
+        swap_info: &SwapInfo,
+        current_tip: u32,
+    ) -> ReceiveSwapResult<SwapInfo> {
         let (mut new_swap_info, new_chain_data) =
             match self.refresh_swap_onchain_data(swap_info).await {
                 Ok((s, cd)) => (s, cd),
@@ -1052,15 +1015,16 @@ impl BTCReceiveSwap {
             }
         };
 
+        let address = parse_address(&swap_info.bitcoin_address)?;
+        new_swap_info.status =
+            self.calculate_status(&new_swap_info, &address, &new_chain_data, current_tip);
         if &new_swap_info != swap_info {
-            let address = parse_address(&swap_info.bitcoin_address)?;
-            let status = self.calculate_status(swap_info, &address, &new_chain_data, current_tip);
             self.swap_storage
-                .set_swap_status(&swap_info.bitcoin_address, &status)?;
+                .set_swap_status(&swap_info.bitcoin_address, &new_swap_info.status)?;
             self.emit_swap_updated(&swap_info.bitcoin_address)?;
         }
 
-        Ok(())
+        Ok(new_swap_info)
     }
 
     async fn refresh_swaps(&self, swaps: Vec<SwapInfo>, tip: u32) -> ReceiveSwapResult<()> {
@@ -1130,11 +1094,6 @@ impl BTCReceiveSwap {
             payment
         );
         let amount_msat = payment.amount_msat;
-        let swap_info = SwapInfo {
-            paid_msat: amount_msat,
-            ..swap_info.clone()
-        };
-
         if amount_msat != swap_info.paid_msat {
             self.swap_storage
                 .update_swap_paid_amount(&swap_info.bitcoin_address, amount_msat)?;
@@ -1168,6 +1127,57 @@ pub(super) fn compute_tx_fee(tx_weight: usize, sat_per_vbyte: u32) -> u64 {
     (tx_weight as u32 * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64
 }
 
+fn refundable_utxos(
+    swap_info: &SwapInfo,
+    chain_data: &SwapChainData,
+    current_tip: u32,
+    address_type: &SwapAddressType,
+) -> Vec<SwapOutput> {
+    unpaid_utxos(swap_info, chain_data)
+        .into_iter()
+        .filter(|o| match address_type {
+            // segwit utxos are refundable after the locktime expires.
+            SwapAddressType::Segwit => o
+                .confirmed_at_height
+                .map(|height| {
+                    current_tip.saturating_sub(height.saturating_add(swap_info.lock_height as u32))
+                        == 0
+                })
+                .unwrap_or(false),
+            // Taproot utxos are always refundable.
+            SwapAddressType::Taproot => true,
+        })
+        .collect()
+}
+
+/// Deduces the paid outputs by assuming the first confirmed outputs are the ones belonging to the payment.
+fn unpaid_utxos(swap_info: &SwapInfo, chain_data: &SwapChainData) -> Vec<SwapOutput> {
+    let mut all_outputs = chain_data.outputs.clone();
+    all_outputs.sort_by(|a, b| a.confirmed_at_height.cmp(&b.confirmed_at_height));
+    let mut sum = 0;
+    let paid_outputs: Vec<_> = all_outputs
+        .iter()
+        .take_while(|o| {
+            if sum >= swap_info.paid_msat {
+                return false;
+            }
+
+            sum += o.amount_sat * 1000;
+            true
+        })
+        .collect();
+
+    chain_data
+        .utxos()
+        .into_iter()
+        .filter(|o| {
+            paid_outputs
+                .iter()
+                .all(|po| po.tx_id != o.tx_id || po.output_index != o.output_index)
+        })
+        .collect()
+}
+
 fn validate_swap_limits(swap_info: &SwapInfo) -> ReceiveSwapResult<()> {
     ensure_sdk!(
         swap_info.max_allowed_deposit >= swap_info.min_allowed_deposit,
@@ -1185,18 +1195,22 @@ mod tests {
     use mockall::predicate;
 
     use crate::{
+        chain::{OnchainTx, TxStatus, Vin, Vout},
         persist::{
             cache::MockNodeStateStorage, swap::MockSwapStorage,
             transactions::MockCompletedPaymentStorage,
         },
         swap_in::{
-            taproot_server::MockTaprootSwapperAPI, BTCReceiveSwap, BTCReceiveSwapParameters,
+            swap::SwapOutput, taproot_server::MockTaprootSwapperAPI, BTCReceiveSwap,
+            BTCReceiveSwapParameters,
         },
         test_utils::{
             MockBreezServer, MockChainService, MockNodeAPI, MockReceiver, MockSwapperAPI,
         },
-        ListSwapsRequest, NodeState, OpeningFeeParams, SwapInfo, SwapStatus,
+        ListSwapsRequest, NodeState, OpeningFeeParams, Payment, SwapInfo, SwapStatus,
     };
+
+    use super::SwapChainData;
     const BITCOIN_ADDRESS: &str = "bc1puvuup6jctnk0v3e3qhvr69c73e8a90vytw06hfyn8ahhvf0l63hqd30tzd";
 
     #[tokio::test]
@@ -1364,5 +1378,250 @@ mod tests {
         let result = swap.create_swap(opening_fee_params).await.unwrap();
 
         assert_eq!(result.max_allowed_deposit, 100_000);
+    }
+
+    async fn test_swap_state_transition(
+        swap_info: &SwapInfo,
+        chain_data: &SwapChainData,
+        payment: Option<Payment>,
+        current_tip: u32,
+    ) -> SwapInfo {
+        let mut chain_service = MockChainService::default();
+        chain_service.address_to_transactions.clear();
+        chain_service.address_to_transactions.insert(
+            swap_info.bitcoin_address.clone(),
+            chain_data
+                .outputs
+                .iter()
+                .map(|o| OnchainTx {
+                    vout: vec![Vout {
+                        scriptpubkey_address: swap_info.bitcoin_address.clone(),
+                        value: o.amount_sat,
+                        ..Default::default()
+                    }],
+                    status: TxStatus {
+                        block_hash: o.block_hash.clone(),
+                        block_height: o.confirmed_at_height,
+                        confirmed: o.confirmed_at_height.is_some(),
+                        ..Default::default()
+                    },
+                    txid: o.tx_id.clone(),
+                    ..Default::default()
+                })
+                .collect(),
+        );
+        chain_service
+            .address_to_transactions
+            .get_mut(&swap_info.bitcoin_address)
+            .unwrap()
+            .append(
+                &mut chain_data
+                    .outputs
+                    .iter()
+                    .filter(|o| o.spend.is_some())
+                    .map(|o| OnchainTx {
+                        vin: vec![Vin {
+                            prevout: Vout {
+                                scriptpubkey_address: swap_info.bitcoin_address.clone(),
+                                value: o.amount_sat,
+                                ..Default::default()
+                            },
+                            txid: o.tx_id.clone(),
+                            vout: o.output_index,
+                            ..Default::default()
+                        }],
+                        status: TxStatus {
+                            block_hash: o.spend.as_ref().unwrap().block_hash.clone(),
+                            block_height: o.spend.as_ref().unwrap().confirmed_at_height,
+                            confirmed: o.spend.as_ref().unwrap().confirmed_at_height.is_some(),
+                            ..Default::default()
+                        },
+                        txid: o.spend.as_ref().unwrap().tx_id.clone(),
+                        ..Default::default()
+                    })
+                    .collect(),
+            );
+
+        let swap_clone = swap_info.clone();
+        let mut completed_payment_storage = MockCompletedPaymentStorage::new();
+        completed_payment_storage
+            .expect_get_completed_payment_by_hash()
+            .returning(move |_| Ok(payment.clone()));
+        let mut swap_storage = MockSwapStorage::new();
+        swap_storage
+            .expect_get_swap_chain_data()
+            .returning(|_| Ok(None));
+        swap_storage
+            .expect_set_swap_chain_data()
+            .returning(|_, _, _| Ok(()));
+        swap_storage
+            .expect_set_swap_status()
+            .returning(|_, _| Ok(()));
+        swap_storage
+            .expect_get_swap_info_by_address()
+            .returning(move |_| Ok(Some(swap_clone.clone())));
+        swap_storage
+            .expect_update_swap_paid_amount()
+            .returning(|_, _| Ok(()));
+        let node_state = NodeState {
+            max_receivable_msat: 100_000_000,
+            ..Default::default()
+        };
+
+        let swapper = BTCReceiveSwap::new(BTCReceiveSwapParameters {
+            chain_service: Arc::new(chain_service),
+            completed_payment_storage: Arc::new(completed_payment_storage),
+            network: Network::Bitcoin,
+            node_api: Arc::new(MockNodeAPI::new(node_state)),
+            node_state_storage: Arc::new(MockNodeStateStorage::new()),
+            payment_receiver: Arc::new(MockReceiver::default()),
+            segwit_swapper_api: Arc::new(MockSwapperAPI {}),
+            swap_storage: Arc::new(swap_storage),
+            taproot_swapper_api: Arc::new(MockBreezServer {}),
+        });
+        let _receiver = swapper.subscribe_status_changes();
+
+        swapper.refresh_swap(swap_info, current_tip).await.unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_swap_state_transitions() {
+        let swap = SwapInfo {
+            lock_height: 288,
+            bitcoin_address: BITCOIN_ADDRESS.to_string(),
+            ..Default::default()
+        };
+
+        let result = test_swap_state_transition(&swap, &SwapChainData::default(), None, 1).await;
+        assert_eq!(result.status, SwapStatus::Initial);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_000,
+                    confirmed_at_height: None,
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::WaitingConfirmation);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_000,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Redeemable);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_000,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            361,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_000,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            Some(Payment {
+                amount_msat: 1_000_000,
+                ..Default::default()
+            }),
+            361,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Completed);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx2".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(2),
+                        ..Default::default()
+                    },
+                ],
+            },
+            Some(Payment {
+                amount_msat: 1_000_000,
+                ..Default::default()
+            }),
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx2".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: None,
+                        ..Default::default()
+                    },
+                ],
+            },
+            Some(Payment {
+                amount_msat: 1_000_000,
+                ..Default::default()
+            }),
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
     }
 }

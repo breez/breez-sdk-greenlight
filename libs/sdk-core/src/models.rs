@@ -30,8 +30,11 @@ pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
 
 /// Different types of supported payments
-#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash)]
+#[derive(
+    Default, Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash,
+)]
 pub enum PaymentType {
+    #[default]
     Sent,
     Received,
     ClosedChannel,
@@ -639,15 +642,16 @@ pub struct SyncResponse {
 }
 
 /// The status of a payment
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum PaymentStatus {
+    #[default]
     Pending = 0,
     Complete = 1,
     Failed = 2,
 }
 
 /// Represents a payment, including its [PaymentType] and [PaymentDetails]
-#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
     pub id: String,
     pub payment_type: PaymentType,
@@ -715,6 +719,14 @@ pub enum PaymentDetails {
     },
 }
 
+impl Default for PaymentDetails {
+    fn default() -> Self {
+        Self::Ln {
+            data: LnPaymentDetails::default(),
+        }
+    }
+}
+
 impl PaymentDetails {
     pub fn add_pending_expiration_block(&mut self, htlc: Htlc) {
         if let PaymentDetails::Ln { data } = self {
@@ -724,7 +736,7 @@ impl PaymentDetails {
 }
 
 /// Details of a LN payment, as included in a [Payment]
-#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+#[derive(Default, PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct LnPaymentDetails {
     pub payment_hash: String,
     pub label: String,
