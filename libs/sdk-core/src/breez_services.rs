@@ -11,7 +11,6 @@ use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
-use futures::TryFutureExt;
 use gl_client::pb::incoming_payment;
 use log::{LevelFilter, Metadata, Record};
 use sdk_common::grpc;
@@ -310,23 +309,39 @@ impl BreezServices {
 
         self.persist_pending_payment(&parsed_invoice, amount_msat, req.label.clone())?;
 
+        // Apply the configured timeout to payment operations
+        let timeout_duration = Duration::from_secs(self.config.payment_timeout_sec as u64);
+
         // If trampoline is an option, try trampoline first.
         let trampoline_result = if let Some(trampoline_id) = maybe_trampoline_id {
             debug!("attempting trampoline payment");
-            match self
-                .node_api
-                .send_trampoline_payment(
+            match tokio::time::timeout(
+                timeout_duration,
+                self.node_api.send_trampoline_payment(
                     parsed_invoice.bolt11.clone(),
                     amount_msat,
                     req.label.clone(),
                     trampoline_id,
-                )
-                .await
+                ),
+            )
+            .await
             {
-                Ok(res) => Some(res),
-                Err(e) => {
+                Ok(Ok(res)) => Some(res),
+                Ok(Err(e)) => {
                     warn!("trampoline payment failed: {:?}", e);
                     None
+                }
+                Err(_) => {
+                    warn!(
+                        "trampoline payment timed out after {} seconds",
+                        self.config.payment_timeout_sec
+                    );
+                    return Err(SendPaymentError::PaymentTimeout {
+                        err: format!(
+                            "Payment timed out after {} seconds",
+                            self.config.payment_timeout_sec
+                        ),
+                    });
                 }
             }
         } else {
@@ -339,14 +354,26 @@ impl BreezServices {
             Some(res) => Ok(res),
             None => {
                 debug!("attempting normal payment");
-                self.node_api
-                    .send_payment(
+                match tokio::time::timeout(
+                    timeout_duration,
+                    self.node_api.send_payment(
                         parsed_invoice.bolt11.clone(),
                         req.amount_msat,
                         req.label.clone(),
-                    )
-                    .map_err(Into::into)
-                    .await
+                    ),
+                )
+                .await
+                {
+                    Ok(result) => result.map_err(Into::into),
+                    Err(_) => {
+                        return Err(SendPaymentError::PaymentTimeout {
+                            err: format!(
+                                "Payment timed out after {} seconds",
+                                self.config.payment_timeout_sec
+                            ),
+                        });
+                    }
+                }
             }
         };
 
@@ -402,16 +429,31 @@ impl BreezServices {
         &self,
         req: SendSpontaneousPaymentRequest,
     ) -> Result<SendPaymentResponse, SendPaymentError> {
-        let payment_res = self
-            .node_api
-            .send_spontaneous_payment(
+        // Apply the configured timeout to payment operations
+        let timeout_duration = Duration::from_secs(self.config.payment_timeout_sec as u64);
+
+        let payment_res = match tokio::time::timeout(
+            timeout_duration,
+            self.node_api.send_spontaneous_payment(
                 req.node_id.clone(),
                 req.amount_msat,
                 req.extra_tlvs,
                 req.label.clone(),
-            )
-            .map_err(Into::into)
-            .await;
+            ),
+        )
+        .await
+        {
+            Ok(result) => result.map_err(Into::into),
+            Err(_) => {
+                return Err(SendPaymentError::PaymentTimeout{
+                    err: format!(
+                        "Payment timed out after {} seconds",
+                        self.config.payment_timeout_sec
+                    ),
+                });
+            }
+        };
+
         let payment = self
             .on_payment_completed(req.node_id, None, req.label, payment_res)
             .await?;
