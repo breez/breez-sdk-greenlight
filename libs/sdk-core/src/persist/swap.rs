@@ -11,11 +11,46 @@ use super::{
     error::{PersistError, PersistResult},
 };
 
-impl SqliteStorage {
-    pub(crate) fn get_swap_chain_data(
+#[cfg_attr(test, mockall::automock)]
+pub(crate) trait SwapStorage: Send + Sync {
+    fn get_swap_chain_data(&self, bitcoin_address: &str) -> PersistResult<Option<SwapChainData>>;
+    fn set_swap_chain_data(
         &self,
         bitcoin_address: &str,
-    ) -> PersistResult<Option<SwapChainData>> {
+        chain_data: &SwapChainData,
+        chain_info: &SwapChainInfo,
+    ) -> PersistResult<()>;
+    fn set_swap_status(&self, address: &str, status: &SwapStatus) -> PersistResult<()>;
+    fn insert_swap(&self, swap_info: &SwapInfo) -> PersistResult<()>;
+    fn update_swap_paid_amount(&self, bitcoin_address: &str, paid_msat: u64) -> PersistResult<()>;
+    fn update_swap_max_allowed_deposit(
+        &self,
+        bitcoin_address: &str,
+        max_allowed_deposit: i64,
+    ) -> PersistResult<()>;
+    fn update_swap_redeem_error(
+        &self,
+        bitcoin_address: String,
+        redeem_err: String,
+    ) -> PersistResult<()>;
+    fn update_swap_bolt11(&self, bitcoin_address: String, bolt11: String) -> PersistResult<()>;
+    fn update_swap_fees(
+        &self,
+        bitcoin_address: &str,
+        channel_opening_fees: &OpeningFeeParams,
+    ) -> PersistResult<()>;
+    fn insert_swap_refund_tx_ids(
+        &self,
+        bitcoin_address: String,
+        refund_tx_id: String,
+    ) -> PersistResult<()>;
+    fn get_swap_info_by_hash(&self, hash: &[u8]) -> PersistResult<Option<SwapInfo>>;
+    fn get_swap_info_by_address(&self, address: &str) -> PersistResult<Option<SwapInfo>>;
+    fn list_swaps(&self, req: ListSwapsRequest) -> PersistResult<Vec<SwapInfo>>;
+}
+
+impl SwapStorage for SqliteStorage {
+    fn get_swap_chain_data(&self, bitcoin_address: &str) -> PersistResult<Option<SwapChainData>> {
         let con = self.get_connection()?;
         let mut stmt = con
             .prepare("SELECT chain_data FROM swaps_info WHERE bitcoin_address=:bitcoin_address")?;
@@ -41,7 +76,7 @@ impl SqliteStorage {
         Ok(serde_json::from_str(row)?)
     }
 
-    pub(crate) fn set_swap_chain_data(
+    fn set_swap_chain_data(
         &self,
         bitcoin_address: &str,
         chain_data: &SwapChainData,
@@ -73,7 +108,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn set_swap_status(&self, address: &str, status: &SwapStatus) -> PersistResult<()> {
+    fn set_swap_status(&self, address: &str, status: &SwapStatus) -> PersistResult<()> {
         let con = self.get_connection()?;
         con.execute(
             "UPDATE swaps_info SET status=:status WHERE bitcoin_address = :bitcoin_address",
@@ -85,7 +120,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn insert_swap(&self, swap_info: &SwapInfo) -> PersistResult<()> {
+    fn insert_swap(&self, swap_info: &SwapInfo) -> PersistResult<()> {
         let mut con = self.get_connection()?;
         let tx = con.transaction_with_behavior(TransactionBehavior::Immediate)?;
 
@@ -161,11 +196,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_swap_paid_amount(
-        &self,
-        bitcoin_address: &str,
-        paid_msat: u64,
-    ) -> PersistResult<()> {
+    fn update_swap_paid_amount(&self, bitcoin_address: &str, paid_msat: u64) -> PersistResult<()> {
         self.get_connection()?.execute(
             "UPDATE swaps_info SET paid_msat=:paid_msat where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -176,7 +207,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_swap_max_allowed_deposit(
+    fn update_swap_max_allowed_deposit(
         &self,
         bitcoin_address: &str,
         max_allowed_deposit: i64,
@@ -192,7 +223,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_swap_redeem_error(
+    fn update_swap_redeem_error(
         &self,
         bitcoin_address: String,
         redeem_err: String,
@@ -208,11 +239,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn update_swap_bolt11(
-        &self,
-        bitcoin_address: String,
-        bolt11: String,
-    ) -> PersistResult<()> {
+    fn update_swap_bolt11(&self, bitcoin_address: String, bolt11: String) -> PersistResult<()> {
         self.get_connection()?.execute(
             "UPDATE swaps_info SET bolt11=:bolt11 where bitcoin_address=:bitcoin_address",
             named_params! {
@@ -224,24 +251,8 @@ impl SqliteStorage {
         Ok(())
     }
 
-    fn insert_swaps_fees(
-        tx: &Transaction,
-        bitcoin_address: &str,
-        channel_opening_fees: &OpeningFeeParams,
-    ) -> PersistResult<()> {
-        tx.execute(
-            "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, created_at, channel_opening_fees) VALUES(:bitcoin_address, CURRENT_TIMESTAMP, :channel_opening_fees)",
-            named_params! {
-             ":bitcoin_address": bitcoin_address,
-             ":channel_opening_fees": channel_opening_fees,
-            },
-        )?;
-
-        Ok(())
-    }
-
     /// Update the dynamic fees associated with a swap
-    pub(crate) fn update_swap_fees(
+    fn update_swap_fees(
         &self,
         bitcoin_address: &str,
         channel_opening_fees: &OpeningFeeParams,
@@ -255,7 +266,7 @@ impl SqliteStorage {
         Ok(())
     }
 
-    pub(crate) fn insert_swap_refund_tx_ids(
+    fn insert_swap_refund_tx_ids(
         &self,
         bitcoin_address: String,
         refund_tx_id: String,
@@ -271,108 +282,15 @@ impl SqliteStorage {
         Ok(())
     }
 
-    //(SELECT json_group_array(value) FROM json_each(json_group_array(refund_tx_id)) WHERE refund_tx_id is not null) as refund_tx_ids,
-    pub(crate) fn select_swap_query(&self, where_clause: &str, prefix: &str) -> String {
-        let swap_fields = format!("        
-          swaps.bitcoin_address  as {prefix}bitcoin_address,
-          swaps.created_at as {prefix}created_at,
-          lock_height as {prefix}lock_height,
-          payment_hash as {prefix}payment_hash,
-          preimage as {prefix}preimage,
-          private_key as {prefix}private_key,
-          public_key as {prefix}public_key,
-          swapper_public_key as {prefix}swapper_public_key,
-          script as {prefix}script,
-          min_allowed_deposit as {prefix}min_allowed_deposit,
-          max_allowed_deposit as {prefix}max_allowed_deposit,
-          max_swapper_payable as {prefix}max_swapper_payable,
-          bolt11 as {prefix}bolt11,
-          paid_msat as {prefix}paid_msat,
-          unconfirmed_sats as {prefix}unconfirmed_sats,
-          confirmed_sats as {prefix}confirmed_sats,
-          total_incoming_txs as {prefix}total_incoming_txs,
-          status as {prefix}status,             
-          (SELECT json_group_array(refund_tx_id) FROM sync.swap_refunds as swap_refunds where bitcoin_address = swaps.bitcoin_address) as {prefix}refund_tx_ids,
-          unconfirmed_tx_ids as {prefix}unconfirmed_tx_ids,
-          confirmed_tx_ids as {prefix}confirmed_tx_ids,
-          last_redeem_error as {prefix}last_redeem_error,
-          swaps_fees.channel_opening_fees as {prefix}channel_opening_fees,
-          swaps_info.confirmed_at as {prefix}confirmed_at          
-        ");
-
-        format!(
-            "
-            SELECT
-             {swap_fields}
-            FROM sync.swaps as swaps
-             LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
-             LEFT JOIN sync.swaps_fees as swaps_fees ON swaps.bitcoin_address = swaps_fees.bitcoin_address
-             LEFT JOIN sync.swap_refunds as swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
-            WHERE {}
-            ",
-            where_clause
-        )
-    }
-
-    pub(crate) fn select_swap_fields(&self, prefix: &str) -> String {
-        format!(
-            "        
-          {prefix}bitcoin_address,
-          {prefix}created_at,
-          {prefix}lock_height,
-          {prefix}payment_hash,
-          {prefix}preimage,
-          {prefix}private_key,
-          {prefix}public_key,
-          {prefix}swapper_public_key,
-          {prefix}script,
-          {prefix}min_allowed_deposit,
-          {prefix}max_allowed_deposit,
-          {prefix}max_swapper_payable,
-          {prefix}bolt11,
-          {prefix}paid_msat,
-          {prefix}unconfirmed_sats,
-          {prefix}confirmed_sats,
-          {prefix}total_incoming_txs,
-          {prefix}status,             
-          {prefix}refund_tx_ids,
-          {prefix}unconfirmed_tx_ids,
-          {prefix}confirmed_tx_ids,
-          {prefix}last_redeem_error,
-          {prefix}channel_opening_fees,
-          {prefix}confirmed_at          
-          "
-        )
-    }
-
-    fn select_single_swap<P>(
-        &self,
-        where_clause: &str,
-        params: P,
-    ) -> PersistResult<Option<SwapInfo>>
-    where
-        P: Params,
-    {
-        Ok(self
-            .get_connection()?
-            .query_row(&self.select_swap_query(where_clause, ""), params, |row| {
-                self.sql_row_to_swap(row, "")
-            })
-            .optional()?)
-    }
-
-    pub(crate) fn get_swap_info_by_hash(&self, hash: &Vec<u8>) -> PersistResult<Option<SwapInfo>> {
+    fn get_swap_info_by_hash(&self, hash: &[u8]) -> PersistResult<Option<SwapInfo>> {
         self.select_single_swap("payment_hash = ?1", [hash])
     }
 
-    pub(crate) fn get_swap_info_by_address(
-        &self,
-        address: &str,
-    ) -> PersistResult<Option<SwapInfo>> {
+    fn get_swap_info_by_address(&self, address: &str) -> PersistResult<Option<SwapInfo>> {
         self.select_single_swap("swaps.bitcoin_address = ?1", [address])
     }
 
-    pub(crate) fn list_swaps(&self, req: ListSwapsRequest) -> PersistResult<Vec<SwapInfo>> {
+    fn list_swaps(&self, req: ListSwapsRequest) -> PersistResult<Vec<SwapInfo>> {
         let con = self.get_connection()?;
         let mut where_clauses = Vec::new();
         if let Some(status) = req.status {
@@ -423,8 +341,42 @@ impl SqliteStorage {
 
         Ok(vec)
     }
+}
 
-    pub(crate) fn sql_row_to_swap(
+impl SqliteStorage {
+    fn insert_swaps_fees(
+        tx: &Transaction,
+        bitcoin_address: &str,
+        channel_opening_fees: &OpeningFeeParams,
+    ) -> PersistResult<()> {
+        tx.execute(
+            "INSERT OR REPLACE INTO sync.swaps_fees (bitcoin_address, created_at, channel_opening_fees) VALUES(:bitcoin_address, CURRENT_TIMESTAMP, :channel_opening_fees)",
+            named_params! {
+             ":bitcoin_address": bitcoin_address,
+             ":channel_opening_fees": channel_opening_fees,
+            },
+        )?;
+
+        Ok(())
+    }
+
+    fn select_single_swap<P>(
+        &self,
+        where_clause: &str,
+        params: P,
+    ) -> PersistResult<Option<SwapInfo>>
+    where
+        P: Params,
+    {
+        Ok(self
+            .get_connection()?
+            .query_row(&self.select_swap_query(where_clause, ""), params, |row| {
+                self.sql_row_to_swap(row, "")
+            })
+            .optional()?)
+    }
+
+    pub(super) fn sql_row_to_swap(
         &self,
         row: &Row,
         prefix: &str,
@@ -481,5 +433,78 @@ impl SqliteStorage {
             channel_opening_fees: row.get(format!("{prefix}channel_opening_fees").as_str())?,
             confirmed_at: row.get(format!("{prefix}confirmed_at").as_str())?,
         })
+    }
+
+    pub(super) fn select_swap_fields(&self, prefix: &str) -> String {
+        format!(
+            "        
+          {prefix}bitcoin_address,
+          {prefix}created_at,
+          {prefix}lock_height,
+          {prefix}payment_hash,
+          {prefix}preimage,
+          {prefix}private_key,
+          {prefix}public_key,
+          {prefix}swapper_public_key,
+          {prefix}script,
+          {prefix}min_allowed_deposit,
+          {prefix}max_allowed_deposit,
+          {prefix}max_swapper_payable,
+          {prefix}bolt11,
+          {prefix}paid_msat,
+          {prefix}unconfirmed_sats,
+          {prefix}confirmed_sats,
+          {prefix}total_incoming_txs,
+          {prefix}status,             
+          {prefix}refund_tx_ids,
+          {prefix}unconfirmed_tx_ids,
+          {prefix}confirmed_tx_ids,
+          {prefix}last_redeem_error,
+          {prefix}channel_opening_fees,
+          {prefix}confirmed_at          
+          "
+        )
+    }
+
+    pub(super) fn select_swap_query(&self, where_clause: &str, prefix: &str) -> String {
+        let swap_fields = format!("        
+          swaps.bitcoin_address  as {prefix}bitcoin_address,
+          swaps.created_at as {prefix}created_at,
+          lock_height as {prefix}lock_height,
+          payment_hash as {prefix}payment_hash,
+          preimage as {prefix}preimage,
+          private_key as {prefix}private_key,
+          public_key as {prefix}public_key,
+          swapper_public_key as {prefix}swapper_public_key,
+          script as {prefix}script,
+          min_allowed_deposit as {prefix}min_allowed_deposit,
+          max_allowed_deposit as {prefix}max_allowed_deposit,
+          max_swapper_payable as {prefix}max_swapper_payable,
+          bolt11 as {prefix}bolt11,
+          paid_msat as {prefix}paid_msat,
+          unconfirmed_sats as {prefix}unconfirmed_sats,
+          confirmed_sats as {prefix}confirmed_sats,
+          total_incoming_txs as {prefix}total_incoming_txs,
+          status as {prefix}status,             
+          (SELECT json_group_array(refund_tx_id) FROM sync.swap_refunds as swap_refunds where bitcoin_address = swaps.bitcoin_address) as {prefix}refund_tx_ids,
+          unconfirmed_tx_ids as {prefix}unconfirmed_tx_ids,
+          confirmed_tx_ids as {prefix}confirmed_tx_ids,
+          last_redeem_error as {prefix}last_redeem_error,
+          swaps_fees.channel_opening_fees as {prefix}channel_opening_fees,
+          swaps_info.confirmed_at as {prefix}confirmed_at          
+        ");
+
+        format!(
+            "
+            SELECT
+             {swap_fields}
+            FROM sync.swaps as swaps
+             LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
+             LEFT JOIN sync.swaps_fees as swaps_fees ON swaps.bitcoin_address = swaps_fees.bitcoin_address
+             LEFT JOIN sync.swap_refunds as swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
+            WHERE {}
+            ",
+            where_clause
+        )
     }
 }

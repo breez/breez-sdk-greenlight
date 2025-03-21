@@ -6,5 +6,7 @@ mod taproot;
 mod taproot_server;
 
 pub(crate) use error::ReceiveSwapError;
-pub(crate) use swap::{create_swap_keys, BTCReceiveSwap, SwapChainData, SwapChainInfo};
+pub(crate) use swap::{
+    create_swap_keys, BTCReceiveSwap, BTCReceiveSwapParameters, SwapChainData, SwapChainInfo,
+};
 pub(crate) use taproot_server::TaprootSwapperAPI;

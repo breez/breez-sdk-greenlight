@@ -10,6 +10,7 @@ use tonic::{async_trait, Status};
 
 use crate::error::SdkResult;
 
+#[cfg_attr(test, mockall::automock)]
 #[tonic::async_trait]
 pub(crate) trait TaprootSwapperAPI: Send + Sync {
     async fn create_swap(

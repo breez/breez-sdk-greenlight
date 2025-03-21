@@ -606,7 +606,7 @@ pub struct BackupStatus {
 /// Note: The implementation attempts to provide the most up-to-date values,
 /// which may result in some short-lived inconsistencies
 /// (e.g., `channels_balance_msat` may be updated before `inbound_liquidity_msats`).
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+#[derive(Serialize, Default, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct NodeState {
     pub id: String,
     pub block_height: u32,
@@ -945,7 +945,7 @@ pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ListSwapsRequest {
     pub status: Option<Vec<SwapStatus>>,
     /// Epoch time, in seconds. If set, acts as filter for minimum swap creation time, inclusive.
@@ -1060,7 +1060,7 @@ pub struct RefundResponse {
 ///
 /// After they are received, the client shouldn't change them when calling LSP methods,
 /// otherwise the LSP may reject the call.
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
     /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
     pub min_msat: u64,
@@ -1264,11 +1264,12 @@ pub enum ChannelState {
 }
 
 /// The status of a swap
-#[derive(Copy, Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum SwapStatus {
     /// The swap address has been created and either there aren't any confirmed transactions associated with it
     /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
     /// eligible to be redeemed normally.
+    #[default]
     Initial = 0,
 
     WaitingConfirmation = 1,
@@ -1346,7 +1347,7 @@ impl TryFrom<i32> for SwapStatus {
 /// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
 ///
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SwapInfo {
     /// Bitcoin address for this swap. Sats sent to this address will be swapped.
     pub bitcoin_address: String,
