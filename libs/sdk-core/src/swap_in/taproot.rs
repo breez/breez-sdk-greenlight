@@ -80,7 +80,7 @@ impl TaprootReceiveSwap {
             &claim_pubkey.serialize(),
             &refund_pubkey.serialize(),
             claim_script,
-            refund_script,
+            refund_script.clone(),
         )?;
         let expected_address =
             Address::p2tr_tweaked(taproot_spend_info.output_key(), self.network).to_string();
@@ -120,7 +120,7 @@ impl TaprootReceiveSwap {
             private_key: keys.priv_key,
             public_key: refund_pubkey.serialize().to_vec(),
             refund_tx_ids: Vec::new(),
-            script: Vec::new(), // TODO: Set script
+            script: refund_script.to_bytes(),
             payment_hash,
             status: SwapStatus::Initial,
             swapper_public_key: resp.claim_pubkey,
