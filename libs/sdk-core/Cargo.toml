@@ -55,4 +55,5 @@ regex = { workspace = true }
 ryu = "1.0.18"
 
 [dev-dependencies]
+mockall = "0.13.1"
 sdk-common = { path = "../sdk-common", features = ["test-utils"] }
