@@ -444,6 +444,7 @@ impl BackupWorker {
 
 #[cfg(test)]
 mod tests {
+    use crate::persist::swap::SwapStorage;
     use crate::test_utils::get_test_ofp_48h;
     use crate::ListSwapsRequest;
     use crate::{

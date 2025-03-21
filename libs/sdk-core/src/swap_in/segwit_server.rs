@@ -2,6 +2,7 @@ use sdk_common::{grpc::GetSwapPaymentRequest, prelude::BreezServer, with_connect
 
 use crate::SwapperAPI;
 
+#[cfg_attr(test, mockall::automock)]
 #[tonic::async_trait]
 impl SwapperAPI for BreezServer {
     async fn complete_swap(&self, bolt11: String) -> anyhow::Result<()> {

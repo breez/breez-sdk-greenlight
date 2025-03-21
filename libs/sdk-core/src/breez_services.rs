@@ -42,8 +42,11 @@ use crate::models::{
     SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
+use crate::persist::cache::NodeStateStorage;
 use crate::persist::db::SqliteStorage;
-use crate::swap_in::{BTCReceiveSwap, TaprootSwapperAPI};
+use crate::persist::swap::SwapStorage;
+use crate::persist::transactions::CompletedPaymentStorage;
+use crate::swap_in::{BTCReceiveSwap, BTCReceiveSwapParameters, TaprootSwapperAPI};
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -1999,7 +2002,7 @@ impl BreezServices {
         match is_new_webhook_url {
             false => debug!("Webhook URL not changed, no need to (re-)register for monitored swap tx notifications"),
             true => {
-                for swap in self.persister.list_swaps(ListSwapsRequest {
+                for swap in self.btc_receive_swapper.list_swaps(ListSwapsRequest {
                     status: Some(SwapStatus::unexpired()),
                     ..Default::default()
                 })?
@@ -2194,7 +2197,7 @@ impl BreezServices {
             self.persister.list_reverse_swaps().map(sanitize_vec)?,
         )?;
         let swaps = crate::serializer::value::to_value(
-            self.persister
+            self.btc_receive_swapper
                 .list_swaps(ListSwapsRequest::default())
                 .map(sanitize_vec)?,
         )?;
@@ -2478,19 +2481,23 @@ impl BreezServicesBuilder {
             mempoolspace_urls,
         ));
 
-        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
-            chain_service.clone(),
-            self.config.network.into(),
-            unwrapped_node_api.clone(),
-            payment_receiver.clone(),
-            persister.clone(),
-            self.swapper_api
+        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(BTCReceiveSwapParameters {
+            chain_service: chain_service.clone(),
+            completed_payment_storage: persister.clone(),
+            network: self.config.network.into(),
+            node_api: unwrapped_node_api.clone(),
+            node_state_storage: persister.clone(),
+            payment_receiver: payment_receiver.clone(),
+            segwit_swapper_api: self
+                .swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
-            self.taproot_swapper_api
+            swap_storage: persister.clone(),
+            taproot_swapper_api: self
+                .taproot_swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
-        ));
+        }));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
             self.config.clone(),
@@ -2919,6 +2926,8 @@ pub(crate) mod tests {
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
+    use crate::persist::cache::NodeStateStorage;
+    use crate::persist::swap::SwapStorage;
     use crate::test_utils::*;
     use crate::*;
 
