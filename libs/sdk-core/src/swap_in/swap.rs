@@ -24,7 +24,10 @@ use crate::{
     chain::ChainService,
     error::ReceivePaymentError,
     node_api::{FetchBolt11Result, NodeAPI},
-    persist::{db::SqliteStorage, error::PersistResult},
+    persist::{
+        cache::NodeStateStorage, error::PersistResult, swap::SwapStorage,
+        transactions::CompletedPaymentStorage,
+    },
     BreezEvent, ListSwapsRequest, OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse,
     ReceivePaymentRequest, RefundRequest, RefundResponse, SwapInfo, SwapStatus, SwapperAPI,
 };
@@ -185,34 +188,42 @@ impl From<SwapChainData> for SwapChainInfo {
 
 pub(crate) struct BTCReceiveSwap {
     chain_service: Arc<dyn ChainService>,
+    completed_payment_storage: Arc<dyn CompletedPaymentStorage>,
     current_tip: Mutex<u32>,
     node_api: Arc<dyn NodeAPI>,
+    node_state_storage: Arc<dyn NodeStateStorage>,
     payment_receiver: Arc<dyn Receiver>,
-    persister: Arc<SqliteStorage>,
     segwit: SegwitReceiveSwap,
     status_changes_notifier: broadcast::Sender<BreezEvent>,
+    swap_storage: Arc<dyn SwapStorage>,
     taproot: TaprootReceiveSwap,
 }
 
+pub(crate) struct BTCReceiveSwapParameters {
+    pub chain_service: Arc<dyn ChainService>,
+    pub completed_payment_storage: Arc<dyn CompletedPaymentStorage>,
+    pub network: Network,
+    pub node_api: Arc<dyn NodeAPI>,
+    pub node_state_storage: Arc<dyn NodeStateStorage>,
+    pub payment_receiver: Arc<dyn Receiver>,
+    pub segwit_swapper_api: Arc<dyn SwapperAPI>,
+    pub swap_storage: Arc<dyn SwapStorage>,
+    pub taproot_swapper_api: Arc<dyn TaprootSwapperAPI>,
+}
+
 impl BTCReceiveSwap {
-    pub(crate) fn new(
-        chain_service: Arc<dyn ChainService>,
-        network: Network,
-        node_api: Arc<dyn NodeAPI>,
-        payment_receiver: Arc<dyn Receiver>,
-        persister: Arc<SqliteStorage>,
-        segwit_swapper_api: Arc<dyn SwapperAPI>,
-        taproot_swapper_api: Arc<dyn TaprootSwapperAPI>,
-    ) -> Self {
+    pub(crate) fn new(params: BTCReceiveSwapParameters) -> Self {
         BTCReceiveSwap {
-            chain_service,
+            chain_service: params.chain_service,
+            completed_payment_storage: params.completed_payment_storage,
             current_tip: Mutex::new(0),
-            node_api,
-            payment_receiver,
-            persister,
-            segwit: SegwitReceiveSwap::new(segwit_swapper_api),
+            node_api: params.node_api,
+            node_state_storage: params.node_state_storage,
+            payment_receiver: params.payment_receiver,
+            segwit: SegwitReceiveSwap::new(params.segwit_swapper_api),
             status_changes_notifier: broadcast::channel(100).0,
-            taproot: TaprootReceiveSwap::new(network, taproot_swapper_api),
+            swap_storage: params.swap_storage,
+            taproot: TaprootReceiveSwap::new(params.network, params.taproot_swapper_api),
         }
     }
 }
@@ -223,7 +234,7 @@ impl BTCReceiveSwap {
         opening_fee_params: OpeningFeeParams,
     ) -> ReceiveSwapResult<SwapInfo> {
         let node_state = self
-            .persister
+            .node_state_storage
             .get_node_state()?
             .ok_or(ReceiveSwapError::NodeStateNotFound)?;
         // Calculate max_allowed_deposit based on absolute max and current node state
@@ -250,13 +261,13 @@ impl BTCReceiveSwap {
             if unused_swap.max_allowed_deposit != old_max_allowed_deposit {
                 info!("max_allowed_deposit for this swap has changed, updating it");
                 validate_swap_limits(&unused_swap)?;
-                self.persister.update_swap_max_allowed_deposit(
+                self.swap_storage.update_swap_max_allowed_deposit(
                     &unused_swap.bitcoin_address,
                     unused_swap.max_allowed_deposit,
                 )?;
             }
 
-            self.persister
+            self.swap_storage
                 .update_swap_fees(&unused_swap.bitcoin_address, &opening_fee_params)?;
 
             return Ok(unused_swap);
@@ -266,12 +277,12 @@ impl BTCReceiveSwap {
             .taproot
             .create_swap(&node_state, opening_fee_params)
             .await?;
-        self.persister.insert_swap(&swap_info)?;
+        self.swap_storage.insert_swap(&swap_info)?;
         Ok(swap_info)
     }
 
     pub(crate) fn list_swaps(&self, req: ListSwapsRequest) -> ReceiveSwapResult<Vec<SwapInfo>> {
-        Ok(self.persister.list_swaps(req)?)
+        Ok(self.swap_storage.list_swaps(req)?)
     }
 
     pub(crate) fn list_in_progress_swaps(&self) -> ReceiveSwapResult<Vec<SwapInfo>> {
@@ -314,7 +325,7 @@ impl BTCReceiveSwap {
 
     #[allow(dead_code)]
     pub(crate) fn list_redeemables(&self) -> ReceiveSwapResult<Vec<SwapInfo>> {
-        Ok(self.persister.list_swaps(ListSwapsRequest {
+        Ok(self.swap_storage.list_swaps(ListSwapsRequest {
             status: Some(SwapStatus::redeemable()),
             ..Default::default()
         })?)
@@ -349,13 +360,13 @@ impl BTCReceiveSwap {
             BreezEvent::InvoicePaid { details } => {
                 debug!("swap InvoicePaid event!");
                 let hash_raw = hex::decode(&details.payment_hash)?;
-                let mut swap_info = match self.persister.get_swap_info_by_hash(&hash_raw)? {
+                let mut swap_info = match self.swap_storage.get_swap_info_by_hash(&hash_raw)? {
                     Some(swap_info) => swap_info,
                     None => return Ok(()),
                 };
 
                 let payment = match self
-                    .persister
+                    .completed_payment_storage
                     .get_completed_payment_by_hash(&details.payment_hash)?
                 {
                     Some(payment) => payment,
@@ -364,15 +375,15 @@ impl BTCReceiveSwap {
 
                 let current_tip = self.tip().await;
                 let chain_data = self
-                    .persister
+                    .swap_storage
                     .get_swap_chain_data(&swap_info.bitcoin_address)?;
                 swap_info.paid_msat = payment.amount_msat;
                 let address = parse_address(&swap_info.bitcoin_address)?;
                 let new_status =
                     self.calculate_status(&swap_info, &address, &chain_data, current_tip);
-                self.persister
+                self.swap_storage
                     .update_swap_paid_amount(&swap_info.bitcoin_address, swap_info.paid_msat)?;
-                self.persister
+                self.swap_storage
                     .set_swap_status(&swap_info.bitcoin_address, &new_status)?;
                 self.emit_swap_updated(&swap_info.bitcoin_address)?;
             }
@@ -388,14 +399,14 @@ impl BTCReceiveSwap {
     ) -> ReceiveSwapResult<PrepareRefundResponse> {
         let address_type = parse_address(&req.swap_address)?;
         let swap_info = self
-            .persister
+            .swap_storage
             .get_swap_info_by_address(&req.swap_address)?
             .ok_or(ReceiveSwapError::SwapNotFound("".to_string()))?;
-        let chain_data = match self.persister.get_swap_chain_data(&req.swap_address)? {
+        let chain_data = match self.swap_storage.get_swap_chain_data(&req.swap_address)? {
             Some(chain_data) => chain_data,
             None => {
                 let chain_data = self.fetch_swap_onchain_data(&swap_info).await?;
-                self.persister.set_swap_chain_data(
+                self.swap_storage.set_swap_chain_data(
                     &req.swap_address,
                     &chain_data,
                     &chain_data.clone().into(),
@@ -448,14 +459,14 @@ impl BTCReceiveSwap {
     pub(crate) async fn refund(&self, req: RefundRequest) -> ReceiveSwapResult<RefundResponse> {
         let address_type = parse_address(&req.swap_address)?;
         let swap_info = self
-            .persister
+            .swap_storage
             .get_swap_info_by_address(&req.swap_address)?
             .ok_or(ReceiveSwapError::SwapNotFound("".to_string()))?;
-        let chain_data = match self.persister.get_swap_chain_data(&req.swap_address)? {
+        let chain_data = match self.swap_storage.get_swap_chain_data(&req.swap_address)? {
             Some(chain_data) => chain_data,
             None => {
                 let chain_data = self.fetch_swap_onchain_data(&swap_info).await?;
-                self.persister.set_swap_chain_data(
+                self.swap_storage.set_swap_chain_data(
                     &req.swap_address,
                     &chain_data,
                     &chain_data.clone().into(),
@@ -510,7 +521,7 @@ impl BTCReceiveSwap {
         let refund_tx = encode::serialize(&tx);
         info!("broadcasting refund tx {:?}", hex::encode(&refund_tx));
         let tx_id = self.chain_service.broadcast_transaction(refund_tx).await?;
-        self.persister
+        self.swap_storage
             .insert_swap_refund_tx_ids(swap_info.bitcoin_address, tx_id.clone())?;
         self.emit_swap_updated(&req.swap_address)?;
 
@@ -521,7 +532,7 @@ impl BTCReceiveSwap {
 
     pub(crate) async fn redeem_swap(&self, address: String) -> ReceiveSwapResult<()> {
         let swap_info = self
-            .persister
+            .swap_storage
             .get_swap_info_by_address(&address)?
             .ok_or(ReceiveSwapError::SwapNotFound("".to_string()))?;
         let address_type = parse_address(&address)?;
@@ -531,7 +542,7 @@ impl BTCReceiveSwap {
         // TODO: Handle NeedsNewFeeParams here.
         let (payment_request, is_new_payment_request) =
             self.get_payment_request(&swap_info, current_tip).await?;
-        self.persister
+        self.swap_storage
             .update_swap_bolt11(swap_info.bitcoin_address.clone(), payment_request.clone())?;
         if is_new_payment_request {
             self.emit_swap_updated(&swap_info.bitcoin_address.clone())?;
@@ -554,7 +565,7 @@ impl BTCReceiveSwap {
         };
 
         debug!("Error getting paid for swap: {}", message);
-        self.persister
+        self.swap_storage
             .update_swap_redeem_error(swap_info.bitcoin_address.clone(), message.clone())?;
         self.emit_swap_updated(&swap_info.bitcoin_address)?;
         Err(ReceiveSwapError::PaymentError(message))
@@ -562,7 +573,7 @@ impl BTCReceiveSwap {
 
     pub(crate) async fn rescan_monitored_swaps(&self, tip: u32) -> ReceiveSwapResult<()> {
         self.refresh_swaps(
-            self.persister.list_swaps(ListSwapsRequest {
+            self.swap_storage.list_swaps(ListSwapsRequest {
                 status: Some(SwapStatus::monitored()),
                 ..Default::default()
             })?,
@@ -573,15 +584,18 @@ impl BTCReceiveSwap {
 
     pub(crate) async fn rescan_swap(&self, address: &str, tip: u32) -> ReceiveSwapResult<()> {
         let swap = self
-            .persister
+            .swap_storage
             .get_swap_info_by_address(address)?
             .ok_or(ReceiveSwapError::SwapNotFound("".to_string()))?;
         self.refresh_swaps(vec![swap], tip).await
     }
 
     pub(crate) async fn rescan_swaps(&self, tip: u32) -> ReceiveSwapResult<()> {
-        self.refresh_swaps(self.persister.list_swaps(ListSwapsRequest::default())?, tip)
-            .await
+        self.refresh_swaps(
+            self.swap_storage.list_swaps(ListSwapsRequest::default())?,
+            tip,
+        )
+        .await
     }
 
     pub(crate) fn subscribe_status_changes(&self) -> broadcast::Receiver<BreezEvent> {
@@ -828,7 +842,7 @@ impl BTCReceiveSwap {
 
     fn emit_swap_updated(&self, bitcoin_address: &str) -> PersistResult<()> {
         let swap_info = self
-            .persister
+            .swap_storage
             .get_swap_info_by_address(bitcoin_address)?
             .ok_or_else(|| {
                 anyhow::anyhow!(format!("swap address {} was not found", bitcoin_address))
@@ -1041,7 +1055,7 @@ impl BTCReceiveSwap {
         if &new_swap_info != swap_info {
             let address = parse_address(&swap_info.bitcoin_address)?;
             let status = self.calculate_status(swap_info, &address, &new_chain_data, current_tip);
-            self.persister
+            self.swap_storage
                 .set_swap_status(&swap_info.bitcoin_address, &status)?;
             self.emit_swap_updated(&swap_info.bitcoin_address)?;
         }
@@ -1064,7 +1078,7 @@ impl BTCReceiveSwap {
         swap_info: &SwapInfo,
     ) -> ReceiveSwapResult<(SwapInfo, Option<SwapChainData>)> {
         let existing_chain_data = self
-            .persister
+            .swap_storage
             .get_swap_chain_data(&swap_info.bitcoin_address)?;
         let new_chain_data = match self.fetch_swap_onchain_data(swap_info).await {
             Ok(d) => d,
@@ -1082,7 +1096,7 @@ impl BTCReceiveSwap {
         };
         let chain_info = new_chain_data.clone().into();
         if changed {
-            self.persister.set_swap_chain_data(
+            self.swap_storage.set_swap_chain_data(
                 &swap_info.bitcoin_address,
                 &new_chain_data,
                 &chain_info,
@@ -1104,7 +1118,7 @@ impl BTCReceiveSwap {
 
     async fn refresh_swap_payment_data(&self, swap_info: &SwapInfo) -> ReceiveSwapResult<SwapInfo> {
         let payment = self
-            .persister
+            .completed_payment_storage
             .get_completed_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
         let payment = match payment {
             Some(p) => p,
@@ -1122,7 +1136,7 @@ impl BTCReceiveSwap {
         };
 
         if amount_msat != swap_info.paid_msat {
-            self.persister
+            self.swap_storage
                 .update_swap_paid_amount(&swap_info.bitcoin_address, amount_msat)?;
         }
 
@@ -1160,4 +1174,195 @@ fn validate_swap_limits(swap_info: &SwapInfo) -> ReceiveSwapResult<()> {
         ReceiveSwapError::unsupported_swap_limits("No allowed deposit amounts")
     );
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+
+    use std::sync::Arc;
+
+    use gl_client::bitcoin::Network;
+    use mockall::predicate;
+
+    use crate::{
+        persist::{
+            cache::MockNodeStateStorage, swap::MockSwapStorage,
+            transactions::MockCompletedPaymentStorage,
+        },
+        swap_in::{
+            taproot_server::MockTaprootSwapperAPI, BTCReceiveSwap, BTCReceiveSwapParameters,
+        },
+        test_utils::{
+            MockBreezServer, MockChainService, MockNodeAPI, MockReceiver, MockSwapperAPI,
+        },
+        ListSwapsRequest, NodeState, OpeningFeeParams, SwapInfo, SwapStatus,
+    };
+    const BITCOIN_ADDRESS: &str = "bc1puvuup6jctnk0v3e3qhvr69c73e8a90vytw06hfyn8ahhvf0l63hqd30tzd";
+
+    #[tokio::test]
+    async fn test_create_swap_uses_unused_taproot_swap() {
+        let mut swap_storage = MockSwapStorage::new();
+        let mut node_state_storage = MockNodeStateStorage::new();
+        let completed_payment_storage = MockCompletedPaymentStorage::new();
+        let node_state = NodeState {
+            max_receivable_msat: 1_000_000_000,
+            ..Default::default()
+        };
+
+        let node_state_clone = node_state.clone();
+        // Setup persister expectations
+        node_state_storage
+            .expect_get_node_state()
+            .return_once(move || Ok(Some(node_state_clone)));
+
+        let unused_swap = SwapInfo {
+            bitcoin_address: BITCOIN_ADDRESS.to_string(),
+            max_allowed_deposit: 1_000_000,
+            max_swapper_payable: 1_000_000,
+            ..Default::default()
+        };
+
+        swap_storage
+            .expect_list_swaps()
+            .with(predicate::eq(ListSwapsRequest {
+                status: Some(SwapStatus::unused()),
+                ..Default::default()
+            }))
+            .return_once(move |_| Ok(vec![unused_swap.clone()]));
+
+        swap_storage
+            .expect_update_swap_fees()
+            .return_once(|_, _| Ok(()));
+
+        let swap = BTCReceiveSwap::new(BTCReceiveSwapParameters {
+            chain_service: Arc::new(MockChainService::default()),
+            completed_payment_storage: Arc::new(completed_payment_storage),
+            network: Network::Bitcoin,
+            node_api: Arc::new(MockNodeAPI::new(node_state)),
+            node_state_storage: Arc::new(node_state_storage),
+            payment_receiver: Arc::new(MockReceiver::default()),
+            segwit_swapper_api: Arc::new(MockSwapperAPI {}),
+            swap_storage: Arc::new(swap_storage),
+            taproot_swapper_api: Arc::new(MockTaprootSwapperAPI::new()),
+        });
+
+        let opening_fee_params = OpeningFeeParams {
+            min_msat: 1000,
+            ..Default::default()
+        };
+
+        let result = swap.create_swap(opening_fee_params).await.unwrap();
+
+        assert_eq!(&result.bitcoin_address, BITCOIN_ADDRESS);
+        assert_eq!(result.max_allowed_deposit, 1_000_000);
+    }
+
+    #[tokio::test]
+    async fn test_create_swap_uses_unused_taproot_swap_new_balance() {
+        let mut swap_storage = MockSwapStorage::new();
+        let mut node_state_storage = MockNodeStateStorage::new();
+        let completed_payment_storage = MockCompletedPaymentStorage::new();
+        let node_state = NodeState {
+            max_receivable_msat: 100_000_000,
+            ..Default::default()
+        };
+
+        let node_state_clone = node_state.clone();
+        // Setup persister expectations
+        node_state_storage
+            .expect_get_node_state()
+            .return_once(move || Ok(Some(node_state_clone)));
+
+        let unused_swap = SwapInfo {
+            bitcoin_address: BITCOIN_ADDRESS.to_string(),
+            max_allowed_deposit: 1_000_000,
+            max_swapper_payable: 1_000_000,
+            ..Default::default()
+        };
+
+        swap_storage
+            .expect_list_swaps()
+            .with(predicate::eq(ListSwapsRequest {
+                status: Some(SwapStatus::unused()),
+                ..Default::default()
+            }))
+            .return_once(move |_| Ok(vec![unused_swap.clone()]));
+
+        swap_storage
+            .expect_update_swap_max_allowed_deposit()
+            .return_once(|_, _| Ok(()));
+        swap_storage
+            .expect_update_swap_fees()
+            .return_once(|_, _| Ok(()));
+
+        let swap = BTCReceiveSwap::new(BTCReceiveSwapParameters {
+            chain_service: Arc::new(MockChainService::default()),
+            completed_payment_storage: Arc::new(completed_payment_storage),
+            network: Network::Bitcoin,
+            node_api: Arc::new(MockNodeAPI::new(node_state)),
+            node_state_storage: Arc::new(node_state_storage),
+            payment_receiver: Arc::new(MockReceiver::default()),
+            segwit_swapper_api: Arc::new(MockSwapperAPI {}),
+            swap_storage: Arc::new(swap_storage),
+            taproot_swapper_api: Arc::new(MockTaprootSwapperAPI::new()),
+        });
+
+        let opening_fee_params = OpeningFeeParams {
+            min_msat: 1000,
+            ..Default::default()
+        };
+
+        let result = swap.create_swap(opening_fee_params).await.unwrap();
+
+        assert_eq!(&result.bitcoin_address, BITCOIN_ADDRESS);
+        assert_eq!(result.max_allowed_deposit, 100_000);
+    }
+
+    #[tokio::test]
+    async fn test_create_swap_creates_new_when_no_unused() {
+        let mut swap_storage = MockSwapStorage::new();
+        let mut node_state_storage = MockNodeStateStorage::new();
+        let completed_payment_storage = MockCompletedPaymentStorage::new();
+        let node_state = NodeState {
+            max_receivable_msat: 100_000_000,
+            ..Default::default()
+        };
+
+        let node_state_clone = node_state.clone();
+        // Setup persister expectations
+        node_state_storage
+            .expect_get_node_state()
+            .return_once(move || Ok(Some(node_state_clone)));
+
+        swap_storage
+            .expect_list_swaps()
+            .return_once(move |_| Ok(vec![]));
+
+        swap_storage
+            .expect_insert_swap()
+            .return_once(move |_| Ok(()));
+
+        // Setup server
+
+        let swap = BTCReceiveSwap::new(BTCReceiveSwapParameters {
+            chain_service: Arc::new(MockChainService::default()),
+            completed_payment_storage: Arc::new(completed_payment_storage),
+            network: Network::Bitcoin,
+            node_api: Arc::new(MockNodeAPI::new(node_state)),
+            node_state_storage: Arc::new(node_state_storage),
+            payment_receiver: Arc::new(MockReceiver::default()),
+            segwit_swapper_api: Arc::new(MockSwapperAPI {}),
+            swap_storage: Arc::new(swap_storage),
+            taproot_swapper_api: Arc::new(MockBreezServer {}),
+        });
+
+        let opening_fee_params = OpeningFeeParams {
+            min_msat: 1000,
+            ..Default::default()
+        };
+
+        let result = swap.create_swap(opening_fee_params).await.unwrap();
+
+        assert_eq!(result.max_allowed_deposit, 100_000);
+    }
 }

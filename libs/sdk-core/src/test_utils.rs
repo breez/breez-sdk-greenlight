@@ -460,11 +460,11 @@ impl NodeAPI for MockNodeAPI {
         Ok(json!({}))
     }
 
-    async fn max_sendable_amount(
+    async fn max_sendable_amount<'a>(
         &self,
         _payee_node_id: Option<Vec<u8>>,
         _max_hops: u32,
-        _last_hop: Option<&RouteHintHop>,
+        _last_hop: Option<&'a RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
@@ -920,7 +920,11 @@ impl TaprootSwapperAPI for MockBreezServer {
             address: address.to_string(),
             claim_pubkey: claim_pubkey_bytes,
             lock_time,
-            parameters: Some(SwapParameters::default()),
+            parameters: Some(SwapParameters {
+                max_swap_amount_sat: 1_000_000,
+                min_swap_amount_sat: 1_000,
+                min_utxo_amount_sat: 1_000,
+            }),
         })
     }
     async fn pay_swap(&self, _payment_request: String) -> Result<PaySwapResponse, Status> {

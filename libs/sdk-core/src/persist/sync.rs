@@ -272,6 +272,7 @@ mod tests {
 
     use crate::persist::db::SqliteStorage;
     use crate::persist::error::PersistResult;
+    use crate::persist::swap::SwapStorage;
     use crate::persist::test_utils;
     use crate::test_utils::{get_test_ofp_48h, rand_string, rand_vec_u8};
     use crate::{ListSwapsRequest, SwapInfo};

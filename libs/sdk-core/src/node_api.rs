@@ -115,6 +115,7 @@ pub struct FetchBolt11Result {
 }
 
 /// Trait covering functions affecting the LN node
+#[cfg_attr(test, mockall::automock)]
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
     async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
@@ -157,11 +158,11 @@ pub trait NodeAPI: Send + Sync {
     async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse>;
 
     /// Calculates the maximum amount that can be sent to a node.
-    async fn max_sendable_amount(
+    async fn max_sendable_amount<'a>(
         &self,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
-        last_hop: Option<&RouteHintHop>,
+        last_hop: Option<&'a RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>>;
     async fn redeem_onchain_funds(
         &self,

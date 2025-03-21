@@ -51,6 +51,7 @@ use crate::bitcoin::{
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
+use crate::persist::cache::NodeStateStorage;
 use crate::persist::db::SqliteStorage;
 use crate::persist::send_pays::{SendPay, SendPayStatus};
 use crate::{models::*, LspInformation};
@@ -1875,11 +1876,11 @@ impl NodeAPI for Greenlight {
         }
     }
 
-    async fn max_sendable_amount(
+    async fn max_sendable_amount<'a>(
         &self,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
-        last_hop_hint: Option<&RouteHintHop>,
+        last_hop_hint: Option<&'a RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         let mut client = self.get_node_client().await?;
 
