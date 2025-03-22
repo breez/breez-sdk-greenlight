@@ -2,7 +2,7 @@ use std::time::SystemTimeError;
 
 use gl_client::{bitcoin, lightning_invoice::ParseOrSemanticError};
 use hex::FromHexError;
-use secp256k1::musig::MusigSignError;
+use secp256k1::musig::{MusigSignError, MusigTweakErr};
 use thiserror::Error;
 
 use crate::{
@@ -154,6 +154,18 @@ impl From<GetPaymentRequestError> for ReceiveSwapError {
 impl From<FromHexError> for ReceiveSwapError {
     fn from(_value: FromHexError) -> Self {
         Self::generic("could not convert from hex")
+    }
+}
+
+impl From<MusigTweakErr> for ReceiveSwapError {
+    fn from(value: MusigTweakErr) -> Self {
+        ReceiveSwapError::Taproot(value.to_string())
+    }
+}
+
+impl From<secp256k1::scalar::OutOfRangeError> for ReceiveSwapError {
+    fn from(value: secp256k1::scalar::OutOfRangeError) -> Self {
+        ReceiveSwapError::Taproot(value.to_string())
     }
 }
 
