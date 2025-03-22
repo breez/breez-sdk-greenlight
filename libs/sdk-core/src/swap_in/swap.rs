@@ -446,12 +446,10 @@ impl BTCReceiveSwap {
             },
         }?;
 
-        let weight = tx.weight() as u32;
-        let fee = (weight as u64)
-            .saturating_mul(req.sat_per_vbyte as u64)
-            .saturating_mul(WITNESS_SCALE_FACTOR as u64);
+        let weight = tx.weight();
+        let fee = compute_tx_fee(weight, req.sat_per_vbyte);
         Ok(PrepareRefundResponse {
-            refund_tx_weight: weight,
+            refund_tx_weight: weight as u32,
             refund_tx_fee_sat: fee,
         })
     }
