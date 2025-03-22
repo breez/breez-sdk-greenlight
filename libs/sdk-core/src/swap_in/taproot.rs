@@ -229,9 +229,32 @@ impl TaprootReceiveSwap {
 
         let swap_address: Address = swap_info.bitcoin_address.parse()?;
         let swap_address_script_pubkey = swap_address.script_pubkey();
-        let refund_privkey = secp256k1::SecretKey::from_slice(&swap_info.private_key)
+        let claim_pubkey = PublicKey::from_slice(&swap_info.swapper_public_key)
+            .map_err(|_| ReceiveSwapError::generic("invalid claim pubkey"))?;
+        let refund_privkey = SecretKey::from_slice(&swap_info.private_key)
             .map_err(|_| ReceiveSwapError::generic("invalid refund private key"))?;
-        let refund_pubkey = refund_privkey.public_key(&self.musig_secp);
+        let refund_pubkey = refund_privkey.public_key(&self.secp);
+        let secp_refund_privkey = secp256k1::SecretKey::from_slice(&swap_info.private_key)
+            .map_err(|_| ReceiveSwapError::generic("invalid refund private key"))?;
+        let secp_refund_pubkey = secp_refund_privkey.public_key(&self.musig_secp);
+        let (x_only_claim_pubkey, _) = claim_pubkey.x_only_public_key();
+        let (x_only_refund_pubkey, _) = refund_pubkey.x_only_public_key();
+        let claim_script = claim_script(&x_only_claim_pubkey, &swap_info.payment_hash);
+        let refund_script = refund_script(&x_only_refund_pubkey, swap_info.lock_height as u32);
+        let tweak = self
+            .taproot_spend_info(
+                &swap_info.swapper_public_key,
+                &swap_info.public_key,
+                claim_script,
+                refund_script,
+            )?
+            .tap_tweak();
+        let tweak_scalar = tweak.to_scalar();
+        let tweak_scalar = secp256k1::Scalar::from_be_bytes(tweak_scalar.to_be_bytes())?;
+        let mut key_agg_cache =
+            self.key_agg_cache(&swap_info.swapper_public_key, &swap_info.public_key)?;
+        let _ = key_agg_cache.pubkey_xonly_tweak_add(&self.musig_secp, &tweak_scalar)?;
+
         let cloned_tx = tx.clone();
         let mut sighasher = SighashCache::new(&cloned_tx);
         let prevouts: Vec<_> = utxos
@@ -257,13 +280,11 @@ impl TaprootReceiveSwap {
                     .map_err(|_| ReceiveSwapError::generic("invalid signature hash"))?,
             );
             let extra_rand = rand::thread_rng().gen();
-            let key_agg_cache =
-                self.key_agg_cache(&swap_info.swapper_public_key, &swap_info.public_key)?;
             let (our_sec_nonce, our_pub_nonce) = key_agg_cache
                 .nonce_gen(
                     &self.musig_secp,
                     session_id,
-                    refund_pubkey,
+                    secp_refund_pubkey,
                     msg,
                     Some(extra_rand),
                 )
@@ -289,7 +310,7 @@ impl TaprootReceiveSwap {
             let partial_sig = musig_session.partial_sign(
                 &self.musig_secp,
                 our_sec_nonce,
-                &refund_privkey.keypair(&self.musig_secp),
+                &secp_refund_privkey.keypair(&self.musig_secp),
                 &key_agg_cache,
             )?;
 
