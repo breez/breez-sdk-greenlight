@@ -24,7 +24,7 @@ use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx, Utxo};
 use crate::error::SdkResult;
 use crate::models::{ReverseSwapServiceAPI, ReverseSwapperRoutingAPI};
 use crate::node_api::{NodeAPI, NodeError};
-use crate::swap_in::swap::create_swap_keys;
+use crate::swap_in::create_swap_keys;
 use crate::{
     ensure_sdk, BreezEvent, Config, FullReverseSwapInfo, PayOnchainRequest, PaymentStatus,
     ReverseSwapInfo, ReverseSwapInfoCached, ReverseSwapPairInfo, ReverseSwapStatus,
@@ -778,7 +778,6 @@ fn build_fake_claim_tx() -> Result<Transaction> {
         sk,
         preimage_bytes,
         AddressUtxos {
-            unconfirmed: vec![],
             confirmed: vec![Utxo {
                 out: OutPoint {
                     txid: Txid::all_zeros(),

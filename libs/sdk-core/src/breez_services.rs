@@ -42,8 +42,11 @@ use crate::models::{
     SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
+use crate::persist::cache::NodeStateStorage;
 use crate::persist::db::SqliteStorage;
-use crate::swap_in::swap::BTCReceiveSwap;
+use crate::persist::swap::SwapStorage;
+use crate::persist::transactions::CompletedPaymentStorage;
+use crate::swap_in::{BTCReceiveSwap, BTCReceiveSwapParameters, TaprootSwapperAPI};
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -838,7 +841,7 @@ impl BreezServices {
 
         let swap_info = self
             .btc_receive_swapper
-            .create_swap_address(channel_opening_fees)
+            .create_swap(channel_opening_fees)
             .await?;
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
             let address = &swap_info.bitcoin_address;
@@ -854,7 +857,7 @@ impl BreezServices {
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper.rescan_monitored_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress()?;
+        let in_progress = self.btc_receive_swapper.list_in_progress_swaps()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }
@@ -878,7 +881,7 @@ impl BreezServices {
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper
-            .refresh_swap_on_chain_status(swap_address.clone(), tip)
+            .rescan_swap(&swap_address, tip)
             .await?;
         self.btc_receive_swapper.redeem_swap(swap_address).await?;
         Ok(())
@@ -982,14 +985,14 @@ impl BreezServices {
         &self,
         req: PrepareRefundRequest,
     ) -> SdkResult<PrepareRefundResponse> {
-        Ok(self.btc_receive_swapper.prepare_refund_swap(req).await?)
+        Ok(self.btc_receive_swapper.prepare_refund(req).await?)
     }
 
     /// Construct and broadcast a refund transaction for a failed/expired swap
     ///
     /// Returns the txid of the refund transaction.
     pub async fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
-        Ok(self.btc_receive_swapper.refund_swap(req).await?)
+        Ok(self.btc_receive_swapper.refund(req).await?)
     }
 
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
@@ -1989,7 +1992,7 @@ impl BreezServices {
         match is_new_webhook_url {
             false => debug!("Webhook URL not changed, no need to (re-)register for monitored swap tx notifications"),
             true => {
-                for swap in self.persister.list_swaps(ListSwapsRequest {
+                for swap in self.btc_receive_swapper.list_swaps(ListSwapsRequest {
                     status: Some(SwapStatus::unexpired()),
                     ..Default::default()
                 })?
@@ -2184,7 +2187,7 @@ impl BreezServices {
             self.persister.list_reverse_swaps().map(sanitize_vec)?,
         )?;
         let swaps = crate::serializer::value::to_value(
-            self.persister
+            self.btc_receive_swapper
                 .list_swaps(ListSwapsRequest::default())
                 .map(sanitize_vec)?,
         )?;
@@ -2242,6 +2245,7 @@ struct BreezServicesBuilder {
     rest_client: Option<Arc<dyn RestClient>>,
     support_api: Option<Arc<dyn SupportAPI>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
+    taproot_swapper_api: Option<Arc<dyn TaprootSwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
@@ -2262,6 +2266,7 @@ impl BreezServicesBuilder {
             rest_client: None,
             support_api: None,
             swapper_api: None,
+            taproot_swapper_api: None,
             reverse_swapper_api: None,
             reverse_swap_service_api: None,
             buy_bitcoin_api: None,
@@ -2306,6 +2311,11 @@ impl BreezServicesBuilder {
 
     pub fn swapper_api(&mut self, swapper_api: Arc<dyn SwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
+        self
+    }
+
+    pub fn taproot_swapper_api(&mut self, swapper_api: Arc<dyn TaprootSwapperAPI>) -> &mut Self {
+        self.taproot_swapper_api = Some(swapper_api.clone());
         self
     }
 
@@ -2461,16 +2471,23 @@ impl BreezServicesBuilder {
             mempoolspace_urls,
         ));
 
-        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
-            self.config.network.into(),
-            unwrapped_node_api.clone(),
-            self.swapper_api
+        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(BTCReceiveSwapParameters {
+            chain_service: chain_service.clone(),
+            completed_payment_storage: persister.clone(),
+            network: self.config.network.into(),
+            node_api: unwrapped_node_api.clone(),
+            node_state_storage: persister.clone(),
+            payment_receiver: payment_receiver.clone(),
+            segwit_swapper_api: self
+                .swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
-            persister.clone(),
-            chain_service.clone(),
-            payment_receiver.clone(),
-        ));
+            swap_storage: persister.clone(),
+            taproot_swapper_api: self
+                .taproot_swapper_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
+        }));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
             self.config.clone(),
@@ -2540,6 +2557,7 @@ pub struct OpenChannelParams {
 
 #[tonic::async_trait]
 pub trait Receiver: Send + Sync {
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError>;
     async fn receive_payment(
         &self,
         req: ReceivePaymentRequest,
@@ -2561,17 +2579,21 @@ pub(crate) struct PaymentReceiver {
 
 #[tonic::async_trait]
 impl Receiver for PaymentReceiver {
-    async fn receive_payment(
-        &self,
-        req: ReceivePaymentRequest,
-    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
-        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError> {
         let node_state = self
             .persister
             .get_node_state()?
             .ok_or(ReceivePaymentError::Generic {
                 err: "Node info not found".into(),
             })?;
+        Ok(node_state.max_receivable_single_payment_amount_msat < amount_msat)
+    }
+
+    async fn receive_payment(
+        &self,
+        req: ReceivePaymentRequest,
+    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
+        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let expiry = req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
@@ -2586,8 +2608,7 @@ impl Receiver for PaymentReceiver {
         let mut channel_fees_msat = None;
 
         // check if we need to open channel
-        let open_channel_needed =
-            node_state.max_receivable_single_payment_amount_msat < req.amount_msat;
+        let open_channel_needed = self.open_channel_needed(req.amount_msat)?;
         if open_channel_needed {
             info!("We need to open a channel");
 
@@ -2888,6 +2909,8 @@ pub(crate) mod tests {
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
+    use crate::persist::cache::NodeStateStorage;
+    use crate::persist::swap::SwapStorage;
     use crate::test_utils::*;
     use crate::*;
 
@@ -3162,7 +3185,7 @@ pub(crate) mod tests {
                 attempted_error: None,
             },
         )?;
-        persister.insert_swap(swap_info.clone())?;
+        persister.insert_swap(&swap_info)?;
         persister.update_swap_bolt11(
             swap_info.bitcoin_address.clone(),
             swap_info.bolt11.clone().unwrap(),
@@ -3373,6 +3396,7 @@ pub(crate) mod tests {
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .taproot_swapper_api(Arc::new(MockBreezServer {}))
             .reverse_swap_service_api(Arc::new(MockReverseSwapperAPI {}))
             .buy_bitcoin_api(Arc::new(MockBuyBitcoinService {}))
             .persister(persister)
