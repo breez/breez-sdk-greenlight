@@ -486,21 +486,40 @@ impl BTCReceiveSwap {
                 .then(a.output_index.cmp(&b.output_index))
         });
 
+        // Function to check whether all utxos exceed the timelock. Only used for unilateral refunds.
+        let has_passed_timelock = utxos.iter().all(|utxo| {
+            let confirmed_at = match utxo.confirmed_at_height {
+                Some(confirmed_at) => confirmed_at,
+                None => return false,
+            };
+
+            current_tip >= confirmed_at.saturating_add(swap_info.lock_height as u32)
+        });
         let destination_address = req.to_address.parse()?;
         let tx = match address_type {
-            SwapAddressType::Segwit => self.segwit.create_refund_tx(
-                &swap_info,
-                &utxos,
-                &destination_address,
-                req.sat_per_vbyte,
-            ),
-            SwapAddressType::Taproot => match req.unilateral {
-                Some(true) => self.taproot.create_unilateral_refund_tx(
+            SwapAddressType::Segwit => {
+                if !has_passed_timelock {
+                    return Err(ReceiveSwapError::UtxosTimelocked);
+                }
+                self.segwit.create_refund_tx(
                     &swap_info,
                     &utxos,
                     &destination_address,
                     req.sat_per_vbyte,
-                ),
+                )
+            }
+            SwapAddressType::Taproot => match req.unilateral {
+                Some(true) => {
+                    if !has_passed_timelock {
+                        return Err(ReceiveSwapError::UtxosTimelocked);
+                    }
+                    self.taproot.create_unilateral_refund_tx(
+                        &swap_info,
+                        &utxos,
+                        &destination_address,
+                        req.sat_per_vbyte,
+                    )
+                }
                 _ => {
                     self.taproot
                         .create_cooperative_refund_tx(
