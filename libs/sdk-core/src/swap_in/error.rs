@@ -21,6 +21,8 @@ pub enum ReceiveSwapError {
     NodeStateNotFound,
     #[error("No utxos found")]
     NoUtxos,
+    #[error("Utxos are still timelocked")]
+    UtxosTimelocked,
     #[error("Payment error: {0}")]
     PaymentError(String),
     #[error("Swap not found: {0}")]
