@@ -74,6 +74,7 @@ impl SwapKeys {
     }
 }
 
+#[derive(Eq, PartialEq)]
 enum SwapAddressType {
     Segwit,
     Taproot,
@@ -669,6 +670,15 @@ impl BTCReceiveSwap {
         // If there are utxos, but they all have unconfirmed spends, they are refundable.
         // If the spends were confirmed, they wouldn't be utxos at all.
         if chain_data.utxos().iter().all(|utxo| utxo.spend.is_some()) {
+            return SwapStatus::Refundable;
+        }
+
+        if address_type == &SwapAddressType::Taproot
+            && chain_data
+                .confirmed_utxos()
+                .iter()
+                .any(|utxo| utxo.amount_sat > swap_info.max_allowed_deposit as u64)
+        {
             return SwapStatus::Refundable;
         }
 
