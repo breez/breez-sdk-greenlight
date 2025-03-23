@@ -1564,26 +1564,36 @@ pub struct PaymentPathEdge {
 }
 
 impl PaymentPathEdge {
-    pub(crate) fn amount_to_forward(&self, in_amount_msat: u64) -> u64 {
-        let amount_to_forward = Self::divide_ceil(
-            1_000_000 * (in_amount_msat - self.base_fee_msat),
-            1_000_000 + self.fee_per_millionth,
+    pub fn final_hop_amount(&self, in_amount_msat: u64) -> u64 {
+        let amount_to_forward = in_amount_msat.saturating_sub(self.base_fee_msat);
+        let amount_to_forward = amount_to_forward.saturating_sub(
+            (amount_to_forward as u128 * self.fee_per_millionth as u128 / 1_000_000) as u64,
         );
-
-        info!("amount_to_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, amount_to_forward);
+        info!(
+            "amount_to_forward: in_amount_msat = {}, base_fee_msat={}, fee_per_millionth={}, amount_to_forward: {}", 
+            in_amount_msat, self.base_fee_msat, self.fee_per_millionth, amount_to_forward
+        );
         amount_to_forward
     }
 
-    pub(crate) fn amount_from_forward(&self, forward_amount_msat: u64) -> u64 {
+    pub fn amount_from_forward(&self, forward_amount_msat: u64) -> u64 {
         let in_amount_msat = self.base_fee_msat
             + forward_amount_msat * (1_000_000 + self.fee_per_millionth) / 1_000_000;
 
         print!("amount_from_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, forward_amount_msat);
         in_amount_msat
     }
+}
 
-    fn divide_ceil(dividend: u64, factor: u64) -> u64 {
-        dividend.div_ceil(factor)
+impl Debug for PaymentPathEdge {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PaymentPathEdge")
+            .field("node_id", &hex::encode(&self.node_id))
+            .field("short_channel_id", &self.short_channel_id)
+            .field("base_fee_msat", &self.base_fee_msat)
+            .field("fee_per_millionth", &self.fee_per_millionth)
+            .field("channel_delay", &self.channel_delay)
+            .finish()
     }
 }
 

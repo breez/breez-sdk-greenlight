@@ -615,7 +615,8 @@ impl Greenlight {
         let route_response = route_result?.into_inner();
         info!(
             "max_sendable_amount: route response = {:?}",
-            route_response.route
+            route_response.route.iter().map(|r| format!("{{node_id: {}, channel: {}}}", 
+                hex::encode(&r.node_id), r.short_channel_id)).collect::<Vec<_>>()
         );
 
         // We fetch the opened channels so can calculate max amount to send for each channel
@@ -657,7 +658,11 @@ impl Greenlight {
                 }])
             }
 
-            info!("max_sendable_amount: route_hops = {:?}", payment_path.edges);
+            info!(
+                "max_sendable_amount: route_hops = {:?}", 
+                payment_path.edges.iter().map(|e| format!("{{node_id: {}, channel: {}}}", 
+                    hex::encode(&e.node_id), e.short_channel_id)).collect::<Vec<_>>()
+            );
 
             // go over each hop and calculate the amount to forward.
             let max_payment_amount =
@@ -1746,10 +1751,30 @@ impl NodeAPI for Greenlight {
         let mut result = Map::new();
         for command in all_commands {
             let command_name = command.clone();
-            let res = self
+            let mut res = self
                 .execute_command(command)
                 .await
                 .unwrap_or_else(|e| json!({ "error": e.to_string() }));
+            
+            // Convert any byte arrays to hex in the response
+            if let Value::Object(obj) = &mut res {
+                for (_, value) in obj.iter_mut() {
+                    if let Value::Array(arr) = value {
+                        for item in arr.iter_mut() {
+                            if let Value::Object(item_obj) = item {
+                                for (_, v) in item_obj.iter_mut() {
+                                    if let Value::String(s) = v {
+                                        if let Ok(bytes) = hex::decode(s) {
+                                            *v = Value::String(hex::encode(bytes));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
             result.insert(command_name, res);
         }
         Ok(Value::Object(result))
@@ -1992,7 +2017,7 @@ impl NodeAPI for Greenlight {
                     Some((fees_base_msat, fees_proportional_millionths, cltv_delta)) => {
                         debug!(
                             "For peer {}: remote base {} proportional {} cltv_delta {}",
-                            peer_id_str, fees_base_msat, fees_proportional_millionths, cltv_delta,
+                            hex::encode(&peer_id), fees_base_msat, fees_proportional_millionths, cltv_delta,
                         );
                         let hint = RouteHint {
                             hops: vec![RouteHintHop {
