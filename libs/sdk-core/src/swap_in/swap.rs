@@ -96,7 +96,14 @@ impl SwapChainData {
     pub fn utxos(&self) -> Vec<SwapOutput> {
         self.outputs
             .iter()
-            .filter(|o| o.spend.is_none())
+            .filter(|o| {
+                let spend = match &o.spend {
+                    Some(spend) => spend,
+                    None => return true,
+                };
+
+                spend.confirmed_at_height.is_none()
+            })
             .cloned()
             .collect()
     }
