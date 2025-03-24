@@ -410,7 +410,7 @@ impl TaprootReceiveSwap {
                 ))?;
             let witness = vec![
                 signature,
-                serialize(&refund_script),
+                refund_script.to_bytes(),
                 control_block.serialize(),
             ];
             input.witness.clear();
