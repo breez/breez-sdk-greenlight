@@ -674,10 +674,10 @@ impl BTCReceiveSwap {
         }
 
         if address_type == &SwapAddressType::Taproot
-            && chain_data
-                .confirmed_utxos()
-                .iter()
-                .any(|utxo| utxo.amount_sat > swap_info.max_allowed_deposit as u64)
+            && chain_data.confirmed_utxos().iter().any(|utxo| {
+                utxo.amount_sat > swap_info.max_allowed_deposit as u64
+                    || utxo.amount_sat < swap_info.min_allowed_deposit as u64
+            })
         {
             return SwapStatus::Refundable;
         }
@@ -1530,6 +1530,8 @@ mod tests {
         let swap = SwapInfo {
             lock_height: 288,
             bitcoin_address: BITCOIN_ADDRESS.to_string(),
+            min_allowed_deposit: 1_000,
+            max_allowed_deposit: 1_000_000,
             ..Default::default()
         };
 
@@ -1569,6 +1571,40 @@ mod tests {
         )
         .await;
         assert_eq!(result.status, SwapStatus::Redeemable);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 999,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_001,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
 
         let result = test_swap_state_transition(
             &swap,
