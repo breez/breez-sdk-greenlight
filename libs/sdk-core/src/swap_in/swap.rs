@@ -87,10 +87,9 @@ pub(crate) struct SwapChainData {
 
 impl SwapChainData {
     pub fn confirmed_utxos(&self) -> Vec<SwapOutput> {
-        self.outputs
-            .iter()
-            .filter(|o| o.spend.is_none() && o.confirmed_at_height.is_some())
-            .cloned()
+        self.utxos()
+            .into_iter()
+            .filter(|u| u.confirmed_at_height.is_some())
             .collect()
     }
 
