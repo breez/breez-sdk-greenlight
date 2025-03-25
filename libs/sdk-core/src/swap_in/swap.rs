@@ -404,6 +404,7 @@ impl BTCReceiveSwap {
         &self,
         req: PrepareRefundRequest,
     ) -> ReceiveSwapResult<PrepareRefundResponse> {
+        let current_tip = self.chain_service.current_tip().await?;
         let address_type = parse_address(&req.swap_address)?;
         let swap_info = self
             .swap_storage
@@ -422,7 +423,7 @@ impl BTCReceiveSwap {
             }
         };
 
-        let mut utxos: Vec<_> = chain_data.confirmed_utxos();
+        let mut utxos = refundable_utxos(&swap_info, &chain_data, current_tip, &address_type);
         if utxos.is_empty() {
             return Err(ReceiveSwapError::NoUtxos);
         }
