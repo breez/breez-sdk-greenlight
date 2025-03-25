@@ -994,7 +994,7 @@ impl BTCReceiveSwap {
                 // TODO: Substract fees here once swapper supports them.
                 amount_msat,
                 cltv: Some(144),
-                description: format!("taproot swap {}", swap_info.bitcoin_address),
+                description: String::from("Bitcoin Transfer"),
                 expiry: Some(blocks.saturating_mul(EXPIRY_SECONDS_PER_BLOCK)),
                 opening_fee_params,
                 preimage: Some(swap_info.preimage.clone()),
