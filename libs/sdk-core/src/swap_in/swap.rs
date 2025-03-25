@@ -348,7 +348,7 @@ impl BTCReceiveSwap {
             let bolt11 = s.bolt11.unwrap_or_default();
 
             match self.redeem_swap(swap_address.clone()).await {
-                Ok(_) => info!("succeed to redeem swap {}: {}", hex::encode(&swap_address), bolt11),
+                Ok(_) => info!("succeed to redeem swap {}: {}", swap_address, bolt11),
                 Err(err) => {
                     error!("failed to redeem swap {err:?}: {swap_address} {bolt11}");
                     self.persister

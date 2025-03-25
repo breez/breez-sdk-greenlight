@@ -2017,7 +2017,7 @@ impl NodeAPI for Greenlight {
                     Some((fees_base_msat, fees_proportional_millionths, cltv_delta)) => {
                         debug!(
                             "For peer {}: remote base {} proportional {} cltv_delta {}",
-                            hex::encode(&peer_id), fees_base_msat, fees_proportional_millionths, cltv_delta,
+                            peer_id_str, fees_base_msat, fees_proportional_millionths, cltv_delta,
                         );
                         let hint = RouteHint {
                             hops: vec![RouteHintHop {
