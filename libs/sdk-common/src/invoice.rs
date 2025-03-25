@@ -12,8 +12,9 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "liquid")]
 use {
-    bitcoin::hashes::hex::ToHex as BitcoinHashToHex, lightning_125::ln::msgs::DecodeError,
-    lightning_125::offers::offer::Offer, lightning_125::offers::parse::Bolt12ParseError,
+    bitcoin::hashes::hex::ToHex as BitcoinHashToHex, lightning_with_bolt12::ln::msgs::DecodeError,
+    lightning_with_bolt12::offers::offer::Offer,
+    lightning_with_bolt12::offers::parse::Bolt12ParseError,
 };
 
 use crate::prelude::*;
@@ -401,10 +402,12 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
     let min_amount = offer
         .amount()
         .map(|amount| match amount {
-            lightning_125::offers::offer::Amount::Bitcoin { amount_msats } => Ok(Amount::Bitcoin {
-                amount_msat: amount_msats,
-            }),
-            lightning_125::offers::offer::Amount::Currency {
+            lightning_with_bolt12::offers::offer::Amount::Bitcoin { amount_msats } => {
+                Ok(Amount::Bitcoin {
+                    amount_msat: amount_msats,
+                })
+            }
+            lightning_with_bolt12::offers::offer::Amount::Currency {
                 iso4217_code,
                 amount,
             } => Ok(Amount::Currency {
@@ -427,7 +430,7 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
         description: offer.description().map(|d| d.to_string()),
         absolute_expiry: offer.absolute_expiry().map(|expiry| expiry.as_secs()),
         issuer: offer.issuer().map(|s| s.to_string()),
-        signing_pubkey: offer.signing_pubkey().map(|pk| pk.to_string()),
+        signing_pubkey: offer.issuer_signing_pubkey().map(|pk| pk.to_string()),
         paths: offer
             .paths()
             .iter()
