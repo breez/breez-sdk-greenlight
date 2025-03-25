@@ -49,7 +49,7 @@ class LnurlPayInvoiceJob(
     override fun start(breezSDK: BlockingBreezServices) {
         var request: LnurlInvoiceRequest? = null
         try {
-            request = Json.decodeFromString(LnurlInvoiceRequest.serializer(), payload)
+            request = Json.decodeFromString<LnurlInvoiceRequest>(LnurlInvoiceRequest.serializer(), payload)
             // Get channel setup fee for invoice amount
             val ofpResp =
                 breezSDK.openChannelFee(OpenChannelFeeRequest(amountMsat = request.amount))
