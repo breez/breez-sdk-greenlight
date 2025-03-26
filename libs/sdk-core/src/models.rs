@@ -1577,7 +1577,7 @@ impl PaymentPathEdge {
     pub(crate) fn amount_from_forward(&self, forward_amount_msat: u64) -> u64 {
         let in_amount_msat = self.base_fee_msat
             + forward_amount_msat * (1_000_000 + self.fee_per_millionth) / 1_000_000;
-        print!("amount_from_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}", self.base_fee_msat, self.fee_per_millionth);
+        print!("amount_from_forward: in_amount_msat = {in_amount_msat},base_fee_msat={}, fee_per_millionth={}  amount_to_forward: {}", self.base_fee_msat, self.fee_per_millionth, forward_amount_msat);
         in_amount_msat
     }
 
