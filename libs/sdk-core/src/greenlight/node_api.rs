@@ -1751,30 +1751,10 @@ impl NodeAPI for Greenlight {
         let mut result = Map::new();
         for command in all_commands {
             let command_name = command.clone();
-            let mut res = self
+            let res = self
                 .execute_command(command)
                 .await
                 .unwrap_or_else(|e| json!({ "error": e.to_string() }));
-            
-            // Convert any byte arrays to hex in the response
-            if let Value::Object(obj) = &mut res {
-                for (_, value) in obj.iter_mut() {
-                    if let Value::Array(arr) = value {
-                        for item in arr.iter_mut() {
-                            if let Value::Object(item_obj) = item {
-                                for (_, v) in item_obj.iter_mut() {
-                                    if let Value::String(s) = v {
-                                        if let Ok(bytes) = hex::decode(s) {
-                                            *v = Value::String(hex::encode(bytes));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
             result.insert(command_name, res);
         }
         Ok(Value::Object(result))
@@ -2050,6 +2030,78 @@ impl NodeAPI for Greenlight {
         let open_peer_channels = self.get_open_peer_channels_pb().await?;
         let open_peers: HashSet<Vec<u8>> = open_peer_channels.into_keys().collect();
         Ok(open_peers)
+    }
+
+    async fn execute_dev_command(&self, command: String) -> NodeResult<Value> {
+        let node_cmd =
+            NodeCommand::from_str(&command).map_err(|_| anyhow!("Command not found: {command}"))?;
+
+        let mut client = self.get_node_client().await?;
+        let res = match node_cmd {
+            NodeCommand::ListPeers => {
+                let req = cln::ListpeersRequest::default();
+                let resp = with_connection_retry!(client.list_peers(req.clone()))
+                    .await?
+                    .into_inner();
+
+                Ok(crate::serializer::value::to_value(&resp)?)
+            }
+            NodeCommand::ListPeerChannels => {
+                let req = cln::ListpeerchannelsRequest::default();
+                let resp = with_connection_retry!(client.list_peer_channels(req.clone()))
+                    .await?
+                    .into_inner();
+                Ok(crate::serializer::value::to_value(&resp)?)
+            }
+            NodeCommand::ListFunds => {
+                let req = cln::ListfundsRequest::default();
+                let resp = with_connection_retry!(client.list_funds(req.clone()))
+                    .await?
+                    .into_inner();
+                Ok(crate::serializer::value::to_value(&resp)?)
+            }
+            NodeCommand::ListPayments => {
+                let req = cln::ListpaysRequest::default();
+                let resp = with_connection_retry!(client.list_pays(req.clone()))
+                    .await?
+                    .into_inner();
+                Ok(crate::serializer::value::to_value(&resp)?)
+            }
+            NodeCommand::ListInvoices => {
+                let req = cln::ListinvoicesRequest::default();
+                let resp = with_connection_retry!(client.list_invoices(req.clone()))
+                    .await?
+                    .into_inner();
+
+                Ok(crate::serializer::value::to_value(&resp)?)
+            }
+            NodeCommand::CloseAllChannels => {
+                let req = cln::ListpeersRequest::default();
+                let resp = with_connection_retry!(client.list_peers(req.clone()))
+                    .await?
+                    .into_inner();
+                for p in resp.peers {
+                    self.close_peer_channels(hex::encode(p.id)).await?;
+                }
+
+                Ok(Value::String("All channels were closed".to_string()))
+            }
+            NodeCommand::GetInfo => {
+                let req = cln::GetinfoRequest::default();
+                let resp = with_connection_retry!(client.getinfo(req.clone()))
+                    .await?
+                    .into_inner();
+                Ok(crate::serializer::value::to_value(&resp)?)
+            }
+            NodeCommand::Stop => {
+                let req = cln::StopRequest::default();
+                let resp = with_connection_retry!(client.stop(req.clone()))
+                    .await?
+                    .into_inner();
+                Ok(crate::serializer::value::to_value(&resp)?)
+            }
+        };
+        Ok(res)
     }
 }
 
