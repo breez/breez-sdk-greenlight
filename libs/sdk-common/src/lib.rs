@@ -12,7 +12,7 @@ mod lnurl;
 mod model;
 mod test_utils;
 pub mod tonic_wrap;
-mod utils;
+pub mod utils;
 
 // Re-export commonly used crates, to make it easy for callers to use the specific versions we're using.
 // For example, for the bitcoin crate, this is important because certain error conversions defined in

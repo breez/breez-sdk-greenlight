@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use anyhow::Result;
 use url::Url;
 
-use crate::{grpc::SignUrlRequest, prelude::BreezServer};
+use crate::{grpc::SignUrlRequest, prelude::BreezServer, utils::Arc};
 
 use super::BuyBitcoinProviderApi;
 
