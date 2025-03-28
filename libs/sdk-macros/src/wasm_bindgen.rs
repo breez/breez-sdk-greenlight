@@ -119,14 +119,14 @@ fn extern_wasm_bindgen_from_enum(
 fn extern_wasm_bindgen_from_struct(
     internal_name: &Ident,
     external_name: &TokenStream,
-    data_stuct: &DataStruct,
+    data_struct: &DataStruct,
 ) -> (
     /* additional_definition */ TokenStream,
     /* input_data_struct */ DataStruct,
     /* output_impl */ TokenStream,
 ) {
-    let input_data_struct = update_data_struct(data_stuct);
-    let fields = get_struct_fields(&data_stuct.fields);
+    let input_data_struct = update_data_struct(data_struct);
+    let fields = get_struct_fields(&data_struct.fields);
     let fields_clone = fields.clone();
     let additional_definition = quote! {
         #[serde(rename_all = "camelCase")]
