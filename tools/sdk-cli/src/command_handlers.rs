@@ -406,12 +406,14 @@ pub(crate) async fn handle_command(
             swap_address,
             to_address,
             sat_per_vbyte,
+            unilateral,
         } => {
             let res = sdk()?
                 .prepare_refund(PrepareRefundRequest {
                     swap_address,
                     to_address,
                     sat_per_vbyte,
+                    unilateral,
                 })
                 .await?;
             Ok(format!(
@@ -423,12 +425,14 @@ pub(crate) async fn handle_command(
             swap_address,
             to_address,
             sat_per_vbyte,
+            unilateral,
         } => {
             let res = sdk()?
                 .refund(RefundRequest {
                     swap_address,
                     to_address,
                     sat_per_vbyte,
+                    unilateral,
                 })
                 .await?;
             Ok(format!("Refund tx: {}", res.refund_tx_id))

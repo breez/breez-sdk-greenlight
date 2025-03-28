@@ -237,6 +237,16 @@ pub mod model {
         Url { data: UrlSuccessActionData },
     }
 
+    impl Default for SuccessActionProcessed {
+        fn default() -> Self {
+            Self::Message {
+                data: MessageSuccessActionData {
+                    message: "".to_string(),
+                },
+            }
+        }
+    }
+
     /// Supported success action types
     ///
     /// Receiving any other (unsupported) success action type will result in a failed parsing,

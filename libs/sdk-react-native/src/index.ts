@@ -388,6 +388,7 @@ export interface PrepareRefundRequest {
     swapAddress: string
     toAddress: string
     satPerVbyte: number
+    unilateral?: boolean
 }
 
 export interface PrepareRefundResponse {
@@ -441,6 +442,7 @@ export interface RefundRequest {
     swapAddress: string
     toAddress: string
     satPerVbyte: number
+    unilateral?: boolean
 }
 
 export interface RefundResponse {
