@@ -10,13 +10,13 @@ pub fn extern_wasm_bindgen(
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
     let derive_input = parse_macro_input!(input as DeriveInput);
-    let (serde_case, output_impl) = extern_wasm_bindgen_from(attr, &derive_input);
+    let (additional_definition, input, output) = extern_wasm_bindgen_from(attr, &derive_input);
     let output = quote! {
         #[derive(serde::Deserialize, serde::Serialize, tsify_next::Tsify)]
         #[tsify(from_wasm_abi, into_wasm_abi)]
-        #[serde(rename_all = #serde_case)]
-        #derive_input
-        #output_impl
+        #additional_definition
+        #input
+        #output
     };
     output.into()
 }
@@ -24,28 +24,33 @@ pub fn extern_wasm_bindgen(
 fn extern_wasm_bindgen_from(
     attr: proc_macro::TokenStream,
     derive_input: &DeriveInput,
-) -> (&str, TokenStream) {
+) -> (
+    /* additional_definition */ TokenStream,
+    /* input */ DeriveInput,
+    /* output */ TokenStream,
+) {
+    let mut input = derive_input.clone();
+    let mut output = TokenStream::new();
     let internal_name = &derive_input.ident;
     let external_name = TokenStream::from(attr);
-    let mut output = TokenStream::new();
-    let serde_case = match &derive_input.data {
+    let additional_definition = match &derive_input.data {
         Data::Enum(data) => {
-            output.extend(extern_wasm_bindgen_from_enum(
-                internal_name,
-                &external_name,
-                data,
-            ));
-            "SCREAMING_SNAKE_CASE"
+            let (additional_definition, input_data_enum, output_impl) =
+                extern_wasm_bindgen_from_enum(internal_name, &external_name, data);
+            input.data = Data::Enum(input_data_enum);
+            output.extend(output_impl);
+            additional_definition
         }
         Data::Struct(data) => {
-            output.extend(extern_wasm_bindgen_from_struct(
-                internal_name,
-                &external_name,
-                data,
-            ));
-            "camelCase"
+            let (additional_definition, input_data_struct, output_impl) =
+                extern_wasm_bindgen_from_struct(internal_name, &external_name, data);
+            input.data = Data::Struct(input_data_struct);
+            output.extend(output_impl);
+            additional_definition
         }
-        _ => "camelCase",
+        _ => quote! {
+            #[serde(rename_all = "camelCase")]
+        },
     };
     output.extend(quote! {
         impl wasm_bindgen::__rt::VectorIntoJsValue for #internal_name {
@@ -54,14 +59,23 @@ fn extern_wasm_bindgen_from(
             }
         }
     });
-    (serde_case, output)
+    (additional_definition, input, output)
 }
 
 fn extern_wasm_bindgen_from_enum(
     internal_name: &Ident,
     external_name: &TokenStream,
     data_enum: &DataEnum,
-) -> TokenStream {
+) -> (
+    /* additional_definition */ TokenStream,
+    /* input_data_enum */ DataEnum,
+    /* output_impl */ TokenStream,
+) {
+    let input_data_enum = update_data_enum(data_enum);
+    let use_tag = data_enum
+        .variants
+        .iter()
+        .any(|variant| !variant.fields.is_empty());
     let variants = data_enum.variants.iter().map(|variant| {
         let variant_name = &variant.ident;
         let field_names = get_enum_field_names(&variant.fields);
@@ -73,7 +87,17 @@ fn extern_wasm_bindgen_from_enum(
         }
     });
     let variants_clone = variants.clone();
-    quote! {
+    let mut output_impl = TokenStream::new();
+    let additional_definition = if use_tag {
+        quote! {
+            #[serde(rename_all = "camelCase", rename_all_fields = "camelCase", tag = "type")]
+        }
+    } else {
+        quote! {
+            #[serde(rename_all = "camelCase")]
+        }
+    };
+    output_impl.extend(quote! {
         impl From<#external_name> for #internal_name {
             fn from(val: #external_name) -> Self {
                 match val {
@@ -88,17 +112,26 @@ fn extern_wasm_bindgen_from_enum(
                 }
             }
         }
-    }
+    });
+    (additional_definition, input_data_enum, output_impl)
 }
 
 fn extern_wasm_bindgen_from_struct(
     internal_name: &Ident,
     external_name: &TokenStream,
-    data_stuct: &DataStruct,
-) -> TokenStream {
-    let fields = get_struct_fields(&data_stuct.fields);
+    data_struct: &DataStruct,
+) -> (
+    /* additional_definition */ TokenStream,
+    /* input_data_struct */ DataStruct,
+    /* output_impl */ TokenStream,
+) {
+    let input_data_struct = update_data_struct(data_struct);
+    let fields = get_struct_fields(&data_struct.fields);
     let fields_clone = fields.clone();
-    quote! {
+    let additional_definition = quote! {
+        #[serde(rename_all = "camelCase")]
+    };
+    let output_impl = quote! {
         impl From<#external_name> for #internal_name {
             fn from(val: #external_name) -> Self {
                 #internal_name {
@@ -113,7 +146,8 @@ fn extern_wasm_bindgen_from_struct(
                 }
             }
         }
-    }
+    };
+    (additional_definition, input_data_struct, output_impl)
 }
 
 fn get_path(path_args: &PathArguments) -> Option<&TypePath> {
@@ -131,6 +165,37 @@ fn get_path(path_args: &PathArguments) -> Option<&TypePath> {
         }
     }
     None
+}
+
+fn update_data_enum(data_enum: &DataEnum) -> DataEnum {
+    let mut data_enum = data_enum.clone();
+    for variant in data_enum.variants.iter_mut() {
+        variant.fields = update_data_fields(&variant.fields);
+    }
+    data_enum
+}
+
+fn update_data_struct(data_struct: &DataStruct) -> DataStruct {
+    let mut data_struct = data_struct.clone();
+    data_struct.fields = update_data_fields(&data_struct.fields);
+    data_struct
+}
+
+fn update_data_fields(fields: &Fields) -> Fields {
+    let mut fields = fields.clone();
+    if let Fields::Named(ref mut fields) = fields {
+        for field in fields.named.iter_mut() {
+            if let Type::Path(ref type_path) = field.ty {
+                let segment = &type_path.path.segments[0];
+                if segment.ident == "Option" {
+                    field.attrs.push(
+                        syn::parse_quote! { #[serde(skip_serializing_if = "Option::is_none")] },
+                    );
+                }
+            }
+        }
+    }
+    fields
 }
 
 fn get_struct_fields(fields: &Fields) -> Vec<TokenStream> {
