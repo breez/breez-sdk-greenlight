@@ -1587,6 +1587,18 @@ impl PaymentPathEdge {
     }
 }
 
+impl Debug for PaymentPathEdge {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PaymentPathEdge")
+            .field("node_id", &hex::encode(&self.node_id))
+            .field("short_channel_id", &self.short_channel_id)
+            .field("base_fee_msat", &self.base_fee_msat)
+            .field("fee_per_millionth", &self.fee_per_millionth)
+            .field("channel_delay", &self.channel_delay)
+            .finish()
+    }
+}
+
 pub(crate) mod sanitize {
     use crate::{FullReverseSwapInfo, SwapInfo};
 

@@ -615,7 +615,8 @@ impl Greenlight {
         let route_response = route_result?.into_inner();
         info!(
             "max_sendable_amount: route response = {:?}",
-            route_response.route
+            route_response.route.iter().map(|r| format!("{{node_id: {}, channel: {}}}", 
+                hex::encode(&r.node_id), r.short_channel_id)).collect::<Vec<_>>()
         );
 
         // We fetch the opened channels so can calculate max amount to send for each channel
@@ -657,7 +658,11 @@ impl Greenlight {
                 }])
             }
 
-            info!("max_sendable_amount: route_hops = {:?}", payment_path.edges);
+            info!(
+                "max_sendable_amount: route_hops = {:?}", 
+                payment_path.edges.iter().map(|e| format!("{{node_id: {}, channel: {}}}", 
+                    hex::encode(&e.node_id), e.short_channel_id)).collect::<Vec<_>>()
+            );
 
             // go over each hop and calculate the amount to forward.
             let max_payment_amount =
