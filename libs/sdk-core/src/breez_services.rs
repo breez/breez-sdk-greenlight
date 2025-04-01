@@ -1513,7 +1513,7 @@ impl BreezServices {
                 };
 
                 debug!("shutting down signer");
-                _ = tx.send(());
+                drop(tx); // Dropping the sender explicitly to notify the receiver.
 
                 if is_shutdown {
                     return;
