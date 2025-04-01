@@ -129,7 +129,12 @@ impl Transport {
 
     async fn handle_message(&self, msg: CustomMessage) {
         if msg.message_type != LSPS0_MESSAGE_TYPE {
-            debug!("received custom message that was not lsps0: {:?}", msg);
+            debug!(
+                "received custom message that was not lsps0: node_id={}, type={}, payload={}",
+                hex::encode(&msg.peer_id),
+                msg.message_type,
+                hex::encode(&msg.payload)
+            );
             return;
         }
 
