@@ -1,4 +1,3 @@
-use anyhow::Result;
 use log::trace;
 use tokio::sync::Mutex;
 use tonic::codegen::InterceptedService;
@@ -13,6 +12,7 @@ use crate::grpc::payment_notifier_client::PaymentNotifierClient;
 use crate::grpc::signer_client::SignerClient;
 use crate::grpc::support_client::SupportClient;
 use crate::grpc::swapper_client::SwapperClient;
+use crate::grpc::taproot_swapper_client::TaprootSwapperClient;
 use crate::grpc::transport::{GrpcClient, Transport};
 use crate::grpc::{ChainApiServersRequest, PingRequest};
 use crate::prelude::{ServiceConnectivityError, ServiceConnectivityErrorKind};
@@ -30,7 +30,7 @@ pub struct BreezServer {
 }
 
 impl BreezServer {
-    pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
+    pub fn new(server_url: String, api_key: Option<String>) -> anyhow::Result<Self> {
         Ok(Self {
             grpc_client: Mutex::new(GrpcClient::new(server_url)?),
             api_key,
@@ -94,7 +94,20 @@ impl BreezServer {
         SwapperClient::new(self.grpc_client.lock().await.clone().into_inner())
     }
 
-    pub async fn ping(&self) -> Result<String> {
+    pub async fn get_taproot_swapper_client(
+        &self,
+    ) -> Result<
+        TaprootSwapperClient<InterceptedService<Transport, ApiKeyInterceptor>>,
+        ServiceConnectivityError,
+    > {
+        let api_key_metadata = self.api_key_metadata()?;
+        Ok(TaprootSwapperClient::with_interceptor(
+            self.grpc_client.lock().await.clone().into_inner(),
+            ApiKeyInterceptor { api_key_metadata },
+        ))
+    }
+
+    pub async fn ping(&self) -> anyhow::Result<String> {
         let request = Request::new(PingRequest {});
         let response = self
             .get_information_client()

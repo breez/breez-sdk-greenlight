@@ -5,26 +5,36 @@ use std::{mem, vec};
 
 use anyhow::{Error, Result};
 use chrono::{SecondsFormat, Utc};
+use gl_client::bitcoin::blockdata::opcodes::all::{
+    OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CSV, OP_EQUALVERIFY, OP_HASH160,
+};
+use gl_client::bitcoin::blockdata::script;
+use gl_client::bitcoin::hashes::ripemd160;
+use gl_client::bitcoin::util::taproot::{TaprootBuilder, TaprootSpendInfo};
+use gl_client::bitcoin::{Address, Script, Sequence, XOnlyPublicKey};
 use gl_client::pb::cln::pay_response::PayStatus;
 use gl_client::pb::cln::Amount;
 use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
 use rand::{random, Rng};
-use sdk_common::grpc;
+use sdk_common::grpc::{
+    self, CreateSwapResponse, PaySwapResponse, RefundSwapResponse, SwapParameters,
+};
 use sdk_common::prelude::{FiatAPI, FiatCurrency, Rate};
+use secp256k1::musig::MusigKeyAggCache;
 use serde_json::{json, Value};
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
 use tokio_stream::StreamExt;
-use tonic::Streaming;
+use tonic::{Status, Streaming};
 
 use crate::backup::{BackupState, BackupTransport};
 use crate::bitcoin::hashes::hex::ToHex;
 use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::ecdsa::RecoverableSignature;
-use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1, SecretKey};
+use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1};
 use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::Network;
 use crate::breez_services::{OpenChannelParams, Receiver};
@@ -36,11 +46,10 @@ use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
-    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, Swap, SwapperAPI, SyncResponse, TlvEntry,
+    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, SwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
-use crate::swap_in::error::SwapResult;
-use crate::swap_in::swap::create_submarine_swap_script;
+use crate::swap_in::TaprootSwapperAPI;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 use crate::{
@@ -117,37 +126,6 @@ pub struct MockSwapperAPI {}
 
 #[tonic::async_trait]
 impl SwapperAPI for MockSwapperAPI {
-    async fn create_swap(
-        &self,
-        hash: Vec<u8>,
-        payer_pubkey: Vec<u8>,
-        _node_pubkey: String,
-    ) -> SwapResult<Swap> {
-        let mut swapper_priv_key_raw = [2; 32];
-        rand::thread_rng().fill(&mut swapper_priv_key_raw);
-
-        let secp = Secp256k1::new();
-        // swapper keys
-        let swapper_private_key = SecretKey::from_slice(&swapper_priv_key_raw).unwrap();
-        let swapper_pub_key = PublicKey::from_secret_key(&secp, &swapper_private_key)
-            .serialize()
-            .to_vec();
-
-        let script =
-            create_submarine_swap_script(hash, swapper_pub_key.clone(), payer_pubkey, 144).unwrap();
-        let address = crate::bitcoin::Address::p2wsh(&script, crate::bitcoin::Network::Bitcoin);
-
-        Ok(Swap {
-            bitcoin_address: address.to_string(),
-            swapper_pubkey: swapper_pub_key,
-            lock_height: 144,
-            swapper_max_payable: 4_000_000,
-            error_message: "".to_string(),
-            required_reserve: 0,
-            swapper_min_payable: 3_000,
-        })
-    }
-
     async fn complete_swap(&self, _bolt11: String) -> Result<()> {
         Ok(())
     }
@@ -296,6 +274,9 @@ impl Default for MockReceiver {
 
 #[tonic::async_trait]
 impl Receiver for MockReceiver {
+    fn open_channel_needed(&self, _amount_msat: u64) -> Result<bool, ReceivePaymentError> {
+        Ok(true)
+    }
     async fn receive_payment(
         &self,
         _request: ReceivePaymentRequest,
@@ -346,6 +327,10 @@ impl NodeAPI for MockNodeAPI {
             request.preimage,
         );
         Ok(invoice.bolt11)
+    }
+
+    async fn delete_invoice(&self, _bolt11: String) -> NodeResult<()> {
+        Ok(())
     }
 
     async fn pull_changed(
@@ -475,11 +460,11 @@ impl NodeAPI for MockNodeAPI {
         Ok(json!({}))
     }
 
-    async fn max_sendable_amount(
+    async fn max_sendable_amount<'a>(
         &self,
         _payee_node_id: Option<Vec<u8>>,
         _max_hops: u32,
-        _last_hop: Option<&RouteHintHop>,
+        _last_hop: Option<&'a RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
@@ -902,4 +887,107 @@ pub(crate) fn get_test_ofp_generic(
         promise: "".to_string(),
     }
     .into()
+}
+
+#[tonic::async_trait]
+impl TaprootSwapperAPI for MockBreezServer {
+    async fn create_swap(
+        &self,
+        hash: Vec<u8>,
+        refund_pubkey: Vec<u8>,
+    ) -> SdkResult<CreateSwapResponse> {
+        let lock_time = 1008;
+        let claim_pubkey_bytes =
+            hex::decode("0207121ffeda98fb0b28258d06efaa97623d1b4298dce269630432b9c12f4f6c84")
+                .unwrap();
+        let claim_pubkey = PublicKey::from_slice(&claim_pubkey_bytes).unwrap();
+        let refund_pubkey = PublicKey::from_slice(&refund_pubkey).unwrap();
+        let (x_only_claim_pubkey, _) = claim_pubkey.x_only_public_key();
+        let (x_only_refund_pubkey, _) = refund_pubkey.x_only_public_key();
+        let claim_script = claim_script(&x_only_claim_pubkey, &hash);
+        let refund_script = refund_script(&x_only_refund_pubkey, lock_time);
+
+        let taproot_spend_info = taproot_spend_info(
+            &claim_pubkey.serialize(),
+            &refund_pubkey.serialize(),
+            claim_script,
+            refund_script,
+        )?;
+        let address =
+            Address::p2tr_tweaked(taproot_spend_info.output_key(), Network::Bitcoin).to_string();
+
+        Ok(CreateSwapResponse {
+            address: address.to_string(),
+            claim_pubkey: claim_pubkey_bytes,
+            lock_time,
+            parameters: Some(SwapParameters {
+                max_swap_amount_sat: 1_000_000,
+                min_swap_amount_sat: 1_000,
+                min_utxo_amount_sat: 1_000,
+            }),
+        })
+    }
+    async fn pay_swap(&self, _payment_request: String) -> Result<PaySwapResponse, Status> {
+        Ok(PaySwapResponse::default())
+    }
+    async fn refund_swap(
+        &self,
+        _address: String,
+        _input_index: u32,
+        _pub_nonce: Vec<u8>,
+        _transaction: Vec<u8>,
+    ) -> SdkResult<RefundSwapResponse> {
+        Ok(RefundSwapResponse::default())
+    }
+    async fn swap_parameters(&self) -> SdkResult<Option<SwapParameters>> {
+        Ok(Some(SwapParameters::default()))
+    }
+}
+
+fn claim_script(x_only_claim_pubkey: &XOnlyPublicKey, hash: &[u8]) -> Script {
+    script::Builder::new()
+        .push_opcode(OP_HASH160)
+        .push_slice(&ripemd160::Hash::hash(hash))
+        .push_opcode(OP_EQUALVERIFY)
+        .push_x_only_key(x_only_claim_pubkey)
+        .push_opcode(OP_CHECKSIG)
+        .into_script()
+}
+
+fn refund_script(x_only_refund_pubkey: &XOnlyPublicKey, lock_time: u32) -> Script {
+    script::Builder::new()
+        .push_x_only_key(x_only_refund_pubkey)
+        .push_opcode(OP_CHECKSIGVERIFY)
+        .push_int(Sequence::from_height(lock_time as u16).to_consensus_u32() as i64)
+        .push_opcode(OP_CSV)
+        .into_script()
+}
+
+fn key_agg_cache(claim_pubkey: &[u8], refund_pubkey: &[u8]) -> Result<MusigKeyAggCache> {
+    let cp = secp256k1::PublicKey::from_slice(claim_pubkey)?;
+    let rp = secp256k1::PublicKey::from_slice(refund_pubkey)?;
+    Ok(MusigKeyAggCache::new(
+        &secp256k1::Secp256k1::new(),
+        &[&cp, &rp],
+    ))
+}
+
+fn taproot_spend_info(
+    claim_pubkey: &[u8],
+    refund_pubkey: &[u8],
+    claim_script: Script,
+    refund_script: Script,
+) -> Result<TaprootSpendInfo> {
+    let m = key_agg_cache(claim_pubkey, refund_pubkey)?;
+    let internal_key = m.agg_pk();
+
+    // Convert from one secp256k1 crate to the other.
+    let internal_key = XOnlyPublicKey::from_slice(&internal_key.serialize())?;
+
+    // claim and refund scripts go in a taptree.
+    Ok(TaprootBuilder::new()
+        .add_leaf(1, claim_script)?
+        .add_leaf(1, refund_script)?
+        .finalize(&Secp256k1::new(), internal_key)
+        .map_err(|_| anyhow::anyhow!("taproot builder error"))?)
 }
