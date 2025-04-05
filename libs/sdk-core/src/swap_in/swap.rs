@@ -1529,12 +1529,12 @@ mod tests {
     }
 
     async fn test_swap_state_transitions(swap: &SwapInfo) {
-        let result = test_swap_state_transition(&swap, &SwapChainData::default(), None, 1).await;
+        let result = test_swap_state_transition(swap, &SwapChainData::default(), None, 1).await;
         assert_eq!(result.status, SwapStatus::Initial);
 
         // Initial swap output is pending confirmation
         let result = test_swap_state_transition(
-            &swap,
+            swap,
             &SwapChainData {
                 outputs: vec![SwapOutput {
                     address: swap.bitcoin_address.clone(),
@@ -1552,7 +1552,7 @@ mod tests {
 
         // Initial swap output is confirmed
         let result = test_swap_state_transition(
-            &swap,
+            swap,
             &SwapChainData {
                 outputs: vec![SwapOutput {
                     address: swap.bitcoin_address.clone(),
@@ -1570,7 +1570,7 @@ mod tests {
 
         // Initial swap output is confirmed, but timelock expired
         let result = test_swap_state_transition(
-            &swap,
+            swap,
             &SwapChainData {
                 outputs: vec![SwapOutput {
                     address: swap.bitcoin_address.clone(),
@@ -1588,7 +1588,7 @@ mod tests {
 
         // Initial swap output is confirmed and was just paid. Also timelock expired.
         let result = test_swap_state_transition(
-            &swap,
+            swap,
             &SwapChainData {
                 outputs: vec![SwapOutput {
                     address: swap.bitcoin_address.clone(),
@@ -1609,7 +1609,7 @@ mod tests {
 
         // Initial swap output has a confirmed spend.
         let result = test_swap_state_transition(
-            &swap,
+            swap,
             &SwapChainData {
                 outputs: vec![SwapOutput {
                     address: swap.bitcoin_address.clone(),
