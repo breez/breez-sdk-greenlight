@@ -1,4 +1,3 @@
-use anyhow::Result;
 use log::trace;
 use tokio::sync::Mutex;
 use tonic::codegen::InterceptedService;
@@ -31,7 +30,7 @@ pub struct BreezServer {
 }
 
 impl BreezServer {
-    pub fn new(server_url: String, api_key: Option<String>) -> Result<Self> {
+    pub fn new(server_url: String, api_key: Option<String>) -> anyhow::Result<Self> {
         Ok(Self {
             grpc_client: Mutex::new(GrpcClient::new(server_url)?),
             api_key,
@@ -108,7 +107,7 @@ impl BreezServer {
         ))
     }
 
-    pub async fn ping(&self) -> Result<String> {
+    pub async fn ping(&self) -> anyhow::Result<String> {
         let request = Request::new(PingRequest {});
         let response = self
             .get_information_client()
