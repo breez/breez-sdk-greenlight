@@ -1180,7 +1180,9 @@ fn refundable_utxos(
             SwapAddressType::Segwit => o
                 .confirmed_at_height
                 .map(|height| {
-                    current_tip.saturating_sub(height.saturating_add(swap_info.lock_height as u32))
+                    height
+                        .saturating_add(swap_info.lock_height as u32)
+                        .saturating_sub(current_tip)
                         == 0
                 })
                 .unwrap_or(false),
@@ -1252,7 +1254,8 @@ mod tests {
     };
 
     use super::SwapChainData;
-    const BITCOIN_ADDRESS: &str = "bc1puvuup6jctnk0v3e3qhvr69c73e8a90vytw06hfyn8ahhvf0l63hqd30tzd";
+    const TAPROOT_ADDRESS: &str = "bc1puvuup6jctnk0v3e3qhvr69c73e8a90vytw06hfyn8ahhvf0l63hqd30tzd";
+    const SEGWIT_ADDRESS: &str = "bc1qzz9e7e9xukxf4e3v22h3q59penyqj8lzslg5xm8txx3k2r6rpffsg25nny";
 
     #[tokio::test]
     async fn test_create_swap_uses_unused_taproot_swap() {
@@ -1271,7 +1274,7 @@ mod tests {
             .return_once(move || Ok(Some(node_state_clone)));
 
         let unused_swap = SwapInfo {
-            bitcoin_address: BITCOIN_ADDRESS.to_string(),
+            bitcoin_address: TAPROOT_ADDRESS.to_string(),
             max_allowed_deposit: 1_000_000,
             max_swapper_payable: 1_000_000,
             ..Default::default()
@@ -1308,7 +1311,7 @@ mod tests {
 
         let result = swap.create_swap(opening_fee_params).await.unwrap();
 
-        assert_eq!(&result.bitcoin_address, BITCOIN_ADDRESS);
+        assert_eq!(&result.bitcoin_address, TAPROOT_ADDRESS);
         assert_eq!(result.max_allowed_deposit, 1_000_000);
     }
 
@@ -1329,7 +1332,7 @@ mod tests {
             .return_once(move || Ok(Some(node_state_clone)));
 
         let unused_swap = SwapInfo {
-            bitcoin_address: BITCOIN_ADDRESS.to_string(),
+            bitcoin_address: TAPROOT_ADDRESS.to_string(),
             max_allowed_deposit: 1_000_000,
             max_swapper_payable: 1_000_000,
             ..Default::default()
@@ -1369,7 +1372,7 @@ mod tests {
 
         let result = swap.create_swap(opening_fee_params).await.unwrap();
 
-        assert_eq!(&result.bitcoin_address, BITCOIN_ADDRESS);
+        assert_eq!(&result.bitcoin_address, TAPROOT_ADDRESS);
         assert_eq!(result.max_allowed_deposit, 100_000);
     }
 
@@ -1525,19 +1528,11 @@ mod tests {
         swapper.refresh_swap(swap_info, current_tip).await.unwrap()
     }
 
-    #[tokio::test]
-    async fn test_swap_state_transitions() {
-        let mut swap = SwapInfo {
-            lock_height: 288,
-            bitcoin_address: BITCOIN_ADDRESS.to_string(),
-            min_allowed_deposit: 1_000,
-            max_allowed_deposit: 1_000_000,
-            ..Default::default()
-        };
-
+    async fn test_swap_state_transitions(swap: &SwapInfo) {
         let result = test_swap_state_transition(&swap, &SwapChainData::default(), None, 1).await;
         assert_eq!(result.status, SwapStatus::Initial);
 
+        // Initial swap output is pending confirmation
         let result = test_swap_state_transition(
             &swap,
             &SwapChainData {
@@ -1555,6 +1550,7 @@ mod tests {
         .await;
         assert_eq!(result.status, SwapStatus::WaitingConfirmation);
 
+        // Initial swap output is confirmed
         let result = test_swap_state_transition(
             &swap,
             &SwapChainData {
@@ -1572,40 +1568,7 @@ mod tests {
         .await;
         assert_eq!(result.status, SwapStatus::Redeemable);
 
-        let result = test_swap_state_transition(
-            &swap,
-            &SwapChainData {
-                outputs: vec![SwapOutput {
-                    address: swap.bitcoin_address.clone(),
-                    tx_id: "tx1".to_string(),
-                    amount_sat: 999,
-                    confirmed_at_height: Some(1),
-                    ..Default::default()
-                }],
-            },
-            None,
-            1,
-        )
-        .await;
-        assert_eq!(result.status, SwapStatus::Refundable);
-
-        let result = test_swap_state_transition(
-            &swap,
-            &SwapChainData {
-                outputs: vec![SwapOutput {
-                    address: swap.bitcoin_address.clone(),
-                    tx_id: "tx1".to_string(),
-                    amount_sat: 1_000_001,
-                    confirmed_at_height: Some(1),
-                    ..Default::default()
-                }],
-            },
-            None,
-            1,
-        )
-        .await;
-        assert_eq!(result.status, SwapStatus::Refundable);
-
+        // Initial swap output is confirmed, but timelock expired
         let result = test_swap_state_transition(
             &swap,
             &SwapChainData {
@@ -1623,6 +1586,7 @@ mod tests {
         .await;
         assert_eq!(result.status, SwapStatus::Refundable);
 
+        // Initial swap output is confirmed and was just paid. Also timelock expired.
         let result = test_swap_state_transition(
             &swap,
             &SwapChainData {
@@ -1643,6 +1607,444 @@ mod tests {
         .await;
         assert_eq!(result.status, SwapStatus::Completed);
 
+        // Initial swap output has a confirmed spend.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    output_index: 0,
+                    amount_sat: 1_000_000,
+                    confirmed_at_height: Some(1),
+                    spend: Some(SwapSpend {
+                        confirmed_at_height: Some(1),
+                        block_hash: Some("hash".to_string()),
+                        tx_id: "tx1".to_string(),
+                        output_index: 0,
+                        spending_tx_id: "tx2".to_string(),
+                        spending_input_index: 0,
+                    }),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Completed);
+
+        // Swap is paid, but the claim tx hasn't confirmed yet.
+        let result = test_swap_state_transition(
+            &SwapInfo {
+                paid_msat: 1_000_000_000,
+                ..swap.clone()
+            },
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    output_index: 0,
+                    amount_sat: 1_000_000,
+                    confirmed_at_height: Some(1),
+                    spend: Some(SwapSpend {
+                        confirmed_at_height: None,
+                        block_hash: None,
+                        tx_id: "tx1".to_string(),
+                        output_index: 0,
+                        spending_tx_id: "tx2".to_string(),
+                        spending_input_index: 0,
+                    }),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Completed);
+    }
+
+    #[tokio::test]
+    async fn test_swap_state_transitions_segwit() {
+        let swap = SwapInfo {
+            lock_height: 288,
+            bitcoin_address: SEGWIT_ADDRESS.to_string(),
+            min_allowed_deposit: 1_000,
+            max_allowed_deposit: 1_000_000,
+            ..Default::default()
+        };
+        test_swap_state_transitions(&swap).await;
+
+        // Initial swap output is confirmed with a too low amount.
+        // Swap will never be redeemable, but that's probably a good state for this case.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 999,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Redeemable);
+
+        // Initial swap output is confirmed with a too high amount.
+        // Swap will never be redeemable, but that's probably a good state for this case.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_001,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Redeemable);
+
+        // Initial swap output is confirmed with a too low amount and timelock passed.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 999,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            289,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        // Initial swap output is confirmed with a too high amount and timelock passed.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_001,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            289,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        // Swap is paid, an additional output was received. It is not yet refundable.
+        let result = test_swap_state_transition(
+            &SwapInfo {
+                paid_msat: 1_000_000_000,
+                ..swap.clone()
+            },
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        output_index: 0,
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        spend: Some(SwapSpend {
+                            confirmed_at_height: None,
+                            block_hash: None,
+                            tx_id: "tx1".to_string(),
+                            output_index: 0,
+                            spending_tx_id: "tx2".to_string(),
+                            spending_input_index: 0,
+                        }),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx3".to_string(),
+                        output_index: 0,
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        spend: None,
+                        ..Default::default()
+                    },
+                ],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Redeemed);
+
+        // Swap is paid, an additional output was received. It is now refundable.
+        let result = test_swap_state_transition(
+            &SwapInfo {
+                paid_msat: 1_000_000_000,
+                ..swap.clone()
+            },
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        output_index: 0,
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        spend: Some(SwapSpend {
+                            confirmed_at_height: None,
+                            block_hash: None,
+                            tx_id: "tx1".to_string(),
+                            output_index: 0,
+                            spending_tx_id: "tx2".to_string(),
+                            spending_input_index: 0,
+                        }),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx3".to_string(),
+                        output_index: 0,
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        spend: None,
+                        ..Default::default()
+                    },
+                ],
+            },
+            None,
+            289,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        // Initial swap output is confirmed and was just paid.
+        // An additional confirmed output was received, that was not paid.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx2".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(2),
+                        ..Default::default()
+                    },
+                ],
+            },
+            Some(Payment {
+                amount_msat: 1_000_000,
+                ..Default::default()
+            }),
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Redeemed);
+
+        // Initial swap output is confirmed and was just paid.
+        // An additional confirmed output was received, that was not paid.
+        // Now the timelock expired.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx2".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(2),
+                        ..Default::default()
+                    },
+                ],
+            },
+            Some(Payment {
+                amount_msat: 1_000_000,
+                ..Default::default()
+            }),
+            290,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        // Initial swap output is confirmed and was just paid.
+        // An additional unconfirmed output was received, that was not paid.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx2".to_string(),
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: None,
+                        ..Default::default()
+                    },
+                ],
+            },
+            Some(Payment {
+                amount_msat: 1_000_000,
+                ..Default::default()
+            }),
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Redeemed);
+
+        // Initial swap output is spent, but the spend is not confirmed.
+        // The swap is still refundable.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    output_index: 0,
+                    amount_sat: 1_000_000,
+                    confirmed_at_height: Some(1),
+                    spend: Some(SwapSpend {
+                        confirmed_at_height: None,
+                        block_hash: None,
+                        tx_id: "tx1".to_string(),
+                        output_index: 0,
+                        spending_tx_id: "tx2".to_string(),
+                        spending_input_index: 0,
+                    }),
+                    ..Default::default()
+                }],
+            },
+            None,
+            289,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+    }
+
+    #[tokio::test]
+    async fn test_swap_state_transitions_taproot() {
+        let swap = SwapInfo {
+            lock_height: 288,
+            bitcoin_address: TAPROOT_ADDRESS.to_string(),
+            min_allowed_deposit: 1_000,
+            max_allowed_deposit: 1_000_000,
+            ..Default::default()
+        };
+        test_swap_state_transitions(&swap).await;
+
+        // Initial swap output is confirmed with a too low amount.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 999,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        // Initial swap output is confirmed with a too high amount.
+        let result = test_swap_state_transition(
+            &swap,
+            &SwapChainData {
+                outputs: vec![SwapOutput {
+                    address: swap.bitcoin_address.clone(),
+                    tx_id: "tx1".to_string(),
+                    amount_sat: 1_000_001,
+                    confirmed_at_height: Some(1),
+                    ..Default::default()
+                }],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        // Swap is paid, an additional output was received.
+        let result = test_swap_state_transition(
+            &SwapInfo {
+                paid_msat: 1_000_000_000,
+                ..swap.clone()
+            },
+            &SwapChainData {
+                outputs: vec![
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx1".to_string(),
+                        output_index: 0,
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        spend: Some(SwapSpend {
+                            confirmed_at_height: None,
+                            block_hash: None,
+                            tx_id: "tx1".to_string(),
+                            output_index: 0,
+                            spending_tx_id: "tx2".to_string(),
+                            spending_input_index: 0,
+                        }),
+                        ..Default::default()
+                    },
+                    SwapOutput {
+                        address: swap.bitcoin_address.clone(),
+                        tx_id: "tx3".to_string(),
+                        output_index: 0,
+                        amount_sat: 1_000_000,
+                        confirmed_at_height: Some(1),
+                        spend: None,
+                        ..Default::default()
+                    },
+                ],
+            },
+            None,
+            1,
+        )
+        .await;
+        assert_eq!(result.status, SwapStatus::Refundable);
+
+        // Initial swap output is confirmed and was just paid.
+        // An additional confirmed output was received, that was not paid.
         let result = test_swap_state_transition(
             &swap,
             &SwapChainData {
@@ -1672,6 +2074,8 @@ mod tests {
         .await;
         assert_eq!(result.status, SwapStatus::Refundable);
 
+        // Initial swap output is confirmed and was just paid.
+        // An additional unconfirmed output was received, that was not paid.
         let result = test_swap_state_transition(
             &swap,
             &SwapChainData {
@@ -1701,6 +2105,8 @@ mod tests {
         .await;
         assert_eq!(result.status, SwapStatus::Refundable);
 
+        // Initial swap output is spent, but the spend is not confirmed.
+        // The swap is still refundable.
         let result = test_swap_state_transition(
             &swap,
             &SwapChainData {
@@ -1720,99 +2126,6 @@ mod tests {
                     }),
                     ..Default::default()
                 }],
-            },
-            None,
-            1,
-        )
-        .await;
-        assert_eq!(result.status, SwapStatus::Refundable);
-
-        let result = test_swap_state_transition(
-            &swap,
-            &SwapChainData {
-                outputs: vec![SwapOutput {
-                    address: swap.bitcoin_address.clone(),
-                    tx_id: "tx1".to_string(),
-                    output_index: 0,
-                    amount_sat: 1_000_000,
-                    confirmed_at_height: Some(1),
-                    spend: Some(SwapSpend {
-                        confirmed_at_height: Some(1),
-                        block_hash: Some("hash".to_string()),
-                        tx_id: "tx1".to_string(),
-                        output_index: 0,
-                        spending_tx_id: "tx2".to_string(),
-                        spending_input_index: 0,
-                    }),
-                    ..Default::default()
-                }],
-            },
-            None,
-            1,
-        )
-        .await;
-        assert_eq!(result.status, SwapStatus::Completed);
-
-        // From here on the swap is paid.
-        swap.paid_msat = 1_000_000_000;
-        let result = test_swap_state_transition(
-            &swap,
-            &SwapChainData {
-                outputs: vec![SwapOutput {
-                    address: swap.bitcoin_address.clone(),
-                    tx_id: "tx1".to_string(),
-                    output_index: 0,
-                    amount_sat: 1_000_000,
-                    confirmed_at_height: Some(1),
-                    spend: Some(SwapSpend {
-                        confirmed_at_height: None,
-                        block_hash: None,
-                        tx_id: "tx1".to_string(),
-                        output_index: 0,
-                        spending_tx_id: "tx2".to_string(),
-                        spending_input_index: 0,
-                    }),
-                    ..Default::default()
-                }],
-            },
-            None,
-            1,
-        )
-        .await;
-        assert_eq!(result.status, SwapStatus::Completed);
-
-        // From here on the swap is paid.
-        swap.paid_msat = 1_000_000_000;
-        let result = test_swap_state_transition(
-            &swap,
-            &SwapChainData {
-                outputs: vec![
-                    SwapOutput {
-                        address: swap.bitcoin_address.clone(),
-                        tx_id: "tx1".to_string(),
-                        output_index: 0,
-                        amount_sat: 1_000_000,
-                        confirmed_at_height: Some(1),
-                        spend: Some(SwapSpend {
-                            confirmed_at_height: None,
-                            block_hash: None,
-                            tx_id: "tx1".to_string(),
-                            output_index: 0,
-                            spending_tx_id: "tx2".to_string(),
-                            spending_input_index: 0,
-                        }),
-                        ..Default::default()
-                    },
-                    SwapOutput {
-                        address: swap.bitcoin_address.clone(),
-                        tx_id: "tx3".to_string(),
-                        output_index: 0,
-                        amount_sat: 1_000_000,
-                        confirmed_at_height: Some(1),
-                        spend: None,
-                        ..Default::default()
-                    },
-                ],
             },
             None,
             1,
