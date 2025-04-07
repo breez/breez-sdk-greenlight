@@ -2851,7 +2851,7 @@ async fn get_notification_lsps(
         .get_node_state()?
         .ok_or(SdkError::generic("Node info not found"))?
         .id;
-    let open_peers = node_api.get_open_peers().await?;
+    let mut open_peers = None;
 
     let mut notification_lsps = vec![];
     for lsp in lsp_api.list_used_lsps(node_pubkey).await? {
@@ -2865,6 +2865,13 @@ async fn get_notification_lsps(
                 // Consider only historical LSPs with whom we have an active channel
                 let lsp_pubkey = hex::decode(&lsp.pubkey)
                     .map_err(|e| anyhow!("Failed decode lsp pubkey: {e}"))?;
+                let open_peers = match &open_peers {
+                    Some(open_peers) => open_peers,
+                    None => {
+                        open_peers = Some(node_api.get_open_peers().await?);
+                        open_peers.as_ref().unwrap()
+                    }
+                };
                 let has_active_channel_to_lsp = open_peers.contains(&lsp_pubkey);
                 if has_active_channel_to_lsp {
                     notification_lsps.push(lsp);
