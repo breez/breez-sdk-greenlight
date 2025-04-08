@@ -19,6 +19,7 @@ const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
 const BOLT12_PREFIX: &str = "lno";
 const LNURL_PAY_PREFIX: &str = "lnurl";
 const BIP353_PREFIX: &str = "bitcoin:";
+const LIGHTNING_PREFIX: &str = "lightning";
 
 /// Parses generic user input, typically pasted from clipboard or scanned from a QR.
 ///
@@ -240,12 +241,35 @@ fn get_by_key(tuple_vector: &[(&str, &str)], key: &str) -> Option<String> {
         .map(|(_, v)| v.to_string())
 }
 
+fn parse_bip353_metadata(query_params: &[(&str, &str)]) -> Bip353Metadata {
+    Bip353Metadata {
+        label: get_by_key(query_params, "label"),
+        message: get_by_key(query_params, "message"),
+        amount: get_by_key(query_params, "amount")
+            .and_then(|a| a.parse::<f64>().ok())
+            .map(|btc| (btc * 100_000_000.0) as u64),
+    }
+}
+
+fn concatenate_txt_records(records: Vec<String>) -> Option<String> {
+    // As per RFC 1035, TXT records are one or more character-strings
+    // Each character-string is limited to 255 characters
+    records.into_iter().find(|r| r.starts_with(BIP353_PREFIX))
+}
+
 fn parse_bip353_record(bip353_record: String) -> Option<String> {
     let (_, query_part) = bip353_record.split_once("?")?;
-
     let query_params = querystring::querify(query_part);
 
-    get_by_key(&query_params, BOLT12_PREFIX).or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
+    // Try BOLT12 and LNURL-pay first
+    if let Some(value) = get_by_key(&query_params, BOLT12_PREFIX)
+        .or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
+    {
+        return Some(value);
+    }
+
+    // Try lightning= parameter for BOLT11
+    get_by_key(&query_params, "lightning")
 }
 
 fn is_valid_bip353_record(decoded: &str) -> bool {
@@ -254,7 +278,13 @@ fn is_valid_bip353_record(decoded: &str) -> bool {
             "Invalid decoded TXT data (doesn't begin with: {})",
             BIP353_PREFIX
         );
+        return false;
+    }
 
+    // Validate record format according to BIP 0353
+    let parts: Vec<&str> = decoded.splitn(2, '?').collect();
+    if parts.len() != 2 {
+        error!("Invalid BIP353 record format: missing query parameters");
         return false;
     }
 
@@ -262,41 +292,54 @@ fn is_valid_bip353_record(decoded: &str) -> bool {
 }
 
 fn extract_bip353_record(records: Vec<String>) -> Option<String> {
-    let bip353_record = records
+    // As per BIP 0353: "Resolvers encountering multiple "bitcoin:"-matching TXT records 
+    // at the same label MUST treat the records as invalid"
+    let bip353_records: Vec<String> = records
         .into_iter()
         .filter(|record| is_valid_bip353_record(record))
-        .collect::<Vec<String>>();
+        .collect();
 
-    if bip353_record.len() > 1 {
-        error!(
-            "Invalid decoded TXT data. Multiple records found ({})",
-            bip353_record.len()
-        );
-
-        return None;
+    match bip353_records.len() {
+        0 => None,
+        1 => concatenate_txt_records(bip353_records),
+        _ => {
+            error!("Multiple BIP353 records found - invalid according to spec");
+            None
+        }
     }
-
-    bip353_record.first().cloned()
 }
 
 async fn bip353_parse(input: &str) -> Option<String> {
     let (local_part, domain) = input.split_once('@')?;
+    
     // Validate both parts are within the DNS label size limit.
     // See <https://datatracker.ietf.org/doc/html/rfc1035#section-2.3.4>
     if local_part.len() > 63 || domain.len() > 63 {
+        error!("BIP353: Local part or domain exceeds DNS label size limit of 63 characters");
         return None;
     }
 
-    // Query for TXT records of a domain
+    // Validate local part characters according to BIP 0353
+    if !local_part.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_' || c == '.') {
+        error!("BIP353: Local part contains invalid characters");
+        return None;
+    }
+
+    // Query for TXT records of a domain with DNSSEC validation
     let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
-    let bip353_record = match dns_resolver::txt_lookup(dns_name).await {
-        Ok(records) => extract_bip353_record(records)?,
+    let (records, dnssec_proof) = match dns_resolver::txt_lookup_with_dnssec(dns_name).await {
+        Ok((records, Some(proof))) => (records, proof),
+        Ok((_, None)) => {
+            error!("BIP353: Missing required DNSSEC signatures");
+            return None;
+        }
         Err(e) => {
-            debug!("No BIP353 TXT records found: {}", e);
+            debug!("No BIP353 TXT records found or DNSSEC validation failed: {}", e);
             return None;
         }
     };
 
+    let bip353_record = extract_bip353_record(records)?;
     parse_bip353_record(bip353_record)
 }
 
@@ -1330,7 +1373,7 @@ pub(crate) mod tests {
     }
 
     #[sdk_macros::test_all]
-    fn test_lnurl_pay_lud_01() -> Result<()> {
+    fn test_lnurl_pay_lud_01() -> Result<(), Box<dyn std::error::Error>> {
         // Covers cases in LUD-01: Base LNURL encoding and decoding
         // https://github.com/lnurl/luds/blob/luds/01.md
 
@@ -2189,4 +2232,79 @@ pub(crate) mod tests {
 
         Ok(())
     }
+
+    #[sdk_macros::test_all]
+    async fn test_bip353_parsing() -> Result<()> {
+        use crate::dns_resolver;
+        use mockall::predicate::*;
+        use std::sync::Arc;
+
+        let mut mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+
+        // Test valid BOLT12 BIP353 record
+        let bolt12_txt = vec!["bitcoin:?lno=lno1qsgqv...".to_string()];
+        dns_resolver::set_mock_txt_records("user1._bitcoin-payment.example.com".to_string(), bolt12_txt);
+        let result = bip353_parse("user1@example.com").await;
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "lno1qsgqv...");
+
+        // Test valid LNURL-pay BIP353 record
+        let lnurl_txt = vec!["bitcoin:?lnurl=lnurl1...".to_string()];
+        dns_resolver::set_mock_txt_records("user2._bitcoin-payment.example.com".to_string(), lnurl_txt);
+        let result = bip353_parse("user2@example.com").await;
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "lnurl1...");
+
+        // Test valid BOLT11 BIP353 record
+        let bolt11_txt = vec!["bitcoin:?lightning=lnbc...".to_string()];
+        dns_resolver::set_mock_txt_records("user3._bitcoin-payment.example.com".to_string(), bolt11_txt);
+        let result = bip353_parse("user3@example.com").await;
+        assert!(result.is_some());
+        assert_eq!(result.unwrap(), "lnbc...");
+
+        // Test invalid local part characters
+        let result = bip353_parse("user!@example.com").await;
+        assert!(result.is_none());
+
+        // Test local part too long
+        let long_user = "a".repeat(64);
+        let result = bip353_parse(&format!("{}@example.com", long_user)).await;
+        assert!(result.is_none());
+
+        // Test domain too long
+        let long_domain = "a".repeat(64);
+        let result = bip353_parse(&format!("user@{}", long_domain)).await;
+        assert!(result.is_none());
+
+        // Test multiple BIP353 records
+        let multiple_txt = vec![
+            "bitcoin:?lnurl=lnurl1...".to_string(),
+            "bitcoin:?lightning=lnbc...".to_string(),
+        ];
+        dns_resolver::set_mock_txt_records("user4._bitcoin-payment.example.com".to_string(), multiple_txt);
+        let result = bip353_parse("user4@example.com").await;
+        assert!(result.is_none());
+
+        // Test invalid BIP353 record format
+        let invalid_txt = vec!["bitcoin:invalid_format".to_string()];
+        dns_resolver::set_mock_txt_records("user5._bitcoin-payment.example.com".to_string(), invalid_txt);
+        let result = bip353_parse("user5@example.com").await;
+        assert!(result.is_none());
+
+        // Test no BIP353 records
+        let no_txt = vec!["some_other_record".to_string()];
+        dns_resolver::set_mock_txt_records("user6._bitcoin-payment.example.com".to_string(), no_txt);
+        let result = bip353_parse("user6@example.com").await;
+        assert!(result.is_none());
+
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Bip353Metadata {
+    pub label: Option<String>,
+    pub message: Option<String>,
+    pub amount: Option<u64>,
 }
