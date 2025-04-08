@@ -58,6 +58,8 @@ maybe-sync = "0.1.1"
 
 [dev-dependencies]
 bitcoin = { workspace = true, features = ["rand"] }
+mockall = "0.12.1"
+tokio = { version = "1.0", features = ["rt", "macros"] }
 
 [target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dev-dependencies]
 tokio = { workspace = true, features = ["sync", "rt"] }
