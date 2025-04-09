@@ -280,7 +280,8 @@ fn extract_bip353_record(records: Vec<String>) -> Option<String> {
 }
 
 async fn bip353_parse(input: &str) -> Option<String> {
-    let (local_part, domain) = input.split_once('@')?;
+    // BIP-353 addresses may have a ₿ prefix, so strip it if present
+    let (local_part, domain) = input.strip_prefix('₿').unwrap_or(input).split_once('@')?;
     // Validate both parts are within the DNS label size limit.
     // See <https://datatracker.ietf.org/doc/html/rfc1035#section-2.3.4>
     if local_part.len() > 63 || domain.len() > 63 {
