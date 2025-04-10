@@ -1164,7 +1164,7 @@ fn parse_address(address: &str) -> ReceiveSwapResult<SwapAddressType> {
 }
 
 pub(super) fn compute_tx_fee(tx_weight: usize, sat_per_vbyte: u32) -> u64 {
-    (tx_weight as u32 * sat_per_vbyte / WITNESS_SCALE_FACTOR as u32) as u64
+    (tx_weight as u64 * sat_per_vbyte as u64).div_ceil(WITNESS_SCALE_FACTOR as u64)
 }
 
 fn refundable_utxos(
@@ -1243,7 +1243,7 @@ mod tests {
             transactions::MockCompletedPaymentStorage,
         },
         swap_in::{
-            swap::{SwapOutput, SwapSpend},
+            swap::{compute_tx_fee, SwapOutput, SwapSpend},
             taproot_server::MockTaprootSwapperAPI,
             BTCReceiveSwap, BTCReceiveSwapParameters,
         },
@@ -1256,6 +1256,21 @@ mod tests {
     use super::SwapChainData;
     const TAPROOT_ADDRESS: &str = "bc1puvuup6jctnk0v3e3qhvr69c73e8a90vytw06hfyn8ahhvf0l63hqd30tzd";
     const SEGWIT_ADDRESS: &str = "bc1qzz9e7e9xukxf4e3v22h3q59penyqj8lzslg5xm8txx3k2r6rpffsg25nny";
+
+    #[test]
+    fn test_compute_tx_fee() {
+        let tx_weight = 1000;
+        let sat_per_vbyte = 10;
+        let expected_fee = 2500;
+        let fee = compute_tx_fee(tx_weight, sat_per_vbyte);
+        assert_eq!(fee, expected_fee);
+
+        let tx_weight = 999;
+        let sat_per_vbyte = 10;
+        let expected_fee = 2498;
+        let fee = compute_tx_fee(tx_weight, sat_per_vbyte);
+        assert_eq!(fee, expected_fee);
+    }
 
     #[tokio::test]
     async fn test_create_swap_uses_unused_taproot_swap() {
