@@ -2802,7 +2802,7 @@ impl PaymentReceiver {
         self.persister.insert_open_channel_payment_info(
             &parsed_invoice.payment_hash,
             params.payer_amount_msat,
-            invoice,
+            &signed_invoice,
         )?;
 
         Ok(signed_invoice)
