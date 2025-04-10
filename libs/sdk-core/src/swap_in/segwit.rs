@@ -17,7 +17,7 @@ use super::{
 };
 
 const MAX_ECDSA_SIGNATURE_SIZE: usize = 73;
-const SEGWIT_SWAP_SCRIPT_SIZE: usize = 100;
+const SEGWIT_SWAP_SCRIPT_SIZE: usize = 101;
 
 pub(super) struct SegwitReceiveSwap {
     swapper_api: Arc<dyn SwapperAPI>,
