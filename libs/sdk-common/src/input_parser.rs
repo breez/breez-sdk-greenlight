@@ -976,6 +976,118 @@ mod tests {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn test_parse_bitcoin_addresses() -> Result<()> {
+        let rest_client: Arc<dyn RestClient> = Arc::new(ReqwestRestClient::new()?);
+
+        // Test plain BTC address
+        let input = "1andreas3batLhQa2FawWjeyjCqyBzypd";
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), input, None).await?,
+            InputType::BitcoinAddress { address: _ }
+        ));
+
+        // Test BIP21 URI with amount
+        let input = "bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000";
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), input, None).await?,
+            InputType::BitcoinAddress { address: _ }
+        ));
+
+        // Test BIP21 URI with amount and label
+        let input = "bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello";
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), input, None).await?,
+            InputType::BitcoinAddress { address: _ }
+        ));
+
+        // Test BIP21 URI with amount, label and message
+        let input = "bitcoin:1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000&label=Hello&message=Msg";
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), input, None).await?,
+            InputType::BitcoinAddress { address: _ }
+        ));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_parse_bolt11() -> Result<()> {
+        let rest_client: Arc<dyn RestClient> = Arc::new(ReqwestRestClient::new()?);
+        let invoice = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
+
+        // Test plain BOLT11 invoice
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), invoice, None).await?,
+            InputType::Bolt11 { invoice: _ }
+        ));
+
+        // Test BOLT11 with lightning: prefix
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), &format!("lightning:{}", invoice), None).await?,
+            InputType::Bolt11 { invoice: _ }
+        ));
+
+        // Test BIP21 with LN fallback
+        let btc_address = "1andreas3batLhQa2FawWjeyjCqyBzypd";
+        assert!(matches!(
+            parse_with_rest_client(
+                rest_client.as_ref(),
+                &format!("bitcoin:{}?lightning={}", btc_address, invoice),
+                None
+            )
+            .await?,
+            InputType::Bolt11 { invoice: _ }
+        ));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_parse_web_urls() -> Result<()> {
+        let rest_client: Arc<dyn RestClient> = Arc::new(ReqwestRestClient::new()?);
+
+        // Test simple URL
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), "https://breez.technology", None).await?,
+            InputType::Url { url: _ }
+        ));
+
+        // Test URL with path
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), "https://breez.technology/test-path", None).await?,
+            InputType::Url { url: _ }
+        ));
+
+        // Test URL with query params
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), "https://breez.technology/test-path?arg=val", None).await?,
+            InputType::Url { url: _ }
+        ));
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_parse_node_id() -> Result<()> {
+        let rest_client: Arc<dyn RestClient> = Arc::new(ReqwestRestClient::new()?);
+        let node_id = "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f";
+
+        // Test plain node ID
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), node_id, None).await?,
+            InputType::NodeId { node_id: _ }
+        ));
+
+        // Test node URI
+        assert!(matches!(
+            parse_with_rest_client(rest_client.as_ref(), &format!("{}@example.com", node_id), None).await?,
+            InputType::NodeId { node_id: _ }
+        ));
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
