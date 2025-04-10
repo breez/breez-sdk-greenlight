@@ -14,11 +14,12 @@ use crate::models::*;
 const METADATA_MAX_LEN: usize = 1000;
 
 #[cfg_attr(test, mockall::automock)]
-pub(crate) trait CompletedPaymentStorage: Send + Sync {
+pub(crate) trait PaymentStorage: Send + Sync {
     fn get_completed_payment_by_hash(&self, hash: &str) -> PersistResult<Option<Payment>>;
+    fn get_open_channel_bolt11_by_hash(&self, hash: &str) -> PersistResult<Option<String>>;
 }
 
-impl CompletedPaymentStorage for SqliteStorage {
+impl PaymentStorage for SqliteStorage {
     /// Looks up a completed payment by hash.
     ///
     /// To include pending or failed payments in the lookup as well, use [Self::get_payment_by_hash]
@@ -27,6 +28,22 @@ impl CompletedPaymentStorage for SqliteStorage {
             .get_payment_by_hash(hash)?
             .filter(|p| p.status == PaymentStatus::Complete);
         Ok(res)
+    }
+
+    /// Look up a modified open channel bolt11 by hash.
+    fn get_open_channel_bolt11_by_hash(&self, hash: &str) -> PersistResult<Option<String>> {
+        Ok(self
+            .get_connection()?
+            .query_row(
+                "
+          SELECT o.open_channel_bolt11           
+          FROM sync.open_channel_payment_info o        
+          WHERE
+           payment_hash = ?1",
+                [hash],
+                |row| row.get(0),
+            )
+            .optional()?)
     }
 }
 
