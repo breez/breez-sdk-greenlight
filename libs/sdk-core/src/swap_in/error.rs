@@ -221,3 +221,9 @@ impl From<anyhow::Error> for GetPaymentRequestError {
         Self::Generic(e.to_string())
     }
 }
+
+impl From<PersistError> for GetPaymentRequestError {
+    fn from(e: PersistError) -> Self {
+        Self::Generic(e.to_string())
+    }
+}

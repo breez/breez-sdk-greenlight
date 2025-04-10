@@ -26,7 +26,7 @@ use crate::{
     node_api::{FetchBolt11Result, NodeAPI},
     persist::{
         cache::NodeStateStorage, error::PersistResult, swap::SwapStorage,
-        transactions::CompletedPaymentStorage,
+        transactions::PaymentStorage,
     },
     BreezEvent, ListSwapsRequest, OpeningFeeParams, PrepareRefundRequest, PrepareRefundResponse,
     ReceivePaymentRequest, RefundRequest, RefundResponse, SwapInfo, SwapStatus, SwapperAPI,
@@ -195,7 +195,7 @@ impl From<SwapChainData> for SwapChainInfo {
 
 pub(crate) struct BTCReceiveSwap {
     chain_service: Arc<dyn ChainService>,
-    completed_payment_storage: Arc<dyn CompletedPaymentStorage>,
+    payment_storage: Arc<dyn PaymentStorage>,
     current_tip: Mutex<u32>,
     node_api: Arc<dyn NodeAPI>,
     node_state_storage: Arc<dyn NodeStateStorage>,
@@ -208,7 +208,7 @@ pub(crate) struct BTCReceiveSwap {
 
 pub(crate) struct BTCReceiveSwapParameters {
     pub chain_service: Arc<dyn ChainService>,
-    pub completed_payment_storage: Arc<dyn CompletedPaymentStorage>,
+    pub payment_storage: Arc<dyn PaymentStorage>,
     pub network: Network,
     pub node_api: Arc<dyn NodeAPI>,
     pub node_state_storage: Arc<dyn NodeStateStorage>,
@@ -222,7 +222,7 @@ impl BTCReceiveSwap {
     pub(crate) fn new(params: BTCReceiveSwapParameters) -> Self {
         BTCReceiveSwap {
             chain_service: params.chain_service,
-            completed_payment_storage: params.completed_payment_storage,
+            payment_storage: params.payment_storage,
             current_tip: Mutex::new(0),
             node_api: params.node_api,
             node_state_storage: params.node_state_storage,
@@ -373,7 +373,7 @@ impl BTCReceiveSwap {
                 };
 
                 let payment = match self
-                    .completed_payment_storage
+                    .payment_storage
                     .get_completed_payment_by_hash(&details.payment_hash)?
                 {
                     Some(payment) => payment,
@@ -808,6 +808,16 @@ impl BTCReceiveSwap {
         }
 
         if let Some(payer_amount_msat) = bolt11_result.payer_amount_msat {
+            // Do not recreate wrapped invoices as long as the amount is correct.
+            // TODO: Validate opening fee params validity here.
+            // TODO: Validate invoice expiry here.
+            if let Some(open_channel_invoice) = self
+                .payment_storage
+                .get_open_channel_bolt11_by_hash(&hex::encode(&swap_info.payment_hash))?
+            {
+                return Ok(Some(open_channel_invoice));
+            }
+
             // This is an open channel invoice, so liquidity won't be an issue.
             // TODO: Validate opening_fee_params validity.
             // TODO: Fetch opening_fee_params belonging to the invoice
@@ -1122,7 +1132,7 @@ impl BTCReceiveSwap {
 
     async fn refresh_swap_payment_data(&self, swap_info: &SwapInfo) -> ReceiveSwapResult<SwapInfo> {
         let payment = self
-            .completed_payment_storage
+            .payment_storage
             .get_completed_payment_by_hash(&hex::encode(swap_info.payment_hash.clone()))?;
         let payment = match payment {
             Some(p) => p,
@@ -1239,8 +1249,7 @@ mod tests {
     use crate::{
         chain::{OnchainTx, TxStatus, Vin, Vout},
         persist::{
-            cache::MockNodeStateStorage, swap::MockSwapStorage,
-            transactions::MockCompletedPaymentStorage,
+            cache::MockNodeStateStorage, swap::MockSwapStorage, transactions::MockPaymentStorage,
         },
         swap_in::{
             swap::{compute_tx_fee, SwapOutput, SwapSpend},
@@ -1276,7 +1285,7 @@ mod tests {
     async fn test_create_swap_uses_unused_taproot_swap() {
         let mut swap_storage = MockSwapStorage::new();
         let mut node_state_storage = MockNodeStateStorage::new();
-        let completed_payment_storage = MockCompletedPaymentStorage::new();
+        let completed_payment_storage = MockPaymentStorage::new();
         let node_state = NodeState {
             max_receivable_msat: 1_000_000_000,
             ..Default::default()
@@ -1309,7 +1318,7 @@ mod tests {
 
         let swap = BTCReceiveSwap::new(BTCReceiveSwapParameters {
             chain_service: Arc::new(MockChainService::default()),
-            completed_payment_storage: Arc::new(completed_payment_storage),
+            payment_storage: Arc::new(completed_payment_storage),
             network: Network::Bitcoin,
             node_api: Arc::new(MockNodeAPI::new(node_state)),
             node_state_storage: Arc::new(node_state_storage),
@@ -1334,7 +1343,7 @@ mod tests {
     async fn test_create_swap_uses_unused_taproot_swap_new_balance() {
         let mut swap_storage = MockSwapStorage::new();
         let mut node_state_storage = MockNodeStateStorage::new();
-        let completed_payment_storage = MockCompletedPaymentStorage::new();
+        let completed_payment_storage = MockPaymentStorage::new();
         let node_state = NodeState {
             max_receivable_msat: 100_000_000,
             ..Default::default()
@@ -1370,7 +1379,7 @@ mod tests {
 
         let swap = BTCReceiveSwap::new(BTCReceiveSwapParameters {
             chain_service: Arc::new(MockChainService::default()),
-            completed_payment_storage: Arc::new(completed_payment_storage),
+            payment_storage: Arc::new(completed_payment_storage),
             network: Network::Bitcoin,
             node_api: Arc::new(MockNodeAPI::new(node_state)),
             node_state_storage: Arc::new(node_state_storage),
@@ -1395,7 +1404,7 @@ mod tests {
     async fn test_create_swap_creates_new_when_no_unused() {
         let mut swap_storage = MockSwapStorage::new();
         let mut node_state_storage = MockNodeStateStorage::new();
-        let completed_payment_storage = MockCompletedPaymentStorage::new();
+        let completed_payment_storage = MockPaymentStorage::new();
         let node_state = NodeState {
             max_receivable_msat: 100_000_000,
             ..Default::default()
@@ -1419,7 +1428,7 @@ mod tests {
 
         let swap = BTCReceiveSwap::new(BTCReceiveSwapParameters {
             chain_service: Arc::new(MockChainService::default()),
-            completed_payment_storage: Arc::new(completed_payment_storage),
+            payment_storage: Arc::new(completed_payment_storage),
             network: Network::Bitcoin,
             node_api: Arc::new(MockNodeAPI::new(node_state)),
             node_state_storage: Arc::new(node_state_storage),
@@ -1502,7 +1511,7 @@ mod tests {
             );
 
         let swap_clone = swap_info.clone();
-        let mut completed_payment_storage = MockCompletedPaymentStorage::new();
+        let mut completed_payment_storage = MockPaymentStorage::new();
         completed_payment_storage
             .expect_get_completed_payment_by_hash()
             .returning(move |_| Ok(payment.clone()));
@@ -1529,7 +1538,7 @@ mod tests {
 
         let swapper = BTCReceiveSwap::new(BTCReceiveSwapParameters {
             chain_service: Arc::new(chain_service),
-            completed_payment_storage: Arc::new(completed_payment_storage),
+            payment_storage: Arc::new(completed_payment_storage),
             network: Network::Bitcoin,
             node_api: Arc::new(MockNodeAPI::new(node_state)),
             node_state_storage: Arc::new(MockNodeStateStorage::new()),

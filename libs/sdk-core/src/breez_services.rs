@@ -45,7 +45,7 @@ use crate::node_api::{CreateInvoiceRequest, NodeAPI};
 use crate::persist::cache::NodeStateStorage;
 use crate::persist::db::SqliteStorage;
 use crate::persist::swap::SwapStorage;
-use crate::persist::transactions::CompletedPaymentStorage;
+use crate::persist::transactions::PaymentStorage;
 use crate::swap_in::{BTCReceiveSwap, BTCReceiveSwapParameters, TaprootSwapperAPI};
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
@@ -2483,7 +2483,7 @@ impl BreezServicesBuilder {
 
         let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(BTCReceiveSwapParameters {
             chain_service: chain_service.clone(),
-            completed_payment_storage: persister.clone(),
+            payment_storage: persister.clone(),
             network: self.config.network.into(),
             node_api: unwrapped_node_api.clone(),
             node_state_storage: persister.clone(),
