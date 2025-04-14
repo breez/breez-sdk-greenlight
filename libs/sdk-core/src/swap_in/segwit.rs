@@ -5,7 +5,7 @@ use gl_client::bitcoin::{
     consensus::serialize,
     secp256k1::{Message, Secp256k1, SecretKey},
     util::sighash::SighashCache,
-    Address, EcdsaSighashType, PackedLockTime, Script, Transaction, TxIn, TxOut, Witness,
+    Address, EcdsaSighashType, PackedLockTime, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use ripemd::{Digest, Ripemd160};
 
@@ -107,8 +107,13 @@ impl SegwitReceiveSwap {
             lock_time: PackedLockTime(lock_time),
             input: utxos
                 .iter()
-                .map(|utxo| utxo.try_into())
-                .collect::<Result<_, _>>()?,
+                .map(|utxo| {
+                    Ok(TxIn {
+                        sequence: Sequence(swap_info.lock_height as u32),
+                        ..utxo.try_into()?
+                    })
+                })
+                .collect::<Result<Vec<TxIn>, ReceiveSwapError>>()?,
             output: vec![TxOut {
                 value,
                 script_pubkey: destination_address.script_pubkey(),
