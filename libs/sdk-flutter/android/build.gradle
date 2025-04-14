@@ -24,7 +24,9 @@ android {
 }
 
 dependencies {
-    implementation "net.java.dev.jna:jna-android:5.14.0"
+    implementation("net.java.dev.jna:jna:5.14.0") {
+        exclude group: "net.java.dev.jna", module: "jna-platform"
+    }
     /* JSON serialization */
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
 }
