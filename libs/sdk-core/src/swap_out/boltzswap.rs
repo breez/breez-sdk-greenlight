@@ -238,7 +238,7 @@ impl BoltzApi {
                 );
                 let hash = String::from(&btc_pair.hash);
                 Ok(ReverseSwapPairInfo {
-                    fees_hash: hash,
+                    fees_hash: hash.into_bytes(),
                     min: btc_pair.limits.minimal,
                     max: btc_pair.limits.maximal,
                     fees_percentage: btc_pair.fees.percentage,

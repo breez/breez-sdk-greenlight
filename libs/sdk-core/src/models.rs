@@ -114,7 +114,7 @@ pub struct ReverseSwapPairInfo {
     /// Maximum amount of sats a reverse swap is allowed to have given the current feerate conditions
     pub max: u64,
     /// Hash of the pair info JSON
-    pub fees_hash: String,
+    pub fees_hash: Vec<u8>,
     /// Percentage fee for the reverse swap service
     pub fees_percentage: f64,
     /// Miner fees in sats for locking up funds
@@ -146,13 +146,13 @@ pub struct FullReverseSwapInfo {
     pub private_key: Vec<u8>,
 
     /// On-chain destination address, to which the reverse swap will finally send funds to
-    pub claim_pubkey: String,
+    pub claim_pubkey: Vec<u8>,
 
     pub timeout_block_height: u32,
 
     /// The HODL invoice
     pub invoice: String,
-    pub redeem_script: String,
+    pub redeem_script: Vec<u8>,
 
     /// Amount of sats that will be locked.
     ///
@@ -225,7 +225,8 @@ impl FullReverseSwapInfo {
         received_lockup_address: String,
         network: Network,
     ) -> ReverseSwapResult<()> {
-        let redeem_script_received = Script::from_hex(&self.redeem_script)?;
+        let redeem_script_hex = hex::encode(&self.redeem_script);
+        let redeem_script_received = Script::from_hex(&redeem_script_hex)?;
         let asm = redeem_script_received.asm();
         debug!("received asm = {asm:?}");
 
@@ -298,7 +299,8 @@ impl FullReverseSwapInfo {
 
     /// Derives the lockup address from the redeem script
     pub(crate) fn get_lockup_address(&self, network: Network) -> ReverseSwapResult<Address> {
-        let redeem_script = Script::from_hex(&self.redeem_script)?;
+        let redeem_script_hex = hex::encode(&self.redeem_script);
+        let redeem_script = Script::from_hex(&redeem_script_hex)?;
         Ok(Address::p2wsh(&redeem_script, network.into()))
     }
 
@@ -311,7 +313,7 @@ impl FullReverseSwapInfo {
     pub(crate) fn get_reverse_swap_info_using_cached_values(&self) -> ReverseSwapInfo {
         ReverseSwapInfo {
             id: self.id.clone(),
-            claim_pubkey: self.claim_pubkey.clone(),
+            claim_pubkey: hex::encode(&self.claim_pubkey),
             lockup_txid: self.cache.clone().lockup_txid,
             claim_txid: self.cache.claim_txid.clone(),
             onchain_amount_sat: self.onchain_amount_sat,
@@ -1021,7 +1023,7 @@ pub struct OnchainPaymentLimitsResponse {
 /// the resulting send and receive amounts.
 #[derive(Clone, Debug, Serialize)]
 pub struct PrepareOnchainPaymentResponse {
-    pub fees_hash: String,
+    pub fees_hash: Vec<u8>,
     pub fees_percentage: f64,
     pub fees_lockup: u64,
     pub fees_claim: u64,
@@ -1806,17 +1808,17 @@ mod tests {
             created_at_block_height: 0,
             preimage: rand_vec_u8(32),
             private_key: vec![],
-            claim_pubkey: "claim_pubkey".to_string(),
+            claim_pubkey: "claim_pubkey".to_string().into_bytes(),
             timeout_block_height: 600_000,
             invoice: "645".to_string(),
-            redeem_script: "redeem_script".to_string(),
+            redeem_script: "redeem_script".to_string().into_bytes(),
             onchain_amount_sat: 250,
             sat_per_vbyte: Some(50),
             receive_amount_sat: None,
             cache: ReverseSwapInfoCached {
                 status: ReverseSwapStatus::CompletedConfirmed,
-                lockup_txid: Some("lockup_txid".to_string()),
-                claim_txid: Some("claim_txid".to_string()),
+                lockup_txid: Some("lockup_txid".to_string().into_bytes()),
+                claim_txid: Some("claim_txid".to_string().into_bytes()),
             },
         }
         .sanitize();
