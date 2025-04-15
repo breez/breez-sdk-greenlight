@@ -47,9 +47,6 @@ jobs:
         rustup toolchain install stable --profile minimal
         rustup target add ${{ matrix.target }}
 
-    - name: Set IPHONEOS_DEPLOYMENT_TARGET 
-      run: echo "IPHONEOS_DEPLOYMENT_TARGET=12.0" >> $GITHUB_ENV
-
     - name: Install Protoc
       uses: arduino/setup-protoc@v3
       with:
