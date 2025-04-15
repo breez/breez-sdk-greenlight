@@ -11,20 +11,20 @@ dependencies:
   flutter:
     sdk: flutter
   ### flutter_rust_bridge_codegen dependencies
-  ffi: ^2.1.2 # requires Dart >=3.3.0(Flutter 3.19)
+  ffi: ^2.1.4 # requires Dart >=3.3.0(Flutter 3.19)
   flutter_rust_bridge: ^1.82.6 # breez-sdk requirement
   freezed: <2.5.3
-  freezed_annotation: ^2.4.1
+  freezed_annotation: ^2.4.4
   ###
   rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^4.0.0
+  flutter_lints: ^5.0.0
   # The following dependencies are required by flutter_rust_bridge_codegen to
   # be defined under dev_dependencies to generate Dart files
-  build_runner: ^2.4.11
+  build_runner: ^2.4.15
   ffigen: <10.0.0 # flutter_rust_bridge requirement
 
 # For information on the generic Dart part of this file, see the
