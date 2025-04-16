@@ -1,4 +1,4 @@
-SDK release notes can be found at [breez-sdk/releases](https://github.com/breez/breez-sdk/releases/)
+SDK release notes can be found at [breez-sdk-greenlight/releases](https://github.com/breez/breez-sdk-greenlight/releases/)
 ## 0.4.0
 * **Breaking** Update Dart SDK range to be compatible with Flutter 3.19
 * **Breaking** Replace parameters of `connect` with `ConnectRequest`.
