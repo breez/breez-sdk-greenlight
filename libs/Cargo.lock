@@ -2399,8 +2399,7 @@ dependencies = [
 [[package]]
 name = "lightning"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc3225b37b2081fec068c481bbc80bd153bec905ada13379f58d462c00da9158"
+source = "git+https://github.com/breez/rust-lightning?rev=1ed173a39d4a415bab8171c3348b459f51f3b5e6#1ed173a39d4a415bab8171c3348b459f51f3b5e6"
 dependencies = [
  "bech32 0.11.0",
  "bitcoin 0.32.5",
@@ -2409,6 +2408,7 @@ dependencies = [
  "libm",
  "lightning-invoice 0.33.2",
  "lightning-types",
+ "musig2",
  "possiblyrandom",
 ]
 
@@ -2429,8 +2429,7 @@ dependencies = [
 [[package]]
 name = "lightning-invoice"
 version = "0.33.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11209f386879b97198b2bfc9e9c1e5d42870825c6bd4376f17f95357244d6600"
+source = "git+https://github.com/breez/rust-lightning?rev=1ed173a39d4a415bab8171c3348b459f51f3b5e6#1ed173a39d4a415bab8171c3348b459f51f3b5e6"
 dependencies = [
  "bech32 0.11.0",
  "bitcoin 0.32.5",
@@ -2440,8 +2439,7 @@ dependencies = [
 [[package]]
 name = "lightning-types"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2cd84d4e71472035903e43caded8ecc123066ce466329ccd5ae537a8d5488c7"
+source = "git+https://github.com/breez/rust-lightning?rev=1ed173a39d4a415bab8171c3348b459f51f3b5e6#1ed173a39d4a415bab8171c3348b459f51f3b5e6"
 dependencies = [
  "bitcoin 0.32.5",
 ]
@@ -2618,6 +2616,14 @@ name = "multimap"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5ce46fe64a9d73be07dcbe690a38ce1b293be448fd8ce1e6c1b8062c9f72c6a"
+
+[[package]]
+name = "musig2"
+version = "0.1.0"
+source = "git+https://github.com/arik-so/rust-musig2?rev=6f95a05718cbb44d8fe3fa6021aea8117aa38d50#6f95a05718cbb44d8fe3fa6021aea8117aa38d50"
+dependencies = [
+ "bitcoin 0.32.5",
+]
 
 [[package]]
 name = "native-tls"
@@ -3127,8 +3133,7 @@ dependencies = [
 [[package]]
 name = "possiblyrandom"
 version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b122a615d72104fb3d8b26523fdf9232cd8ee06949fb37e4ce3ff964d15dffd"
+source = "git+https://github.com/breez/rust-lightning?rev=1ed173a39d4a415bab8171c3348b459f51f3b5e6#1ed173a39d4a415bab8171c3348b459f51f3b5e6"
 dependencies = [
  "getrandom",
 ]
