@@ -42,6 +42,7 @@ enum LnUrlPayError {
     "RouteNotFound",
     "RouteTooExpensive",
     "ServiceConnectivity",
+    "InsufficientBalance",
 };
 
 [Error]
@@ -96,6 +97,7 @@ enum SendPaymentError {
     "RouteNotFound",
     "RouteTooExpensive",
     "ServiceConnectivity",
+    "InsufficientBalance",
 };
 
 [Error]
