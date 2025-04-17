@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use gl_client::bitcoin::{
     blockdata::{opcodes, script::Builder},
-    consensus::serialize,
     secp256k1::{Message, Secp256k1, SecretKey},
     util::sighash::SighashCache,
     Address, EcdsaSighashType, PackedLockTime, Script, Sequence, Transaction, TxIn, TxOut, Witness,
@@ -137,7 +136,7 @@ impl SegwitReceiveSwap {
             let mut sigvec = sig.serialize_der().to_vec();
             sigvec.push(EcdsaSighashType::All as u8);
 
-            let witness: Vec<Vec<u8>> = vec![sigvec, vec![], serialize(&input_script)];
+            let witness: Vec<Vec<u8>> = vec![sigvec, vec![], input_script.to_bytes()];
 
             let w = Witness::from_vec(witness);
             input.witness = w;
