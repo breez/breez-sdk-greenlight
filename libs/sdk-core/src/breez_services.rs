@@ -325,6 +325,16 @@ impl BreezServices {
             {
                 Ok(res) => Some(res),
                 Err(e) => {
+                    if e.to_string().contains("missing balance") {
+                        debug!(
+                            "trampoline payment failed due to insufficient balance: {:?}",
+                            e
+                        );
+                        return Err(SendPaymentError::InsufficientBalance {
+                            err: "Trampoline payment failed".into(),
+                        });
+                    }
+
                     warn!("trampoline payment failed: {:?}", e);
                     None
                 }
