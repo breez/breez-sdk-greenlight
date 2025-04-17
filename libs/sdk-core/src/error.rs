@@ -112,6 +112,7 @@ impl From<SendPaymentError> for LnUrlPayError {
             SendPaymentError::RouteNotFound { err } => Self::RouteNotFound { err },
             SendPaymentError::RouteTooExpensive { err } => Self::RouteTooExpensive { err },
             SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+            SendPaymentError::InsufficientBalance { err } => Self::InsufficientBalance { err },
         }
     }
 }
@@ -479,7 +480,8 @@ impl From<SendPaymentError> for SdkError {
             | SendPaymentError::PaymentFailed { err }
             | SendPaymentError::PaymentTimeout { err }
             | SendPaymentError::RouteNotFound { err }
-            | SendPaymentError::RouteTooExpensive { err } => Self::Generic { err },
+            | SendPaymentError::RouteTooExpensive { err }
+            | SendPaymentError::InsufficientBalance { err } => Self::Generic { err },
             SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
         }
     }
@@ -626,6 +628,10 @@ pub enum SendPaymentError {
     /// This error is raised when a connection to an external service fails.
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
+
+    /// This error is raised when the node does not have enough funds to make the payment.
+    #[error("Insufficient balance: {err}")]
+    InsufficientBalance { err: String },
 }
 
 impl From<anyhow::Error> for SendPaymentError {

@@ -429,6 +429,10 @@ pub mod model {
         /// This error is raised when a connection to an external service fails.
         #[error("Service connectivity: {err}")]
         ServiceConnectivity { err: String },
+
+        /// This error is raised when the node does not have enough funds to make the payment.
+        #[error("Insufficient balance: {err}")]
+        InsufficientBalance { err: String },
     }
 
     impl From<anyhow::Error> for LnUrlPayError {
