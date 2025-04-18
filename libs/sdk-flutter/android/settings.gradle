@@ -2,7 +2,9 @@ rootProject.name = 'breez_sdk'
 
 dependencyResolutionManagement {
     repositories {
-        maven { url("https://mvn.breez.technology/releases") }
+        google()
+        mavenCentral()
+        maven { url = uri("https://mvn.breez.technology/releases") }
     }
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
 }
