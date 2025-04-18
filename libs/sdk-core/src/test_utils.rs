@@ -161,7 +161,7 @@ impl ReverseSwapServiceAPI for MockReverseSwapperAPI {
         Ok(ReverseSwapPairInfo {
             min: MOCK_REVERSE_SWAP_MIN,
             max: MOCK_REVERSE_SWAP_MAX,
-            fees_hash: rand_string(5),
+            fees_hash: rand_string(5).into_bytes(),
             fees_percentage: 0.5,
             fees_lockup: 3_000 + rand_int_in_range(1..1_000),
             fees_claim: 3_000 + rand_int_in_range(1..1_000),
