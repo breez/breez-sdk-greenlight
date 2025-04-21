@@ -55,8 +55,9 @@ android {
 
 dependencies {
     api "breez_sdk:bindings-android:$version"
-    implementation "net.java.dev.jna:jna:5.14.0@aar"
+    implementation("net.java.dev.jna:jna:5.14.0@aar") {
+        exclude group: 'net.java.dev.jna', module: 'jna'
+    }
     /* JSON serialization */
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
-
 }
