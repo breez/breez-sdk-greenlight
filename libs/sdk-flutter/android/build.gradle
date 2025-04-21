@@ -44,7 +44,11 @@ android {
     }
 
     sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
+        main {
+            java.srcDirs += 'src/main/kotlin'
+            // Troubleshooting: Run 'make android' first to generate library files
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
     }
 
     defaultConfig {
