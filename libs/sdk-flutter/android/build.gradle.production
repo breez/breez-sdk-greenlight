@@ -49,7 +49,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 24
+        minSdk = 24
     }
 }
 
