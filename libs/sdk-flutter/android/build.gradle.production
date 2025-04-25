@@ -11,6 +11,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
     }
 }
 
@@ -27,15 +28,20 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
 
 android {
-    compileSdkVersion 33
+    // Conditional for compatibility with AGP <4.2.
+    if (project.android.hasProperty("namespace")) {
+      namespace "$group"
+    }
+
+    compileSdk 35
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '11'
     }
 
     sourceSets {
@@ -43,14 +49,16 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 24
+        ndkVersion = flutter.ndkVersion
+        minSdk = 24
     }
 }
 
 dependencies {
     api "breez_sdk:bindings-android:$version"
-    implementation "net.java.dev.jna:jna:5.14.0@aar"
+    implementation("net.java.dev.jna:jna:5.14.0@aar") {
+        exclude group: 'net.java.dev.jna', module: 'jna'
+    }
     /* JSON serialization */
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
-
 }
