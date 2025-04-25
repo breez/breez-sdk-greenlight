@@ -19,7 +19,7 @@ Pod::Spec.new do |s|
     ]
   }
   s.dependency 'Flutter'
-  s.platform = :ios, '11.0'
+  s.platform = :ios, '12.0'
   s.static_framework = true
 
   # Flutter.framework does not contain a i386 slice.
