@@ -5,7 +5,7 @@ try
 {
  var seed = BreezSdkMethods.MnemonicToSeed("repeat hawk combine screen network rhythm ritual social neither casual volcano powder");
  BreezSdkMethods.SetLogStream(new LogStreamListener());
- var config = BreezSdkMethods.DefaultConfig(EnvironmentType.PRODUCTION, "code", new NodeConfig.Greenlight(new GreenlightNodeConfig(null, null)));
+ var config = BreezSdkMethods.DefaultConfig(EnvironmentType.Production, "code", new NodeConfig.Greenlight(new GreenlightNodeConfig(null, null)));
  var connectRequest = new ConnectRequest(config, seed);
  BlockingBreezServices sdkServices = BreezSdkMethods.Connect(connectRequest, new SDKListener());
  NodeState? nodeInfo = sdkServices.NodeInfo();

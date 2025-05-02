@@ -41,7 +41,7 @@ kotlin {
         it.compilations["main"].cinterops {
             create("breezCInterop") {
                 defFile(project.file("src/nativeInterop/cinterop/breez.def"))
-                includeDirs(project.file("src/nativeInterop/cinterop/headers/breez_sdk"), project.file("src/libs/$platform"))
+                includeDirs(project.file("src/nativeInterop/cinterop/headers/breez_sdk"), project.file("src/lib/$platform"))
             }
         }
     }

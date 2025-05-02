@@ -21,14 +21,35 @@ on:
         required: false
         type: boolean
         default: false
+      uniffi-25:
+        description: 'If true, builds additional bindings for Uniffi 0.25'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - id: set-matrix
+        run: |
+          if [ ${{ inputs.uniffi-25 }} == true ]; then
+            echo "::set-output name=matrix::['', '-uniffi-25']"
+          else
+            echo "::set-output name=matrix::['']"
+          fi
+    outputs:
+      uniffi-matrix: ${{ steps.set-matrix.outputs.matrix }}
+
   build:
     if: ${{ !inputs.use-dummy-binaries }}
     runs-on: windows-latest
-    name: build ${{ matrix.target }}
+    name: build ${{ matrix.target }}${{ matrix.uniffi }}
+    needs: setup
     strategy:
       matrix:
+        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
         target: [
           x86_64-pc-windows-msvc,
           i686-pc-windows-msvc,
@@ -54,24 +75,33 @@ jobs:
 
     - uses: Swatinem/rust-cache@v2
       with:
+        key: ${{ matrix.uniffi }}
         workspaces: libs
 
     - name: Build sdk-bindings
+      if: matrix.uniffi != '-uniffi-25'
       working-directory: libs/sdk-bindings
       run: cargo build --release --target ${{ matrix.target }}
+
+    - name: Build sdk-bindings Uniffi 0.25
+      if: matrix.uniffi == '-uniffi-25'
+      working-directory: libs/sdk-bindings
+      run: cargo build --no-default-features --features=uniffi-25 --release --target ${{ matrix.target }}
 
     - name: Archive release
       uses: actions/upload-artifact@v4
       with:
-        name: sdk-bindings-${{ matrix.target }}
+        name: sdk-bindings-${{ matrix.target }}${{ matrix.uniffi }}
         path: libs/target/${{ matrix.target }}/release/breez_sdk_bindings.dll
 
   build-dummies:
     if: ${{ inputs.use-dummy-binaries }}
     runs-on: ubuntu-latest
-    name: build windows dummies
+    name: build dummies ${{ matrix.target }}${{ matrix.uniffi }}
+    needs: setup
     strategy:
       matrix:
+        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
         target: [
           x86_64-pc-windows-msvc,
           i686-pc-windows-msvc,
@@ -84,5 +114,5 @@ jobs:
       - name: Upload dummy windows ${{ matrix.target }} artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sdk-bindings-${{ matrix.target }}
+          name: sdk-bindings-${{ matrix.target }}${{ matrix.uniffi }}
           path: ./*

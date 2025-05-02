@@ -14,7 +14,7 @@ on:
         description: 'array of packages to publish (remove what you do not want)'
         required: true
         type: string
-        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python", "swift"]'
+        default: '["csharp", "golang", "maven", "kotlin-multiplatform", "flutter", "react-native", "python", "swift"]'
       csharp-ref:
         description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
         required: false
@@ -47,7 +47,7 @@ on:
         description: 'array of packages to publish (remove what you do not want)'
         required: true
         type: string
-        default: '["csharp", "golang", "maven", "kotlin-mpp", "flutter", "react-native", "python", "swift"]'
+        default: '["csharp", "golang", "maven", "kotlin-multiplatform", "flutter", "react-native", "python", "swift"]'
       csharp-ref:
         description: 'optional commit/tag/branch reference for the C# project. Defaults to ref.'
         required: false
@@ -74,7 +74,7 @@ jobs:
       csharp-ref: ${{ inputs.csharp-ref || inputs.ref || github.sha }}
       golang-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'golang') && inputs.package-version) || '' }}
       maven-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'maven') && inputs.package-version) || ''}}
-      kotlin-mpp-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'kotlin-mpp') && inputs.package-version) || '' }}
+      kotlin-multiplatform-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'kotlin-multiplatform') && inputs.package-version) || '' }}
       flutter-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'flutter') && inputs.package-version) || '' }}
       react-native-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'react-native') && inputs.package-version) || '' }}
       python-package-version: ${{ (contains(fromJSON(inputs.packages-to-publish), 'python') && inputs.package-version) || '' }}
@@ -98,15 +98,15 @@ jobs:
       bindings-windows: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version }}
       bindings-darwin: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version || !!needs.pre-setup.outputs.swift-package-version }}
       bindings-linux: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.python-package-version }}
-      bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version }}
-      bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.swift-package-version }}
-      kotlin: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
+      bindings-android: ${{ !!needs.pre-setup.outputs.kotlin-multiplatform-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.golang-package-version }}
+      bindings-ios: ${{ !!needs.pre-setup.outputs.kotlin-multiplatform-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.swift-package-version }}
+      kotlin: ${{ !!needs.pre-setup.outputs.kotlin-multiplatform-package-version || !!needs.pre-setup.outputs.maven-package-version || !!needs.pre-setup.outputs.flutter-package-version }}
       swift: ${{ !!needs.pre-setup.outputs.flutter-package-version || !!needs.pre-setup.outputs.swift-package-version }}
       python: ${{ !!needs.pre-setup.outputs.python-package-version }}
       csharp: ${{ !!needs.pre-setup.outputs.csharp-package-version }}
       golang: ${{ !!needs.pre-setup.outputs.golang-package-version }}
       maven: ${{ !!needs.pre-setup.outputs.maven-package-version }}
-      kotlin-mpp: ${{ !!needs.pre-setup.outputs.kotlin-mpp-package-version }}
+      kotlin-multiplatform: ${{ !!needs.pre-setup.outputs.kotlin-multiplatform-package-version }}
       flutter: ${{ !!needs.pre-setup.outputs.flutter-package-version }}
       react-native: ${{ !!needs.pre-setup.outputs.react-native-package-version }}
       spm-cocoapods: ${{ !!needs.pre-setup.outputs.swift-package-version }}
@@ -115,13 +115,14 @@ jobs:
       csharp-ref: ${{ needs.pre-setup.outputs.csharp-ref }}
       golang-package-version: ${{ needs.pre-setup.outputs.golang-package-version || '0.0.2' }}
       maven-package-version: ${{ needs.pre-setup.outputs.maven-package-version || '0.0.2' }}
-      kotlin-mpp-package-version: ${{ needs.pre-setup.outputs.kotlin-mpp-package-version || '0.0.2' }}
+      kotlin-multiplatform-package-version: ${{ needs.pre-setup.outputs.kotlin-multiplatform-package-version || '0.0.2' }}
       flutter-package-version: ${{ needs.pre-setup.outputs.flutter-package-version || '0.0.2' }}
       react-native-package-version: ${{ needs.pre-setup.outputs.react-native-package-version || '0.0.2' }}
       python-package-version: ${{ needs.pre-setup.outputs.python-package-version || '0.0.2' }}
       swift-package-version: ${{ needs.pre-setup.outputs.swift-package-version || '0.0.2' }}
       publish: ${{ needs.pre-setup.outputs.publish }}
       use-dummy-binaries: ${{ needs.pre-setup.outputs.use-dummy-binaries }}
+      uniffi-25: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.kotlin-multiplatform-package-version || !!needs.pre-setup.outputs.maven-package-version }}
     steps:
       - run: echo "set setup output variables"
 
@@ -133,6 +134,8 @@ jobs:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
+      uniffi-25: ${{ needs.setup.outputs.uniffi-25 == 'true' }}
+
   build-bindings-darwin:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-darwin == 'true' }}
@@ -141,6 +144,8 @@ jobs:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
+      uniffi-25: ${{ needs.setup.outputs.uniffi-25 == 'true' }}
+
   build-bindings-linux:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-linux == 'true' }}
@@ -149,6 +154,8 @@ jobs:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
+      uniffi-25: ${{ needs.setup.outputs.uniffi-25 == 'true' }}
+
   build-bindings-android:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-android == 'true' }}
@@ -157,6 +164,8 @@ jobs:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
+      uniffi-25: ${{ needs.setup.outputs.uniffi-25 == 'true' }}
+
   build-bindings-ios:
     needs: setup
     if: ${{ needs.setup.outputs.bindings-ios == 'true' }}
@@ -165,6 +174,7 @@ jobs:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
       use-dummy-binaries: ${{ needs.setup.outputs.use-dummy-binaries == 'true' }}
+      uniffi-25: ${{ needs.setup.outputs.uniffi-25 == 'true' }}
 
   build-language-bindings:
     needs: setup
@@ -229,18 +239,18 @@ jobs:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}
       BREEZ_MVN_PASSWORD: ${{ secrets.BREEZ_MVN_PASSWORD }}
   
-  publish-kotlin-mpp:
+  publish-kotlin-multiplatform:
     needs:
       - setup
       - build-bindings-android
       - build-bindings-ios
       - build-language-bindings
-    if: ${{ needs.setup.outputs.kotlin-mpp == 'true' }}
-    uses: ./.github/workflows/publish-kotlin-mpp.yml
+    if: ${{ needs.setup.outputs.kotlin-multiplatform == 'true' }}
+    uses: ./.github/workflows/publish-kotlin-multiplatform.yml
     with:
       repository: ${{ needs.setup.outputs.repository }}
       ref: ${{ needs.setup.outputs.ref }}
-      package-version: ${{ needs.setup.outputs.kotlin-mpp-package-version }}
+      package-version: ${{ needs.setup.outputs.kotlin-multiplatform-package-version }}
       publish: ${{ needs.setup.outputs.publish == 'true' }}
     secrets:
       BREEZ_MVN_USERNAME: ${{ secrets.BREEZ_MVN_USERNAME }}

@@ -1,7 +1,10 @@
-use anyhow::*;
+#[cfg(feature = "uniffi-25")]
+extern crate uniffi_25 as uniffi;
+#[cfg(feature = "uniffi-28")]
+extern crate uniffi_28 as uniffi;
+
 use glob::glob;
 use std::env;
-use std::result::Result::Ok;
 
 /// Adds a temporary workaround for an issue with the Rust compiler and Android
 /// in x86_64 devices: https://github.com/rust-lang/rust/issues/109717.
@@ -32,8 +35,7 @@ fn setup_x86_64_android_workaround() {
     }
 }
 
-fn main() -> Result<()> {
+fn main() {
     setup_x86_64_android_workaround();
-    uniffi_build::generate_scaffolding("./src/breez_sdk.udl").unwrap();
-    Ok(())
+    uniffi::generate_scaffolding("src/breez_sdk.udl").unwrap();
 }

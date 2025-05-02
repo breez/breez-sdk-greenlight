@@ -21,14 +21,35 @@ on:
         required: false
         type: boolean
         default: false
+      uniffi-25:
+        description: 'If true, builds additional bindings for Uniffi 0.25'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - id: set-matrix
+        run: |
+          if [ ${{ inputs.uniffi-25 }} == true ]; then
+            echo "::set-output name=matrix::['', '-uniffi-25']"
+          else
+            echo "::set-output name=matrix::['']"
+          fi
+    outputs:
+      uniffi-matrix: ${{ steps.set-matrix.outputs.matrix }}
+
   build:
     if: ${{ !inputs.use-dummy-binaries }}
     runs-on: macOS-latest
-    name: build ${{ matrix.target }}
+    name: build ${{ matrix.target }}${{ matrix.uniffi }}
+    needs: setup
     strategy:
       matrix:
+        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
         target: [
           aarch64-apple-darwin,
           x86_64-apple-darwin,
@@ -55,33 +76,45 @@ jobs:
 
     - uses: Swatinem/rust-cache@v2
       with:
+        key: ${{ matrix.uniffi }}
         workspaces: libs
 
     - name: Build sdk-bindings
+      if: matrix.uniffi != '-uniffi-25'
       working-directory: libs/sdk-bindings
       run: cargo lipo --release --targets ${{ matrix.target }}
-    
+
+    - name: Build sdk-bindings Uniffi 0.25
+      if: matrix.uniffi == '-uniffi-25'
+      working-directory: libs/sdk-bindings
+      run: cargo lipo --no-default-features --features=uniffi-25 --release --targets ${{ matrix.target }}
+
     - name: Archive release
       uses: actions/upload-artifact@v4
       with:
-        name: sdk-bindings-${{ matrix.target }}
+        name: sdk-bindings-${{ matrix.target }}${{ matrix.uniffi }}
         path: |
           libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.dylib
           libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
   
   merge:
     runs-on: macOS-latest
-    needs: build
-    name: build darwin-universal
+    needs:
+    - setup
+    - build
+    name: build darwin-universal${{ matrix.uniffi }}
+    strategy:
+      matrix:
+        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
     steps:
     - uses: actions/download-artifact@v4
       with:
-        name: sdk-bindings-aarch64-apple-darwin
+        name: sdk-bindings-aarch64-apple-darwin${{ matrix.uniffi }}
         path: aarch64-apple-darwin
 
     - uses: actions/download-artifact@v4
       with:
-        name: sdk-bindings-x86_64-apple-darwin
+        name: sdk-bindings-x86_64-apple-darwin${{ matrix.uniffi }}
         path: x86_64-apple-darwin
 
     - name: Build Darwin universal
@@ -93,7 +126,7 @@ jobs:
     - name: Archive release
       uses: actions/upload-artifact@v4
       with:
-        name: sdk-bindings-darwin-universal
+        name: sdk-bindings-darwin-universal${{ matrix.uniffi }}
         path: |
           darwin-universal/libbreez_sdk_bindings.dylib
           darwin-universal/libbreez_sdk_bindings.a
@@ -101,9 +134,11 @@ jobs:
   build-dummies:
     if: ${{ inputs.use-dummy-binaries }}
     runs-on: ubuntu-latest
-    name: build darwin dummies
+    name: build dummies ${{ matrix.target }}${{ matrix.uniffi }}
+    needs: setup
     strategy:
       matrix:
+        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
         target: [
           aarch64-apple-darwin,
           x86_64-apple-darwin,
@@ -118,5 +153,5 @@ jobs:
       - name: Upload dummy darwin ${{ matrix.target }} artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sdk-bindings-${{ matrix.target }}
+          name: sdk-bindings-${{ matrix.target }}${{ matrix.uniffi }}
           path: ./*

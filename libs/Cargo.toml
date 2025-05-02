@@ -17,6 +17,9 @@ resolver = "2"
 [workspace.package]
 version = "0.6.2"
 
+[workspace.lints.clippy]
+empty_line_after_doc_comments = "allow"
+
 [workspace.dependencies]
 aes = "0.8"
 anyhow = { version = "1.0.79", features = ["backtrace"] }
@@ -46,5 +49,3 @@ thiserror = "1.0.56"
 tokio = "1.41"
 tonic = "^0.8"
 tonic-build = "^0.8"
-uniffi = "0.23.0"
-uniffi_macros = "0.23.0"
