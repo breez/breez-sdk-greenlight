@@ -25,7 +25,7 @@ ios: $(SOURCES) flutter_rust_bridge
 ## android: Compile the android targets (arm64, armv7 and i686)
 .PHONY: android
 android: $(SOURCES) flutter_rust_bridge
-	make -C ../sdk-bindings kotlin
+	make -C ../sdk-bindings android
 	rm -rf android/src/main/jniLibs
 	rm -rf android/src/main/kotlin/breez_sdk
 	rm -rf android/src/main/kotlin/breez_sdk_notification
