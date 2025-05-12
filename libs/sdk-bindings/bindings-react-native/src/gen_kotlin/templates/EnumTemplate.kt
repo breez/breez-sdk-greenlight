@@ -13,7 +13,10 @@ fun as{{ type_name }}({{ type_name|var_name|unquote }}: ReadableMap): {{ type_na
     {% for variant in e.variants() -%}
         if (type == "{{ variant.name()|var_name|unquote }}") {
             {% if variant.has_fields() -%}
-            return {{ type_name }}.{{ variant.name() }}( {{ variant.fields()[0].type_()|render_from_map(ci, type_name|var_name|unquote, variant.fields()[0].name()|var_name|unquote, false) }})                         
+            {%- for field in variant.fields() %}
+            val {{field.name()|var_name|unquote}} = {{ field.type_()|render_from_map(ci, type_name|var_name|unquote, field.name()|var_name|unquote, false) }}    
+            {%- endfor %}
+            return {{ type_name }}.{{ variant.name() }}( {%- call kt::field_list(variant) -%} )    
             {%- else %}
             return {{ type_name }}.{{ variant.name() }}          
             {%- endif %}       

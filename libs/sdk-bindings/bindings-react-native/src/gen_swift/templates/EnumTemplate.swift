@@ -38,30 +38,31 @@ static func as{{ type_name }}({{ type_name|var_name|unquote }}: [String: Any?]) 
     {%- for variant in e.variants() %}
         if (type == "{{ variant.name()|var_name|unquote }}") {
             {%- if variant.has_fields() %}
-            {% let field = variant.fields()[0] %}
-            {%- match field.type_() %}         
-            {%- when Type::Optional(_) %}
+                {%- for field in variant.fields() %}
+                {%- match field.type_() %}         
+                {%- when Type::Optional(_) %}
+                    {% if field.type_()|inline_optional_field(ci) -%}
+                    let _{{field.name()|var_name|unquote}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}}
+                    {% else -%}
+                    var _{{field.name()|var_name|unquote}}: {{field.type_()|type_name}}
+                    if let {{field.name()|var_name|unquote|temporary}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}} {
+                        _{{field.name()|var_name|unquote}} = {{field.type_()|render_from_map(ci, field.name()|var_name|unquote|temporary)}}
+                    }
+                    {% endif -%}
+                {%- else %}
                 {% if field.type_()|inline_optional_field(ci) -%}
-                let _{{field.name()|var_name|unquote}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}}
-                {% else -%}
-                var _{{field.name()|var_name|unquote}}: {{field.type_()|type_name}}
-                if let {{field.name()|var_name|unquote|temporary}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}} {
-                    _{{field.name()|var_name|unquote}} = {{field.type_()|render_from_map(ci, field.name()|var_name|unquote|temporary)}}
+                guard let _{{field.name()|var_name|unquote}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}} else {
+                    throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "{{field.name()|var_name|unquote}}", typeName: "{{ type_name }}"))
                 }
-                {% endif -%}
-            {%- else %}
-            {% if field.type_()|inline_optional_field(ci) -%}
-            guard let _{{field.name()|var_name|unquote}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}} else {
-                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "{{field.name()|var_name|unquote}}", typeName: "{{ type_name }}"))
-            }
-            {%- else -%}
-            guard let {{field.name()|var_name|unquote|temporary}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}} else {
-                throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "{{field.name()|var_name|unquote}}", typeName: "{{ type_name }}"))
-            }
+                {%- else -%}
+                guard let {{field.name()|var_name|unquote|temporary}} = {{ type_name|var_name|unquote }}["{{field.name()|var_name|unquote}}"] as? {{field.type_()|rn_type_name(ci, true)}} else {
+                    throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "{{field.name()|var_name|unquote}}", typeName: "{{ type_name }}"))
+                }
             let _{{field.name()|var_name|unquote}} = {{field.type_()|render_from_map(ci, field.name()|var_name|unquote|temporary)}}
             {% endif -%}        
-            {% endmatch %}            
-            return {{ type_name }}.{{ variant.name()|var_name|unquote }}({{ variant.fields()[0].name()|var_name|unquote }}: _{{field.name()|var_name|unquote}})                         
+            {% endmatch %}    
+            {%- endfor %}            
+            return {{ type_name }}.{{ variant.name()|var_name|unquote }}({%- call swift::field_list(variant, "_") -%})                         
             {%- else %}
             return {{ type_name }}.{{ variant.name()|var_name|unquote }}          
             {%- endif %}       

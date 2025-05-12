@@ -10,10 +10,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "plaintext", typeName: "AesSuccessActionDataDecrypted"))
         }
 
-        return AesSuccessActionDataDecrypted(
-            description: description,
-            plaintext: plaintext
-        )
+        return AesSuccessActionDataDecrypted(description: description, plaintext: plaintext)
     }
 
     static func dictionaryOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted) -> [String: Any?] {
@@ -45,8 +42,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "error", typeName: "BackupFailedData"))
         }
 
-        return BackupFailedData(
-            error: error)
+        return BackupFailedData(error: error)
     }
 
     static func dictionaryOf(backupFailedData: BackupFailedData) -> [String: Any?] {
@@ -84,10 +80,7 @@ enum BreezSDKMapper {
             lastBackupTime = lastBackupTimeTmp
         }
 
-        return BackupStatus(
-            backedUp: backedUp,
-            lastBackupTime: lastBackupTime
-        )
+        return BackupStatus(backedUp: backedUp, lastBackupTime: lastBackupTime)
     }
 
     static func dictionaryOf(backupStatus: BackupStatus) -> [String: Any?] {
@@ -145,13 +138,7 @@ enum BreezSDKMapper {
             message = messageTmp
         }
 
-        return BitcoinAddressData(
-            address: address,
-            network: network,
-            amountSat: amountSat,
-            label: label,
-            message: message
-        )
+        return BitcoinAddressData(address: address, network: network, amountSat: amountSat, label: label, message: message)
     }
 
     static func dictionaryOf(bitcoinAddressData: BitcoinAddressData) -> [String: Any?] {
@@ -200,11 +187,7 @@ enum BreezSDKMapper {
             redirectUrl = redirectUrlTmp
         }
 
-        return BuyBitcoinRequest(
-            provider: provider,
-            openingFeeParams: openingFeeParams,
-            redirectUrl: redirectUrl
-        )
+        return BuyBitcoinRequest(provider: provider, openingFeeParams: openingFeeParams, redirectUrl: redirectUrl)
     }
 
     static func dictionaryOf(buyBitcoinRequest: BuyBitcoinRequest) -> [String: Any?] {
@@ -241,10 +224,7 @@ enum BreezSDKMapper {
             openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
-        return BuyBitcoinResponse(
-            url: url,
-            openingFeeParams: openingFeeParams
-        )
+        return BuyBitcoinResponse(url: url, openingFeeParams: openingFeeParams)
     }
 
     static func dictionaryOf(buyBitcoinResponse: BuyBitcoinResponse) -> [String: Any?] {
@@ -282,11 +262,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "signature", typeName: "CheckMessageRequest"))
         }
 
-        return CheckMessageRequest(
-            message: message,
-            pubkey: pubkey,
-            signature: signature
-        )
+        return CheckMessageRequest(message: message, pubkey: pubkey, signature: signature)
     }
 
     static func dictionaryOf(checkMessageRequest: CheckMessageRequest) -> [String: Any?] {
@@ -319,8 +295,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "isValid", typeName: "CheckMessageResponse"))
         }
 
-        return CheckMessageResponse(
-            isValid: isValid)
+        return CheckMessageResponse(isValid: isValid)
     }
 
     static func dictionaryOf(checkMessageResponse: CheckMessageResponse) -> [String: Any?] {
@@ -370,12 +345,7 @@ enum BreezSDKMapper {
             closingTxid = closingTxidTmp
         }
 
-        return ClosedChannelPaymentDetails(
-            state: state,
-            fundingTxid: fundingTxid,
-            shortChannelId: shortChannelId,
-            closingTxid: closingTxid
-        )
+        return ClosedChannelPaymentDetails(state: state, fundingTxid: fundingTxid, shortChannelId: shortChannelId, closingTxid: closingTxid)
     }
 
     static func dictionaryOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails) -> [String: Any?] {
@@ -454,19 +424,7 @@ enum BreezSDKMapper {
         }
         let nodeConfig = try asNodeConfig(nodeConfig: nodeConfigTmp)
 
-        return Config(
-            breezserver: breezserver,
-            chainnotifierUrl: chainnotifierUrl,
-            mempoolspaceUrl: mempoolspaceUrl,
-            workingDir: workingDir,
-            network: network,
-            paymentTimeoutSec: paymentTimeoutSec,
-            defaultLspId: defaultLspId,
-            apiKey: apiKey,
-            maxfeePercent: maxfeePercent,
-            exemptfeeMsat: exemptfeeMsat,
-            nodeConfig: nodeConfig
-        )
+        return Config(breezserver: breezserver, chainnotifierUrl: chainnotifierUrl, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent, exemptfeeMsat: exemptfeeMsat, nodeConfig: nodeConfig)
     }
 
     static func dictionaryOf(config: Config) -> [String: Any?] {
@@ -511,8 +469,7 @@ enum BreezSDKMapper {
             closeToAddress = closeToAddressTmp
         }
 
-        return ConfigureNodeRequest(
-            closeToAddress: closeToAddress)
+        return ConfigureNodeRequest(closeToAddress: closeToAddress)
     }
 
     static func dictionaryOf(configureNodeRequest: ConfigureNodeRequest) -> [String: Any?] {
@@ -555,11 +512,7 @@ enum BreezSDKMapper {
             restoreOnly = restoreOnlyTmp
         }
 
-        return ConnectRequest(
-            config: config,
-            seed: seed,
-            restoreOnly: restoreOnly
-        )
+        return ConnectRequest(config: config, seed: seed, restoreOnly: restoreOnly)
     }
 
     static func dictionaryOf(connectRequest: ConnectRequest) -> [String: Any?] {
@@ -621,15 +574,7 @@ enum BreezSDKMapper {
         }
         let localeOverrides = try asLocaleOverridesList(arr: localeOverridesTmp)
 
-        return CurrencyInfo(
-            name: name,
-            fractionSize: fractionSize,
-            spacing: spacing,
-            symbol: symbol,
-            uniqSymbol: uniqSymbol,
-            localizedName: localizedName,
-            localeOverrides: localeOverrides
-        )
+        return CurrencyInfo(name: name, fractionSize: fractionSize, spacing: spacing, symbol: symbol, uniqSymbol: uniqSymbol, localizedName: localizedName, localeOverrides: localeOverrides)
     }
 
     static func dictionaryOf(currencyInfo: CurrencyInfo) -> [String: Any?] {
@@ -670,10 +615,7 @@ enum BreezSDKMapper {
         }
         let info = try asCurrencyInfo(currencyInfo: infoTmp)
 
-        return FiatCurrency(
-            id: id,
-            info: info
-        )
+        return FiatCurrency(id: id, info: info)
     }
 
     static func dictionaryOf(fiatCurrency: FiatCurrency) -> [String: Any?] {
@@ -708,10 +650,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "developerCert", typeName: "GreenlightCredentials"))
         }
 
-        return GreenlightCredentials(
-            developerKey: developerKey,
-            developerCert: developerCert
-        )
+        return GreenlightCredentials(developerKey: developerKey, developerCert: developerCert)
     }
 
     static func dictionaryOf(greenlightCredentials: GreenlightCredentials) -> [String: Any?] {
@@ -743,8 +682,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "device", typeName: "GreenlightDeviceCredentials"))
         }
 
-        return GreenlightDeviceCredentials(
-            device: device)
+        return GreenlightDeviceCredentials(device: device)
     }
 
     static func dictionaryOf(greenlightDeviceCredentials: GreenlightDeviceCredentials) -> [String: Any?] {
@@ -784,10 +722,7 @@ enum BreezSDKMapper {
             inviteCode = inviteCodeTmp
         }
 
-        return GreenlightNodeConfig(
-            partnerCredentials: partnerCredentials,
-            inviteCode: inviteCode
-        )
+        return GreenlightNodeConfig(partnerCredentials: partnerCredentials, inviteCode: inviteCode)
     }
 
     static func dictionaryOf(greenlightNodeConfig: GreenlightNodeConfig) -> [String: Any?] {
@@ -826,11 +761,7 @@ enum BreezSDKMapper {
             payment = try asPayment(payment: paymentTmp)
         }
 
-        return InvoicePaidDetails(
-            paymentHash: paymentHash,
-            bolt11: bolt11,
-            payment: payment
-        )
+        return InvoicePaidDetails(paymentHash: paymentHash, bolt11: bolt11, payment: payment)
     }
 
     static func dictionaryOf(invoicePaidDetails: InvoicePaidDetails) -> [String: Any?] {
@@ -912,20 +843,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minFinalCltvExpiryDelta", typeName: "LnInvoice"))
         }
 
-        return LnInvoice(
-            bolt11: bolt11,
-            network: network,
-            payeePubkey: payeePubkey,
-            paymentHash: paymentHash,
-            description: description,
-            descriptionHash: descriptionHash,
-            amountMsat: amountMsat,
-            timestamp: timestamp,
-            expiry: expiry,
-            routingHints: routingHints,
-            paymentSecret: paymentSecret,
-            minFinalCltvExpiryDelta: minFinalCltvExpiryDelta
-        )
+        return LnInvoice(bolt11: bolt11, network: network, payeePubkey: payeePubkey, paymentHash: paymentHash, description: description, descriptionHash: descriptionHash, amountMsat: amountMsat, timestamp: timestamp, expiry: expiry, routingHints: routingHints, paymentSecret: paymentSecret, minFinalCltvExpiryDelta: minFinalCltvExpiryDelta)
     }
 
     static func dictionaryOf(lnInvoice: LnInvoice) -> [String: Any?] {
@@ -1009,15 +927,7 @@ enum BreezSDKMapper {
             limit = limitTmp
         }
 
-        return ListPaymentsRequest(
-            filters: filters,
-            metadataFilters: metadataFilters,
-            fromTimestamp: fromTimestamp,
-            toTimestamp: toTimestamp,
-            includeFailures: includeFailures,
-            offset: offset,
-            limit: limit
-        )
+        return ListPaymentsRequest(filters: filters, metadataFilters: metadataFilters, fromTimestamp: fromTimestamp, toTimestamp: toTimestamp, includeFailures: includeFailures, offset: offset, limit: limit)
     }
 
     static func dictionaryOf(listPaymentsRequest: ListPaymentsRequest) -> [String: Any?] {
@@ -1084,13 +994,7 @@ enum BreezSDKMapper {
             limit = limitTmp
         }
 
-        return ListSwapsRequest(
-            status: status,
-            fromTimestamp: fromTimestamp,
-            toTimestamp: toTimestamp,
-            offset: offset,
-            limit: limit
-        )
+        return ListSwapsRequest(status: status, fromTimestamp: fromTimestamp, toTimestamp: toTimestamp, offset: offset, limit: limit)
     }
 
     static func dictionaryOf(listSwapsRequest: ListSwapsRequest) -> [String: Any?] {
@@ -1204,24 +1108,7 @@ enum BreezSDKMapper {
             pendingExpirationBlock = pendingExpirationBlockTmp
         }
 
-        return LnPaymentDetails(
-            paymentHash: paymentHash,
-            label: label,
-            destinationPubkey: destinationPubkey,
-            paymentPreimage: paymentPreimage,
-            keysend: keysend,
-            bolt11: bolt11,
-            openChannelBolt11: openChannelBolt11,
-            lnurlSuccessAction: lnurlSuccessAction,
-            lnurlPayDomain: lnurlPayDomain,
-            lnurlPayComment: lnurlPayComment,
-            lnurlMetadata: lnurlMetadata,
-            lnAddress: lnAddress,
-            lnurlWithdrawEndpoint: lnurlWithdrawEndpoint,
-            swapInfo: swapInfo,
-            reverseSwapInfo: reverseSwapInfo,
-            pendingExpirationBlock: pendingExpirationBlock
-        )
+        return LnPaymentDetails(paymentHash: paymentHash, label: label, destinationPubkey: destinationPubkey, paymentPreimage: paymentPreimage, keysend: keysend, bolt11: bolt11, openChannelBolt11: openChannelBolt11, lnurlSuccessAction: lnurlSuccessAction, lnurlPayDomain: lnurlPayDomain, lnurlPayComment: lnurlPayComment, lnurlMetadata: lnurlMetadata, lnAddress: lnAddress, lnurlWithdrawEndpoint: lnurlWithdrawEndpoint, swapInfo: swapInfo, reverseSwapInfo: reverseSwapInfo, pendingExpirationBlock: pendingExpirationBlock)
     }
 
     static func dictionaryOf(lnPaymentDetails: LnPaymentDetails) -> [String: Any?] {
@@ -1280,12 +1167,7 @@ enum BreezSDKMapper {
             action = actionTmp
         }
 
-        return LnUrlAuthRequestData(
-            k1: k1,
-            domain: domain,
-            url: url,
-            action: action
-        )
+        return LnUrlAuthRequestData(k1: k1, domain: domain, url: url, action: action)
     }
 
     static func dictionaryOf(lnUrlAuthRequestData: LnUrlAuthRequestData) -> [String: Any?] {
@@ -1319,8 +1201,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "reason", typeName: "LnUrlErrorData"))
         }
 
-        return LnUrlErrorData(
-            reason: reason)
+        return LnUrlErrorData(reason: reason)
     }
 
     static func dictionaryOf(lnUrlErrorData: LnUrlErrorData) -> [String: Any?] {
@@ -1354,10 +1235,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "reason", typeName: "LnUrlPayErrorData"))
         }
 
-        return LnUrlPayErrorData(
-            paymentHash: paymentHash,
-            reason: reason
-        )
+        return LnUrlPayErrorData(paymentHash: paymentHash, reason: reason)
     }
 
     static func dictionaryOf(lnUrlPayErrorData: LnUrlPayErrorData) -> [String: Any?] {
@@ -1418,14 +1296,7 @@ enum BreezSDKMapper {
             validateSuccessActionUrl = validateSuccessActionUrlTmp
         }
 
-        return LnUrlPayRequest(
-            data: data,
-            amountMsat: amountMsat,
-            useTrampoline: useTrampoline,
-            comment: comment,
-            paymentLabel: paymentLabel,
-            validateSuccessActionUrl: validateSuccessActionUrl
-        )
+        return LnUrlPayRequest(data: data, amountMsat: amountMsat, useTrampoline: useTrampoline, comment: comment, paymentLabel: paymentLabel, validateSuccessActionUrl: validateSuccessActionUrl)
     }
 
     static func dictionaryOf(lnUrlPayRequest: LnUrlPayRequest) -> [String: Any?] {
@@ -1493,17 +1364,7 @@ enum BreezSDKMapper {
             lnAddress = lnAddressTmp
         }
 
-        return LnUrlPayRequestData(
-            callback: callback,
-            minSendable: minSendable,
-            maxSendable: maxSendable,
-            metadataStr: metadataStr,
-            commentAllowed: commentAllowed,
-            domain: domain,
-            allowsNostr: allowsNostr,
-            nostrPubkey: nostrPubkey,
-            lnAddress: lnAddress
-        )
+        return LnUrlPayRequestData(callback: callback, minSendable: minSendable, maxSendable: maxSendable, metadataStr: metadataStr, commentAllowed: commentAllowed, domain: domain, allowsNostr: allowsNostr, nostrPubkey: nostrPubkey, lnAddress: lnAddress)
     }
 
     static func dictionaryOf(lnUrlPayRequestData: LnUrlPayRequestData) -> [String: Any?] {
@@ -1548,10 +1409,7 @@ enum BreezSDKMapper {
         }
         let payment = try asPayment(payment: paymentTmp)
 
-        return LnUrlPaySuccessData(
-            successAction: successAction,
-            payment: payment
-        )
+        return LnUrlPaySuccessData(successAction: successAction, payment: payment)
     }
 
     static func dictionaryOf(lnUrlPaySuccessData: LnUrlPaySuccessData) -> [String: Any?] {
@@ -1595,11 +1453,7 @@ enum BreezSDKMapper {
             description = descriptionTmp
         }
 
-        return LnUrlWithdrawRequest(
-            data: data,
-            amountMsat: amountMsat,
-            description: description
-        )
+        return LnUrlWithdrawRequest(data: data, amountMsat: amountMsat, description: description)
     }
 
     static func dictionaryOf(lnUrlWithdrawRequest: LnUrlWithdrawRequest) -> [String: Any?] {
@@ -1644,13 +1498,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxWithdrawable", typeName: "LnUrlWithdrawRequestData"))
         }
 
-        return LnUrlWithdrawRequestData(
-            callback: callback,
-            k1: k1,
-            defaultDescription: defaultDescription,
-            minWithdrawable: minWithdrawable,
-            maxWithdrawable: maxWithdrawable
-        )
+        return LnUrlWithdrawRequestData(callback: callback, k1: k1, defaultDescription: defaultDescription, minWithdrawable: minWithdrawable, maxWithdrawable: maxWithdrawable)
     }
 
     static func dictionaryOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData) -> [String: Any?] {
@@ -1686,8 +1534,7 @@ enum BreezSDKMapper {
         }
         let invoice = try asLnInvoice(lnInvoice: invoiceTmp)
 
-        return LnUrlWithdrawSuccessData(
-            invoice: invoice)
+        return LnUrlWithdrawSuccessData(invoice: invoice)
     }
 
     static func dictionaryOf(lnUrlWithdrawSuccessData: LnUrlWithdrawSuccessData) -> [String: Any?] {
@@ -1729,11 +1576,7 @@ enum BreezSDKMapper {
         }
         let symbol = try asSymbol(symbol: symbolTmp)
 
-        return LocaleOverrides(
-            locale: locale,
-            spacing: spacing,
-            symbol: symbol
-        )
+        return LocaleOverrides(locale: locale, spacing: spacing, symbol: symbol)
     }
 
     static func dictionaryOf(localeOverrides: LocaleOverrides) -> [String: Any?] {
@@ -1769,10 +1612,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "name", typeName: "LocalizedName"))
         }
 
-        return LocalizedName(
-            locale: locale,
-            name: name
-        )
+        return LocalizedName(locale: locale, name: name)
     }
 
     static func dictionaryOf(localizedName: LocalizedName) -> [String: Any?] {
@@ -1807,10 +1647,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "level", typeName: "LogEntry"))
         }
 
-        return LogEntry(
-            line: line,
-            level: level
-        )
+        return LogEntry(line: line, level: level)
     }
 
     static func dictionaryOf(logEntry: LogEntry) -> [String: Any?] {
@@ -1873,19 +1710,7 @@ enum BreezSDKMapper {
         }
         let openingFeeParamsList = try asOpeningFeeParamsMenu(openingFeeParamsMenu: openingFeeParamsListTmp)
 
-        return LspInformation(
-            id: id,
-            name: name,
-            widgetUrl: widgetUrl,
-            pubkey: pubkey,
-            host: host,
-            baseFeeMsat: baseFeeMsat,
-            feeRate: feeRate,
-            timeLockDelta: timeLockDelta,
-            minHtlcMsat: minHtlcMsat,
-            lspPubkey: lspPubkey,
-            openingFeeParamsList: openingFeeParamsList
-        )
+        return LspInformation(id: id, name: name, widgetUrl: widgetUrl, pubkey: pubkey, host: host, baseFeeMsat: baseFeeMsat, feeRate: feeRate, timeLockDelta: timeLockDelta, minHtlcMsat: minHtlcMsat, lspPubkey: lspPubkey, openingFeeParamsList: openingFeeParamsList)
     }
 
     static func dictionaryOf(lspInformation: LspInformation) -> [String: Any?] {
@@ -1926,8 +1751,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "message", typeName: "MessageSuccessActionData"))
         }
 
-        return MessageSuccessActionData(
-            message: message)
+        return MessageSuccessActionData(message: message)
     }
 
     static func dictionaryOf(messageSuccessActionData: MessageSuccessActionData) -> [String: Any?] {
@@ -1961,10 +1785,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "jsonValue", typeName: "MetadataFilter"))
         }
 
-        return MetadataFilter(
-            jsonPath: jsonPath,
-            jsonValue: jsonValue
-        )
+        return MetadataFilter(jsonPath: jsonPath, jsonValue: jsonValue)
     }
 
     static func dictionaryOf(metadataFilter: MetadataFilter) -> [String: Any?] {
@@ -1999,10 +1820,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "value", typeName: "MetadataItem"))
         }
 
-        return MetadataItem(
-            key: key,
-            value: value
-        )
+        return MetadataItem(key: key, value: value)
     }
 
     static func dictionaryOf(metadataItem: MetadataItem) -> [String: Any?] {
@@ -2072,21 +1890,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalInboundLiquidityMsats", typeName: "NodeState"))
         }
 
-        return NodeState(
-            id: id,
-            blockHeight: blockHeight,
-            channelsBalanceMsat: channelsBalanceMsat,
-            onchainBalanceMsat: onchainBalanceMsat,
-            pendingOnchainBalanceMsat: pendingOnchainBalanceMsat,
-            utxos: utxos,
-            maxPayableMsat: maxPayableMsat,
-            maxReceivableMsat: maxReceivableMsat,
-            maxSinglePaymentAmountMsat: maxSinglePaymentAmountMsat,
-            maxChanReserveMsats: maxChanReserveMsats,
-            connectedPeers: connectedPeers,
-            maxReceivableSinglePaymentAmountMsat: maxReceivableSinglePaymentAmountMsat,
-            totalInboundLiquidityMsats: totalInboundLiquidityMsats
-        )
+        return NodeState(id: id, blockHeight: blockHeight, channelsBalanceMsat: channelsBalanceMsat, onchainBalanceMsat: onchainBalanceMsat, pendingOnchainBalanceMsat: pendingOnchainBalanceMsat, utxos: utxos, maxPayableMsat: maxPayableMsat, maxReceivableMsat: maxReceivableMsat, maxSinglePaymentAmountMsat: maxSinglePaymentAmountMsat, maxChanReserveMsats: maxChanReserveMsats, connectedPeers: connectedPeers, maxReceivableSinglePaymentAmountMsat: maxReceivableSinglePaymentAmountMsat, totalInboundLiquidityMsats: totalInboundLiquidityMsats)
     }
 
     static func dictionaryOf(nodeState: NodeState) -> [String: Any?] {
@@ -2135,11 +1939,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "maxPayableSat", typeName: "OnchainPaymentLimitsResponse"))
         }
 
-        return OnchainPaymentLimitsResponse(
-            minSat: minSat,
-            maxSat: maxSat,
-            maxPayableSat: maxPayableSat
-        )
+        return OnchainPaymentLimitsResponse(minSat: minSat, maxSat: maxSat, maxPayableSat: maxPayableSat)
     }
 
     static func dictionaryOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse) -> [String: Any?] {
@@ -2183,10 +1983,7 @@ enum BreezSDKMapper {
             expiry = expiryTmp
         }
 
-        return OpenChannelFeeRequest(
-            amountMsat: amountMsat,
-            expiry: expiry
-        )
+        return OpenChannelFeeRequest(amountMsat: amountMsat, expiry: expiry)
     }
 
     static func dictionaryOf(openChannelFeeRequest: OpenChannelFeeRequest) -> [String: Any?] {
@@ -2226,10 +2023,7 @@ enum BreezSDKMapper {
         }
         let feeParams = try asOpeningFeeParams(openingFeeParams: feeParamsTmp)
 
-        return OpenChannelFeeResponse(
-            feeMsat: feeMsat,
-            feeParams: feeParams
-        )
+        return OpenChannelFeeResponse(feeMsat: feeMsat, feeParams: feeParams)
     }
 
     static func dictionaryOf(openChannelFeeResponse: OpenChannelFeeResponse) -> [String: Any?] {
@@ -2276,14 +2070,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "promise", typeName: "OpeningFeeParams"))
         }
 
-        return OpeningFeeParams(
-            minMsat: minMsat,
-            proportional: proportional,
-            validUntil: validUntil,
-            maxIdleTime: maxIdleTime,
-            maxClientToSelfDelay: maxClientToSelfDelay,
-            promise: promise
-        )
+        return OpeningFeeParams(minMsat: minMsat, proportional: proportional, validUntil: validUntil, maxIdleTime: maxIdleTime, maxClientToSelfDelay: maxClientToSelfDelay, promise: promise)
     }
 
     static func dictionaryOf(openingFeeParams: OpeningFeeParams) -> [String: Any?] {
@@ -2320,8 +2107,7 @@ enum BreezSDKMapper {
         }
         let values = try asOpeningFeeParamsList(arr: valuesTmp)
 
-        return OpeningFeeParamsMenu(
-            values: values)
+        return OpeningFeeParamsMenu(values: values)
     }
 
     static func dictionaryOf(openingFeeParamsMenu: OpeningFeeParamsMenu) -> [String: Any?] {
@@ -2356,10 +2142,7 @@ enum BreezSDKMapper {
         }
         let prepareRes = try asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: prepareResTmp)
 
-        return PayOnchainRequest(
-            recipientAddress: recipientAddress,
-            prepareRes: prepareRes
-        )
+        return PayOnchainRequest(recipientAddress: recipientAddress, prepareRes: prepareRes)
     }
 
     static func dictionaryOf(payOnchainRequest: PayOnchainRequest) -> [String: Any?] {
@@ -2392,8 +2175,7 @@ enum BreezSDKMapper {
         }
         let reverseSwapInfo = try asReverseSwapInfo(reverseSwapInfo: reverseSwapInfoTmp)
 
-        return PayOnchainResponse(
-            reverseSwapInfo: reverseSwapInfo)
+        return PayOnchainResponse(reverseSwapInfo: reverseSwapInfo)
     }
 
     static func dictionaryOf(payOnchainResponse: PayOnchainResponse) -> [String: Any?] {
@@ -2469,18 +2251,7 @@ enum BreezSDKMapper {
             metadata = metadataTmp
         }
 
-        return Payment(
-            id: id,
-            paymentType: paymentType,
-            paymentTime: paymentTime,
-            amountMsat: amountMsat,
-            feeMsat: feeMsat,
-            status: status,
-            error: error,
-            description: description,
-            details: details,
-            metadata: metadata
-        )
+        return Payment(id: id, paymentType: paymentType, paymentTime: paymentTime, amountMsat: amountMsat, feeMsat: feeMsat, status: status, error: error, description: description, details: details, metadata: metadata)
     }
 
     static func dictionaryOf(payment: Payment) -> [String: Any?] {
@@ -2535,12 +2306,7 @@ enum BreezSDKMapper {
             label = labelTmp
         }
 
-        return PaymentFailedData(
-            error: error,
-            nodeId: nodeId,
-            invoice: invoice,
-            label: label
-        )
+        return PaymentFailedData(error: error, nodeId: nodeId, invoice: invoice, label: label)
     }
 
     static func dictionaryOf(paymentFailedData: PaymentFailedData) -> [String: Any?] {
@@ -2582,11 +2348,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "claimTxFeerate", typeName: "PrepareOnchainPaymentRequest"))
         }
 
-        return PrepareOnchainPaymentRequest(
-            amountSat: amountSat,
-            amountType: amountType,
-            claimTxFeerate: claimTxFeerate
-        )
+        return PrepareOnchainPaymentRequest(amountSat: amountSat, amountType: amountType, claimTxFeerate: claimTxFeerate)
     }
 
     static func dictionaryOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest) -> [String: Any?] {
@@ -2637,15 +2399,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "totalFees", typeName: "PrepareOnchainPaymentResponse"))
         }
 
-        return PrepareOnchainPaymentResponse(
-            feesHash: feesHash,
-            feesPercentage: feesPercentage,
-            feesLockup: feesLockup,
-            feesClaim: feesClaim,
-            senderAmountSat: senderAmountSat,
-            recipientAmountSat: recipientAmountSat,
-            totalFees: totalFees
-        )
+        return PrepareOnchainPaymentResponse(feesHash: feesHash, feesPercentage: feesPercentage, feesLockup: feesLockup, feesClaim: feesClaim, senderAmountSat: senderAmountSat, recipientAmountSat: recipientAmountSat, totalFees: totalFees)
     }
 
     static func dictionaryOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse) -> [String: Any?] {
@@ -2685,10 +2439,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "PrepareRedeemOnchainFundsRequest"))
         }
 
-        return PrepareRedeemOnchainFundsRequest(
-            toAddress: toAddress,
-            satPerVbyte: satPerVbyte
-        )
+        return PrepareRedeemOnchainFundsRequest(toAddress: toAddress, satPerVbyte: satPerVbyte)
     }
 
     static func dictionaryOf(prepareRedeemOnchainFundsRequest: PrepareRedeemOnchainFundsRequest) -> [String: Any?] {
@@ -2723,10 +2474,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "txFeeSat", typeName: "PrepareRedeemOnchainFundsResponse"))
         }
 
-        return PrepareRedeemOnchainFundsResponse(
-            txWeight: txWeight,
-            txFeeSat: txFeeSat
-        )
+        return PrepareRedeemOnchainFundsResponse(txWeight: txWeight, txFeeSat: txFeeSat)
     }
 
     static func dictionaryOf(prepareRedeemOnchainFundsResponse: PrepareRedeemOnchainFundsResponse) -> [String: Any?] {
@@ -2771,12 +2519,7 @@ enum BreezSDKMapper {
             unilateral = unilateralTmp
         }
 
-        return PrepareRefundRequest(
-            swapAddress: swapAddress,
-            toAddress: toAddress,
-            satPerVbyte: satPerVbyte,
-            unilateral: unilateral
-        )
+        return PrepareRefundRequest(swapAddress: swapAddress, toAddress: toAddress, satPerVbyte: satPerVbyte, unilateral: unilateral)
     }
 
     static func dictionaryOf(prepareRefundRequest: PrepareRefundRequest) -> [String: Any?] {
@@ -2813,10 +2556,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "refundTxFeeSat", typeName: "PrepareRefundResponse"))
         }
 
-        return PrepareRefundResponse(
-            refundTxWeight: refundTxWeight,
-            refundTxFeeSat: refundTxFeeSat
-        )
+        return PrepareRefundResponse(refundTxWeight: refundTxWeight, refundTxFeeSat: refundTxFeeSat)
     }
 
     static func dictionaryOf(prepareRefundResponse: PrepareRefundResponse) -> [String: Any?] {
@@ -2851,10 +2591,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "value", typeName: "Rate"))
         }
 
-        return Rate(
-            coin: coin,
-            value: value
-        )
+        return Rate(coin: coin, value: value)
     }
 
     static func dictionaryOf(rate: Rate) -> [String: Any?] {
@@ -2887,8 +2624,7 @@ enum BreezSDKMapper {
             openingFeeParams = try asOpeningFeeParams(openingFeeParams: openingFeeParamsTmp)
         }
 
-        return ReceiveOnchainRequest(
-            openingFeeParams: openingFeeParams)
+        return ReceiveOnchainRequest(openingFeeParams: openingFeeParams)
     }
 
     static func dictionaryOf(receiveOnchainRequest: ReceiveOnchainRequest) -> [String: Any?] {
@@ -2955,15 +2691,7 @@ enum BreezSDKMapper {
             cltv = cltvTmp
         }
 
-        return ReceivePaymentRequest(
-            amountMsat: amountMsat,
-            description: description,
-            preimage: preimage,
-            openingFeeParams: openingFeeParams,
-            useDescriptionHash: useDescriptionHash,
-            expiry: expiry,
-            cltv: cltv
-        )
+        return ReceivePaymentRequest(amountMsat: amountMsat, description: description, preimage: preimage, openingFeeParams: openingFeeParams, useDescriptionHash: useDescriptionHash, expiry: expiry, cltv: cltv)
     }
 
     static func dictionaryOf(receivePaymentRequest: ReceivePaymentRequest) -> [String: Any?] {
@@ -3014,11 +2742,7 @@ enum BreezSDKMapper {
             openingFeeMsat = openingFeeMsatTmp
         }
 
-        return ReceivePaymentResponse(
-            lnInvoice: lnInvoice,
-            openingFeeParams: openingFeeParams,
-            openingFeeMsat: openingFeeMsat
-        )
+        return ReceivePaymentResponse(lnInvoice: lnInvoice, openingFeeParams: openingFeeParams, openingFeeMsat: openingFeeMsat)
     }
 
     static func dictionaryOf(receivePaymentResponse: ReceivePaymentResponse) -> [String: Any?] {
@@ -3063,13 +2787,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "minimumFee", typeName: "RecommendedFees"))
         }
 
-        return RecommendedFees(
-            fastestFee: fastestFee,
-            halfHourFee: halfHourFee,
-            hourFee: hourFee,
-            economyFee: economyFee,
-            minimumFee: minimumFee
-        )
+        return RecommendedFees(fastestFee: fastestFee, halfHourFee: halfHourFee, hourFee: hourFee, economyFee: economyFee, minimumFee: minimumFee)
     }
 
     static func dictionaryOf(recommendedFees: RecommendedFees) -> [String: Any?] {
@@ -3107,10 +2825,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "RedeemOnchainFundsRequest"))
         }
 
-        return RedeemOnchainFundsRequest(
-            toAddress: toAddress,
-            satPerVbyte: satPerVbyte
-        )
+        return RedeemOnchainFundsRequest(toAddress: toAddress, satPerVbyte: satPerVbyte)
     }
 
     static func dictionaryOf(redeemOnchainFundsRequest: RedeemOnchainFundsRequest) -> [String: Any?] {
@@ -3142,8 +2857,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "txid", typeName: "RedeemOnchainFundsResponse"))
         }
 
-        return RedeemOnchainFundsResponse(
-            txid: txid)
+        return RedeemOnchainFundsResponse(txid: txid)
     }
 
     static func dictionaryOf(redeemOnchainFundsResponse: RedeemOnchainFundsResponse) -> [String: Any?] {
@@ -3187,12 +2901,7 @@ enum BreezSDKMapper {
             unilateral = unilateralTmp
         }
 
-        return RefundRequest(
-            swapAddress: swapAddress,
-            toAddress: toAddress,
-            satPerVbyte: satPerVbyte,
-            unilateral: unilateral
-        )
+        return RefundRequest(swapAddress: swapAddress, toAddress: toAddress, satPerVbyte: satPerVbyte, unilateral: unilateral)
     }
 
     static func dictionaryOf(refundRequest: RefundRequest) -> [String: Any?] {
@@ -3226,8 +2935,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "refundTxId", typeName: "RefundResponse"))
         }
 
-        return RefundResponse(
-            refundTxId: refundTxId)
+        return RefundResponse(refundTxId: refundTxId)
     }
 
     static func dictionaryOf(refundResponse: RefundResponse) -> [String: Any?] {
@@ -3265,10 +2973,7 @@ enum BreezSDKMapper {
             comment = commentTmp
         }
 
-        return ReportPaymentFailureDetails(
-            paymentHash: paymentHash,
-            comment: comment
-        )
+        return ReportPaymentFailureDetails(paymentHash: paymentHash, comment: comment)
     }
 
     static func dictionaryOf(reportPaymentFailureDetails: ReportPaymentFailureDetails) -> [String: Any?] {
@@ -3311,10 +3016,7 @@ enum BreezSDKMapper {
             claimTxFeerate = claimTxFeerateTmp
         }
 
-        return ReverseSwapFeesRequest(
-            sendAmountSat: sendAmountSat,
-            claimTxFeerate: claimTxFeerate
-        )
+        return ReverseSwapFeesRequest(sendAmountSat: sendAmountSat, claimTxFeerate: claimTxFeerate)
     }
 
     static func dictionaryOf(reverseSwapFeesRequest: ReverseSwapFeesRequest) -> [String: Any?] {
@@ -3370,14 +3072,7 @@ enum BreezSDKMapper {
         }
         let status = try asReverseSwapStatus(reverseSwapStatus: statusTmp)
 
-        return ReverseSwapInfo(
-            id: id,
-            claimPubkey: claimPubkey,
-            lockupTxid: lockupTxid,
-            claimTxid: claimTxid,
-            onchainAmountSat: onchainAmountSat,
-            status: status
-        )
+        return ReverseSwapInfo(id: id, claimPubkey: claimPubkey, lockupTxid: lockupTxid, claimTxid: claimTxid, onchainAmountSat: onchainAmountSat, status: status)
     }
 
     static func dictionaryOf(reverseSwapInfo: ReverseSwapInfo) -> [String: Any?] {
@@ -3435,15 +3130,7 @@ enum BreezSDKMapper {
             totalFees = totalFeesTmp
         }
 
-        return ReverseSwapPairInfo(
-            min: min,
-            max: max,
-            feesHash: feesHash,
-            feesPercentage: feesPercentage,
-            feesLockup: feesLockup,
-            feesClaim: feesClaim,
-            totalFees: totalFees
-        )
+        return ReverseSwapPairInfo(min: min, max: max, feesHash: feesHash, feesPercentage: feesPercentage, feesLockup: feesLockup, feesClaim: feesClaim, totalFees: totalFees)
     }
 
     static func dictionaryOf(reverseSwapPairInfo: ReverseSwapPairInfo) -> [String: Any?] {
@@ -3481,8 +3168,7 @@ enum BreezSDKMapper {
         }
         let hops = try asRouteHintHopList(arr: hopsTmp)
 
-        return RouteHint(
-            hops: hops)
+        return RouteHint(hops: hops)
     }
 
     static func dictionaryOf(routeHint: RouteHint) -> [String: Any?] {
@@ -3539,15 +3225,7 @@ enum BreezSDKMapper {
             htlcMaximumMsat = htlcMaximumMsatTmp
         }
 
-        return RouteHintHop(
-            srcNodeId: srcNodeId,
-            shortChannelId: shortChannelId,
-            feesBaseMsat: feesBaseMsat,
-            feesProportionalMillionths: feesProportionalMillionths,
-            cltvExpiryDelta: cltvExpiryDelta,
-            htlcMinimumMsat: htlcMinimumMsat,
-            htlcMaximumMsat: htlcMaximumMsat
-        )
+        return RouteHintHop(srcNodeId: srcNodeId, shortChannelId: shortChannelId, feesBaseMsat: feesBaseMsat, feesProportionalMillionths: feesProportionalMillionths, cltvExpiryDelta: cltvExpiryDelta, htlcMinimumMsat: htlcMinimumMsat, htlcMaximumMsat: htlcMaximumMsat)
     }
 
     static func dictionaryOf(routeHintHop: RouteHintHop) -> [String: Any?] {
@@ -3601,12 +3279,7 @@ enum BreezSDKMapper {
             label = labelTmp
         }
 
-        return SendPaymentRequest(
-            bolt11: bolt11,
-            useTrampoline: useTrampoline,
-            amountMsat: amountMsat,
-            label: label
-        )
+        return SendPaymentRequest(bolt11: bolt11, useTrampoline: useTrampoline, amountMsat: amountMsat, label: label)
     }
 
     static func dictionaryOf(sendPaymentRequest: SendPaymentRequest) -> [String: Any?] {
@@ -3641,8 +3314,7 @@ enum BreezSDKMapper {
         }
         let payment = try asPayment(payment: paymentTmp)
 
-        return SendPaymentResponse(
-            payment: payment)
+        return SendPaymentResponse(payment: payment)
     }
 
     static func dictionaryOf(sendPaymentResponse: SendPaymentResponse) -> [String: Any?] {
@@ -3688,12 +3360,7 @@ enum BreezSDKMapper {
             label = labelTmp
         }
 
-        return SendSpontaneousPaymentRequest(
-            nodeId: nodeId,
-            amountMsat: amountMsat,
-            extraTlvs: extraTlvs,
-            label: label
-        )
+        return SendSpontaneousPaymentRequest(nodeId: nodeId, amountMsat: amountMsat, extraTlvs: extraTlvs, label: label)
     }
 
     static func dictionaryOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest) -> [String: Any?] {
@@ -3728,8 +3395,7 @@ enum BreezSDKMapper {
         }
         let status = try asHealthCheckStatus(healthCheckStatus: statusTmp)
 
-        return ServiceHealthCheckResponse(
-            status: status)
+        return ServiceHealthCheckResponse(status: status)
     }
 
     static func dictionaryOf(serviceHealthCheckResponse: ServiceHealthCheckResponse) -> [String: Any?] {
@@ -3760,8 +3426,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "message", typeName: "SignMessageRequest"))
         }
 
-        return SignMessageRequest(
-            message: message)
+        return SignMessageRequest(message: message)
     }
 
     static func dictionaryOf(signMessageRequest: SignMessageRequest) -> [String: Any?] {
@@ -3792,8 +3457,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "signature", typeName: "SignMessageResponse"))
         }
 
-        return SignMessageResponse(
-            signature: signature)
+        return SignMessageResponse(signature: signature)
     }
 
     static func dictionaryOf(signMessageResponse: SignMessageResponse) -> [String: Any?] {
@@ -3824,8 +3488,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "workingDir", typeName: "StaticBackupRequest"))
         }
 
-        return StaticBackupRequest(
-            workingDir: workingDir)
+        return StaticBackupRequest(workingDir: workingDir)
     }
 
     static func dictionaryOf(staticBackupRequest: StaticBackupRequest) -> [String: Any?] {
@@ -3860,8 +3523,7 @@ enum BreezSDKMapper {
             backup = backupTmp
         }
 
-        return StaticBackupResponse(
-            backup: backup)
+        return StaticBackupResponse(backup: backup)
     }
 
     static func dictionaryOf(staticBackupResponse: StaticBackupResponse) -> [String: Any?] {
@@ -3977,32 +3639,7 @@ enum BreezSDKMapper {
             confirmedAt = confirmedAtTmp
         }
 
-        return SwapInfo(
-            bitcoinAddress: bitcoinAddress,
-            createdAt: createdAt,
-            lockHeight: lockHeight,
-            paymentHash: paymentHash,
-            preimage: preimage,
-            privateKey: privateKey,
-            publicKey: publicKey,
-            swapperPublicKey: swapperPublicKey,
-            script: script,
-            bolt11: bolt11,
-            paidMsat: paidMsat,
-            unconfirmedSats: unconfirmedSats,
-            confirmedSats: confirmedSats,
-            totalIncomingTxs: totalIncomingTxs,
-            status: status,
-            refundTxIds: refundTxIds,
-            unconfirmedTxIds: unconfirmedTxIds,
-            confirmedTxIds: confirmedTxIds,
-            minAllowedDeposit: minAllowedDeposit,
-            maxAllowedDeposit: maxAllowedDeposit,
-            maxSwapperPayable: maxSwapperPayable,
-            lastRedeemError: lastRedeemError,
-            channelOpeningFees: channelOpeningFees,
-            confirmedAt: confirmedAt
-        )
+        return SwapInfo(bitcoinAddress: bitcoinAddress, createdAt: createdAt, lockHeight: lockHeight, paymentHash: paymentHash, preimage: preimage, privateKey: privateKey, publicKey: publicKey, swapperPublicKey: swapperPublicKey, script: script, bolt11: bolt11, paidMsat: paidMsat, unconfirmedSats: unconfirmedSats, confirmedSats: confirmedSats, totalIncomingTxs: totalIncomingTxs, status: status, refundTxIds: refundTxIds, unconfirmedTxIds: unconfirmedTxIds, confirmedTxIds: confirmedTxIds, minAllowedDeposit: minAllowedDeposit, maxAllowedDeposit: maxAllowedDeposit, maxSwapperPayable: maxSwapperPayable, lastRedeemError: lastRedeemError, channelOpeningFees: channelOpeningFees, confirmedAt: confirmedAt)
     }
 
     static func dictionaryOf(swapInfo: SwapInfo) -> [String: Any?] {
@@ -4081,12 +3718,7 @@ enum BreezSDKMapper {
             position = positionTmp
         }
 
-        return Symbol(
-            grapheme: grapheme,
-            template: template,
-            rtl: rtl,
-            position: position
-        )
+        return Symbol(grapheme: grapheme, template: template, rtl: rtl, position: position)
     }
 
     static func dictionaryOf(symbol: Symbol) -> [String: Any?] {
@@ -4123,10 +3755,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "value", typeName: "TlvEntry"))
         }
 
-        return TlvEntry(
-            fieldNumber: fieldNumber,
-            value: value
-        )
+        return TlvEntry(fieldNumber: fieldNumber, value: value)
     }
 
     static func dictionaryOf(tlvEntry: TlvEntry) -> [String: Any?] {
@@ -4170,13 +3799,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "reserved", typeName: "UnspentTransactionOutput"))
         }
 
-        return UnspentTransactionOutput(
-            txid: txid,
-            outnum: outnum,
-            amountMillisatoshi: amountMillisatoshi,
-            address: address,
-            reserved: reserved
-        )
+        return UnspentTransactionOutput(txid: txid, outnum: outnum, amountMillisatoshi: amountMillisatoshi, address: address, reserved: reserved)
     }
 
     static func dictionaryOf(unspentTransactionOutput: UnspentTransactionOutput) -> [String: Any?] {
@@ -4217,11 +3840,7 @@ enum BreezSDKMapper {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "matchesCallbackDomain", typeName: "UrlSuccessActionData"))
         }
 
-        return UrlSuccessActionData(
-            description: description,
-            url: url,
-            matchesCallbackDomain: matchesCallbackDomain
-        )
+        return UrlSuccessActionData(description: description, url: url, matchesCallbackDomain: matchesCallbackDomain)
     }
 
     static func dictionaryOf(urlSuccessActionData: UrlSuccessActionData) -> [String: Any?] {
@@ -4716,7 +4335,9 @@ enum BreezSDKMapper {
             }
             let _data = try asLnUrlPayRequestData(lnUrlPayRequestData: dataTmp)
 
-            return InputType.lnUrlPay(data: _data)
+            let _bip353Address = inputType["bip353Address"] as? String
+
+            return InputType.lnUrlPay(data: _data, bip353Address: _bip353Address)
         }
         if type == "lnUrlWithdraw" {
             guard let dataTmp = inputType["data"] as? [String: Any?] else {

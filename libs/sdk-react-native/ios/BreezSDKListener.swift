@@ -1,5 +1,5 @@
-import Foundation
 import BreezSDK
+import Foundation
 
 class BreezSDKListener: EventListener {
     static let emitterName: String = "breezSdkEvent"

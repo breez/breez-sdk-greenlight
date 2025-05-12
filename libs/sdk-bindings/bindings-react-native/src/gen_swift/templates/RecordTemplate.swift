@@ -30,7 +30,7 @@ static func as{{ type_name }}({{ type_name|var_name|unquote }}: [String: Any?]) 
     {% endmatch %}
     {%- endfor %}
     
-    return {{ type_name }}({%- call swift::field_list(rec) -%})    
+    return {{ type_name }}({%- call swift::field_list(rec, "") -%})    
 }
 
 static func  dictionaryOf({{ type_name|var_name|unquote }}: {{ type_name }}) -> [String: Any?] {
