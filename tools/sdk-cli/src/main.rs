@@ -9,7 +9,7 @@ use crate::command_handlers::CliHelper;
 use anyhow::{anyhow, ensure, Result};
 use breez_sdk_core::BreezServices;
 use clap::Parser;
-use command_handlers::handle_command;
+use command_handlers::CommandHandler;
 use commands::{Commands, SdkCli};
 use persist::CliPersistence;
 use rustyline::error::ReadlineError;
@@ -40,6 +40,8 @@ async fn main() -> Result<()> {
         info!("No previous history.");
     }
 
+    let mut command_handler = CommandHandler::new(persistence);
+
     loop {
         let readline = rl.readline("sdk> ");
         match readline {
@@ -52,7 +54,7 @@ async fn main() -> Result<()> {
                     println!("{}", cli_res.unwrap_err());
                     continue;
                 }
-                let res = handle_command(rl, &persistence, cli_res.unwrap()).await;
+                let res = command_handler.handle_command(rl, cli_res.unwrap()).await;
                 show_results(res);
                 continue;
             }
