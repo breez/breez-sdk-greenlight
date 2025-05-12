@@ -1,5 +1,5 @@
-import Foundation
 import BreezSDK
+import Foundation
 
 class BreezSDKLogStream: LogStream {
     static let emitterName: String = "breezSdkLog"

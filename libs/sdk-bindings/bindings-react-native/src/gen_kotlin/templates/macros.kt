@@ -21,7 +21,7 @@
 {%- endmacro %}
 
 {%- macro field_list(rec) %}
-    {%- for f in rec.fields() %}
+    {%- for f in rec.fields() -%}
         {{ f.name()|var_name|unquote }},
     {%- endfor %}
 {%- endmacro -%}

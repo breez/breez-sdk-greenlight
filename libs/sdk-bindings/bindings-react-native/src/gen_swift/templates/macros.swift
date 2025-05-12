@@ -29,9 +29,9 @@
     {%- if func.arguments().len() >= 1 -%}resolve:{%- endif -%}reject:
 {%- endmacro %}
 
-{%- macro field_list(rec) %}
-    {%- for f in rec.fields() %}
-        {{ f.name()|var_name|unquote }}: {{ f.name()|var_name|unquote }}{%- if !loop.last %}, {% endif -%}
+{%- macro field_list(rec, prefix) %}
+    {%- for f in rec.fields() -%}
+        {{ f.name()|var_name|unquote }}: {{ prefix }}{{ f.name()|var_name|unquote }}{%- if !loop.last %}, {% endif -%}
     {%- endfor %}
 {%- endmacro -%}
 
