@@ -13,6 +13,40 @@ use crate::models::*;
 
 const METADATA_MAX_LEN: usize = 1000;
 
+#[cfg_attr(test, mockall::automock)]
+pub(crate) trait PaymentStorage: Send + Sync {
+    fn get_completed_payment_by_hash(&self, hash: &str) -> PersistResult<Option<Payment>>;
+    fn get_open_channel_bolt11_by_hash(&self, hash: &str) -> PersistResult<Option<String>>;
+}
+
+impl PaymentStorage for SqliteStorage {
+    /// Looks up a completed payment by hash.
+    ///
+    /// To include pending or failed payments in the lookup as well, use [Self::get_payment_by_hash]
+    fn get_completed_payment_by_hash(&self, hash: &str) -> PersistResult<Option<Payment>> {
+        let res = self
+            .get_payment_by_hash(hash)?
+            .filter(|p| p.status == PaymentStatus::Complete);
+        Ok(res)
+    }
+
+    /// Look up a modified open channel bolt11 by hash.
+    fn get_open_channel_bolt11_by_hash(&self, hash: &str) -> PersistResult<Option<String>> {
+        Ok(self
+            .get_connection()?
+            .query_row(
+                "
+          SELECT o.open_channel_bolt11           
+          FROM sync.open_channel_payment_info o        
+          WHERE
+           payment_hash = ?1",
+                [hash],
+                |row| row.get(0),
+            )
+            .optional()?)
+    }
+}
+
 impl SqliteStorage {
     /// Inserts payments into the payments table. These can be pending, completed and failed payments. Before
     /// persisting, it automatically deletes previously pending payments
@@ -308,7 +342,7 @@ impl SqliteStorage {
     /// To lookup a completed payment by hash, use [Self::get_completed_payment_by_hash]
     ///
     /// To query all payments, see [Self::list_payments]
-    pub(crate) fn get_payment_by_hash(&self, hash: &String) -> PersistResult<Option<Payment>> {
+    pub(crate) fn get_payment_by_hash(&self, hash: &str) -> PersistResult<Option<Payment>> {
         let query = self.select_payments_query("where id = ?1", 0, 1)?;
         Ok(self
             .get_connection()?
@@ -317,6 +351,7 @@ impl SqliteStorage {
     }
 
     /// Look up a modified open channel bolt11 by hash.
+    #[allow(unused)]
     pub(crate) fn get_open_channel_bolt11_by_hash(
         &self,
         hash: &str,
@@ -334,19 +369,6 @@ impl SqliteStorage {
                 |row| row.get(0),
             )
             .optional()?)
-    }
-
-    /// Looks up a completed payment by hash.
-    ///
-    /// To include pending or failed payments in the lookup as well, use [Self::get_payment_by_hash]
-    pub(crate) fn get_completed_payment_by_hash(
-        &self,
-        hash: &String,
-    ) -> PersistResult<Option<Payment>> {
-        let res = self
-            .get_payment_by_hash(hash)?
-            .filter(|p| p.status == PaymentStatus::Complete);
-        Ok(res)
     }
 
     fn sql_row_to_payment(&self, row: &Row) -> PersistResult<Payment, rusqlite::Error> {
@@ -503,136 +525,270 @@ impl ToSql for PaymentStatus {
     }
 }
 
-#[test]
-fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
-    use sdk_common::prelude::*;
-
-    use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
-    use crate::persist::test_utils;
-
-    let lnurl_metadata = "{'key': 'sample-metadata-val'}";
-    let test_ln_address = "test@ln.adddress.com";
-    let test_lnurl_pay_domain = "example.com";
-    let test_lnurl_pay_comment = "Thank you Satoshi!";
-    let sa = SuccessActionProcessed::Message {
-        data: MessageSuccessActionData {
-            message: "test message".into(),
-        },
+#[cfg(test)]
+mod test {
+    use crate::{
+        persist::{db::SqliteStorage, error::PersistResult, swap::SwapStorage},
+        FullReverseSwapInfo, ListPaymentsRequest, MetadataFilter, OpeningFeeParams,
+        PaymentExternalInfo, PaymentStatus, PaymentType, PaymentTypeFilter, ReverseSwapInfo,
+        ReverseSwapInfoCached, ReverseSwapStatus, SwapInfo, SwapStatus,
     };
 
-    let payment_hash_with_lnurl_success_action = "123";
-    let payment_hash_with_lnurl_withdraw = "124";
-    let payment_hash_with_swap_info: Vec<u8> = vec![234, 12, 53, 124];
-    let payment_hash_with_lnurl_domain = "126";
-    let payment_hash_with_rev_swap_info: Vec<u8> = vec![8, 7, 6, 5, 4, 3, 2, 1];
-    let lnurl_withdraw_url = "https://test.lnurl.withdraw.link";
-    let swap_info = SwapInfo {
-        bitcoin_address: "123".to_string(),
-        created_at: 1234567,
-        lock_height: 7654321,
-        payment_hash: payment_hash_with_swap_info.clone(),
-        preimage: vec![1, 2, 3],
-        private_key: vec![3, 2, 1],
-        public_key: vec![1, 3, 2],
-        swapper_public_key: vec![2, 1, 3],
-        script: vec![2, 3, 1],
-        bolt11: Some("swap_bolt11".into()),
-        paid_msat: 50_000,
-        confirmed_sats: 50,
-        unconfirmed_sats: 0,
-        total_incoming_txs: 1,
-        status: SwapStatus::Refundable,
-        refund_tx_ids: vec![],
-        unconfirmed_tx_ids: vec![],
-        confirmed_tx_ids: vec![],
-        min_allowed_deposit: 5_000,
-        max_allowed_deposit: 1_000_000,
-        max_swapper_payable: 2_000_000,
-        last_redeem_error: None,
-        channel_opening_fees: Some(OpeningFeeParams {
-            min_msat: 5_000_000,
-            proportional: 50,
-            valid_until: "date".to_string(),
-            max_idle_time: 12345,
-            max_client_to_self_delay: 234,
-            promise: "promise".to_string(),
-        }),
-        confirmed_at: Some(555),
-    };
-    let rev_swap_preimage = vec![4, 4, 4, 4];
-    let full_ref_swap_info = FullReverseSwapInfo {
-        id: "rev_swap_id".to_string(),
-        created_at_block_height: 0,
-        preimage: rev_swap_preimage.clone(),
-        private_key: vec![],
-        claim_pubkey: "claim_pubkey".to_string(),
-        timeout_block_height: 600_000,
-        invoice: "645".to_string(),
-        redeem_script: "redeem_script".to_string(),
-        onchain_amount_sat: 250,
-        sat_per_vbyte: Some(50),
-        receive_amount_sat: None,
-        cache: ReverseSwapInfoCached {
-            status: ReverseSwapStatus::CompletedConfirmed,
+    #[test]
+    fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
+        use sdk_common::prelude::*;
+
+        use crate::models::{LnPaymentDetails, Payment, PaymentDetails};
+        use crate::persist::test_utils;
+
+        let lnurl_metadata = "{'key': 'sample-metadata-val'}";
+        let test_ln_address = "test@ln.adddress.com";
+        let test_lnurl_pay_domain = "example.com";
+        let test_lnurl_pay_comment = "Thank you Satoshi!";
+        let sa = SuccessActionProcessed::Message {
+            data: MessageSuccessActionData {
+                message: "test message".into(),
+            },
+        };
+
+        let payment_hash_with_lnurl_success_action = "123";
+        let payment_hash_with_lnurl_withdraw = "124";
+        let payment_hash_with_swap_info: Vec<u8> = vec![234, 12, 53, 124];
+        let payment_hash_with_lnurl_domain = "126";
+        let payment_hash_with_rev_swap_info: Vec<u8> = vec![8, 7, 6, 5, 4, 3, 2, 1];
+        let lnurl_withdraw_url = "https://test.lnurl.withdraw.link";
+        let swap_info = SwapInfo {
+            bitcoin_address: "123".to_string(),
+            created_at: 1234567,
+            lock_height: 7654321,
+            payment_hash: payment_hash_with_swap_info.clone(),
+            preimage: vec![1, 2, 3],
+            private_key: vec![3, 2, 1],
+            public_key: vec![1, 3, 2],
+            swapper_public_key: vec![2, 1, 3],
+            script: vec![2, 3, 1],
+            bolt11: Some("swap_bolt11".into()),
+            paid_msat: 50_000,
+            confirmed_sats: 50,
+            unconfirmed_sats: 0,
+            total_incoming_txs: 1,
+            status: SwapStatus::Refundable,
+            refund_tx_ids: vec![],
+            unconfirmed_tx_ids: vec![],
+            confirmed_tx_ids: vec![],
+            min_allowed_deposit: 5_000,
+            max_allowed_deposit: 1_000_000,
+            max_swapper_payable: 2_000_000,
+            last_redeem_error: None,
+            channel_opening_fees: Some(OpeningFeeParams {
+                min_msat: 5_000_000,
+                proportional: 50,
+                valid_until: "date".to_string(),
+                max_idle_time: 12345,
+                max_client_to_self_delay: 234,
+                promise: "promise".to_string(),
+            }),
+            confirmed_at: Some(555),
+        };
+        let rev_swap_preimage = vec![4, 4, 4, 4];
+        let full_ref_swap_info = FullReverseSwapInfo {
+            id: "rev_swap_id".to_string(),
+            created_at_block_height: 0,
+            preimage: rev_swap_preimage.clone(),
+            private_key: vec![],
+            claim_pubkey: "claim_pubkey".to_string(),
+            timeout_block_height: 600_000,
+            invoice: "645".to_string(),
+            redeem_script: "redeem_script".to_string(),
+            onchain_amount_sat: 250,
+            sat_per_vbyte: Some(50),
+            receive_amount_sat: None,
+            cache: ReverseSwapInfoCached {
+                status: ReverseSwapStatus::CompletedConfirmed,
+                lockup_txid: Some("lockup_txid".to_string()),
+                claim_txid: Some("claim_txid".to_string()),
+            },
+        };
+        let rev_swap_info = ReverseSwapInfo {
+            id: "rev_swap_id".to_string(),
+            claim_pubkey: "claim_pubkey".to_string(),
             lockup_txid: Some("lockup_txid".to_string()),
             claim_txid: Some("claim_txid".to_string()),
-        },
-    };
-    let rev_swap_info = ReverseSwapInfo {
-        id: "rev_swap_id".to_string(),
-        claim_pubkey: "claim_pubkey".to_string(),
-        lockup_txid: Some("lockup_txid".to_string()),
-        claim_txid: Some("claim_txid".to_string()),
-        onchain_amount_sat: 250,
-        status: ReverseSwapStatus::CompletedConfirmed,
-    };
-    let txs = [
-        Payment {
-            id: payment_hash_with_lnurl_success_action.to_string(),
-            payment_type: PaymentType::Sent,
-            payment_time: 1001,
-            amount_msat: 100,
-            fee_msat: 20,
-            status: PaymentStatus::Complete,
-            error: None,
-            description: None,
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: payment_hash_with_lnurl_success_action.to_string(),
-                    label: "label".to_string(),
-                    destination_pubkey: "pubey".to_string(),
-                    payment_preimage: "1111".to_string(),
-                    keysend: true,
-                    bolt11: "bolt11".to_string(),
-                    lnurl_success_action: Some(sa.clone()),
-                    lnurl_pay_domain: None,
-                    lnurl_pay_comment: None,
-                    lnurl_metadata: Some(lnurl_metadata.to_string()),
-                    ln_address: Some(test_ln_address.to_string()),
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
+            onchain_amount_sat: 250,
+            status: ReverseSwapStatus::CompletedConfirmed,
+        };
+        let txs = [
+            Payment {
+                id: payment_hash_with_lnurl_success_action.to_string(),
+                payment_type: PaymentType::Sent,
+                payment_time: 1001,
+                amount_msat: 100,
+                fee_msat: 20,
+                status: PaymentStatus::Complete,
+                error: None,
+                description: None,
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: payment_hash_with_lnurl_success_action.to_string(),
+                        label: "label".to_string(),
+                        destination_pubkey: "pubey".to_string(),
+                        payment_preimage: "1111".to_string(),
+                        keysend: true,
+                        bolt11: "bolt11".to_string(),
+                        lnurl_success_action: Some(sa.clone()),
+                        lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
+                        lnurl_metadata: Some(lnurl_metadata.to_string()),
+                        ln_address: Some(test_ln_address.to_string()),
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: None,
+                        reverse_swap_info: None,
+                        pending_expiration_block: None,
+                        open_channel_bolt11: None,
+                    },
                 },
+                metadata: None,
             },
-            metadata: None,
-        },
-        Payment {
-            id: payment_hash_with_lnurl_withdraw.to_string(),
-            payment_type: PaymentType::Received,
-            payment_time: 1000,
-            amount_msat: 100,
-            fee_msat: 20,
-            status: PaymentStatus::Complete,
+            Payment {
+                id: payment_hash_with_lnurl_withdraw.to_string(),
+                payment_type: PaymentType::Received,
+                payment_time: 1000,
+                amount_msat: 100,
+                fee_msat: 20,
+                status: PaymentStatus::Complete,
+                error: None,
+                description: Some("desc".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: payment_hash_with_lnurl_withdraw.to_string(),
+                        label: "label".to_string(),
+                        destination_pubkey: "pubey".to_string(),
+                        payment_preimage: "2222".to_string(),
+                        keysend: true,
+                        bolt11: "bolt11".to_string(),
+                        lnurl_success_action: None,
+                        lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
+                        lnurl_metadata: None,
+                        ln_address: None,
+                        lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
+                        swap_info: None,
+                        reverse_swap_info: None,
+                        pending_expiration_block: None,
+                        open_channel_bolt11: None,
+                    },
+                },
+                metadata: None,
+            },
+            Payment {
+                id: hex::encode(payment_hash_with_swap_info.clone()),
+                payment_type: PaymentType::Received,
+                payment_time: 999,
+                amount_msat: 50_000,
+                fee_msat: 20,
+                status: PaymentStatus::Complete,
+                error: None,
+                description: Some("desc".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: hex::encode(payment_hash_with_swap_info),
+                        label: "label".to_string(),
+                        destination_pubkey: "pubkey".to_string(),
+                        payment_preimage: "3333".to_string(),
+                        keysend: false,
+                        bolt11: "swap_bolt11".to_string(),
+                        lnurl_success_action: None,
+                        lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
+                        lnurl_metadata: None,
+                        ln_address: None,
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: Some(swap_info.clone()),
+                        reverse_swap_info: None,
+                        pending_expiration_block: None,
+                        open_channel_bolt11: None,
+                    },
+                },
+                metadata: None,
+            },
+            Payment {
+                id: hex::encode(payment_hash_with_rev_swap_info.clone()),
+                payment_type: PaymentType::Sent,
+                payment_time: 998,
+                amount_msat: 100_000,
+                fee_msat: 200,
+                status: PaymentStatus::Complete,
+                error: None,
+                description: Some("desc".to_string()),
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: hex::encode(payment_hash_with_rev_swap_info),
+                        label: "label".to_string(),
+                        destination_pubkey: "pubkey".to_string(),
+                        payment_preimage: hex::encode(rev_swap_preimage),
+                        keysend: false,
+                        bolt11: "swap_bolt11".to_string(),
+                        lnurl_success_action: None,
+                        lnurl_metadata: None,
+                        lnurl_pay_domain: None,
+                        lnurl_pay_comment: None,
+                        ln_address: None,
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: None,
+                        reverse_swap_info: Some(rev_swap_info.clone()),
+                        pending_expiration_block: None,
+                        open_channel_bolt11: None,
+                    },
+                },
+                metadata: None,
+            },
+            Payment {
+                id: payment_hash_with_lnurl_domain.to_string(),
+                payment_type: PaymentType::Sent,
+                payment_time: 998,
+                amount_msat: 100,
+                fee_msat: 20,
+                status: PaymentStatus::Complete,
+                error: None,
+                description: None,
+                details: PaymentDetails::Ln {
+                    data: LnPaymentDetails {
+                        payment_hash: payment_hash_with_lnurl_domain.to_string(),
+                        label: "label".to_string(),
+                        destination_pubkey: "pubey".to_string(),
+                        payment_preimage: "payment_preimage".to_string(),
+                        keysend: true,
+                        bolt11: "bolt11".to_string(),
+                        lnurl_success_action: None,
+                        lnurl_pay_domain: Some(test_lnurl_pay_domain.to_string()),
+                        lnurl_pay_comment: Some(test_lnurl_pay_comment.to_string()),
+                        lnurl_metadata: Some(lnurl_metadata.to_string()),
+                        ln_address: None,
+                        lnurl_withdraw_endpoint: None,
+                        swap_info: None,
+                        reverse_swap_info: None,
+                        pending_expiration_block: None,
+                        open_channel_bolt11: None,
+                    },
+                },
+                metadata: None,
+            },
+        ];
+        let failed_txs = [Payment {
+            id: "125".to_string(),
+            payment_type: PaymentType::Sent,
+            payment_time: 2000,
+            amount_msat: 1000,
+            fee_msat: 0,
+            status: PaymentStatus::Failed,
             error: None,
             description: Some("desc".to_string()),
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
-                    payment_hash: payment_hash_with_lnurl_withdraw.to_string(),
+                    payment_hash: "125".to_string(),
                     label: "label".to_string(),
                     destination_pubkey: "pubey".to_string(),
-                    payment_preimage: "2222".to_string(),
+                    payment_preimage: "4444".to_string(),
                     keysend: true,
                     bolt11: "bolt11".to_string(),
                     lnurl_success_action: None,
@@ -640,99 +796,6 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                     lnurl_pay_comment: None,
                     lnurl_metadata: None,
                     ln_address: None,
-                    lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
-                },
-            },
-            metadata: None,
-        },
-        Payment {
-            id: hex::encode(payment_hash_with_swap_info.clone()),
-            payment_type: PaymentType::Received,
-            payment_time: 999,
-            amount_msat: 50_000,
-            fee_msat: 20,
-            status: PaymentStatus::Complete,
-            error: None,
-            description: Some("desc".to_string()),
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: hex::encode(payment_hash_with_swap_info),
-                    label: "label".to_string(),
-                    destination_pubkey: "pubkey".to_string(),
-                    payment_preimage: "3333".to_string(),
-                    keysend: false,
-                    bolt11: "swap_bolt11".to_string(),
-                    lnurl_success_action: None,
-                    lnurl_pay_domain: None,
-                    lnurl_pay_comment: None,
-                    lnurl_metadata: None,
-                    ln_address: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: Some(swap_info.clone()),
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
-                },
-            },
-            metadata: None,
-        },
-        Payment {
-            id: hex::encode(payment_hash_with_rev_swap_info.clone()),
-            payment_type: PaymentType::Sent,
-            payment_time: 998,
-            amount_msat: 100_000,
-            fee_msat: 200,
-            status: PaymentStatus::Complete,
-            error: None,
-            description: Some("desc".to_string()),
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: hex::encode(payment_hash_with_rev_swap_info),
-                    label: "label".to_string(),
-                    destination_pubkey: "pubkey".to_string(),
-                    payment_preimage: hex::encode(rev_swap_preimage),
-                    keysend: false,
-                    bolt11: "swap_bolt11".to_string(),
-                    lnurl_success_action: None,
-                    lnurl_metadata: None,
-                    lnurl_pay_domain: None,
-                    lnurl_pay_comment: None,
-                    ln_address: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: Some(rev_swap_info.clone()),
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
-                },
-            },
-            metadata: None,
-        },
-        Payment {
-            id: payment_hash_with_lnurl_domain.to_string(),
-            payment_type: PaymentType::Sent,
-            payment_time: 998,
-            amount_msat: 100,
-            fee_msat: 20,
-            status: PaymentStatus::Complete,
-            error: None,
-            description: None,
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: payment_hash_with_lnurl_domain.to_string(),
-                    label: "label".to_string(),
-                    destination_pubkey: "pubey".to_string(),
-                    payment_preimage: "payment_preimage".to_string(),
-                    keysend: true,
-                    bolt11: "bolt11".to_string(),
-                    lnurl_success_action: None,
-                    lnurl_pay_domain: Some(test_lnurl_pay_domain.to_string()),
-                    lnurl_pay_comment: Some(test_lnurl_pay_comment.to_string()),
-                    lnurl_metadata: Some(lnurl_metadata.to_string()),
-                    ln_address: None,
                     lnurl_withdraw_endpoint: None,
                     swap_info: None,
                     reverse_swap_info: None,
@@ -741,259 +804,229 @@ fn test_ln_transactions() -> PersistResult<(), Box<dyn std::error::Error>> {
                 },
             },
             metadata: None,
-        },
-    ];
-    let failed_txs = [Payment {
-        id: "125".to_string(),
-        payment_type: PaymentType::Sent,
-        payment_time: 2000,
-        amount_msat: 1000,
-        fee_msat: 0,
-        status: PaymentStatus::Failed,
-        error: None,
-        description: Some("desc".to_string()),
-        details: PaymentDetails::Ln {
-            data: LnPaymentDetails {
-                payment_hash: "125".to_string(),
-                label: "label".to_string(),
-                destination_pubkey: "pubey".to_string(),
-                payment_preimage: "4444".to_string(),
-                keysend: true,
-                bolt11: "bolt11".to_string(),
-                lnurl_success_action: None,
+        }];
+        let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
+        storage.init()?;
+        storage.insert_or_update_payments(&txs, false)?;
+        storage.insert_or_update_payments(&failed_txs, false)?;
+        storage.insert_payment_external_info(
+            payment_hash_with_lnurl_success_action,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: Some(sa.clone()),
+                lnurl_pay_domain: None,
+                lnurl_pay_comment: None,
+                lnurl_metadata: Some(lnurl_metadata.to_string()),
+                ln_address: Some(test_ln_address.to_string()),
+                lnurl_withdraw_endpoint: None,
+                attempted_amount_msat: None,
+                attempted_error: None,
+            },
+        )?;
+        storage.insert_payment_external_info(
+            payment_hash_with_lnurl_withdraw,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: None,
                 lnurl_pay_domain: None,
                 lnurl_pay_comment: None,
                 lnurl_metadata: None,
                 ln_address: None,
-                lnurl_withdraw_endpoint: None,
-                swap_info: None,
-                reverse_swap_info: None,
-                pending_expiration_block: None,
-                open_channel_bolt11: None,
+                lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
+                attempted_amount_msat: None,
+                attempted_error: None,
             },
-        },
-        metadata: None,
-    }];
-    let storage = SqliteStorage::new(test_utils::create_test_sql_dir());
-    storage.init()?;
-    storage.insert_or_update_payments(&txs, false)?;
-    storage.insert_or_update_payments(&failed_txs, false)?;
-    storage.insert_payment_external_info(
-        payment_hash_with_lnurl_success_action,
-        PaymentExternalInfo {
-            lnurl_pay_success_action: Some(sa.clone()),
-            lnurl_pay_domain: None,
-            lnurl_pay_comment: None,
-            lnurl_metadata: Some(lnurl_metadata.to_string()),
-            ln_address: Some(test_ln_address.to_string()),
-            lnurl_withdraw_endpoint: None,
-            attempted_amount_msat: None,
-            attempted_error: None,
-        },
-    )?;
-    storage.insert_payment_external_info(
-        payment_hash_with_lnurl_withdraw,
-        PaymentExternalInfo {
-            lnurl_pay_success_action: None,
-            lnurl_pay_domain: None,
-            lnurl_pay_comment: None,
-            lnurl_metadata: None,
-            ln_address: None,
-            lnurl_withdraw_endpoint: Some(lnurl_withdraw_url.to_string()),
-            attempted_amount_msat: None,
-            attempted_error: None,
-        },
-    )?;
-    storage.insert_swap(swap_info.clone())?;
-    storage.update_swap_bolt11(
-        swap_info.bitcoin_address.clone(),
-        swap_info.bolt11.clone().unwrap(),
-    )?;
-    storage.insert_payment_external_info(
-        payment_hash_with_lnurl_domain,
-        PaymentExternalInfo {
-            lnurl_pay_success_action: None,
-            lnurl_pay_domain: Some(test_lnurl_pay_domain.to_string()),
-            lnurl_pay_comment: Some(test_lnurl_pay_comment.to_string()),
-            lnurl_metadata: Some(lnurl_metadata.to_string()),
-            ln_address: None,
-            lnurl_withdraw_endpoint: None,
-            attempted_amount_msat: None,
-            attempted_error: None,
-        },
-    )?;
-    storage.insert_reverse_swap(&full_ref_swap_info)?;
-    storage.update_reverse_swap_status("rev_swap_id", &ReverseSwapStatus::CompletedConfirmed)?;
-    storage.update_reverse_swap_lockup_txid("rev_swap_id", Some("lockup_txid".to_string()))?;
-    storage.update_reverse_swap_claim_txid("rev_swap_id", Some("claim_txid".to_string()))?;
+        )?;
+        storage.insert_swap(&swap_info)?;
+        storage.update_swap_bolt11(
+            swap_info.bitcoin_address.clone(),
+            swap_info.bolt11.clone().unwrap(),
+        )?;
+        storage.insert_payment_external_info(
+            payment_hash_with_lnurl_domain,
+            PaymentExternalInfo {
+                lnurl_pay_success_action: None,
+                lnurl_pay_domain: Some(test_lnurl_pay_domain.to_string()),
+                lnurl_pay_comment: Some(test_lnurl_pay_comment.to_string()),
+                lnurl_metadata: Some(lnurl_metadata.to_string()),
+                ln_address: None,
+                lnurl_withdraw_endpoint: None,
+                attempted_amount_msat: None,
+                attempted_error: None,
+            },
+        )?;
+        storage.insert_reverse_swap(&full_ref_swap_info)?;
+        storage
+            .update_reverse_swap_status("rev_swap_id", &ReverseSwapStatus::CompletedConfirmed)?;
+        storage.update_reverse_swap_lockup_txid("rev_swap_id", Some("lockup_txid".to_string()))?;
+        storage.update_reverse_swap_claim_txid("rev_swap_id", Some("claim_txid".to_string()))?;
 
-    // retrieve all
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
-    assert_eq!(retrieve_txs.len(), 5);
-    assert_eq!(retrieve_txs, txs);
+        // retrieve all
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
+        assert_eq!(retrieve_txs.len(), 5);
+        assert_eq!(retrieve_txs, txs);
 
-    //test only sent
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: Some(vec![
-            PaymentTypeFilter::Sent,
-            PaymentTypeFilter::ClosedChannel,
-        ]),
-        ..Default::default()
-    })?;
-    assert_eq!(retrieve_txs.len(), 3);
-    assert_eq!(retrieve_txs[0], txs[0]);
-    assert_eq!(retrieve_txs[1], txs[3]);
-    assert!(
-        matches!( &retrieve_txs[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}} if lnurl_success_action == &Some(sa))
-    );
-    assert!(
-        matches!( &retrieve_txs[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_pay_domain, ln_address, ..}} if lnurl_pay_domain.is_none() && ln_address == &Some(test_ln_address.to_string()))
-    );
-    assert!(
-        matches!( &retrieve_txs[2].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_pay_domain, ln_address, ..}} if lnurl_pay_domain == &Some(test_lnurl_pay_domain.to_string()) && ln_address.is_none())
-    );
-    assert!(
-        matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {reverse_swap_info: rev_swap, ..}} if rev_swap == &Some(rev_swap_info))
-    );
-
-    //test only received
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: Some(vec![PaymentTypeFilter::Received]),
-        ..Default::default()
-    })?;
-    assert_eq!(retrieve_txs.len(), 2);
-    assert_eq!(retrieve_txs[0], txs[1]);
-    assert_eq!(retrieve_txs[1], txs[2]);
-    assert!(
-        matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}} if swap == &Some(swap_info))
-    );
-
-    storage.insert_or_update_payments(&txs, false)?;
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
-    assert_eq!(retrieve_txs.len(), 5);
-    assert_eq!(retrieve_txs, txs);
-
-    storage.insert_open_channel_payment_info("123", 150, "")?;
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
-    assert_eq!(retrieve_txs[0].fee_msat, 50);
-
-    // test all with failures
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        include_failures: Some(true),
-        ..Default::default()
-    })?;
-    assert_eq!(retrieve_txs.len(), 6);
-
-    // test sent with failures
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: Some(vec![
-            PaymentTypeFilter::Sent,
-            PaymentTypeFilter::ClosedChannel,
-        ]),
-        include_failures: Some(true),
-        ..Default::default()
-    })?;
-    assert_eq!(retrieve_txs.len(), 4);
-
-    // test limit
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        include_failures: Some(false),
-        limit: Some(1),
-        ..Default::default()
-    })?;
-    assert_eq!(retrieve_txs.len(), 1);
-
-    // test offset
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        include_failures: Some(false),
-        offset: Some(1),
-        limit: Some(1),
-        ..Default::default()
-    })?;
-    assert_eq!(retrieve_txs.len(), 1);
-    assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
-
-    // test json metadata validation
-    assert!(storage
-        .set_payment_external_metadata(
-            payment_hash_with_lnurl_withdraw.to_string(),
-            r#"{ "malformed: true }"#.to_string()
-        )
-        .is_err());
-
-    // test metadata set and filter
-    let test_json = r#"{"supportsBoolean":true,"supportsInt":10,"supportsString":"supports string","supportsNested":{"value":[1,2]}}"#;
-    let test_json_filters = Some(vec![
-        MetadataFilter {
-            json_path: "supportsBoolean".to_string(),
-            json_value: "true".to_string(),
-        },
-        MetadataFilter {
-            json_path: "supportsInt".to_string(),
-            json_value: "10".to_string(),
-        },
-        MetadataFilter {
-            json_path: "supportsString".to_string(),
-            json_value: r#""supports string""#.to_string(),
-        },
-        MetadataFilter {
-            json_path: "supportsNested.value".to_string(),
-            json_value: "[1,2]".to_string(),
-        },
-    ]);
-
-    storage.set_payment_external_metadata(
-        payment_hash_with_lnurl_withdraw.to_string(),
-        test_json.to_string(),
-    )?;
-
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        metadata_filters: test_json_filters,
-        ..Default::default()
-    })?;
-    assert_eq!(retrieve_txs.len(), 1);
-    assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
-    assert_eq!(retrieve_txs[0].metadata, Some(test_json.to_string()),);
-
-    // test open_channel_bolt11
-    storage.insert_open_channel_payment_info(
-        payment_hash_with_lnurl_withdraw,
-        150,
-        "original_invoice",
-    )?;
-
-    let open_channel_bolt11 = storage
-        .get_open_channel_bolt11_by_hash(payment_hash_with_lnurl_withdraw)?
-        .unwrap();
-    assert_eq!(open_channel_bolt11, "original_invoice");
-
-    let open_channel_bolt11 = storage.get_open_channel_bolt11_by_hash("non existing hash")?;
-    assert_eq!(open_channel_bolt11, None);
-
-    let retrieve_txs = storage.list_payments(ListPaymentsRequest {
-        filters: Some(vec![PaymentTypeFilter::Received]),
-        ..Default::default()
-    })?;
-
-    let filtered_txs: Vec<&Payment> = retrieve_txs
-        .iter()
-        .filter(|p| {
-            if let PaymentDetails::Ln { data } = &p.details {
-                return data.open_channel_bolt11 == Some("original_invoice".to_string());
-            }
-            false
-        })
-        .collect();
-
-    assert_eq!(filtered_txs.len(), 1);
-    assert_eq!(filtered_txs[0].id, payment_hash_with_lnurl_withdraw);
-    assert!(matches!(filtered_txs[0].details, PaymentDetails::Ln { .. }));
-    if let PaymentDetails::Ln { data } = &filtered_txs[0].details {
-        assert_eq!(
-            data.open_channel_bolt11,
-            Some("original_invoice".to_string())
+        //test only sent
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            filters: Some(vec![
+                PaymentTypeFilter::Sent,
+                PaymentTypeFilter::ClosedChannel,
+            ]),
+            ..Default::default()
+        })?;
+        assert_eq!(retrieve_txs.len(), 3);
+        assert_eq!(retrieve_txs[0], txs[0]);
+        assert_eq!(retrieve_txs[1], txs[3]);
+        assert!(
+            matches!( &retrieve_txs[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_success_action, ..}} if lnurl_success_action == &Some(sa))
         );
-    }
+        assert!(
+            matches!( &retrieve_txs[0].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_pay_domain, ln_address, ..}} if lnurl_pay_domain.is_none() && ln_address == &Some(test_ln_address.to_string()))
+        );
+        assert!(
+            matches!( &retrieve_txs[2].details, PaymentDetails::Ln {data: LnPaymentDetails {lnurl_pay_domain, ln_address, ..}} if lnurl_pay_domain == &Some(test_lnurl_pay_domain.to_string()) && ln_address.is_none())
+        );
+        assert!(
+            matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {reverse_swap_info: rev_swap, ..}} if rev_swap == &Some(rev_swap_info))
+        );
 
-    Ok(())
+        //test only received
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            filters: Some(vec![PaymentTypeFilter::Received]),
+            ..Default::default()
+        })?;
+        assert_eq!(retrieve_txs.len(), 2);
+        assert_eq!(retrieve_txs[0], txs[1]);
+        assert_eq!(retrieve_txs[1], txs[2]);
+        assert!(
+            matches!( &retrieve_txs[1].details, PaymentDetails::Ln {data: LnPaymentDetails {swap_info: swap, ..}} if swap == &Some(swap_info))
+        );
+
+        storage.insert_or_update_payments(&txs, false)?;
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
+        assert_eq!(retrieve_txs.len(), 5);
+        assert_eq!(retrieve_txs, txs);
+
+        storage.insert_open_channel_payment_info("123", 150, "")?;
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest::default())?;
+        assert_eq!(retrieve_txs[0].fee_msat, 50);
+
+        // test all with failures
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            include_failures: Some(true),
+            ..Default::default()
+        })?;
+        assert_eq!(retrieve_txs.len(), 6);
+
+        // test sent with failures
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            filters: Some(vec![
+                PaymentTypeFilter::Sent,
+                PaymentTypeFilter::ClosedChannel,
+            ]),
+            include_failures: Some(true),
+            ..Default::default()
+        })?;
+        assert_eq!(retrieve_txs.len(), 4);
+
+        // test limit
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            include_failures: Some(false),
+            limit: Some(1),
+            ..Default::default()
+        })?;
+        assert_eq!(retrieve_txs.len(), 1);
+
+        // test offset
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            include_failures: Some(false),
+            offset: Some(1),
+            limit: Some(1),
+            ..Default::default()
+        })?;
+        assert_eq!(retrieve_txs.len(), 1);
+        assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
+
+        // test json metadata validation
+        assert!(storage
+            .set_payment_external_metadata(
+                payment_hash_with_lnurl_withdraw.to_string(),
+                r#"{ "malformed: true }"#.to_string()
+            )
+            .is_err());
+
+        // test metadata set and filter
+        let test_json = r#"{"supportsBoolean":true,"supportsInt":10,"supportsString":"supports string","supportsNested":{"value":[1,2]}}"#;
+        let test_json_filters = Some(vec![
+            MetadataFilter {
+                json_path: "supportsBoolean".to_string(),
+                json_value: "true".to_string(),
+            },
+            MetadataFilter {
+                json_path: "supportsInt".to_string(),
+                json_value: "10".to_string(),
+            },
+            MetadataFilter {
+                json_path: "supportsString".to_string(),
+                json_value: r#""supports string""#.to_string(),
+            },
+            MetadataFilter {
+                json_path: "supportsNested.value".to_string(),
+                json_value: "[1,2]".to_string(),
+            },
+        ]);
+
+        storage.set_payment_external_metadata(
+            payment_hash_with_lnurl_withdraw.to_string(),
+            test_json.to_string(),
+        )?;
+
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            metadata_filters: test_json_filters,
+            ..Default::default()
+        })?;
+        assert_eq!(retrieve_txs.len(), 1);
+        assert_eq!(retrieve_txs[0].id, payment_hash_with_lnurl_withdraw);
+        assert_eq!(retrieve_txs[0].metadata, Some(test_json.to_string()),);
+
+        // test open_channel_bolt11
+        storage.insert_open_channel_payment_info(
+            payment_hash_with_lnurl_withdraw,
+            150,
+            "original_invoice",
+        )?;
+
+        let open_channel_bolt11 = storage
+            .get_open_channel_bolt11_by_hash(payment_hash_with_lnurl_withdraw)?
+            .unwrap();
+        assert_eq!(open_channel_bolt11, "original_invoice");
+
+        let open_channel_bolt11 = storage.get_open_channel_bolt11_by_hash("non existing hash")?;
+        assert_eq!(open_channel_bolt11, None);
+
+        let retrieve_txs = storage.list_payments(ListPaymentsRequest {
+            filters: Some(vec![PaymentTypeFilter::Received]),
+            ..Default::default()
+        })?;
+
+        let filtered_txs: Vec<&Payment> = retrieve_txs
+            .iter()
+            .filter(|p| {
+                if let PaymentDetails::Ln { data } = &p.details {
+                    return data.open_channel_bolt11 == Some("original_invoice".to_string());
+                }
+                false
+            })
+            .collect();
+
+        assert_eq!(filtered_txs.len(), 1);
+        assert_eq!(filtered_txs[0].id, payment_hash_with_lnurl_withdraw);
+        assert!(matches!(filtered_txs[0].details, PaymentDetails::Ln { .. }));
+        if let PaymentDetails::Ln { data } = &filtered_txs[0].details {
+            assert_eq!(
+                data.open_channel_bolt11,
+                Some("original_invoice".to_string())
+            );
+        }
+
+        Ok(())
+    }
 }

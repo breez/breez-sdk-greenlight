@@ -485,7 +485,8 @@ pub(crate) fn current_migrations() -> Vec<&'static str> {
        "ALTER TABLE payments ADD COLUMN is_pseudo INTEGER DEFAULT 0 NOT NULL;
         DELETE FROM payments;
         DELETE FROM cached_items WHERE key = 'sync_state';
-       "
+       ",
+       "ALTER TABLE swaps_info ADD COLUMN chain_data TEXT;"
     ]
 }
 
@@ -671,5 +672,6 @@ pub(crate) fn current_sync_migrations() -> Vec<&'static str> {
         UPDATE swaps SET max_swapper_payable = max_allowed_deposit;
         ",
         "ALTER TABLE payments_external_info ADD COLUMN lnurl_pay_comment TEXT;",
+        "DELETE FROM open_channel_payment_info;",
 	]
 }

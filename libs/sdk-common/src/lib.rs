@@ -1,5 +1,6 @@
 mod breez_server;
 mod buy;
+mod dns_resolver;
 mod error;
 mod fiat;
 pub mod grpc;
@@ -9,8 +10,9 @@ pub mod invoice;
 pub mod liquid;
 mod lnurl;
 mod model;
+mod test_utils;
 pub mod tonic_wrap;
-mod utils;
+pub mod utils;
 
 // Re-export commonly used crates, to make it easy for callers to use the specific versions we're using.
 // For example, for the bitcoin crate, this is important because certain error conversions defined in
@@ -19,9 +21,9 @@ mod utils;
 // (e.g. impl From<bip32::Error> for LnUrlError)
 pub use bitcoin;
 pub use lightning;
-#[cfg(feature = "liquid")]
-pub use lightning_125;
 pub use lightning_invoice;
+#[cfg(feature = "liquid")]
+pub use lightning_with_bolt12;
 
 // We don't include grpc::* in the prelude exports, to force callers to use the grpc path prefix.
 #[rustfmt::skip]
@@ -46,5 +48,7 @@ pub mod prelude {
     pub use crate::lnurl::specs::withdraw::*;
     pub use crate::lnurl::*;
     pub use crate::model::*;
+    #[cfg(feature = "test-utils")]
+    pub use crate::test_utils::mock_rest_client::*;
     pub use crate::utils::rest_client::*;
 }

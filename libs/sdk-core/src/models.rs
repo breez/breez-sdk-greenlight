@@ -23,8 +23,6 @@ use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
 use crate::bitcoin::{Address, Script};
 use crate::error::SdkResult;
 use crate::lsp::LspInformation;
-use crate::persist::swap::SwapChainInfo;
-use crate::swap_in::error::{SwapError, SwapResult};
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
 
@@ -32,8 +30,11 @@ pub const SWAP_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60 * 24 * 2; // 2 days
 pub const INVOICE_PAYMENT_FEE_EXPIRY_SECONDS: u32 = 60 * 60; // 60 minutes
 
 /// Different types of supported payments
-#[derive(Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash)]
+#[derive(
+    Default, Clone, PartialEq, Eq, Debug, EnumString, Display, Deserialize, Serialize, Hash,
+)]
 pub enum PaymentType {
+    #[default]
     Sent,
     Received,
     ClosedChannel,
@@ -96,13 +97,6 @@ pub struct Swap {
 /// Trait covering functionality involving swaps
 #[tonic::async_trait]
 pub trait SwapperAPI: Send + Sync {
-    async fn create_swap(
-        &self,
-        hash: Vec<u8>,
-        payer_pubkey: Vec<u8>,
-        node_pubkey: String,
-    ) -> SwapResult<Swap>;
-
     async fn complete_swap(&self, bolt11: String) -> Result<()>;
 }
 
@@ -615,7 +609,7 @@ pub struct BackupStatus {
 /// Note: The implementation attempts to provide the most up-to-date values,
 /// which may result in some short-lived inconsistencies
 /// (e.g., `channels_balance_msat` may be updated before `inbound_liquidity_msats`).
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
+#[derive(Serialize, Default, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct NodeState {
     pub id: String,
     pub block_height: u32,
@@ -648,15 +642,16 @@ pub struct SyncResponse {
 }
 
 /// The status of a payment
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum PaymentStatus {
+    #[default]
     Pending = 0,
     Complete = 1,
     Failed = 2,
 }
 
 /// Represents a payment, including its [PaymentType] and [PaymentDetails]
-#[derive(PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
+#[derive(Default, PartialEq, Eq, Debug, Clone, Serialize, Deserialize)]
 pub struct Payment {
     pub id: String,
     pub payment_type: PaymentType,
@@ -724,6 +719,14 @@ pub enum PaymentDetails {
     },
 }
 
+impl Default for PaymentDetails {
+    fn default() -> Self {
+        Self::Ln {
+            data: LnPaymentDetails::default(),
+        }
+    }
+}
+
 impl PaymentDetails {
     pub fn add_pending_expiration_block(&mut self, htlc: Htlc) {
         if let PaymentDetails::Ln { data } = self {
@@ -733,7 +736,7 @@ impl PaymentDetails {
 }
 
 /// Details of a LN payment, as included in a [Payment]
-#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
+#[derive(Default, PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 pub struct LnPaymentDetails {
     pub payment_hash: String,
     pub label: String,
@@ -954,7 +957,7 @@ pub struct ReceiveOnchainRequest {
     pub opening_fee_params: Option<OpeningFeeParams>,
 }
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct ListSwapsRequest {
     pub status: Option<Vec<SwapStatus>>,
     /// Epoch time, in seconds. If set, acts as filter for minimum swap creation time, inclusive.
@@ -1046,12 +1049,14 @@ pub struct PrepareRefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+    pub unilateral: Option<bool>,
 }
 
 pub struct RefundRequest {
     pub swap_address: String,
     pub to_address: String,
     pub sat_per_vbyte: u32,
+    pub unilateral: Option<bool>,
 }
 
 pub struct PrepareRefundResponse {
@@ -1067,7 +1072,7 @@ pub struct RefundResponse {
 ///
 /// After they are received, the client shouldn't change them when calling LSP methods,
 /// otherwise the LSP may reject the call.
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize, Eq, PartialEq)]
 pub struct OpeningFeeParams {
     /// The minimum value in millisatoshi we will require for incoming HTLCs on the channel
     pub min_msat: u64,
@@ -1271,11 +1276,12 @@ pub enum ChannelState {
 }
 
 /// The status of a swap
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum SwapStatus {
     /// The swap address has been created and either there aren't any confirmed transactions associated with it
     /// or there are confirmed transactions that are bellow the lock timeout which means the funds are still
     /// eligible to be redeemed normally.
+    #[default]
     Initial = 0,
 
     WaitingConfirmation = 1,
@@ -1353,7 +1359,7 @@ impl TryFrom<i32> for SwapStatus {
 /// The SwapInfo has a status which changes accordingly, documented in [SwapStatus].
 ///
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SwapInfo {
     /// Bitcoin address for this swap. Sats sent to this address will be swapped.
     pub bitcoin_address: String,
@@ -1408,81 +1414,6 @@ pub struct SwapInfo {
     pub channel_opening_fees: Option<OpeningFeeParams>,
     /// The block height when the swap was confirmed.
     pub confirmed_at: Option<u32>,
-}
-
-impl SwapInfo {
-    pub(crate) fn with_chain_info(&self, onchain_info: SwapChainInfo, tip: u32) -> Self {
-        let new_info = Self {
-            confirmed_sats: onchain_info.confirmed_sats,
-            unconfirmed_sats: onchain_info.unconfirmed_sats,
-            confirmed_tx_ids: onchain_info.confirmed_tx_ids,
-            unconfirmed_tx_ids: onchain_info.unconfirmed_tx_ids,
-            confirmed_at: onchain_info.confirmed_at,
-            ..self.clone()
-        };
-
-        Self {
-            status: new_info.calculate_status(tip),
-            ..new_info
-        }
-    }
-
-    pub(crate) fn with_paid_amount(&self, paid_msat: u64, tip: u32) -> Self {
-        let new_info = Self {
-            paid_msat,
-            ..self.clone()
-        };
-
-        Self {
-            status: new_info.calculate_status(tip),
-            ..new_info
-        }
-    }
-
-    fn calculate_status(&self, tip: u32) -> SwapStatus {
-        let mut passed_timelock = false;
-        if let Some(confirmed_at) = self.confirmed_at {
-            passed_timelock = (tip - confirmed_at) as i64 > self.lock_height;
-        }
-
-        // In case timelock has passed we can only be in the Refundable or Completed state.
-        if passed_timelock {
-            return match self.confirmed_sats {
-                0 => SwapStatus::Completed,
-                // This is to make sure we don't consider refundable in case we only have one transaction which was already
-                // paid by the swapper.
-                _ => match (self.paid_msat, self.total_incoming_txs) {
-                    (paid, 1) if paid > 0 => SwapStatus::Completed,
-                    _ => SwapStatus::Refundable,
-                },
-            };
-        }
-
-        match (
-            self.confirmed_at,
-            self.unconfirmed_sats,
-            self.confirmed_sats,
-            self.paid_msat,
-        ) {
-            // We have confirmation and both uconfirmed and confirmed balance are zero then we are done
-            (Some(_), 0, 0, _) => SwapStatus::Completed,
-            // We got lightning payment so we are in redeemed state.
-            (_, _, _, paid) if paid > 0 => SwapStatus::Redeemed,
-            // We have positive confirmed balance then we should redeem the funds.
-            (_, _, confirmed, _) if confirmed > 0 => SwapStatus::Redeemable,
-            // We have positive unconfirmed balance then we are waiting for confirmation.
-            (_, unconfirmed, _, _) if unconfirmed > 0 => SwapStatus::WaitingConfirmation,
-            _ => SwapStatus::Initial,
-        }
-    }
-
-    pub(crate) fn validate_swap_limits(&self) -> SwapResult<()> {
-        ensure_sdk!(
-            self.max_allowed_deposit >= self.min_allowed_deposit,
-            SwapError::unsupported_swap_limits("No allowed deposit amounts")
-        );
-        Ok(())
-    }
 }
 
 /// UTXO known to the LN node

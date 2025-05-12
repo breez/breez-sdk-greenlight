@@ -235,7 +235,7 @@ pub(crate) fn parse_cln_error(status: tonic::Status) -> Result<JsonRpcErrCode> {
 /// The [tonic::Status] is nested into an [tonic::Code::Internal] one here:
 /// <https://github.com/Blockstream/greenlight/blob/e87f60e473edf9395631086c48ba6234c0c052ff/libs/gl-plugin/src/node/wrapper.rs#L90-L93>
 pub(crate) fn parse_cln_error_wrapped(status: tonic::Status) -> Result<JsonRpcErrCode> {
-    let re: Regex = Regex::new(r"code: (?<code>-?\d+)")?;
+    let re: Regex = Regex::new(r"code:? (?<code>-?\d+)")?;
     re.captures(status.message())
         .and_then(|caps| {
             caps["code"]
@@ -254,6 +254,14 @@ mod tests {
 
     #[test]
     fn test_parse_cln_error() -> Result<()> {
+        assert!(matches!(
+            parse_cln_error(tonic::Status::new(
+                Code::Internal,
+                "converting invoice response to grpc: Error code 901: preimage already used"
+            )),
+            Ok(JsonRpcErrCode::InvoicePreimageAlreadyExists)
+        ));
+
         assert!(parse_cln_error(tonic::Status::new(Code::Internal, "...")).is_err());
 
         assert!(matches!(

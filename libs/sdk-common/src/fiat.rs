@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
+use maybe_sync::{MaybeSend, MaybeSync};
 use serde::{Deserialize, Serialize};
 
 use crate::grpc::RatesRequest;
@@ -8,8 +9,8 @@ use crate::prelude::BreezServer;
 use crate::with_connection_retry;
 
 /// Trait covering fiat-related functionality
-#[tonic::async_trait]
-pub trait FiatAPI: Send + Sync {
+#[sdk_macros::async_trait]
+pub trait FiatAPI: MaybeSend + MaybeSync {
     /// List all supported fiat currencies for which there is a known exchange rate.
     async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
 
@@ -74,7 +75,7 @@ fn convert_to_fiat_currency_with_id(id: String, info: CurrencyInfo) -> FiatCurre
     FiatCurrency { id, info }
 }
 
-#[tonic::async_trait]
+#[sdk_macros::async_trait]
 impl FiatAPI for BreezServer {
     async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>> {
         let known_rates = self.fetch_fiat_rates().await?;

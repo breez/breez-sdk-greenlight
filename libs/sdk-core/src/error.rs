@@ -6,7 +6,7 @@ use thiserror::Error;
 
 use crate::{
     bitcoin::util::bip32, node_api::NodeError, persist::error::PersistError,
-    swap_in::error::SwapError, swap_out::error::ReverseSwapError,
+    swap_in::ReceiveSwapError, swap_out::error::ReverseSwapError,
 };
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
@@ -54,6 +54,12 @@ impl From<PersistError> for ConnectError {
         Self::Generic {
             err: err.to_string(),
         }
+    }
+}
+
+impl From<ServiceConnectivityError> for ConnectError {
+    fn from(value: ServiceConnectivityError) -> Self {
+        Self::ServiceConnectivity { err: value.err }
     }
 }
 
@@ -106,6 +112,7 @@ impl From<SendPaymentError> for LnUrlPayError {
             SendPaymentError::RouteNotFound { err } => Self::RouteNotFound { err },
             SendPaymentError::RouteTooExpensive { err } => Self::RouteTooExpensive { err },
             SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+            SendPaymentError::InsufficientBalance { err } => Self::InsufficientBalance { err },
         }
     }
 }
@@ -182,10 +189,10 @@ impl From<SdkError> for ReceiveOnchainError {
     }
 }
 
-impl From<SwapError> for ReceiveOnchainError {
-    fn from(value: SwapError) -> Self {
+impl From<ReceiveSwapError> for ReceiveOnchainError {
+    fn from(value: ReceiveSwapError) -> Self {
         match value {
-            SwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            ReceiveSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
             _ => Self::Generic {
                 err: value.to_string(),
             },
@@ -473,8 +480,20 @@ impl From<SendPaymentError> for SdkError {
             | SendPaymentError::PaymentFailed { err }
             | SendPaymentError::PaymentTimeout { err }
             | SendPaymentError::RouteNotFound { err }
-            | SendPaymentError::RouteTooExpensive { err } => Self::Generic { err },
+            | SendPaymentError::RouteTooExpensive { err }
+            | SendPaymentError::InsufficientBalance { err } => Self::Generic { err },
             SendPaymentError::ServiceConnectivity { err } => Self::ServiceConnectivity { err },
+        }
+    }
+}
+
+impl From<ReceiveSwapError> for SdkError {
+    fn from(value: ReceiveSwapError) -> Self {
+        match value {
+            ReceiveSwapError::ServiceConnectivity(err) => Self::ServiceConnectivity { err },
+            _ => Self::Generic {
+                err: value.to_string(),
+            },
         }
     }
 }
@@ -620,6 +639,10 @@ pub enum SendPaymentError {
     /// This error is raised when a connection to an external service fails.
     #[error("Service connectivity: {err}")]
     ServiceConnectivity { err: String },
+
+    /// This error is raised when the node does not have enough funds to make the payment.
+    #[error("Insufficient balance: {err}")]
+    InsufficientBalance { err: String },
 }
 
 impl From<anyhow::Error> for SendPaymentError {

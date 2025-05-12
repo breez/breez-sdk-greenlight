@@ -6,44 +6,72 @@ version.workspace = true
 [dependencies]
 aes = { workspace = true }
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 base64 = { workspace = true }
 bip21 = "0.2"
 bitcoin = { workspace = true }
 cbc = { version = "0.1", features = ["std"] }
+elements = { version = "0.25.0", optional = true }
 hex = { workspace = true }
+lazy_static = "1.5.0"
 lightning = { workspace = true }
-lightning-125 = { package = "lightning", version = "0.0.125", default-features = false, features = ["std"], optional = true }
 lightning-invoice = { workspace = true }
 log = { workspace = true }
+percent-encoding = "2.3.1"
 querystring = "1"
-prost = { workspace = true }
 regex = { workspace = true }
 reqwest = { workspace = true }
+sdk-macros = { path = "../sdk-macros" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 strum_macros = { workspace = true }
 thiserror = { workspace = true }
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
+url = "2.5.0"
+urlencoding = { version = "2.1.3" }
+
+[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dependencies]
+hickory-resolver = { version = "0.24.2", features = ["dnssec-ring"] }
+lightning-with-bolt12 = { package = "lightning", version = "0.1.2", default-features = false, features = [
+    "std",
+], optional = true }
+prost = { workspace = true }
 tonic = { workspace = true, features = [
     "tls",
     "transport",
     "tls-roots",
     "tls-webpki-roots",
 ] }
-url = "2.5.0"
-elements = { version = "0.25.0", optional = true }
-urlencoding = { version = "2.1.3" }
-percent-encoding = "2.3.1"
-hickory-resolver = { version = "0.24.2", features = ["dnssec-ring"] }
-lazy_static = "1.5.0"
+maybe-sync = { version = "0.1.1", features = ["sync"] }
+
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
+dns-parser = "0.8.0"
+getrandom = { version = "0.2.14", features = ["js"] }
+lightning-with-bolt12 = { package = "lightning", version = "0.1.2", default-features = false, features = [], optional = true }
+prost = "^0.13"
+tonic = { version = "0.12", default-features = false, features = [
+    "codegen",
+    "prost",
+] }
+tonic-web-wasm-client = "0.6"
+wasm-bindgen = "0.2.100"
+maybe-sync = "0.1.1"
 
 [dev-dependencies]
 bitcoin = { workspace = true, features = ["rand"] }
-mockito = { workspace = true }
-once_cell = { workspace = true }
 
-[build-dependencies]
+[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dev-dependencies]
+tokio = { workspace = true, features = ["sync", "rt"] }
+
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dev-dependencies]
+wasm-bindgen-test = "0.3.33"
+
+[target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.build-dependencies]
 tonic-build = { workspace = true }
 
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.build-dependencies]
+tonic-build = "0.12"
+
 [features]
-liquid = ["dep:elements", "dep:lightning-125"]
+liquid = ["dep:elements", "dep:lightning-with-bolt12"]
+test-utils = []

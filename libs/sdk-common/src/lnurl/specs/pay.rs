@@ -9,7 +9,8 @@ pub type Aes256CbcDec = cbc::Decryptor<aes::Aes256>;
 /// <https://github.com/lnurl/luds/blob/luds/06.md>
 ///
 /// See the [parse] docs for more detail on the full workflow.
-pub async fn validate_lnurl_pay(
+pub async fn validate_lnurl_pay<C: RestClient + ?Sized>(
+    rest_client: &C,
     user_amount_msat: u64,
     comment: &Option<String>,
     req_data: &LnUrlPayRequestData,
@@ -25,14 +26,11 @@ pub async fn validate_lnurl_pay(
     )?;
 
     let callback_url = build_pay_callback_url(user_amount_msat, comment, req_data)?;
-    let (callback_resp_text, _) = get_and_log_response(&callback_url)
-        .await
-        .map_err(|e| LnUrlError::ServiceConnectivity(e.to_string()))?;
-
-    if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&callback_resp_text) {
+    let (response, _) = rest_client.get(&callback_url).await?;
+    if let Ok(err) = serde_json::from_str::<LnUrlErrorData>(&response) {
         Ok(ValidatedCallbackResponse::EndpointError { data: err })
     } else {
-        let mut callback_resp: CallbackResponse = serde_json::from_str(&callback_resp_text)?;
+        let mut callback_resp: CallbackResponse = serde_json::from_str(&response)?;
         if let Some(ref sa) = callback_resp.success_action {
             match sa {
                 SuccessAction::Aes { data } => data.validate()?,
@@ -239,6 +237,16 @@ pub mod model {
         Url { data: UrlSuccessActionData },
     }
 
+    impl Default for SuccessActionProcessed {
+        fn default() -> Self {
+            Self::Message {
+                data: MessageSuccessActionData {
+                    message: "".to_string(),
+                },
+            }
+        }
+    }
+
     /// Supported success action types
     ///
     /// Receiving any other (unsupported) success action type will result in a failed parsing,
@@ -431,6 +439,10 @@ pub mod model {
         /// This error is raised when a connection to an external service fails.
         #[error("Service connectivity: {err}")]
         ServiceConnectivity { err: String },
+
+        /// This error is raised when the node does not have enough funds to make the payment.
+        #[error("Insufficient balance: {err}")]
+        InsufficientBalance { err: String },
     }
 
     impl From<anyhow::Error> for LnUrlPayError {
@@ -482,6 +494,9 @@ pub(crate) mod tests {
     use crate::lnurl::specs::pay::*;
     use crate::lnurl::tests::rand_string;
 
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
     fn get_test_pay_req_data(
         min_sendable: u64,
         max_sendable: u64,
@@ -500,7 +515,7 @@ pub(crate) mod tests {
         }
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_input() -> Result<()> {
         assert!(validate_user_input(100_000, &None, 0, 100_000, 0).is_ok());
         assert!(validate_user_input(100_000, &Some("test".into()), 0, 100_000, 5).is_ok());
@@ -512,7 +527,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_success_action_deserialize() -> Result<()> {
         let aes_json_str = r#"{"tag":"aes","description":"short msg","ciphertext":"kSOatdlDaaGEdO5YNyx9D87l4ieQP2cb/hnvMvHK2oBNEPDwBiZSidk2MXND28DK","iv":"1234567890abcdef"}"#;
         let aes_deserialized_sa: SuccessAction = serde_json::from_str(aes_json_str)?;
@@ -532,7 +547,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_action_encrypt_decrypt() -> Result<()> {
         // Simulate a preimage, which will be the AES key
         let key = sha256::Hash::hash(&[0x42; 16]);
@@ -576,7 +591,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_action_aes() -> Result<()> {
         assert!(AesSuccessActionData {
             description: "Test AES successData description".into(),
@@ -643,7 +658,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_action_msg() -> Result<()> {
         assert!(MessageSuccessActionData {
             message: "short msg".into()
@@ -661,7 +676,7 @@ pub(crate) mod tests {
         Ok(())
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_lnurl_pay_validate_success_url() -> Result<()> {
         let pay_req_data = get_test_pay_req_data(0, 100_000, 100);
 

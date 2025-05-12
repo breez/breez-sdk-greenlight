@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::str::FromStr;
@@ -13,7 +14,6 @@ use chrono::Local;
 use futures::TryFutureExt;
 use gl_client::pb::incoming_payment;
 use log::{LevelFilter, Metadata, Record};
-use reqwest::{header::CONTENT_TYPE, Body};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde::Serialize;
@@ -42,8 +42,11 @@ use crate::models::{
     SwapInfo, SwapperAPI, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{CreateInvoiceRequest, NodeAPI};
+use crate::persist::cache::NodeStateStorage;
 use crate::persist::db::SqliteStorage;
-use crate::swap_in::swap::BTCReceiveSwap;
+use crate::persist::swap::SwapStorage;
+use crate::persist::transactions::PaymentStorage;
+use crate::swap_in::{BTCReceiveSwap, BTCReceiveSwapParameters, TaprootSwapperAPI};
 use crate::swap_out::boltzswap::BoltzApi;
 use crate::swap_out::reverseswap::BTCSendSwap;
 use crate::*;
@@ -161,6 +164,7 @@ pub struct BreezServices {
     support_api: Arc<dyn SupportAPI>,
     chain_service: Arc<dyn ChainService>,
     persister: Arc<SqliteStorage>,
+    rest_client: Arc<dyn RestClient>,
     payment_receiver: Arc<PaymentReceiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
@@ -324,6 +328,16 @@ impl BreezServices {
             {
                 Ok(res) => Some(res),
                 Err(e) => {
+                    if e.to_string().contains("missing balance") {
+                        debug!(
+                            "trampoline payment failed due to insufficient balance: {:?}",
+                            e
+                        );
+                        return Err(SendPaymentError::InsufficientBalance {
+                            err: "Trampoline payment failed".into(),
+                        });
+                    }
+
                     warn!("trampoline payment failed: {:?}", e);
                     None
                 }
@@ -427,6 +441,7 @@ impl BreezServices {
     /// This method will return an [anyhow::Error] when any validation check fails.
     pub async fn lnurl_pay(&self, req: LnUrlPayRequest) -> Result<LnUrlPayResult, LnUrlPayError> {
         match validate_lnurl_pay(
+            self.rest_client.as_ref(),
             req.amount_msat,
             &req.comment,
             &req.data,
@@ -547,7 +562,7 @@ impl BreezServices {
             .ln_invoice;
 
         let lnurl_w_endpoint = req.data.callback.clone();
-        let res = validate_lnurl_withdraw(req.data, invoice).await?;
+        let res = validate_lnurl_withdraw(self.rest_client.as_ref(), req.data, invoice).await?;
 
         if let LnUrlWithdrawResult::Ok { ref data } = res {
             // If endpoint was successfully called, store the LNURL-withdraw endpoint URL as metadata linked to the invoice
@@ -578,7 +593,12 @@ impl BreezServices {
         &self,
         req_data: LnUrlAuthRequestData,
     ) -> Result<LnUrlCallbackStatus, LnUrlAuthError> {
-        Ok(perform_lnurl_auth(&req_data, &SdkLnurlAuthSigner::new(self.node_api.clone())).await?)
+        Ok(perform_lnurl_auth(
+            self.rest_client.as_ref(),
+            &req_data,
+            &SdkLnurlAuthSigner::new(self.node_api.clone()),
+        )
+        .await?)
     }
 
     /// Creates an bolt11 payment request.
@@ -831,7 +851,7 @@ impl BreezServices {
 
         let swap_info = self
             .btc_receive_swapper
-            .create_swap_address(channel_opening_fees)
+            .create_swap(channel_opening_fees)
             .await?;
         if let Some(webhook_url) = self.persister.get_webhook_url()? {
             let address = &swap_info.bitcoin_address;
@@ -847,7 +867,7 @@ impl BreezServices {
     pub async fn in_progress_swap(&self) -> SdkResult<Option<SwapInfo>> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper.rescan_monitored_swaps(tip).await?;
-        let in_progress = self.btc_receive_swapper.list_in_progress()?;
+        let in_progress = self.btc_receive_swapper.list_in_progress_swaps()?;
         if !in_progress.is_empty() {
             return Ok(Some(in_progress[0].clone()));
         }
@@ -871,7 +891,7 @@ impl BreezServices {
     pub async fn redeem_swap(&self, swap_address: String) -> SdkResult<()> {
         let tip = self.chain_service.current_tip().await?;
         self.btc_receive_swapper
-            .refresh_swap_on_chain_status(swap_address.clone(), tip)
+            .rescan_swap(&swap_address, tip)
             .await?;
         self.btc_receive_swapper.redeem_swap(swap_address).await?;
         Ok(())
@@ -975,14 +995,14 @@ impl BreezServices {
         &self,
         req: PrepareRefundRequest,
     ) -> SdkResult<PrepareRefundResponse> {
-        Ok(self.btc_receive_swapper.prepare_refund_swap(req).await?)
+        Ok(self.btc_receive_swapper.prepare_refund(req).await?)
     }
 
     /// Construct and broadcast a refund transaction for a failed/expired swap
     ///
     /// Returns the txid of the refund transaction.
     pub async fn refund(&self, req: RefundRequest) -> SdkResult<RefundResponse> {
-        Ok(self.btc_receive_swapper.refund_swap(req).await?)
+        Ok(self.btc_receive_swapper.refund(req).await?)
     }
 
     pub async fn onchain_payment_limits(&self) -> SdkResult<OnchainPaymentLimitsResponse> {
@@ -1506,7 +1526,7 @@ impl BreezServices {
                 };
 
                 debug!("shutting down signer");
-                _ = tx.send(());
+                drop(tx); // Dropping the sender explicitly to notify the receiver.
 
                 if is_shutdown {
                     return;
@@ -1982,7 +2002,7 @@ impl BreezServices {
         match is_new_webhook_url {
             false => debug!("Webhook URL not changed, no need to (re-)register for monitored swap tx notifications"),
             true => {
-                for swap in self.persister.list_swaps(ListSwapsRequest {
+                for swap in self.btc_receive_swapper.list_swaps(ListSwapsRequest {
                     status: Some(SwapStatus::unexpired()),
                     ..Default::default()
                 })?
@@ -2129,17 +2149,15 @@ impl BreezServices {
         address: &str,
         webhook_url: &str,
     ) -> SdkResult<()> {
-        get_reqwest_client()?
-            .post(format!("{}/api/v1/register", self.config.chainnotifier_url))
-            .header(CONTENT_TYPE, "application/json")
-            .body(Body::from(
-                json!({
-                    "address": address,
-                    "webhook": webhook_url
-                })
-                .to_string(),
-            ))
-            .send()
+        let url = format!("{}/api/v1/register", self.config.chainnotifier_url);
+        let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+        let body = json!({
+            "address": address,
+            "webhook": webhook_url
+        })
+        .to_string();
+        self.rest_client
+            .post(&url, Some(headers), Some(body))
             .await
             .map(|_| ())
             .map_err(|e| SdkError::ServiceConnectivity {
@@ -2149,19 +2167,14 @@ impl BreezServices {
 
     /// Unregisters all onchain tx notifications for the `webhook_url`.
     async fn unregister_onchain_tx_notifications(&self, webhook_url: &str) -> SdkResult<()> {
-        get_reqwest_client()?
-            .post(format!(
-                "{}/api/v1/unregister",
-                self.config.chainnotifier_url
-            ))
-            .header(CONTENT_TYPE, "application/json")
-            .body(Body::from(
-                json!({
-                    "webhook": webhook_url
-                })
-                .to_string(),
-            ))
-            .send()
+        let url = format!("{}/api/v1/unregister", self.config.chainnotifier_url);
+        let headers = HashMap::from([("Content-Type".to_string(), "application/json".to_string())]);
+        let body = json!({
+            "webhook": webhook_url
+        })
+        .to_string();
+        self.rest_client
+            .post(&url, Some(headers), Some(body))
             .await
             .map(|_| ())
             .map_err(|e| SdkError::ServiceConnectivity {
@@ -2184,7 +2197,7 @@ impl BreezServices {
             self.persister.list_reverse_swaps().map(sanitize_vec)?,
         )?;
         let swaps = crate::serializer::value::to_value(
-            self.persister
+            self.btc_receive_swapper
                 .list_swaps(ListSwapsRequest::default())
                 .map(sanitize_vec)?,
         )?;
@@ -2239,8 +2252,10 @@ struct BreezServicesBuilder {
     lsp_api: Option<Arc<dyn LspAPI>>,
     fiat_api: Option<Arc<dyn FiatAPI>>,
     persister: Option<Arc<SqliteStorage>>,
+    rest_client: Option<Arc<dyn RestClient>>,
     support_api: Option<Arc<dyn SupportAPI>>,
     swapper_api: Option<Arc<dyn SwapperAPI>>,
+    taproot_swapper_api: Option<Arc<dyn TaprootSwapperAPI>>,
     /// Reverse swap functionality on the Breez Server
     reverse_swapper_api: Option<Arc<dyn ReverseSwapperRoutingAPI>>,
     /// Reverse swap functionality on the 3rd party reverse swap service
@@ -2258,8 +2273,10 @@ impl BreezServicesBuilder {
             lsp_api: None,
             fiat_api: None,
             persister: None,
+            rest_client: None,
             support_api: None,
             swapper_api: None,
+            taproot_swapper_api: None,
             reverse_swapper_api: None,
             reverse_swap_service_api: None,
             buy_bitcoin_api: None,
@@ -2297,8 +2314,18 @@ impl BreezServicesBuilder {
         self
     }
 
+    pub fn rest_client(&mut self, rest_client: Arc<dyn RestClient>) -> &mut Self {
+        self.rest_client = Some(rest_client.clone());
+        self
+    }
+
     pub fn swapper_api(&mut self, swapper_api: Arc<dyn SwapperAPI>) -> &mut Self {
         self.swapper_api = Some(swapper_api.clone());
+        self
+    }
+
+    pub fn taproot_swapper_api(&mut self, swapper_api: Arc<dyn TaprootSwapperAPI>) -> &mut Self {
+        self.taproot_swapper_api = Some(swapper_api.clone());
         self
     }
 
@@ -2424,6 +2451,11 @@ impl BreezServicesBuilder {
             persister: persister.clone(),
         });
 
+        let rest_client: Arc<dyn RestClient> = match self.rest_client.clone() {
+            Some(rest_client) => rest_client,
+            None => Arc::new(ReqwestRestClient::new()?),
+        };
+
         // mempool space is used to monitor the chain
         let mempoolspace_urls = match self.config.mempoolspace_url.clone() {
             None => {
@@ -2444,18 +2476,28 @@ impl BreezServicesBuilder {
             }
             Some(mempoolspace_url_from_config) => vec![mempoolspace_url_from_config],
         };
-        let chain_service = Arc::new(RedundantChainService::from_base_urls(mempoolspace_urls));
+        let chain_service = Arc::new(RedundantChainService::from_base_urls(
+            rest_client.clone(),
+            mempoolspace_urls,
+        ));
 
-        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(
-            self.config.network.into(),
-            unwrapped_node_api.clone(),
-            self.swapper_api
+        let btc_receive_swapper = Arc::new(BTCReceiveSwap::new(BTCReceiveSwapParameters {
+            chain_service: chain_service.clone(),
+            payment_storage: persister.clone(),
+            network: self.config.network.into(),
+            node_api: unwrapped_node_api.clone(),
+            node_state_storage: persister.clone(),
+            payment_receiver: payment_receiver.clone(),
+            segwit_swapper_api: self
+                .swapper_api
                 .clone()
                 .unwrap_or_else(|| breez_server.clone()),
-            persister.clone(),
-            chain_service.clone(),
-            payment_receiver.clone(),
-        ));
+            swap_storage: persister.clone(),
+            taproot_swapper_api: self
+                .taproot_swapper_api
+                .clone()
+                .unwrap_or_else(|| breez_server.clone()),
+        }));
 
         let btc_send_swapper = Arc::new(BTCSendSwap::new(
             self.config.clone(),
@@ -2464,7 +2506,7 @@ impl BreezServicesBuilder {
                 .unwrap_or_else(|| breez_server.clone()),
             self.reverse_swap_service_api
                 .clone()
-                .unwrap_or_else(|| Arc::new(BoltzApi {})),
+                .unwrap_or_else(|| Arc::new(BoltzApi::new(rest_client.clone()))),
             persister.clone(),
             chain_service.clone(),
             unwrapped_node_api.clone(),
@@ -2495,6 +2537,7 @@ impl BreezServicesBuilder {
             buy_bitcoin_api,
             chain_service,
             persister: persister.clone(),
+            rest_client,
             btc_receive_swapper,
             btc_send_swapper,
             payment_receiver,
@@ -2524,6 +2567,7 @@ pub struct OpenChannelParams {
 
 #[tonic::async_trait]
 pub trait Receiver: Send + Sync {
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError>;
     async fn receive_payment(
         &self,
         req: ReceivePaymentRequest,
@@ -2545,17 +2589,21 @@ pub(crate) struct PaymentReceiver {
 
 #[tonic::async_trait]
 impl Receiver for PaymentReceiver {
-    async fn receive_payment(
-        &self,
-        req: ReceivePaymentRequest,
-    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
-        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
+    fn open_channel_needed(&self, amount_msat: u64) -> Result<bool, ReceivePaymentError> {
         let node_state = self
             .persister
             .get_node_state()?
             .ok_or(ReceivePaymentError::Generic {
                 err: "Node info not found".into(),
             })?;
+        Ok(node_state.max_receivable_single_payment_amount_msat < amount_msat)
+    }
+
+    async fn receive_payment(
+        &self,
+        req: ReceivePaymentRequest,
+    ) -> Result<ReceivePaymentResponse, ReceivePaymentError> {
+        let lsp_info = get_lsp(self.persister.clone(), self.lsp.clone()).await?;
         let expiry = req.expiry.unwrap_or(INVOICE_PAYMENT_FEE_EXPIRY_SECONDS);
 
         ensure_sdk!(
@@ -2570,8 +2618,7 @@ impl Receiver for PaymentReceiver {
         let mut channel_fees_msat = None;
 
         // check if we need to open channel
-        let open_channel_needed =
-            node_state.max_receivable_single_payment_amount_msat < req.amount_msat;
+        let open_channel_needed = self.open_channel_needed(req.amount_msat)?;
         if open_channel_needed {
             info!("We need to open a channel");
 
@@ -2765,7 +2812,7 @@ impl PaymentReceiver {
         self.persister.insert_open_channel_payment_info(
             &parsed_invoice.payment_hash,
             params.payer_amount_msat,
-            invoice,
+            &signed_invoice,
         )?;
 
         Ok(signed_invoice)
@@ -2835,7 +2882,7 @@ async fn get_notification_lsps(
         .get_node_state()?
         .ok_or(SdkError::generic("Node info not found"))?
         .id;
-    let open_peers = node_api.get_open_peers().await?;
+    let mut open_peers = None;
 
     let mut notification_lsps = vec![];
     for lsp in lsp_api.list_used_lsps(node_pubkey).await? {
@@ -2849,6 +2896,13 @@ async fn get_notification_lsps(
                 // Consider only historical LSPs with whom we have an active channel
                 let lsp_pubkey = hex::decode(&lsp.pubkey)
                     .map_err(|e| anyhow!("Failed decode lsp pubkey: {e}"))?;
+                let open_peers = match &open_peers {
+                    Some(open_peers) => open_peers,
+                    None => {
+                        open_peers = Some(node_api.get_open_peers().await?);
+                        open_peers.as_ref().unwrap()
+                    }
+                };
                 let has_active_channel_to_lsp = open_peers.contains(&lsp_pubkey);
                 if has_active_channel_to_lsp {
                     notification_lsps.push(lsp);
@@ -2872,6 +2926,8 @@ pub(crate) mod tests {
     use crate::breez_services::{BreezServices, BreezServicesBuilder};
     use crate::models::{LnPaymentDetails, NodeState, Payment, PaymentDetails, PaymentTypeFilter};
     use crate::node_api::NodeAPI;
+    use crate::persist::cache::NodeStateStorage;
+    use crate::persist::swap::SwapStorage;
     use crate::test_utils::*;
     use crate::*;
 
@@ -3146,7 +3202,7 @@ pub(crate) mod tests {
                 attempted_error: None,
             },
         )?;
-        persister.insert_swap(swap_info.clone())?;
+        persister.insert_swap(&swap_info)?;
         persister.update_swap_bolt11(
             swap_info.bitcoin_address.clone(),
             swap_info.bolt11.clone().unwrap(),
@@ -3299,8 +3355,13 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_buy_bitcoin_with_moonpay() -> Result<(), Box<dyn std::error::Error>> {
-        let breez_services = breez_services().await?;
+        let mock_rest_client = MockRestClient::new();
+        mock_rest_client.add_response(MockResponse::new(200, "800000".to_string()));
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+
+        let breez_services = breez_services_with(None, Some(rest_client.clone()), vec![]).await?;
         breez_services.sync().await?;
+
         let moonpay_url = breez_services
             .buy_bitcoin(BuyBitcoinRequest {
                 provider: BuyBitcoinProvider::Moonpay,
@@ -3315,7 +3376,9 @@ pub(crate) mod tests {
         assert_eq!(parsed.host_str(), Some("mock.moonpay"));
         assert_eq!(parsed.path(), "/");
 
-        let wallet_address = parse(query_pairs.get("wa").unwrap(), None).await?;
+        let wallet_address =
+            parse_with_rest_client(rest_client.as_ref(), query_pairs.get("wa").unwrap(), None)
+                .await?;
         assert!(matches!(wallet_address, InputType::BitcoinAddress { .. }));
 
         let max_amount = query_pairs.get("ma").unwrap();
@@ -3326,16 +3389,19 @@ pub(crate) mod tests {
 
     /// Build node service for tests
     pub(crate) async fn breez_services() -> Result<Arc<BreezServices>> {
-        breez_services_with(None, vec![]).await
+        breez_services_with(None, None, vec![]).await
     }
 
     /// Build node service for tests with a list of known payments
     pub(crate) async fn breez_services_with(
         node_api: Option<Arc<dyn NodeAPI>>,
+        rest_client: Option<Arc<dyn RestClient>>,
         known_payments: Vec<Payment>,
     ) -> Result<Arc<BreezServices>> {
         let node_api =
             node_api.unwrap_or_else(|| Arc::new(MockNodeAPI::new(get_dummy_node_state())));
+        let rest_client: Arc<dyn RestClient> =
+            rest_client.unwrap_or_else(|| Arc::new(MockRestClient::new()));
 
         let test_config = create_test_config();
         let persister = Arc::new(create_test_persister(test_config.clone()));
@@ -3347,10 +3413,12 @@ pub(crate) mod tests {
         let breez_services = builder
             .lsp_api(Arc::new(MockBreezServer {}))
             .fiat_api(Arc::new(MockBreezServer {}))
+            .taproot_swapper_api(Arc::new(MockBreezServer {}))
             .reverse_swap_service_api(Arc::new(MockReverseSwapperAPI {}))
             .buy_bitcoin_api(Arc::new(MockBuyBitcoinService {}))
             .persister(persister)
             .node_api(node_api)
+            .rest_client(rest_client)
             .backup_transport(Arc::new(MockBackupTransport::new()))
             .build(None, None)
             .await?;

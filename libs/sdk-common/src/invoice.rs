@@ -12,8 +12,9 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "liquid")]
 use {
-    bitcoin::hashes::hex::ToHex as BitcoinHashToHex, lightning_125::ln::msgs::DecodeError,
-    lightning_125::offers::offer::Offer, lightning_125::offers::parse::Bolt12ParseError,
+    bitcoin::hashes::hex::ToHex as BitcoinHashToHex, lightning_with_bolt12::ln::msgs::DecodeError,
+    lightning_with_bolt12::offers::offer::Offer,
+    lightning_with_bolt12::offers::parse::Bolt12ParseError,
 };
 
 use crate::prelude::*;
@@ -97,7 +98,7 @@ fn parse_short_channel_id(id_str: &str) -> InvoiceResult<u64> {
     let tx_num = parts[1].parse::<u64>()?;
     let tx_out = parts[2].parse::<u64>()?;
 
-    Ok((block_num & 0xFFFFFF) << 40 | (tx_num & 0xFFFFFF) << 16 | (tx_out & 0xFFFF))
+    Ok(((block_num & 0xFFFFFF) << 40) | ((tx_num & 0xFFFFFF) << 16) | (tx_out & 0xFFFF))
 }
 
 fn format_short_channel_id(id: u64) -> String {
@@ -401,10 +402,12 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
     let min_amount = offer
         .amount()
         .map(|amount| match amount {
-            lightning_125::offers::offer::Amount::Bitcoin { amount_msats } => Ok(Amount::Bitcoin {
-                amount_msat: amount_msats,
-            }),
-            lightning_125::offers::offer::Amount::Currency {
+            lightning_with_bolt12::offers::offer::Amount::Bitcoin { amount_msats } => {
+                Ok(Amount::Bitcoin {
+                    amount_msat: amount_msats,
+                })
+            }
+            lightning_with_bolt12::offers::offer::Amount::Currency {
                 iso4217_code,
                 amount,
             } => Ok(Amount::Currency {
@@ -427,7 +430,7 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
         description: offer.description().map(|d| d.to_string()),
         absolute_expiry: offer.absolute_expiry().map(|expiry| expiry.as_secs()),
         issuer: offer.issuer().map(|s| s.to_string()),
-        signing_pubkey: offer.signing_pubkey().map(|pk| pk.to_string()),
+        signing_pubkey: offer.issuer_signing_pubkey().map(|pk| pk.to_string()),
         paths: offer
             .paths()
             .iter()
@@ -446,7 +449,10 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
 mod tests {
     use crate::invoice::*;
 
-    #[test]
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    #[sdk_macros::test_all]
     fn test_parse_invoice() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res = parse_invoice(&payreq).unwrap();
@@ -472,7 +478,7 @@ mod tests {
         print!("{encoded:?}");
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_invoice_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res: LNInvoice = parse_invoice(&payreq).unwrap();
@@ -499,7 +505,7 @@ mod tests {
         print!("{encoded:?}");
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_invoice_invalid_bitcoin_network() {
         let payreq = String::from("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz");
         let res = parse_invoice(&payreq);
@@ -508,7 +514,7 @@ mod tests {
         assert!(validate_network(res.unwrap(), Network::Testnet).is_err());
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_invoice_invalid_testnet_network() {
         let payreq = String::from("lntb15u1pj53l9tpp5p7kjsjcv3eqa39upytmj6k7ac8rqvdffyqr4um98pq5n4ppwxvnsdpzxysy2umswfjhxum0yppk76twypgxzmnwvyxqrrsscqp79qy9qsqsp53xw4x5ezpzvnheff9mrt0ju72u5a5dnxyh4rq6gtweufv9650d4qwqj3ds5xfg4pxc9h7a2g43fmntr4tt322jzujsycvuvury50u994kzr8539qf658hrp07hyz634qpvkeh378wnvf7lddp2x7yfgyk9cp7f7937");
         let res = parse_invoice(&payreq);
@@ -517,7 +523,7 @@ mod tests {
         assert!(validate_network(res.unwrap(), Network::Bitcoin).is_err());
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_format_short_channel_id() {
         let valid_short_channel_ids = vec![
             (0, "0x0x0"),
@@ -531,7 +537,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[sdk_macros::test_all]
     fn test_parse_short_channel_id() {
         let valid_short_channel_ids = vec![
             ("0x0x0", 0),

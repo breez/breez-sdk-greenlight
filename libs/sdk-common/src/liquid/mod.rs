@@ -8,14 +8,21 @@ mod tests {
 
     use crate::input_parser::tests::get_bip21_rounding_test_vectors;
     use crate::prelude::*;
+    use crate::test_utils::mock_rest_client::MockRestClient;
+    use crate::utils::Arc;
 
-    #[tokio::test]
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
+
+    #[sdk_macros::async_test_all]
     async fn test_liquid_address_bip21_rounding() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
         let asset_id = AssetId::LIQUID_BTC.to_string();
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let addr = format!("liquidnetwork:tlq1qqw5ur50rnvcx33vmljjtnez3hrtl6n7vs44tdj2c9fmnxrrgzgwnhw6jtpn8cljkmlr8tgfw9hemrr5y8u2nu024hhak3tpdk?amount={amount_btc}&assetid={asset_id}");
 
-            match parse(&addr, None).await? {
+            match parse_with_rest_client(rest_client.as_ref(), &addr, None).await? {
                 InputType::LiquidAddress {
                     address: addr_with_amount_parsed,
                 } => {
@@ -28,7 +35,7 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
+    #[sdk_macros::async_test_all]
     async fn test_liquid_address_bip21_rounding_reverse() -> Result<()> {
         for (amount_sat, amount_btc) in get_bip21_rounding_test_vectors() {
             let data = LiquidAddressData {

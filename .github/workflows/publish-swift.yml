@@ -105,6 +105,9 @@ jobs:
         run: |
           sed -i '' 's#^.\{2\}spec.version.*$#  spec.version                = "${{ inputs.package-version }}"#' breez_sdkFFI.podspec
           sed -i '' 's#^.\{2\}spec.version.*$#  spec.version                = "${{ inputs.package-version }}"#' BreezSDK.podspec
+          # Set iOS Deployment Target to 12.0
+          sed -i '' 's#^.\{2\}spec.ios.deployment_target.*$#  spec.ios.deployment_target = "12.0"#' breez_sdkFFI.podspec
+          sed -i '' 's#^.\{2\}spec.ios.deployment_target.*$#  spec.ios.deployment_target = "12.0"#' BreezSDK.podspec
 
       - name: Tag swift package
         working-directory: breez-sdk-swift

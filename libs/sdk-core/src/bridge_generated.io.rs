@@ -1018,6 +1018,7 @@ impl Wire2Api<PrepareRefundRequest> for wire_PrepareRefundRequest {
             swap_address: self.swap_address.wire2api(),
             to_address: self.to_address.wire2api(),
             sat_per_vbyte: self.sat_per_vbyte.wire2api(),
+            unilateral: self.unilateral.wire2api(),
         }
     }
 }
@@ -1055,6 +1056,7 @@ impl Wire2Api<RefundRequest> for wire_RefundRequest {
             swap_address: self.swap_address.wire2api(),
             to_address: self.to_address.wire2api(),
             sat_per_vbyte: self.sat_per_vbyte.wire2api(),
+            unilateral: self.unilateral.wire2api(),
         }
     }
 }
@@ -1369,6 +1371,7 @@ pub struct wire_PrepareRefundRequest {
     swap_address: *mut wire_uint_8_list,
     to_address: *mut wire_uint_8_list,
     sat_per_vbyte: u32,
+    unilateral: *mut bool,
 }
 
 #[repr(C)]
@@ -1402,6 +1405,7 @@ pub struct wire_RefundRequest {
     swap_address: *mut wire_uint_8_list,
     to_address: *mut wire_uint_8_list,
     sat_per_vbyte: u32,
+    unilateral: *mut bool,
 }
 
 #[repr(C)]
@@ -1901,6 +1905,7 @@ impl NewWithNullPtr for wire_PrepareRefundRequest {
             swap_address: core::ptr::null_mut(),
             to_address: core::ptr::null_mut(),
             sat_per_vbyte: Default::default(),
+            unilateral: core::ptr::null_mut(),
         }
     }
 }
@@ -1966,6 +1971,7 @@ impl NewWithNullPtr for wire_RefundRequest {
             swap_address: core::ptr::null_mut(),
             to_address: core::ptr::null_mut(),
             sat_per_vbyte: Default::default(),
+            unilateral: core::ptr::null_mut(),
         }
     }
 }

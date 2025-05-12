@@ -2763,11 +2763,19 @@ enum BreezSDKMapper {
         guard let satPerVbyte = prepareRefundRequest["satPerVbyte"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "PrepareRefundRequest"))
         }
+        var unilateral: Bool?
+        if hasNonNilKey(data: prepareRefundRequest, key: "unilateral") {
+            guard let unilateralTmp = prepareRefundRequest["unilateral"] as? Bool else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "unilateral"))
+            }
+            unilateral = unilateralTmp
+        }
 
         return PrepareRefundRequest(
             swapAddress: swapAddress,
             toAddress: toAddress,
-            satPerVbyte: satPerVbyte
+            satPerVbyte: satPerVbyte,
+            unilateral: unilateral
         )
     }
 
@@ -2776,6 +2784,7 @@ enum BreezSDKMapper {
             "swapAddress": prepareRefundRequest.swapAddress,
             "toAddress": prepareRefundRequest.toAddress,
             "satPerVbyte": prepareRefundRequest.satPerVbyte,
+            "unilateral": prepareRefundRequest.unilateral == nil ? nil : prepareRefundRequest.unilateral,
         ]
     }
 
@@ -3170,11 +3179,19 @@ enum BreezSDKMapper {
         guard let satPerVbyte = refundRequest["satPerVbyte"] as? UInt32 else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "satPerVbyte", typeName: "RefundRequest"))
         }
+        var unilateral: Bool?
+        if hasNonNilKey(data: refundRequest, key: "unilateral") {
+            guard let unilateralTmp = refundRequest["unilateral"] as? Bool else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "unilateral"))
+            }
+            unilateral = unilateralTmp
+        }
 
         return RefundRequest(
             swapAddress: swapAddress,
             toAddress: toAddress,
-            satPerVbyte: satPerVbyte
+            satPerVbyte: satPerVbyte,
+            unilateral: unilateral
         )
     }
 
@@ -3183,6 +3200,7 @@ enum BreezSDKMapper {
             "swapAddress": refundRequest.swapAddress,
             "toAddress": refundRequest.toAddress,
             "satPerVbyte": refundRequest.satPerVbyte,
+            "unilateral": refundRequest.unilateral == nil ? nil : refundRequest.unilateral,
         ]
     }
 

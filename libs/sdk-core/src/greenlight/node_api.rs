@@ -13,13 +13,14 @@ use futures::{Future, Stream};
 use gl_client::credentials::{Device, Nobody};
 use gl_client::node;
 use gl_client::node::ClnClient;
+use gl_client::pb::cln::delinvoice_request::DelinvoiceStatus;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listinvoices_request::ListinvoicesIndex;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
 use gl_client::pb::cln::listpeerchannels_channels::ListpeerchannelsChannelsState::*;
 use gl_client::pb::cln::listsendpays_request::ListsendpaysIndex;
 use gl_client::pb::cln::{
-    self, Amount, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
+    self, Amount, DelinvoiceRequest, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
     ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels, ListsendpaysPayments,
     PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
@@ -50,6 +51,7 @@ use crate::bitcoin::{
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
 use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
+use crate::persist::cache::NodeStateStorage;
 use crate::persist::db::SqliteStorage;
 use crate::persist::send_pays::{SendPay, SendPayStatus};
 use crate::{models::*, LspInformation};
@@ -615,7 +617,15 @@ impl Greenlight {
         let route_response = route_result?.into_inner();
         info!(
             "max_sendable_amount: route response = {:?}",
-            route_response.route
+            route_response
+                .route
+                .iter()
+                .map(|r| format!(
+                    "{{node_id: {}, channel: {}}}",
+                    hex::encode(&r.id),
+                    r.channel
+                ))
+                .collect::<Vec<_>>()
         );
 
         // We fetch the opened channels so can calculate max amount to send for each channel
@@ -657,7 +667,18 @@ impl Greenlight {
                 }])
             }
 
-            info!("max_sendable_amount: route_hops = {:?}", payment_path.edges);
+            info!(
+                "max_sendable_amount: route_hops = {:?}",
+                payment_path
+                    .edges
+                    .iter()
+                    .map(|e| format!(
+                        "{{node_id: {}, channel: {}}}",
+                        hex::encode(&e.node_id),
+                        e.short_channel_id
+                    ))
+                    .collect::<Vec<_>>()
+            );
 
             // go over each hop and calculate the amount to forward.
             let max_payment_amount =
@@ -1063,6 +1084,35 @@ impl NodeAPI for Greenlight {
             .await?
             .into_inner();
         Ok(res.bolt11)
+    }
+
+    async fn delete_invoice(&self, bolt11: String) -> NodeResult<()> {
+        let mut client = self.get_node_client().await?;
+        let invoice_request = cln::ListinvoicesRequest {
+            invstring: Some(bolt11),
+            ..Default::default()
+        };
+        let invoice_result = with_connection_retry!(client.list_invoices(invoice_request.clone()))
+            .await?
+            .into_inner();
+        let invoice_result = invoice_result.invoices.first();
+        let result = match invoice_result {
+            Some(result) => result,
+            None => return Ok(()),
+        };
+
+        let status = match result.status() {
+            ListinvoicesInvoicesStatus::Unpaid => DelinvoiceStatus::Unpaid,
+            ListinvoicesInvoicesStatus::Paid => return Err(NodeError::InvoiceAlreadyPaid),
+            ListinvoicesInvoicesStatus::Expired => DelinvoiceStatus::Expired,
+        };
+        with_connection_retry!(client.del_invoice(DelinvoiceRequest {
+            label: result.label.clone(),
+            status: status.into(),
+            desconly: Some(false),
+        }))
+        .await?;
+        Ok(())
     }
 
     async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>> {
@@ -1826,11 +1876,11 @@ impl NodeAPI for Greenlight {
         }
     }
 
-    async fn max_sendable_amount(
+    async fn max_sendable_amount<'a>(
         &self,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
-        last_hop_hint: Option<&RouteHintHop>,
+        last_hop_hint: Option<&'a RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>> {
         let mut client = self.get_node_client().await?;
 

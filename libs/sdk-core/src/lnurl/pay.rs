@@ -35,269 +35,170 @@ pub(crate) mod tests {
     use anyhow::{anyhow, Result};
     use gl_client::bitcoin::hashes::hex::ToHex;
     use gl_client::pb::cln::pay_response::PayStatus;
-    use mockito::Mock;
     use rand::random;
+    use serde_json::json;
 
     use crate::bitcoin::hashes::{sha256, Hash};
-    use crate::breez_services::tests::get_dummy_node_state;
+    use crate::breez_services::tests::{breez_services_with, get_dummy_node_state};
     use crate::lnurl::pay::*;
-    use crate::lnurl::tests::MOCK_HTTP_SERVER;
     use crate::{test_utils::*, LnUrlPayRequest};
 
-    struct LnurlPayCallbackParams<'a> {
-        pay_req: &'a LnUrlPayRequestData,
-        user_amount_msat: u64,
+    struct LnurlPayCallbackParams {
         error: Option<String>,
         pr: Option<String>,
-        comment: String,
     }
 
-    struct AesPayCallbackParams<'a> {
-        pay_req: &'a LnUrlPayRequestData,
-        user_amount_msat: u64,
+    struct AesPayCallbackParams {
         error: Option<String>,
         pr: Option<String>,
         sa_data: AesSuccessActionDataDecrypted,
         iv_bytes: [u8; 16],
         key_bytes: [u8; 32],
-        comment: String,
     }
 
     /// Mock an LNURL-pay endpoint that responds with no Success Action
     fn mock_lnurl_pay_callback_endpoint_no_success_action(
+        mock_rest_client: &MockRestClient,
         callback_params: LnurlPayCallbackParams,
-    ) -> Result<Mock> {
-        let LnurlPayCallbackParams {
-            pay_req,
-            user_amount_msat,
-            error,
-            pr,
-            comment,
-        } = callback_params;
-
-        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
-        let url = reqwest::Url::parse(&callback_url)?;
-        let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
-
-        let expected_payload = r#"
-{
-    "pr":"token-invoice",
-    "routes":[]
-}
-        "#
-        .replace('\n', "")
-        .replace(
-            "token-invoice",
-            &pr.unwrap_or_else(|| "token-invoice".to_string()),
-        );
+    ) {
+        let LnurlPayCallbackParams { error, pr } = callback_params;
 
         let response_body = match error {
-            None => expected_payload,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+            None => json!({
+                "pr": pr.unwrap_or_else(|| "token-invoice".to_string()),
+                "routes": []
+            })
+            .to_string(),
+            Some(err_reason) => json!({
+                "status": "ERROR",
+                "reason": err_reason
+            })
+            .to_string(),
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        Ok(server
-            .mock("GET", mockito_path)
-            .with_body(response_body)
-            .create())
+        mock_rest_client.add_response(MockResponse::new(200, response_body));
     }
 
     /// Mock an LNURL-pay endpoint that responds with an unsupported Success Action
     fn mock_lnurl_pay_callback_endpoint_unsupported_success_action(
+        mock_rest_client: &MockRestClient,
         callback_params: LnurlPayCallbackParams,
-    ) -> Result<Mock> {
-        let LnurlPayCallbackParams {
-            pay_req,
-            user_amount_msat,
-            error,
-            pr: _pr,
-            comment,
-        } = callback_params;
-
-        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
-        let url = reqwest::Url::parse(&callback_url)?;
-        let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
-
-        let expected_payload = r#"
-{
-    "pr":"lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz",
-    "routes":[],
-    "successAction": {
-        "tag":"random-type-that-is-not-supported",
-        "message":"test msg"
-    }
-}
-        "#.replace('\n', "");
+    ) {
+        let LnurlPayCallbackParams { error, pr } = callback_params;
 
         let response_body = match error {
-            None => expected_payload,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+            None => json!({
+                "pr": pr.unwrap_or_else(|| "token-invoice".to_string()),
+                "routes": [],
+                "successAction": {
+                    "tag": "random-type-that-is-not-supported",
+                    "message": "test msg"
+                }
+            })
+            .to_string(),
+            Some(err_reason) => json!({
+                "status": "ERROR",
+                "reason": err_reason
+            })
+            .to_string(),
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        Ok(server
-            .mock("GET", mockito_path)
-            .with_body(response_body)
-            .create())
+        mock_rest_client.add_response(MockResponse::new(200, response_body));
     }
 
     /// Mock an LNURL-pay endpoint that responds with a Success Action of type message
     fn mock_lnurl_pay_callback_endpoint_msg_success_action(
+        mock_rest_client: &MockRestClient,
         callback_params: LnurlPayCallbackParams,
-    ) -> Result<Mock> {
-        let LnurlPayCallbackParams {
-            pay_req,
-            user_amount_msat,
-            error,
-            pr,
-            comment,
-        } = callback_params;
-
-        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
-        let url = reqwest::Url::parse(&callback_url)?;
-        let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
-
-        let expected_payload = r#"
-{
-    "pr":"token-invoice",
-    "routes":[],
-    "successAction": {
-        "tag":"message",
-        "message":"test msg"
-    }
-}
-        "#
-        .replace('\n', "")
-        .replace(
-            "token-invoice",
-            &pr.unwrap_or_else(|| "token-invoice".to_string()),
-        );
+    ) {
+        let LnurlPayCallbackParams { error, pr } = callback_params;
 
         let response_body = match error {
-            None => expected_payload,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+            None => json!({
+                "pr": pr.unwrap_or_else(|| "token-invoice".to_string()),
+                "routes":[],
+                "successAction": {
+                    "tag": "message",
+                    "message": "test msg"
+                }
+            })
+            .to_string(),
+            Some(err_reason) => json!({
+                "status": "ERROR",
+                "reason": err_reason
+            })
+            .to_string(),
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        Ok(server
-            .mock("GET", mockito_path)
-            .with_body(response_body)
-            .create())
+        mock_rest_client.add_response(MockResponse::new(200, response_body));
     }
 
     /// Mock an LNURL-pay endpoint that responds with a Success Action of type URL
     fn mock_lnurl_pay_callback_endpoint_url_success_action(
+        mock_rest_client: &MockRestClient,
         callback_params: LnurlPayCallbackParams,
         success_action_url: Option<&str>,
-    ) -> Result<Mock> {
-        let LnurlPayCallbackParams {
-            pay_req,
-            user_amount_msat,
-            error,
-            pr,
-            comment,
-        } = callback_params;
-
-        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
-        let url = reqwest::Url::parse(&callback_url)?;
-        let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
-
-        let expected_payload = r#"
-{
-    "pr":"token-invoice",
-    "routes":[],
-    "successAction": {
-        "tag":"url",
-        "description":"test description",
-        "url":"success-action-url"
-    }
-}
-        "#
-        .replace('\n', "")
-        .replace(
-            "token-invoice",
-            &pr.unwrap_or_else(|| "token-invoice".to_string()),
-        )
-        .replace(
-            "success-action-url",
-            success_action_url.unwrap_or("http://localhost:8080/test-url"),
-        );
+    ) {
+        let LnurlPayCallbackParams { error, pr } = callback_params;
 
         let response_body = match error {
-            None => expected_payload,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+            None => json!({
+                "pr": pr.unwrap_or_else(|| "token-invoice".to_string()),
+                "routes":[],
+                "successAction": {
+                    "tag": "url",
+                    "description": "test description",
+                    "url": success_action_url.unwrap_or("http://localhost:8080/test-url"),
+                }
+            })
+            .to_string(),
+            Some(err_reason) => json!({
+                "status": "ERROR",
+                "reason": err_reason
+            })
+            .to_string(),
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        Ok(server
-            .mock("GET", mockito_path)
-            .with_body(response_body)
-            .create())
+        mock_rest_client.add_response(MockResponse::new(200, response_body));
     }
 
     /// Mock an LNURL-pay endpoint that responds with a Success Action of type AES
     fn mock_lnurl_pay_callback_endpoint_aes_success_action(
+        mock_rest_client: &MockRestClient,
         aes_callback_params: AesPayCallbackParams,
-    ) -> Result<Mock> {
+    ) {
         let AesPayCallbackParams {
-            pay_req,
-            user_amount_msat,
             error,
             pr,
             sa_data,
             iv_bytes,
             key_bytes,
-            comment,
         } = aes_callback_params;
 
-        let callback_url = build_pay_callback_url(user_amount_msat, &Some(comment), pay_req)?;
-        let url = reqwest::Url::parse(&callback_url)?;
-        let mockito_path: &str = &format!("{}?{}", url.path(), url.query().unwrap());
         let iv_base64 = base64::encode(iv_bytes);
-        let cipertext = AesSuccessActionData::encrypt(&key_bytes, &iv_bytes, sa_data.plaintext)?;
-
-        let expected_payload = r#"
-{
-    "pr":"token-invoice",
-    "routes":[],
-    "successAction": {
-        "tag":"aes",
-        "description":"token-description",
-        "iv":"token-iv",
-        "ciphertext":"token-ciphertext"
-    }
-}
-        "#
-        .replace('\n', "")
-        .replace("token-iv", &iv_base64)
-        .replace("token-ciphertext", &cipertext)
-        .replace("token-description", &sa_data.description)
-        .replace(
-            "token-invoice",
-            &pr.unwrap_or_else(|| "token-invoice".to_string()),
-        );
+        let cipertext =
+            AesSuccessActionData::encrypt(&key_bytes, &iv_bytes, sa_data.plaintext).unwrap();
 
         let response_body = match error {
-            None => expected_payload,
-            Some(err_reason) => {
-                ["{\"status\": \"ERROR\", \"reason\": \"", &err_reason, "\"}"].join("")
-            }
+            None => json!({
+                "pr": pr.unwrap_or_else(|| "token-invoice".to_string()),
+                "routes": [],
+                "successAction": {
+                    "tag": "aes",
+                    "description": sa_data.description,
+                    "iv": iv_base64,
+                    "ciphertext": cipertext
+                }
+            })
+            .to_string(),
+            Some(err_reason) => json!({
+                "status": "ERROR",
+                "reason": err_reason
+            })
+            .to_string(),
         };
 
-        let mut server = MOCK_HTTP_SERVER.lock().unwrap();
-        Ok(server
-            .mock("GET", mockito_path)
-            .with_body(response_body)
-            .create())
+        mock_rest_client.add_response(MockResponse::new(200, response_body));
     }
 
     fn get_test_pay_req_data(
@@ -383,21 +284,23 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_no_success_action() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
 
-        let _m = mock_lnurl_pay_callback_endpoint_no_success_action(LnurlPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: None,
-            pr: Some(inv.to_string()),
-            comment: comment.clone(),
-        })?;
+        mock_lnurl_pay_callback_endpoint_no_success_action(
+            &mock_rest_client,
+            LnurlPayCallbackParams {
+                error: None,
+                pr: Some(inv.to_string()),
+            },
+        );
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -431,19 +334,18 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_unsupported_success_action() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let user_amount_msat = 11000;
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
-        let _m =
-            mock_lnurl_pay_callback_endpoint_unsupported_success_action(LnurlPayCallbackParams {
-                pay_req: &pay_req,
-                user_amount_msat,
-                error: None,
-                pr: None,
-                comment: comment.clone(),
-            })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        mock_lnurl_pay_callback_endpoint_unsupported_success_action(&mock_rest_client, LnurlPayCallbackParams {
+                error: None,
+                pr: Some("lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz".to_string()),
+            });
+
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         let r = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -462,20 +364,23 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_success_payment_hash() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
-        let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: None,
-            pr: Some(inv.to_string()),
-            comment: comment.clone(),
-        })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        mock_lnurl_pay_callback_endpoint_msg_success_action(
+            &mock_rest_client,
+            LnurlPayCallbackParams {
+                error: None,
+                pr: Some(inv.to_string()),
+            },
+        );
+
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -497,20 +402,23 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
-        let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: None,
-            pr: Some(inv.to_string()),
-            comment: comment.clone(),
-        })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        mock_lnurl_pay_callback_endpoint_msg_success_action(
+            &mock_rest_client,
+            LnurlPayCallbackParams {
+                error: None,
+                pr: Some(inv.to_string()),
+            },
+        );
+
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -547,20 +455,23 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action_incorrect_amount() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap() + 1000;
-        let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: None,
-            pr: Some(inv.to_string()),
-            comment: comment.clone(),
-        })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        mock_lnurl_pay_callback_endpoint_msg_success_action(
+            &mock_rest_client,
+            LnurlPayCallbackParams {
+                error: None,
+                pr: Some(inv.to_string()),
+            },
+        );
+
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         assert!(mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -578,21 +489,24 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_msg_success_action_error_from_endpoint() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
         let expected_error_msg = "Error message from LNURL endpoint";
-        let _m = mock_lnurl_pay_callback_endpoint_msg_success_action(LnurlPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: Some(expected_error_msg.to_string()),
-            pr: Some(inv.to_string()),
-            comment: comment.clone(),
-        })?;
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        mock_lnurl_pay_callback_endpoint_msg_success_action(
+            &mock_rest_client,
+            LnurlPayCallbackParams {
+                error: Some(expected_error_msg.to_string()),
+                pr: Some(inv.to_string()),
+            },
+        );
+
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         let res = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -618,23 +532,24 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_url_success_action() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
-        let _m = mock_lnurl_pay_callback_endpoint_url_success_action(
+
+        mock_lnurl_pay_callback_endpoint_url_success_action(
+            &mock_rest_client,
             LnurlPayCallbackParams {
-                pay_req: &pay_req,
-                user_amount_msat,
                 error: None,
                 pr: Some(inv.to_string()),
-                comment: comment.clone(),
             },
             None,
-        )?;
+        );
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -676,23 +591,24 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_url_success_action_validate_url_invalid() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
-        let _m = mock_lnurl_pay_callback_endpoint_url_success_action(
+
+        mock_lnurl_pay_callback_endpoint_url_success_action(
+            &mock_rest_client,
             LnurlPayCallbackParams {
-                pay_req: &pay_req,
-                user_amount_msat,
                 error: None,
                 pr: Some(inv.to_string()),
-                comment: comment.clone(),
             },
             Some("http://different.localhost:8080/test-url"),
-        )?;
+        );
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         let r = mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -711,23 +627,24 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_url_success_action_validate_url_valid() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         let comment = rand_string(COMMENT_LENGTH as usize);
         let pay_req = get_test_pay_req_data(0, 100_000, COMMENT_LENGTH);
         let temp_desc = pay_req.metadata_str.clone();
         let inv = rand_invoice_with_description_hash(temp_desc)?;
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
-        let _m = mock_lnurl_pay_callback_endpoint_url_success_action(
+
+        mock_lnurl_pay_callback_endpoint_url_success_action(
+            &mock_rest_client,
             LnurlPayCallbackParams {
-                pay_req: &pay_req,
-                user_amount_msat,
                 error: None,
                 pr: Some(inv.to_string()),
-                comment: comment.clone(),
             },
             Some("http://different.localhost:8080/test-url"),
-        )?;
+        );
 
-        let mock_breez_services = crate::breez_services::tests::breez_services().await?;
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(None, Some(rest_client), vec![]).await?;
         match mock_breez_services
             .lnurl_pay(LnUrlPayRequest {
                 data: pay_req,
@@ -769,6 +686,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_aes_success_action() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         // Expected fields in the AES payload
         let description = "test description in AES payload".to_string();
         let plaintext = "Hello, test plaintext".to_string();
@@ -794,16 +712,17 @@ pub(crate) mod tests {
 
         let user_amount_msat = inv.amount_milli_satoshis().unwrap();
         let bolt11 = inv.to_string();
-        let _m = mock_lnurl_pay_callback_endpoint_aes_success_action(AesPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: None,
-            pr: Some(bolt11.clone()),
-            sa_data: sa_data.clone(),
-            iv_bytes: random::<[u8; 16]>(),
-            key_bytes: preimage.into_inner(),
-            comment: comment.clone(),
-        })?;
+
+        mock_lnurl_pay_callback_endpoint_aes_success_action(
+            &mock_rest_client,
+            AesPayCallbackParams {
+                error: None,
+                pr: Some(bolt11.clone()),
+                sa_data: sa_data.clone(),
+                iv_bytes: random::<[u8; 16]>(),
+                key_bytes: preimage.into_inner(),
+            },
+        );
 
         let mock_node_api = MockNodeAPI::new(get_dummy_node_state());
         let model_payment = mock_node_api
@@ -811,8 +730,10 @@ pub(crate) mod tests {
             .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];
-        let mock_breez_services = crate::breez_services::tests::breez_services_with(
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(
             Some(Arc::new(mock_node_api)),
+            Some(rest_client),
             known_payments,
         )
         .await?;
@@ -854,6 +775,7 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn test_lnurl_pay_aes_success_action_fail_to_decrypt() -> Result<()> {
+        let mock_rest_client = MockRestClient::new();
         // Expected error in the AES payload
         let sa = SuccessActionProcessed::Aes {
             result: AesSuccessActionDataResult::ErrorStatus {
@@ -880,16 +802,17 @@ pub(crate) mod tests {
             plaintext,
         };
         let wrong_key = vec![0u8; 32];
-        let _m = mock_lnurl_pay_callback_endpoint_aes_success_action(AesPayCallbackParams {
-            pay_req: &pay_req,
-            user_amount_msat,
-            error: None,
-            pr: Some(bolt11.clone()),
-            sa_data: sa_data.clone(),
-            iv_bytes: random::<[u8; 16]>(),
-            key_bytes: wrong_key.try_into().unwrap(),
-            comment: comment.clone(),
-        })?;
+
+        mock_lnurl_pay_callback_endpoint_aes_success_action(
+            &mock_rest_client,
+            AesPayCallbackParams {
+                error: None,
+                pr: Some(bolt11.clone()),
+                sa_data: sa_data.clone(),
+                iv_bytes: random::<[u8; 16]>(),
+                key_bytes: wrong_key.try_into().unwrap(),
+            },
+        );
 
         let mock_node_api = MockNodeAPI::new(get_dummy_node_state());
         let model_payment = mock_node_api
@@ -897,8 +820,10 @@ pub(crate) mod tests {
             .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];
-        let mock_breez_services = crate::breez_services::tests::breez_services_with(
+        let rest_client: Arc<dyn RestClient> = Arc::new(mock_rest_client);
+        let mock_breez_services = breez_services_with(
             Some(Arc::new(mock_node_api)),
+            Some(rest_client),
             known_payments,
         )
         .await?;

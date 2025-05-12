@@ -17,26 +17,23 @@ Learn more about the Breez SDK — download our one pager [here](https://drive.
 
 ## **What Is the Breez SDK - Native *(Greenlight Implementation)*?**
 
-It's a cloud-based Lightning integration that offers a self-custodial, end-to-end solution for integrating Lightning payments, utilizing nodes-on-demand provided by Blockstream’s Greenlight, with built-in Lightning Service Providers (LSP), on-chain interoperability, and third-party fiat on-ramps.
+It's a cloud-based Lightning integration that offers a self-custodial, end-to-end solution for integrating Lightning payments, utilizing nodes-on-demand provided by Blockstream’s Greenlight, with built-in Lightning Service Providers (LSP), on-chain interoperability, and third-party fiat on-ramps. Using the SDK you'll able to:
 
-**Core Functions**
-
-- **Sending payments** *via protocols such as: bolt11, keysend, lnurl-pay, lightning address, btc address.*
-- **Receiving payments** *via protocols such as: bolt11, lnurl-withdraw, btc address.*
-- **Interacting with a node** *e.g. balance, max allow to pay, max allow to receive, on-chain balance.*
+- **Send payments** via various protocols such as: Bolt11, LNURL-Pay, Lightning address, BTC address
+- **Receive payments** via various protocols such as: Bolt11, LNURL-Withdraw, LNURL-Pay, Lightning address, BTC address
 
 **Key Features**
 
 - [x]  On-chain interoperability
 - [x]  Built-in LSP
 - [x]  Integrated watchtower
-- [x]  LNURL functionality
+- [x]  Complete LNURL functionality
 - [x]  Multi-app support
 - [x]  Multi-device support
 - [x]  Real-time state backup
 - [x]  Keys are only held by users
-- [x]  Fiat on-ramps
-- [x]  Open-source
+- [x]  Built-in fiat on-ramp
+- [x]  Free open-source solution
 
 ## Getting Started
 
@@ -71,6 +68,7 @@ The Breez SDK - Native *(Greenlight implementation)* allows end-users to send an
 
 The libs folder contains three sub-folders and is a structured as a cargo workspace:
 
+- **sdk-common**: common SDK functionality for [Breez SDK - Native](https://github.com/breez/breez-sdk-greenlight) and [Breez SDK - Nodeless](https://github.com/breez/breez-sdk-liquid).
 - **sdk-core**: the core SDK rust library.
 - **sdk-bindings**: ffi bindings for Kotlin, Python, Swift, C#, and Go.
 - **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
@@ -79,6 +77,10 @@ The libs folder contains three sub-folders and is a structured as a cargo worksp
 The tools folder contains a simple command line interface (sdk-cli) to the SDK.
 
 See the instructions in each sub-project readme on how to build, test, and run.
+
+## **Contributing**
+
+Contributions are always welcome. Please read our [contribution guide](CONTRIBUTING.md) to get started.
 
 ## SDK Development Roadmap
 

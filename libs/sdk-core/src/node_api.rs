@@ -63,6 +63,9 @@ pub enum NodeError {
 
     #[error("{0}")]
     InsufficientFunds(String),
+
+    #[error("invoice already paid")]
+    InvoiceAlreadyPaid,
 }
 
 impl NodeError {
@@ -112,11 +115,13 @@ pub struct FetchBolt11Result {
 }
 
 /// Trait covering functions affecting the LN node
+#[cfg_attr(test, mockall::automock)]
 #[tonic::async_trait]
 pub trait NodeAPI: Send + Sync {
     async fn node_credentials(&self) -> NodeResult<Option<NodeCredentials>>;
     async fn configure_node(&self, close_to_address: Option<String>) -> NodeResult<()>;
     async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String>;
+    async fn delete_invoice(&self, bolt11: String) -> NodeResult<()>;
     /// Fetches an existing BOLT11 invoice from the node
     async fn fetch_bolt11(&self, payment_hash: Vec<u8>) -> NodeResult<Option<FetchBolt11Result>>;
     async fn pull_changed(
@@ -153,11 +158,11 @@ pub trait NodeAPI: Send + Sync {
     async fn send_pay(&self, bolt11: String, max_hops: u32) -> NodeResult<PaymentResponse>;
 
     /// Calculates the maximum amount that can be sent to a node.
-    async fn max_sendable_amount(
+    async fn max_sendable_amount<'a>(
         &self,
         payee_node_id: Option<Vec<u8>>,
         max_hops: u32,
-        last_hop: Option<&RouteHintHop>,
+        last_hop: Option<&'a RouteHintHop>,
     ) -> NodeResult<Vec<MaxChannelAmount>>;
     async fn redeem_onchain_funds(
         &self,

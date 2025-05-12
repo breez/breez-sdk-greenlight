@@ -42,6 +42,7 @@ lazy_static = "^1.4.0"
 log = { workspace = true }
 once_cell = { workspace = true }
 openssl = { version = "0.10", features = ["vendored"] }
+secp256k1 = { git = "https://github.com/rust-bitcoin/rust-secp256k1", rev = "1cc7410df436b73d06db3c8ff7cbb29a78916b06"}
 strum = { workspace = true }
 strum_macros = { workspace = true }
 tempfile = "3"
@@ -54,4 +55,5 @@ regex = { workspace = true }
 ryu = "1.0.18"
 
 [dev-dependencies]
-mockito = { workspace = true }
+mockall = "0.13.1"
+sdk-common = { path = "../sdk-common", features = ["test-utils"] }

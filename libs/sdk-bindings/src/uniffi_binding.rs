@@ -389,4 +389,10 @@ fn rt() -> &'static tokio::runtime::Runtime {
     &RT
 }
 
-uniffi_macros::include_scaffolding!("breez_sdk");
+#[allow(clippy::all)]
+mod uniffi_binding {
+    use super::*;
+    uniffi_macros::include_scaffolding!("breez_sdk");
+}
+
+pub use uniffi_binding::*;
