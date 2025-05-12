@@ -335,4 +335,7 @@ pub(crate) enum Commands {
 
     /// [dev] Generates and retrieves a diagnostic data report from the sdk services (used for debugging)
     GenerateDiagnosticData {},
+
+    /// [dev] Immediately abort the program
+    Abort {},
 }
