@@ -23,7 +23,7 @@ react-native:
 	cp -r ../sdk-bindings/bindings-react-native/ts/src/* src/
 
 android-make:
-	make -C ../sdk-bindings kotlin
+	make -C ../sdk-bindings android
 
 android-copy:
 	mkdir -p android/src/main/jniLibs/x86

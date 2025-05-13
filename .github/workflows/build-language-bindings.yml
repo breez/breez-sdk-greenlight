@@ -60,6 +60,7 @@ on:
 jobs:
   build-language-bindings:
     runs-on: ubuntu-latest
+    if: ${{ inputs.swift || inputs.python }}
     steps:
       - name: Checkout breez-sdk repo
         uses: actions/checkout@v4
@@ -77,32 +78,12 @@ jobs:
         with:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Kotlin binding
-        if: ${{ inputs.kotlin }}
-        working-directory: libs/sdk-bindings
-        run: |
-          cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl --language kotlin -o ffi/kotlin
-  
-      - name: Archive Kotlin binding
-        if: ${{ inputs.kotlin }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: bindings-kotlin
-          path: libs/sdk-bindings/ffi/kotlin/breez_sdk/breez_sdk.kt
-
-      - name: Archive KMM bindings
-        if: ${{ inputs.kotlin }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: bindings-kmm
-          path: libs/sdk-bindings/ffi/kmm/*
       
       - name: Build Swift binding
         if: ${{ inputs.swift }}
         working-directory: libs/sdk-bindings
         run: |
-          cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl --no-format --language swift --out-dir bindings-swift/Sources/BreezSDK
+          cargo run --bin uniffi-bindgen generate src/breez_sdk.udl --no-format --language swift --out-dir bindings-swift/Sources/BreezSDK
           mv bindings-swift/Sources/BreezSDK/breez_sdk.swift bindings-swift/Sources/BreezSDK/BreezSDK.swift
       
       - name: Archive Swift binding
@@ -116,7 +97,7 @@ jobs:
         if: ${{ inputs.python }}
         working-directory: libs/sdk-bindings
         run: |
-            cargo run --features=uniffi/cli --bin uniffi-bindgen generate src/breez_sdk.udl --language python -o ffi/python
+            cargo run --bin uniffi-bindgen generate src/breez_sdk.udl --language python -o ffi/python
     
       - name: Archive Python binding
         if: ${{ inputs.python }}
@@ -125,11 +106,57 @@ jobs:
           name: bindings-python
           path: libs/sdk-bindings/ffi/python/breez_sdk.py
 
+  build-language-bindings-uniffi-25:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.kotlin || inputs.csharp || inputs.golang }}
+    steps:
+      - name: Checkout breez-sdk repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Install rust
+        run: |
+          rustup set auto-self-update disable
+          rustup toolchain install stable --profile minimal
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "27.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: uniffi-25
+          workspaces: lib
+
+      - name: Build Kotlin binding
+        if: ${{ inputs.kotlin }}
+        working-directory: libs/sdk-bindings
+        run: |
+          cargo run --no-default-features --features=uniffi-25 --bin uniffi-bindgen generate src/breez_sdk.udl --language kotlin -o ffi/kotlin
+  
+      - name: Archive Kotlin binding
+        if: ${{ inputs.kotlin }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-kotlin
+          path: libs/sdk-bindings/ffi/kotlin/breez_sdk/breez_sdk.kt
+
+      - name: Archive Kotlin multiplatform binding
+        if: ${{ inputs.kotlin }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-kotlin-multiplatform
+          path: libs/sdk-bindings/ffi/kmp/*
+
       - name: Build C# binding
         if: ${{ inputs.csharp }}
         working-directory: libs/sdk-bindings
         run: |
-          cargo install uniffi-bindgen-cs --git https://github.com/breez/uniffi-bindgen-cs --branch namespace
+          cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
           uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
       
       - name: Archive C# binding
@@ -143,7 +170,7 @@ jobs:
         if: ${{ inputs.golang }}
         working-directory: libs/sdk-bindings
         run: |
-          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.1.5+v0.23.0
+          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.2.1+v0.25.0
           uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
   
       - name: Archive golang binding
@@ -151,5 +178,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bindings-golang
-          path: libs/sdk-bindings/ffi/golang/breez/breez_sdk/breez_sdk.go
-
+          path: libs/sdk-bindings/ffi/golang/breez_sdk/breez_sdk.*

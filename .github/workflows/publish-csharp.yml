@@ -46,32 +46,32 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-aarch64-apple-darwin
+          name: sdk-bindings-aarch64-apple-darwin-uniffi-25
           path: libs/sdk-bindings/bindings-csharp/src/runtimes/osx-arm64/native
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-x86_64-apple-darwin
+          name: sdk-bindings-x86_64-apple-darwin-uniffi-25
           path: libs/sdk-bindings/bindings-csharp/src/runtimes/osx-x64/native
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-aarch64-unknown-linux-gnu
+          name: sdk-bindings-aarch64-unknown-linux-gnu-uniffi-25
           path: libs/sdk-bindings/bindings-csharp/src/runtimes/linux-arm64/native
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-x86_64-unknown-linux-gnu
+          name: sdk-bindings-x86_64-unknown-linux-gnu-uniffi-25
           path: libs/sdk-bindings/bindings-csharp/src/runtimes/linux-x64/native
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-x86_64-pc-windows-msvc
+          name: sdk-bindings-x86_64-pc-windows-msvc-uniffi-25
           path: libs/sdk-bindings/bindings-csharp/src/runtimes/win-x64/native
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-i686-pc-windows-msvc
+          name: sdk-bindings-i686-pc-windows-msvc-uniffi-25
           path: libs/sdk-bindings/bindings-csharp/src/runtimes/win-x86/native
 
       - name: Update package version

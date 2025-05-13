@@ -44,12 +44,12 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-android-jniLibs
+          name: sdk-bindings-android-jniLibs-uniffi-25
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/jniLibs
 
       - uses: actions/download-artifact@v4
         with:
-          name: bindings-kmm
+          name: bindings-kotlin-multiplatform
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src
 
       - name: Copy jvmMain
@@ -59,18 +59,18 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-aarch64-apple-ios
-          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-arm64
+          name: sdk-bindings-aarch64-apple-ios-uniffi-25
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/lib/ios-arm64
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-aarch64-apple-ios-sim
-          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-arm64
+          name: sdk-bindings-aarch64-apple-ios-sim-uniffi-25
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/lib/ios-simulator-arm64
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-x86_64-apple-ios
-          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/libs/ios-simulator-x64
+          name: sdk-bindings-x86_64-apple-ios-uniffi-25
+          path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/lib/ios-simulator-x64
 
       - name: Build Kotlin Multiplatform project
         working-directory: libs/sdk-bindings/bindings-kotlin-multiplatform

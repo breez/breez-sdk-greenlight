@@ -11,12 +11,13 @@ path = "uniffi-bindgen.rs"
 name = "breez_sdk_bindings"
 crate-type = ["staticlib", "cdylib", "lib"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+default = ["uniffi-28"]
+uniffi-25 = ["uniffi_25", "uniffi_bindgen_25", "uniffi_bindgen_kotlin_multiplatform"]
+uniffi-28 = ["uniffi_28", "uniffi_bindgen_28"]
 
-# Explicitly allow clippy warnings present in the generated breez_sdk.uniffi.rs
-[lints.clippy]
-uninlined-format-args = "allow"
-useless_conversion = "allow"
+[lints]
+workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
@@ -24,10 +25,11 @@ breez-sdk-core = { path = "../sdk-core" }
 sdk-common = { path = "../sdk-common" }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-uniffi = { version = "0.23.0", features = ["bindgen-tests", "cli"] }
-uniffi_bindgen = "0.23.0"
-uniffi_macros = "0.23.0"
-uniffi-kotlin-multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "bf48c5fcb153856e3055025a3cbfa56fbf213188" }
+uniffi_25 = { package = "uniffi", version = "0.25.2", features = [ "bindgen-tests", "cli" ], optional = true }
+uniffi_28 = { package = "uniffi", version = "0.28.0", features = [ "bindgen-tests", "cli" ], optional = true }
+uniffi_bindgen_25 = { package = "uniffi_bindgen", version = "0.25.2", optional = true }
+uniffi_bindgen_28 = { package = "uniffi_bindgen", version = "0.28.0", optional = true }
+uniffi_bindgen_kotlin_multiplatform = { git = "https://gitlab.com/trixnity/uniffi-kotlin-multiplatform-bindings", rev = "e8e3a88df5b657787c1198425c16008232b26548", optional = true }
 camino = "1.1.1"
 log = { workspace = true }
 once_cell = { workspace = true }
@@ -40,7 +42,6 @@ tonic = { workspace = true, features = [
 ] }
 
 [build-dependencies]
-uniffi_build = { version = "0.23.0" }
-uniffi_bindgen = "0.23.0"
-anyhow = { workspace = true }
+uniffi_25 = { package = "uniffi", version = "0.25.2", features = [ "build" ], optional = true }
+uniffi_28 = { package = "uniffi", version = "0.28.0", features = [ "build" ], optional = true }
 glob = "0.3.1"
