@@ -323,7 +323,7 @@ impl BTCSendSwap {
                 req.prepare_res.sender_amount_sat,
                 reverse_swap_keys.preimage_hash_bytes().to_hex(),
                 reverse_swap_keys.public_key()?.to_hex(),
-                req.prepare_res.fees_hash,
+                hex::encode(&req.prepare_res.fees_hash),
                 routing_node,
             )
             .await?;
@@ -331,7 +331,7 @@ impl BTCSendSwap {
             BoltzApiCreateReverseSwapResponse::BoltzApiSuccess(response) => {
                 let res = FullReverseSwapInfo {
                     created_at_block_height: self.chain_service.current_tip().await?,
-                    claim_pubkey: req.recipient_address,
+                    claim_pubkey: req.recipient_address.as_bytes().to_vec(),
                     invoice: response.invoice,
                     preimage: reverse_swap_keys.preimage,
                     private_key: reverse_swap_keys.priv_key,
@@ -340,7 +340,7 @@ impl BTCSendSwap {
                     onchain_amount_sat: response.onchain_amount,
                     sat_per_vbyte: None,
                     receive_amount_sat: Some(req.prepare_res.recipient_amount_sat),
-                    redeem_script: response.redeem_script,
+                    redeem_script: hex::decode(&response.redeem_script)?,
                     cache: ReverseSwapInfoCached {
                         status: Initial,
                         lockup_txid: None,
@@ -363,8 +363,10 @@ impl BTCSendSwap {
     /// Builds and signs claim tx
     async fn create_claim_tx(&self, rs: &FullReverseSwapInfo) -> Result<Transaction> {
         let lockup_addr = rs.get_lockup_address(self.config.network)?;
-        let claim_addr = Address::from_str(&rs.claim_pubkey)?;
-        let redeem_script = Script::from_hex(&rs.redeem_script)?;
+        // claim_pubkey is actually the Bitcoin address in binary form, so we convert it to a string
+        let claim_pubkey_str = String::from_utf8(rs.claim_pubkey.clone())?;
+        let claim_addr = Address::from_str(&claim_pubkey_str)?;
+        let redeem_script = Script::from_hex(&hex::encode(&rs.redeem_script))?;
 
         match lockup_addr.address_type() {
             Some(AddressType::P2wsh) => {
@@ -502,13 +504,14 @@ impl BTCSendSwap {
             .await?
             .into_iter()
             .find(|tx| {
+                let claim_pubkey_hex = hex::encode(&rsi.claim_pubkey);
                 tx.vin
                     .iter()
                     .any(|vin| vin.prevout.scriptpubkey_address == lockup_addr.to_string())
                     && tx
                         .vout
                         .iter()
-                        .any(|vout| vout.scriptpubkey_address == rsi.claim_pubkey.clone())
+                        .any(|vout| vout.scriptpubkey_address == claim_pubkey_hex)
             }))
     }
 
@@ -728,7 +731,7 @@ impl BTCSendSwap {
     ) -> Result<ReverseSwapInfo> {
         Ok(ReverseSwapInfo {
             id: full_rsi.id.clone(),
-            claim_pubkey: full_rsi.claim_pubkey.clone(),
+            claim_pubkey: hex::encode(&full_rsi.claim_pubkey),
             lockup_txid: self
                 .get_lockup_tx(&full_rsi)
                 .await?
