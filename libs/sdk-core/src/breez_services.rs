@@ -1738,16 +1738,15 @@ impl BreezServices {
                         Ok(Some(l)) => {
                             let prefix_len = l.line.find(':').map_or(0, |len| len + 2);
                             let log_message = l.line.split_at(prefix_len).1.trim_start();
-                            match l.line.to_ascii_lowercase() {
-                                s if s.starts_with("unusual") => {
+                            match l.line.to_ascii_lowercase().as_str() {
+                                s if s.starts_with("broken") => {
                                     error!("node-logs: {}", log_message)
                                 }
-                                s if s.starts_with("info") => {
-                                    info!("node-logs: {}", log_message)
+                                s if s.starts_with("unusual") => {
+                                    warn!("node-logs: {}", log_message)
                                 }
-                                s if s.starts_with("debug") => {
-                                    debug!("node-logs: {}", log_message)
-                                }
+                                s if s.starts_with("info") => info!("node-logs: {}", log_message),
+                                s if s.starts_with("debug") => debug!("node-logs: {}", log_message),
                                 _ => trace!("node-logs: {}", l.line),
                             }
                         }
