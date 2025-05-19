@@ -94,7 +94,7 @@ jobs:
         run: |
           git config --global user.email github-actions@github.com
           git config --global user.name github-actions
-          git add breez_sdkbreez_sdk.h
+          git add breez_sdk/breez_sdk.h
           git add breez_sdk/breez_sdk.c
           git add breez_sdk/breez_sdk.go
           git add breez_sdk/lib/android-386/libbreez_sdk_bindings.so
