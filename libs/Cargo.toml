@@ -15,7 +15,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.7.2"
+version = "0.8.0"
 
 [workspace.lints.clippy]
 empty_line_after_doc_comments = "allow"
