@@ -178,6 +178,11 @@ impl BreezServices {
     /// `connect` initializes the SDK services, schedules the node to run in the cloud and
     /// runs the signer. This must be called in order to start communicating with the node.
     ///
+    /// Once you are finished using the SDK services, call [BreezServices::disconnect] to
+    /// free up the resources which are currently in use. This is especially useful in cases
+    /// where the SDK has to be re-instantiated, for example, when you need to change the
+    /// mnemonic and/or configuration.
+    ///
     /// # Arguments
     ///
     /// * `req` - The connect request containing the `config` SDK configuration and `seed` node
