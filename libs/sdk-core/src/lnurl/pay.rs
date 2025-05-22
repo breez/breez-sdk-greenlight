@@ -33,8 +33,8 @@ pub(crate) mod tests {
     use std::sync::Arc;
 
     use anyhow::{anyhow, Result};
-    use gl_client::bitcoin::hashes::hex::ToHex;
     use gl_client::pb::cln::pay_response::PayStatus;
+    use hex::ToHex;
     use rand::random;
     use serde_json::json;
 
@@ -393,7 +393,7 @@ pub(crate) mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess { data } => match data.payment.id {
-                s if s == inv.payment_hash().to_hex() => Ok(()),
+                s if s == inv.payment_hash().encode_hex::<String>() => Ok(()),
                 _ => Err(anyhow!("Unexpected payment hash")),
             },
             _ => Err(anyhow!("Unexpected result")),
@@ -720,7 +720,7 @@ pub(crate) mod tests {
                 pr: Some(bolt11.clone()),
                 sa_data: sa_data.clone(),
                 iv_bytes: random::<[u8; 16]>(),
-                key_bytes: preimage.into_inner(),
+                key_bytes: preimage.to_byte_array(),
             },
         );
 

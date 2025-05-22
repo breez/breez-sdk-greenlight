@@ -5,8 +5,8 @@ use sdk_common::prelude::*;
 use thiserror::Error;
 
 use crate::{
-    bitcoin::util::bip32, node_api::NodeError, persist::error::PersistError,
-    swap_in::ReceiveSwapError, swap_out::error::ReverseSwapError,
+    bitcoin::bip32, node_api::NodeError, persist::error::PersistError, swap_in::ReceiveSwapError,
+    swap_out::error::ReverseSwapError,
 };
 
 pub type SdkResult<T, E = SdkError> = Result<T, E>;
