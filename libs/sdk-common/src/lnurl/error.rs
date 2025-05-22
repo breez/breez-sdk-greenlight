@@ -1,6 +1,6 @@
 use std::{array::TryFromSliceError, string::FromUtf8Error};
 
-use bitcoin::{bech32, secp256k1, util::bip32};
+use bitcoin::{bech32, bip32, secp256k1};
 
 use crate::prelude::{InvoiceError, ServiceConnectivityError};
 

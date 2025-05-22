@@ -22,18 +22,17 @@ use tokio_stream::StreamExt;
 use tonic::Status;
 
 use crate::backup::{BackupState, BackupTransport};
+use crate::bitcoin::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::blockdata::opcodes::all::{
     OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CSV, OP_EQUALVERIFY, OP_HASH160,
 };
 use crate::bitcoin::blockdata::script;
-use crate::bitcoin::hashes::hex::ToHex;
 use crate::bitcoin::hashes::ripemd160;
 use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1};
-use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use crate::bitcoin::util::taproot::{TaprootBuilder, TaprootSpendInfo};
-use crate::bitcoin::{Address, Network, Script, Sequence, XOnlyPublicKey};
+use crate::bitcoin::taproot::{TaprootBuilder, TaprootSpendInfo};
+use crate::bitcoin::{key::XOnlyPublicKey, Address, Network, ScriptBuf, Sequence};
 use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::buy::BuyBitcoinApi;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
@@ -556,11 +555,11 @@ impl MockNodeAPI {
         status: Option<PaymentStatus>,
     ) -> Payment {
         let preimage = match preimage {
-            Some(preimage) => preimage.to_hex(),
+            Some(preimage) => hex::encode(&preimage),
             None => hex::encode(rand_vec_u8(32)),
         };
         let payment = Payment {
-            id: inv.payment_hash().to_hex(),
+            id: hex::encode(inv.payment_hash()),
             payment_type: PaymentType::Sent,
             payment_time: random::<i64>(),
             amount_msat: inv.amount_milli_satoshis().unwrap_or_default(),
@@ -570,7 +569,7 @@ impl MockNodeAPI {
             description: None,
             details: PaymentDetails::Ln {
                 data: LnPaymentDetails {
-                    payment_hash: inv.payment_hash().to_hex(),
+                    payment_hash: hex::encode(inv.payment_hash()),
                     label: String::new(),
                     destination_pubkey: hex::encode(rand_vec_u8(32)),
                     payment_preimage: preimage,
@@ -949,17 +948,17 @@ impl TaprootSwapperAPI for MockBreezServer {
     }
 }
 
-fn claim_script(x_only_claim_pubkey: &XOnlyPublicKey, hash: &[u8]) -> Script {
+fn claim_script(x_only_claim_pubkey: &XOnlyPublicKey, hash: &[u8]) -> ScriptBuf {
     script::Builder::new()
         .push_opcode(OP_HASH160)
-        .push_slice(&ripemd160::Hash::hash(hash))
+        .push_slice(&ripemd160::Hash::hash(hash).as_byte_array())
         .push_opcode(OP_EQUALVERIFY)
         .push_x_only_key(x_only_claim_pubkey)
         .push_opcode(OP_CHECKSIG)
         .into_script()
 }
 
-fn refund_script(x_only_refund_pubkey: &XOnlyPublicKey, lock_time: u32) -> Script {
+fn refund_script(x_only_refund_pubkey: &XOnlyPublicKey, lock_time: u32) -> ScriptBuf {
     script::Builder::new()
         .push_x_only_key(x_only_refund_pubkey)
         .push_opcode(OP_CHECKSIGVERIFY)
@@ -980,8 +979,8 @@ fn key_agg_cache(claim_pubkey: &[u8], refund_pubkey: &[u8]) -> Result<MusigKeyAg
 fn taproot_spend_info(
     claim_pubkey: &[u8],
     refund_pubkey: &[u8],
-    claim_script: Script,
-    refund_script: Script,
+    claim_script: ScriptBuf,
+    refund_script: ScriptBuf,
 ) -> Result<TaprootSpendInfo> {
     let m = key_agg_cache(claim_pubkey, refund_pubkey)?;
     let internal_key = m.agg_pk();

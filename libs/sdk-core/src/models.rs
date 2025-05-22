@@ -4,8 +4,6 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, ensure, Result};
 use chrono::{DateTime, Duration, Utc};
-use ripemd::Digest;
-use ripemd::Ripemd160;
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef};
 use rusqlite::ToSql;
 use sdk_common::grpc;
@@ -15,12 +13,14 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use strum_macros::{Display, EnumString};
 
-use crate::bitcoin::blockdata::opcodes;
-use crate::bitcoin::blockdata::script::Builder;
-use crate::bitcoin::hashes::hex::{FromHex, ToHex};
-use crate::bitcoin::hashes::{sha256, Hash};
-use crate::bitcoin::secp256k1::{PublicKey, Secp256k1, SecretKey};
-use crate::bitcoin::{Address, Script};
+use crate::bitcoin::{
+    absolute::LockTime,
+    blockdata::{opcodes, script::Builder},
+    hashes::{sha256, Hash},
+    script::PushBytes,
+    secp256k1::{PublicKey, Secp256k1, SecretKey},
+    Address, ScriptBuf,
+};
 use crate::error::SdkResult;
 use crate::lsp::LspInformation;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
@@ -174,35 +174,30 @@ pub struct ReverseSwapInfoCached {
 impl FullReverseSwapInfo {
     /// Builds the expected redeem script
     pub(crate) fn build_expected_reverse_swap_script(
-        preimage_hash: Vec<u8>,
-        compressed_pub_key: Vec<u8>,
-        sig: Vec<u8>,
+        preimage_hash: sha256::Hash,
+        compressed_pub_key: [u8; 33],
+        refund_address: Vec<u8>,
         lock_height: u32,
-    ) -> ReverseSwapResult<Script> {
-        let mut ripemd160_hasher = Ripemd160::new();
-        ripemd160_hasher.update(preimage_hash);
-        let ripemd160_hash = ripemd160_hasher.finalize();
-
-        // Remove empty non-significant bytes
-        let timeout_height_le_hex = lock_height.to_le_bytes().to_hex();
-        let timeout_height_le_hex_trimmed = timeout_height_le_hex.trim_end_matches("00");
-        let timeout_height_le_bytes = hex::decode(timeout_height_le_hex_trimmed)?;
+    ) -> ReverseSwapResult<ScriptBuf> {
+        let ripemd160_hash = bitcoin::hashes::ripemd160::Hash::hash(preimage_hash.as_byte_array());
+        let lock_height = LockTime::from_height(lock_height)?;
+        let refund_address: &PushBytes = refund_address.as_slice().try_into()?;
 
         Ok(Builder::new()
             .push_opcode(opcodes::all::OP_SIZE)
-            .push_slice(&[0x20])
+            .push_slice([0x20])
             .push_opcode(opcodes::all::OP_EQUAL)
             .push_opcode(opcodes::all::OP_IF)
             .push_opcode(opcodes::all::OP_HASH160)
-            .push_slice(&ripemd160_hash[..])
+            .push_slice(ripemd160_hash.as_byte_array())
             .push_opcode(opcodes::all::OP_EQUALVERIFY)
-            .push_slice(&compressed_pub_key[..])
+            .push_slice(compressed_pub_key)
             .push_opcode(opcodes::all::OP_ELSE)
             .push_opcode(opcodes::all::OP_DROP)
-            .push_slice(&timeout_height_le_bytes)
+            .push_lock_time(lock_height)
             .push_opcode(opcodes::all::OP_CLTV)
             .push_opcode(opcodes::all::OP_DROP)
-            .push_slice(&sig[..])
+            .push_slice(refund_address)
             .push_opcode(opcodes::all::OP_ENDIF)
             .push_opcode(opcodes::all::OP_CHECKSIG)
             .into_script())
@@ -219,8 +214,8 @@ impl FullReverseSwapInfo {
         received_lockup_address: String,
         network: Network,
     ) -> ReverseSwapResult<()> {
-        let redeem_script_received = Script::from_hex(&self.redeem_script)?;
-        let asm = redeem_script_received.asm();
+        let redeem_script_received = ScriptBuf::from_hex(&self.redeem_script)?;
+        let asm = redeem_script_received.as_script().to_asm_string();
         debug!("received asm = {asm:?}");
 
         let sk = SecretKey::from_slice(&self.private_key)?;
@@ -232,12 +227,15 @@ impl FullReverseSwapInfo {
         let refund_address_bytes = hex::decode(refund_address)?;
 
         let redeem_script_expected = Self::build_expected_reverse_swap_script(
-            self.get_preimage_hash().to_vec(), // Preimage hash
-            pk.serialize().to_vec(),           // Compressed pubkey
+            self.get_preimage_hash(), // Preimage hash
+            pk.serialize(),           // Compressed pubkey
             refund_address_bytes,
             self.timeout_block_height,
         )?;
-        debug!("expected asm = {:?}", redeem_script_expected.asm());
+        debug!(
+            "expected asm = {:?}",
+            redeem_script_expected.as_script().to_asm_string()
+        );
 
         match redeem_script_received.eq(&redeem_script_expected) {
             true => {
@@ -292,8 +290,8 @@ impl FullReverseSwapInfo {
 
     /// Derives the lockup address from the redeem script
     pub(crate) fn get_lockup_address(&self, network: Network) -> ReverseSwapResult<Address> {
-        let redeem_script = Script::from_hex(&self.redeem_script)?;
-        Ok(Address::p2wsh(&redeem_script, network.into()))
+        let redeem_script = ScriptBuf::from_hex(&self.redeem_script)?;
+        Ok(Address::p2wsh(redeem_script.as_script(), network.into()))
     }
 
     /// Get the preimage hash sent in the create request

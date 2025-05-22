@@ -10,7 +10,7 @@ use tokio_stream::Stream;
 use sdk_common::prelude::*;
 
 use crate::{
-    bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
+    bitcoin::bip32::{ChildNumber, ExtendedPrivKey},
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
     CustomMessage, LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentType,PaymentDetails,LnPaymentDetails,PaymentStatus,
@@ -78,8 +78,8 @@ impl NodeError {
     }
 }
 
-impl From<crate::bitcoin::util::bip32::Error> for NodeError {
-    fn from(err: crate::bitcoin::util::bip32::Error) -> Self {
+impl From<crate::bitcoin::bip32::Error> for NodeError {
+    fn from(err: crate::bitcoin::bip32::Error) -> Self {
         Self::Generic(err.to_string())
     }
 }

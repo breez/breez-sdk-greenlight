@@ -8,7 +8,7 @@ aes = { workspace = true }
 anyhow = { workspace = true }
 async-trait = { workspace = true }
 base64 = { workspace = true }
-bip21 = "0.2"
+bip21 = "0.3"
 bitcoin = { workspace = true }
 cbc = { version = "0.1", features = ["std"] }
 elements = { version = "0.25.0", optional = true }

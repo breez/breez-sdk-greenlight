@@ -3,6 +3,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+use bitcoin::{absolute, address::NetworkUnchecked};
 use rand::Rng;
 use sdk_common::tonic_wrap;
 use secp256k1::musig::{
@@ -18,13 +19,11 @@ use crate::bitcoin::{
     },
     consensus::serialize,
     hashes::{ripemd160, Hash},
+    key::XOnlyPublicKey,
     secp256k1::{Message, PublicKey, SecretKey},
-    util::{
-        sighash::{Prevouts, SighashCache},
-        taproot::{LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo},
-    },
-    Address, Network, PackedLockTime, SchnorrSighashType, Script, Sequence, Transaction, TxIn,
-    TxOut, Witness, XOnlyPublicKey,
+    sighash::{Prevouts, SighashCache, TapSighashType},
+    taproot::{LeafVersion, TapLeafHash, TaprootBuilder, TaprootSpendInfo},
+    Address, Network, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::{NodeState, OpeningFeeParams, SwapInfo, SwapStatus};
 
@@ -152,12 +151,12 @@ impl TaprootReceiveSwap {
     ) -> ReceiveSwapResult<Transaction> {
         Ok(Transaction {
             version: 2,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: utxos
                 .iter()
                 .map(|utxo| {
                     Ok(TxIn {
-                        witness: Witness::from_vec(vec![[1; SCHNORR_SIGNATURE_SIZE].to_vec()]),
+                        witness: Witness::from_slice(&[[1; SCHNORR_SIGNATURE_SIZE].to_vec()]),
                         ..utxo.try_into()?
                     })
                 })
@@ -177,12 +176,12 @@ impl TaprootReceiveSwap {
     ) -> ReceiveSwapResult<Transaction> {
         Ok(Transaction {
             version: 2,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: utxos
                 .iter()
                 .map(|utxo| {
                     Ok(TxIn {
-                        witness: Witness::from_vec(vec![
+                        witness: Witness::from_slice(&[
                             [1; SCHNORR_SIGNATURE_SIZE].to_vec(),
                             [1; TAPROOT_REFUND_SCRIPT_SIZE].to_vec(),
                             [1; TAPROOT_CONTROL_BLOCK_SIZE].to_vec(),
@@ -216,7 +215,7 @@ impl TaprootReceiveSwap {
             .saturating_sub(fee);
         let mut tx = Transaction {
             version: 2,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: utxos
                 .iter()
                 .map(|utxo| utxo.try_into())
@@ -227,7 +226,10 @@ impl TaprootReceiveSwap {
             }],
         };
 
-        let swap_address: Address = swap_info.bitcoin_address.parse()?;
+        let swap_address: Address = swap_info
+            .bitcoin_address
+            .parse::<Address<NetworkUnchecked>>()?
+            .require_network(self.network)?;
         let swap_address_script_pubkey = swap_address.script_pubkey();
         let claim_pubkey = PublicKey::from_slice(&swap_info.swapper_public_key)
             .map_err(|_| ReceiveSwapError::generic("invalid claim pubkey"))?;
@@ -271,14 +273,9 @@ impl TaprootReceiveSwap {
             let sighash = sighasher.taproot_key_spend_signature_hash(
                 input_index,
                 &prevouts,
-                SchnorrSighashType::Default,
+                TapSighashType::Default,
             )?;
-            let msg = secp256k1::Message::from_digest(
-                sighash
-                    .to_vec()
-                    .try_into()
-                    .map_err(|_| ReceiveSwapError::generic("invalid signature hash"))?,
-            );
+            let msg = secp256k1::Message::from_digest(sighash.to_byte_array());
             let extra_rand = rand::thread_rng().gen();
             let (our_sec_nonce, our_pub_nonce) = key_agg_cache
                 .nonce_gen(
@@ -341,7 +338,7 @@ impl TaprootReceiveSwap {
 
         let mut tx = Transaction {
             version: 2,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: absolute::LockTime::ZERO,
             input: utxos
                 .iter()
                 .map(|utxo| {
@@ -356,7 +353,10 @@ impl TaprootReceiveSwap {
                 script_pubkey: destination_address.script_pubkey(),
             }],
         };
-        let swap_address: Address = swap_info.bitcoin_address.parse()?;
+        let swap_address: Address = swap_info
+            .bitcoin_address
+            .parse::<Address<NetworkUnchecked>>()?
+            .require_network(self.network)?;
         let swap_address_script_pubkey = swap_address.script_pubkey();
         let claim_pubkey = PublicKey::from_slice(&swap_info.swapper_public_key)
             .map_err(|_| ReceiveSwapError::generic("invalid claim pubkey"))?;
@@ -385,7 +385,7 @@ impl TaprootReceiveSwap {
                 input_index,
                 &prevouts,
                 leaf_hash,
-                SchnorrSighashType::Default,
+                TapSighashType::Default,
             )?;
 
             let rnd = rand::thread_rng().gen();
@@ -414,7 +414,7 @@ impl TaprootReceiveSwap {
                 control_block.serialize(),
             ];
             input.witness.clear();
-            input.witness = Witness::from_vec(witness);
+            input.witness = Witness::from_slice(&witness);
         }
 
         Ok(tx)
@@ -468,8 +468,8 @@ impl TaprootReceiveSwap {
         &self,
         claim_pubkey: &[u8],
         refund_pubkey: &[u8],
-        claim_script: Script,
-        refund_script: Script,
+        claim_script: ScriptBuf,
+        refund_script: ScriptBuf,
     ) -> ReceiveSwapResult<TaprootSpendInfo> {
         let m = self.key_agg_cache(claim_pubkey, refund_pubkey)?;
         let internal_key = m.agg_pk();
@@ -485,17 +485,17 @@ impl TaprootReceiveSwap {
     }
 }
 
-fn claim_script(x_only_claim_pubkey: &XOnlyPublicKey, hash: &[u8]) -> Script {
+fn claim_script(x_only_claim_pubkey: &XOnlyPublicKey, hash: &[u8]) -> ScriptBuf {
     script::Builder::new()
         .push_opcode(OP_HASH160)
-        .push_slice(&ripemd160::Hash::hash(hash))
+        .push_slice(ripemd160::Hash::hash(hash).as_byte_array())
         .push_opcode(OP_EQUALVERIFY)
         .push_x_only_key(x_only_claim_pubkey)
         .push_opcode(OP_CHECKSIG)
         .into_script()
 }
 
-fn refund_script(x_only_refund_pubkey: &XOnlyPublicKey, lock_time: u32) -> Script {
+fn refund_script(x_only_refund_pubkey: &XOnlyPublicKey, lock_time: u32) -> ScriptBuf {
     script::Builder::new()
         .push_x_only_key(x_only_refund_pubkey)
         .push_opcode(OP_CHECKSIGVERIFY)

@@ -9,16 +9,16 @@ use tokio::time::{sleep, Duration};
 
 use super::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus::*};
 use super::error::{ReverseSwapError, ReverseSwapResult};
-use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
-use crate::bitcoin::consensus::serialize;
-use crate::bitcoin::hashes::hex::{FromHex, ToHex};
-use crate::bitcoin::hashes::{sha256, Hash};
-use crate::bitcoin::psbt::serialize::Serialize as PsbtSerialize;
-use crate::bitcoin::secp256k1::{Message, Secp256k1, SecretKey};
-use crate::bitcoin::util::sighash::SighashCache;
 use crate::bitcoin::{
-    Address, AddressType, EcdsaSighashType, KeyPair, Network, OutPoint, Script, Sequence,
-    Transaction, TxIn, TxOut, Txid, Witness,
+    absolute,
+    blockdata::constants::WITNESS_SCALE_FACTOR,
+    consensus::serialize,
+    hashes::{sha256, Hash},
+    key::KeyPair,
+    secp256k1::{Message, Secp256k1, SecretKey},
+    sighash::{EcdsaSighashType, SighashCache},
+    Address, AddressType, Network, OutPoint, Script, ScriptBuf, Sequence, Transaction, TxIn, TxOut,
+    Txid, Witness,
 };
 use crate::chain::{get_utxos, AddressUtxos, ChainService, OnchainTx, Utxo};
 use crate::error::SdkResult;
@@ -321,8 +321,8 @@ impl BTCSendSwap {
             .reverse_swap_service_api
             .create_reverse_swap_on_remote(
                 req.prepare_res.sender_amount_sat,
-                reverse_swap_keys.preimage_hash_bytes().to_hex(),
-                reverse_swap_keys.public_key()?.to_hex(),
+                hex::encode(reverse_swap_keys.preimage_hash_bytes()),
+                hex::encode(reverse_swap_keys.public_key()?.serialize()),
                 req.prepare_res.fees_hash,
                 routing_node,
             )
@@ -363,8 +363,9 @@ impl BTCSendSwap {
     /// Builds and signs claim tx
     async fn create_claim_tx(&self, rs: &FullReverseSwapInfo) -> Result<Transaction> {
         let lockup_addr = rs.get_lockup_address(self.config.network)?;
-        let claim_addr = Address::from_str(&rs.claim_pubkey)?;
-        let redeem_script = Script::from_hex(&rs.redeem_script)?;
+        let claim_addr =
+            Address::from_str(&rs.claim_pubkey)?.require_network(self.config.network.into())?;
+        let redeem_script = ScriptBuf::from_hex(&rs.redeem_script)?;
 
         match lockup_addr.address_type() {
             Some(AddressType::P2wsh) => {
@@ -410,7 +411,7 @@ impl BTCSendSwap {
                     rs.preimage.clone(),
                     utxos,
                     claim_addr,
-                    redeem_script,
+                    &redeem_script,
                     tx_out_value,
                 )
             }
@@ -424,7 +425,7 @@ impl BTCSendSwap {
         preimage: Vec<u8>,
         utxos: AddressUtxos,
         claim_addr: Address,
-        redeem_script: Script,
+        redeem_script: &Script,
         tx_out_value: u64,
     ) -> Result<Transaction> {
         let txins: Vec<TxIn> = utxos
@@ -432,7 +433,7 @@ impl BTCSendSwap {
             .iter()
             .map(|utxo| TxIn {
                 previous_output: utxo.out,
-                script_sig: Script::new(),
+                script_sig: ScriptBuf::new(),
                 sequence: Sequence(0),
                 witness: Witness::default(),
             })
@@ -446,12 +447,12 @@ impl BTCSendSwap {
         // construct the transaction
         let mut tx = Transaction {
             version: 2,
-            lock_time: crate::bitcoin::PackedLockTime(0),
+            lock_time: absolute::LockTime::ZERO,
             input: txins.clone(),
             output: tx_out,
         };
 
-        let claim_script_bytes = PsbtSerialize::serialize(&redeem_script);
+        let claim_script_bytes = redeem_script.to_bytes();
 
         // Sign inputs (iterate, even though we only have one input)
         let scpt = Secp256k1::signing_only();
@@ -460,7 +461,7 @@ impl BTCSendSwap {
             let mut signer = SighashCache::new(&tx);
             let sig = signer.segwit_signature_hash(
                 index,
-                &redeem_script,
+                redeem_script,
                 utxos.confirmed[index].value,
                 EcdsaSighashType::All,
             )?;
@@ -473,7 +474,7 @@ impl BTCSendSwap {
             let witness: Vec<Vec<u8>> = vec![sigvec, preimage.clone(), claim_script_bytes.clone()];
 
             let mut signed_input = input.clone();
-            let w = Witness::from_vec(witness);
+            let w = Witness::from_slice(&witness);
             signed_input.witness = w;
             signed_inputs.push(signed_input);
         }
@@ -546,8 +547,8 @@ impl BTCSendSwap {
             "Tried to get status for non-monitored reverse swap"
         );
 
-        let payment_hash_hex = &rsi.get_preimage_hash().to_hex();
-        let payment_status = self.persister.get_payment_by_hash(payment_hash_hex)?;
+        let payment_hash_hex = format!("{:x}", &rsi.get_preimage_hash().forward_hex());
+        let payment_status = self.persister.get_payment_by_hash(&payment_hash_hex)?;
         if let Some(ref payment) = payment_status {
             if payment.status == PaymentStatus::Failed {
                 warn!("Payment failed for reverse swap {}", rsi.id);
@@ -737,7 +738,7 @@ impl BTCSendSwap {
                     .create_claim_tx(&full_rsi)
                     .await
                     .ok()
-                    .map(|claim_tx| claim_tx.txid().to_hex()),
+                    .map(|claim_tx| claim_tx.txid().to_string()),
                 _ => None,
             },
             onchain_amount_sat: full_rsi.onchain_amount_sat,
@@ -755,12 +756,14 @@ fn build_fake_claim_tx() -> Result<Transaction> {
     let keys = KeyPair::new(&Secp256k1::new(), &mut thread_rng());
 
     let sk = keys.secret_key();
-    let pk_compressed_bytes = keys.public_key().serialize().to_vec();
-    let preimage_bytes = sha256::Hash::hash("123".as_bytes()).to_vec();
+    let pk_compressed_bytes = keys.public_key().serialize();
+    let preimage_bytes = sha256::Hash::hash("123".as_bytes())
+        .to_byte_array()
+        .to_vec();
     let redeem_script = FullReverseSwapInfo::build_expected_reverse_swap_script(
-        sha256::Hash::hash(&preimage_bytes).to_vec(), // 32 bytes
-        pk_compressed_bytes.clone(),                  // 33 bytes
-        pk_compressed_bytes,                          // 33 bytes
+        sha256::Hash::hash(&preimage_bytes), // 32 bytes
+        pk_compressed_bytes,                 // 33 bytes
+        pk_compressed_bytes.to_vec(),        // 33 bytes
         840_000,
     )?;
 
@@ -787,7 +790,7 @@ fn build_fake_claim_tx() -> Result<Transaction> {
             }],
         },
         claim_addr,
-        redeem_script,
+        &redeem_script,
         1_000,
     )
 }

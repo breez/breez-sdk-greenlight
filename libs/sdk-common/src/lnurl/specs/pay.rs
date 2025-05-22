@@ -551,7 +551,7 @@ pub(crate) mod tests {
     fn test_lnurl_pay_validate_success_action_encrypt_decrypt() -> Result<()> {
         // Simulate a preimage, which will be the AES key
         let key = sha256::Hash::hash(&[0x42; 16]);
-        let key_bytes = key.as_inner();
+        let key_bytes = key.as_byte_array();
 
         let iv_bytes = [0x24; 16]; // 16 bytes = 24 chars
         let iv_base64 = base64::encode(iv_bytes); // JCQkJCQkJCQkJCQkJCQkJA==

@@ -59,8 +59,14 @@ impl From<bitcoin::hashes::hex::Error> for ReceiveSwapError {
     }
 }
 
-impl From<bitcoin::util::address::Error> for ReceiveSwapError {
-    fn from(e: bitcoin::util::address::Error) -> Self {
+impl From<bitcoin::absolute::Error> for ReceiveSwapError {
+    fn from(e: bitcoin::absolute::Error) -> Self {
+        Self::Generic(e.to_string())
+    }
+}
+
+impl From<bitcoin::address::Error> for ReceiveSwapError {
+    fn from(e: bitcoin::address::Error) -> Self {
         Self::Generic(e.to_string())
     }
 }
@@ -80,8 +86,8 @@ impl From<SdkError> for ReceiveSwapError {
     }
 }
 
-impl From<bitcoin::util::sighash::Error> for ReceiveSwapError {
-    fn from(e: bitcoin::util::sighash::Error) -> Self {
+impl From<bitcoin::sighash::Error> for ReceiveSwapError {
+    fn from(e: bitcoin::sighash::Error) -> Self {
         Self::Generic(e.to_string())
     }
 }
@@ -110,14 +116,14 @@ impl From<bitcoin::secp256k1::Error> for ReceiveSwapError {
     }
 }
 
-impl From<bitcoin::util::taproot::TaprootBuilderError> for ReceiveSwapError {
-    fn from(e: bitcoin::util::taproot::TaprootBuilderError) -> Self {
+impl From<bitcoin::taproot::TaprootBuilderError> for ReceiveSwapError {
+    fn from(e: bitcoin::taproot::TaprootBuilderError) -> Self {
         Self::Taproot(e.to_string())
     }
 }
 
-impl From<bitcoin::util::taproot::TaprootBuilder> for ReceiveSwapError {
-    fn from(_e: bitcoin::util::taproot::TaprootBuilder) -> Self {
+impl From<bitcoin::taproot::TaprootBuilder> for ReceiveSwapError {
+    fn from(_e: bitcoin::taproot::TaprootBuilder) -> Self {
         Self::Taproot("Could not finalize taproot spend info".to_string())
     }
 }

@@ -4,17 +4,19 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
+use bitcoin::Weight;
 use rand::Rng;
 use sdk_common::ensure_sdk;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{broadcast, Mutex};
 
 use crate::bitcoin::{
+    address::NetworkUnchecked,
     blockdata::constants::WITNESS_SCALE_FACTOR,
     consensus::encode,
     hashes::sha256,
     secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
-    Address, AddressType, Network, OutPoint, Script, Sequence, TxIn, Witness,
+    Address, AddressType, Network, OutPoint, ScriptBuf, Sequence, TxIn, Witness,
 };
 use crate::lightning_invoice::Bolt11Invoice;
 use crate::{
@@ -127,7 +129,7 @@ impl TryInto<TxIn> for &SwapOutput {
                 txid: self.tx_id.parse()?,
                 vout: self.output_index,
             },
-            script_sig: Script::default(),
+            script_sig: ScriptBuf::default(),
             sequence: Sequence::default(),
             witness: Witness::default(),
         })
@@ -195,6 +197,7 @@ pub(crate) struct BTCReceiveSwap {
     chain_service: Arc<dyn ChainService>,
     payment_storage: Arc<dyn PaymentStorage>,
     current_tip: Mutex<u32>,
+    network: Network,
     node_api: Arc<dyn NodeAPI>,
     node_state_storage: Arc<dyn NodeStateStorage>,
     payment_receiver: Arc<dyn Receiver>,
@@ -222,6 +225,7 @@ impl BTCReceiveSwap {
             chain_service: params.chain_service,
             payment_storage: params.payment_storage,
             current_tip: Mutex::new(0),
+            network: params.network,
             node_api: params.node_api,
             node_state_storage: params.node_state_storage,
             payment_receiver: params.payment_receiver,
@@ -433,7 +437,10 @@ impl BTCReceiveSwap {
                 .then(a.output_index.cmp(&b.output_index))
         });
 
-        let destination_address = req.to_address.parse()?;
+        let destination_address = req
+            .to_address
+            .parse::<Address<NetworkUnchecked>>()?
+            .require_network(self.network)?;
         let tx = match address_type {
             SwapAddressType::Segwit => self
                 .segwit
@@ -455,7 +462,7 @@ impl BTCReceiveSwap {
         let weight = tx.weight();
         let fee = compute_tx_fee(weight, req.sat_per_vbyte);
         Ok(PrepareRefundResponse {
-            refund_tx_weight: weight as u32,
+            refund_tx_weight: weight.to_wu() as u32,
             refund_tx_fee_sat: fee,
         })
     }
@@ -501,7 +508,10 @@ impl BTCReceiveSwap {
 
             current_tip >= confirmed_at.saturating_add(swap_info.lock_height as u32)
         });
-        let destination_address = req.to_address.parse()?;
+        let destination_address = req
+            .to_address
+            .parse::<Address<NetworkUnchecked>>()?
+            .require_network(self.network)?;
         let tx = match address_type {
             SwapAddressType::Segwit => {
                 if !has_passed_timelock {
@@ -1163,16 +1173,16 @@ impl BTCReceiveSwap {
 }
 
 fn parse_address(address: &str) -> ReceiveSwapResult<SwapAddressType> {
-    let address: Address = address.parse()?;
-    match address.address_type() {
+    let address: Address<NetworkUnchecked> = address.parse()?;
+    match address.assume_checked().address_type() {
         Some(AddressType::P2tr) => Ok(SwapAddressType::Taproot),
         Some(AddressType::P2wsh) => Ok(SwapAddressType::Segwit),
         _ => Err(ReceiveSwapError::InvalidAddressType),
     }
 }
 
-pub(super) fn compute_tx_fee(tx_weight: usize, sat_per_vbyte: u32) -> u64 {
-    (tx_weight as u64 * sat_per_vbyte as u64).div_ceil(WITNESS_SCALE_FACTOR as u64)
+pub(super) fn compute_tx_fee(tx_weight: Weight, sat_per_vbyte: u32) -> u64 {
+    (tx_weight.to_wu() * sat_per_vbyte as u64).div_ceil(WITNESS_SCALE_FACTOR as u64)
 }
 
 fn refundable_utxos(
@@ -1241,10 +1251,10 @@ mod tests {
 
     use std::sync::Arc;
 
-    use bitcoin::Network;
     use mockall::predicate;
 
     use crate::{
+        bitcoin::{Network, Weight},
         chain::{OnchainTx, TxStatus, Vin, Vout},
         persist::{
             cache::MockNodeStateStorage, swap::MockSwapStorage, transactions::MockPaymentStorage,
@@ -1269,13 +1279,13 @@ mod tests {
         let tx_weight = 1000;
         let sat_per_vbyte = 10;
         let expected_fee = 2500;
-        let fee = compute_tx_fee(tx_weight, sat_per_vbyte);
+        let fee = compute_tx_fee(Weight::from_wu(tx_weight), sat_per_vbyte);
         assert_eq!(fee, expected_fee);
 
         let tx_weight = 999;
         let sat_per_vbyte = 10;
         let expected_fee = 2498;
-        let fee = compute_tx_fee(tx_weight, sat_per_vbyte);
+        let fee = compute_tx_fee(Weight::from_wu(tx_weight), sat_per_vbyte);
         assert_eq!(fee, expected_fee);
     }
 

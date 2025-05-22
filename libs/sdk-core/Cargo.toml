@@ -20,7 +20,7 @@ anyhow = { workspace = true }
 hex = { workspace = true }
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "c09c1be59994b35aadfe4747b78bcdc8fffbe45a", optional = true }
+], rev = "409479c99dcb71865d5b2a9fd955f55da6f33f80", optional = true }
 zbase32 = "0.1.2"
 base64 = { workspace = true }
 bitcoin = { workspace = true, features = ["serde", "rand"] }
@@ -28,7 +28,6 @@ chrono = "0.4"
 ecies = { version = "0.2.6", default-features = false, features = ["pure"] }
 env_logger = "0.10"
 futures = "0.3.30"
-ripemd = "0.1"
 rand = "0.8"
 tiny-bip39 = "1"
 tokio = { workspace = true }
@@ -56,7 +55,7 @@ tempfile = "3"
 thiserror = { workspace = true }
 const_format = "0.2"
 miniz_oxide = "0.7.1"
-tokio-stream = "0.1.14"
+tokio-stream = "0.1.15"
 serde_with = "3.3.0"
 regex = { workspace = true }
 ryu = "1.0.18"
