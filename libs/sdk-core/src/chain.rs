@@ -4,8 +4,7 @@ use anyhow::Result;
 use sdk_common::prelude::*;
 use serde::{Deserialize, Serialize};
 
-use crate::bitcoin::hashes::hex::FromHex;
-use crate::bitcoin::{OutPoint, Txid};
+use crate::bitcoin::OutPoint;
 use crate::error::{SdkError, SdkResult};
 
 pub const DEFAULT_MEMPOOL_SPACE_URL: &str = "https://mempool.space/api";
@@ -161,7 +160,7 @@ pub(crate) fn get_utxos(
                 && (include_unconfirmed_spends || tx.status.confirmed)
             {
                 spent_outputs.push(OutPoint {
-                    txid: Txid::from_hex(vin.txid.as_str())?,
+                    txid: vin.txid.parse()?,
                     vout: vin.vout,
                 })
             }
@@ -172,7 +171,7 @@ pub(crate) fn get_utxos(
         for (index, vout) in tx.vout.iter().enumerate() {
             if vout.scriptpubkey_address == address {
                 let outpoint = OutPoint {
-                    txid: Txid::from_hex(tx.txid.as_str())?,
+                    txid: tx.txid.parse()?,
                     vout: index as u32,
                 };
                 if !spent_outputs.contains(&outpoint) {

@@ -4,6 +4,7 @@ use std::str::FromStr;
 
 use ::bip21::Uri;
 use anyhow::{anyhow, bail, Context, Result};
+use bitcoin::address::{NetworkChecked, NetworkUnchecked};
 use bitcoin::bech32;
 use bitcoin::bech32::FromBase32;
 use log::{debug, error};
@@ -307,8 +308,11 @@ async fn bip353_parse(input: &str) -> Option<String> {
 /// Core parse implementation
 async fn parse_core<C: RestClient + ?Sized>(rest_client: &C, input: &str) -> Result<InputType> {
     // Covers BIP 21 URIs and simple onchain BTC addresses (which are valid BIP 21 with the 'bitcoin:' prefix)
-    if let Ok(bip21_uri) = prepend_if_missing("bitcoin:", input).parse::<Uri<'_>>() {
-        let bitcoin_addr_data = bip21_uri.into();
+    if let Ok(bip21_uri) =
+        prepend_if_missing("bitcoin:", input).parse::<Uri<'_, NetworkUnchecked>>()
+    {
+        let bip21_uri = bip21_uri.assume_checked();
+        let bitcoin_addr_data: BitcoinAddressData = bip21_uri.into();
 
         // Special case of LN BOLT11 with onchain fallback
         // Search for the `lightning=bolt11` param in the BIP21 URI and, if found, extract the bolt11
@@ -841,7 +845,7 @@ impl BitcoinAddressData {
     /// ensuring that all the fields are valid
     pub fn to_uri(&self) -> Result<String, URISerializationError> {
         self.address
-            .parse::<bitcoin::Address>()
+            .parse::<bitcoin::Address<NetworkUnchecked>>()
             .map_err(|_| URISerializationError::InvalidAddress)?;
 
         let mut optional_keys = HashMap::new();
@@ -874,8 +878,8 @@ impl BitcoinAddressData {
     }
 }
 
-impl From<Uri<'_>> for BitcoinAddressData {
-    fn from(uri: Uri) -> Self {
+impl From<Uri<'_, NetworkChecked>> for BitcoinAddressData {
+    fn from(uri: Uri<'_, NetworkChecked>) -> Self {
         BitcoinAddressData {
             address: uri.address.to_string(),
             network: uri.address.network.into(),

@@ -1,6 +1,7 @@
 use std::{num::TryFromIntError, time::SystemTimeError};
 
 use anyhow::{anyhow, Result};
+use gl_client::bitcoin;
 use regex::Regex;
 use strum_macros::FromRepr;
 
@@ -116,8 +117,8 @@ impl From<anyhow::Error> for NodeError {
     }
 }
 
-impl From<crate::bitcoin::util::address::Error> for NodeError {
-    fn from(err: crate::bitcoin::util::address::Error) -> Self {
+impl From<bitcoin::address::Error> for NodeError {
+    fn from(err: bitcoin::address::Error) -> Self {
         Self::Generic(err.to_string())
     }
 }

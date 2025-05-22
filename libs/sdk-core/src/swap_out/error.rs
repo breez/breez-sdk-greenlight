@@ -1,7 +1,7 @@
 use sdk_common::prelude::ServiceConnectivityError;
 
 use crate::{
-    bitcoin::{hashes, secp256k1},
+    bitcoin::{hashes, script::PushBytesError, secp256k1},
     error::SdkError,
     node_api::NodeError,
     persist::error::PersistError,
@@ -64,6 +64,18 @@ impl From<anyhow::Error> for ReverseSwapError {
 
 impl From<hashes::hex::Error> for ReverseSwapError {
     fn from(err: hashes::hex::Error) -> Self {
+        Self::Generic(err.to_string())
+    }
+}
+
+impl From<bitcoin::absolute::Error> for ReverseSwapError {
+    fn from(err: bitcoin::absolute::Error) -> Self {
+        Self::Generic(err.to_string())
+    }
+}
+
+impl From<PushBytesError> for ReverseSwapError {
+    fn from(err: PushBytesError) -> Self {
         Self::Generic(err.to_string())
     }
 }

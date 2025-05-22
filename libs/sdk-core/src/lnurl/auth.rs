@@ -6,7 +6,7 @@ use crate::node_api::NodeAPI;
 use crate::bitcoin::{
     hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine},
     secp256k1::{Message, Secp256k1},
-    util::bip32::{ChildNumber, ExtendedPubKey},
+    bip32::{ChildNumber, ExtendedPubKey},
 };
 
 pub(crate) struct SdkLnurlAuthSigner {
@@ -48,7 +48,7 @@ impl LnurlAuthSigner for SdkLnurlAuthSigner {
         let mut engine = HmacEngine::<sha256::Hash>::new(priv_key.encode().as_slice());
         engine.input(input);
         Ok(Hmac::<sha256::Hash>::from_engine(engine)
-            .as_inner()
+            .as_byte_array()
             .to_vec())
     }
 }

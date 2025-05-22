@@ -17,12 +17,12 @@ use gl_client::pb::cln::delinvoice_request::DelinvoiceStatus;
 use gl_client::pb::cln::listinvoices_invoices::ListinvoicesInvoicesStatus;
 use gl_client::pb::cln::listinvoices_request::ListinvoicesIndex;
 use gl_client::pb::cln::listpays_pays::ListpaysPaysStatus;
-use gl_client::pb::cln::listpeerchannels_channels::ListpeerchannelsChannelsState::*;
 use gl_client::pb::cln::listsendpays_request::ListsendpaysIndex;
 use gl_client::pb::cln::{
-    self, Amount, DelinvoiceRequest, GetrouteRequest, GetrouteRoute, ListchannelsRequest,
-    ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels, ListsendpaysPayments,
-    PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
+    self, Amount, ChannelState::*, DelinvoiceRequest, GetrouteRequest, GetrouteRoute,
+    ListchannelsRequest, ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels,
+    ListsendpaysPayments, PreapproveinvoiceRequest, SendpayRequest, SendpayRoute,
+    WaitsendpayRequest,
 };
 use gl_client::pb::{incoming_payment, TrampolinePayRequest};
 use gl_client::scheduler::Scheduler;
@@ -38,14 +38,14 @@ use tokio::time::{sleep, Instant, MissedTickBehavior};
 use tokio_stream::StreamExt;
 
 use crate::bitcoin::bech32::{u5, ToBase32};
+use crate::bitcoin::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
 use crate::bitcoin::hashes::Hash;
 use crate::bitcoin::secp256k1::ecdsa::{RecoverableSignature, RecoveryId};
 use crate::bitcoin::secp256k1::PublicKey;
 use crate::bitcoin::secp256k1::Secp256k1;
-use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::{
-    Address, OutPoint, Script, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
+    Address, OutPoint, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
@@ -427,9 +427,8 @@ impl Greenlight {
         let connected_peers: Vec<String> = peerchannels
             .channels
             .iter()
-            .filter(|channel| channel.peer_connected())
-            .filter_map(|channel| channel.peer_id.clone())
-            .map(hex::encode)
+            .filter(|channel| channel.peer_connected)
+            .map(|channel| hex::encode(&channel.peer_id))
             .collect::<HashSet<_>>()
             .into_iter()
             .collect();
@@ -710,10 +709,8 @@ impl Greenlight {
         let open_peer_channels: HashMap<Vec<u8>, cln::ListpeerchannelsChannels> = peer_channels
             .channels
             .into_iter()
-            .filter(|c| {
-                c.state == Some(cln::ChannelState::ChanneldNormal as i32) && c.peer_id.is_some()
-            })
-            .map(|c| (c.peer_id.clone().unwrap(), c))
+            .filter(|c| c.state() == ChanneldNormal)
+            .map(|c| (c.peer_id.clone(), c))
             .collect();
         Ok(open_peer_channels)
     }
@@ -970,10 +967,8 @@ impl Greenlight {
             None => return Err(NodeError::generic("Channel not found")),
         };
 
-        if let Some(peer_connected) = channel.peer_connected {
-            if !peer_connected {
-                return Ok(false);
-            }
+        if !channel.peer_connected {
+            return Ok(false);
         }
 
         if !channel
@@ -1076,6 +1071,7 @@ impl NodeAPI for Greenlight {
             }),
             label,
             description: request.description,
+            exposeprivatechannels: vec![],
             preimage: request.preimage,
             deschashonly: request.use_description_hash,
             expiry: request.expiry.map(|e| e as u64),
@@ -1301,7 +1297,7 @@ impl NodeAPI for Greenlight {
         // This is needed in greenlight for the signer to recognize this invoice.
         client
             .pre_approve_invoice(PreapproveinvoiceRequest {
-                bolt11: Some(bolt11.clone()),
+                bolt11: bolt11.clone(),
             })
             .await?;
 
@@ -1341,9 +1337,11 @@ impl NodeAPI for Greenlight {
                 }),
                 bolt11: Some(bolt11.clone()),
                 payment_secret: Some(invoice.payment_secret.clone()),
+                payment_metadata: None,
                 partid: Some(part_id),
                 localinvreqid: None,
                 groupid: Some(group_id),
+                description: None,
             };
             let mut client = client.clone();
             with_connection_retry!(client.send_pay(req.clone())).await?;
@@ -1405,6 +1403,7 @@ impl NodeAPI for Greenlight {
             exemptfee: Some(cln::Amount {
                 msat: self.sdk_config.exemptfee_msat,
             }),
+            partial_msat: None,
         };
         let result: cln::PayResponse = self
             .with_keep_alive(with_connection_retry!(client.pay(request.clone())))
@@ -1493,6 +1492,7 @@ impl NodeAPI for Greenlight {
             exemptfee: None,
             retry_for: Some(self.sdk_config.payment_timeout_sec),
             maxdelay: None,
+            maxfee: None,
         };
 
         // Not wrapped with connection retry, in case it causes to send twice.
@@ -1553,7 +1553,7 @@ impl NodeAPI for Greenlight {
                         txid: Txid::from_slice(&utxo.txid).unwrap(),
                         vout: 0,
                     },
-                    script_sig: Script::new(),
+                    script_sig: ScriptBuf::new(),
                     sequence: Sequence(0),
                     witness: Witness::default(),
                 }
@@ -1568,7 +1568,7 @@ impl NodeAPI for Greenlight {
         }];
         let tx = Transaction {
             version: 2,
-            lock_time: crate::bitcoin::PackedLockTime(0),
+            lock_time: crate::bitcoin::absolute::LockTime::ZERO,
             input: txins.clone(),
             output: tx_out,
         };
@@ -1709,20 +1709,16 @@ impl NodeAPI for Greenlight {
             .into_inner();
         let mut tx_ids = vec![];
         for channel in closed_channels.channels {
-            let mut should_close = false;
-            if let Some(state) = channel.state {
-                match cln::ChannelState::from_i32(state) {
-                    Some(cln::ChannelState::Openingd) => should_close = true,
-                    Some(cln::ChannelState::ChanneldAwaitingLockin) => should_close = true,
-                    Some(cln::ChannelState::ChanneldNormal) => should_close = true,
-                    Some(cln::ChannelState::ChanneldShuttingDown) => should_close = true,
-                    Some(cln::ChannelState::FundingSpendSeen) => should_close = true,
-                    Some(cln::ChannelState::DualopendOpenInit) => should_close = true,
-                    Some(cln::ChannelState::DualopendAwaitingLockin) => should_close = true,
-                    Some(_) => should_close = false,
-                    None => should_close = false,
-                }
-            }
+            let should_close = matches!(
+                channel.state(),
+                Openingd
+                    | ChanneldAwaitingLockin
+                    | ChanneldNormal
+                    | ChanneldShuttingDown
+                    | FundingSpendSeen
+                    | DualopendOpenInit
+                    | DualopendAwaitingLockin
+            );
 
             if should_close {
                 let chan_id = channel.channel_id.ok_or(anyhow!("Empty channel id"))?;
@@ -1911,7 +1907,7 @@ impl NodeAPI for Greenlight {
             .into_iter()
             .for_each(|channel| {
                 peers
-                    .entry(channel.peer_id().to_vec())
+                    .entry(channel.peer_id.clone())
                     .or_insert(Vec::new())
                     .push(channel)
             });
@@ -2501,7 +2497,7 @@ impl From<cln::ListpeerchannelsChannels> for Channel {
             htlcs: c
                 .htlcs
                 .into_iter()
-                .map(|c| Htlc::from(c.expiry.unwrap_or(0), c.payment_hash.unwrap_or_default()))
+                .map(|c| Htlc::from(c.expiry, c.payment_hash))
                 .collect(),
         }
     }
@@ -2584,15 +2580,12 @@ impl TryFrom<ListclosedchannelsClosedchannels> for Channel {
 
 #[cfg(test)]
 mod tests {
-    use anyhow::Result;
-    use gl_client::pb::cln::listpeerchannels_channels::{
-        ListpeerchannelsChannelsState, ListpeerchannelsChannelsState::*,
-    };
-    use gl_client::pb::cln::Amount;
-    use gl_client::pb::{self, cln};
-
     use crate::greenlight::node_api::convert_to_send_pay_route;
     use crate::{models, PaymentPath, PaymentPathEdge};
+    use anyhow::Result;
+    use gl_client::pb::cln::ChannelState::*;
+    use gl_client::pb::cln::{Amount, ChannelState};
+    use gl_client::pb::{self, cln};
 
     #[test]
     fn test_convert_route() -> Result<()> {
@@ -2730,9 +2723,9 @@ mod tests {
         Ok(())
     }
 
-    fn cln_channel(state: &ListpeerchannelsChannelsState) -> cln::ListpeerchannelsChannels {
+    fn cln_channel(state: &ChannelState) -> cln::ListpeerchannelsChannels {
         cln::ListpeerchannelsChannels {
-            state: Some((*state).into()),
+            state: (*state).into(),
             scratch_txid: None,
             feerate: None,
             owner: None,
@@ -2747,7 +2740,7 @@ mod tests {
             inflight: vec![],
             close_to: None,
             private: Some(true),
-            opener: Some(0),
+            opener: 0,
             closer: None,
             funding: None,
             to_us_msat: None,
@@ -2780,12 +2773,17 @@ mod tests {
             out_fulfilled_msat: None,
             htlcs: vec![],
             close_to_addr: None,
-            peer_id: None,
-            peer_connected: None,
+            peer_id: vec![],
+            peer_connected: false,
             updates: None,
             ignore_fee_limits: None,
             lost_state: None,
             last_stable_connection: None,
+            reestablished: None,
+            direction: None,
+            last_tx_fee_msat: None,
+            our_max_htlc_value_in_flight_msat: None,
+            their_max_htlc_value_in_flight_msat: None,
         }
     }
 }

@@ -37,7 +37,6 @@ pub(crate) mod tests {
     use serde_json::json;
 
 	use crate::PaymentStatus;
-    use crate::bitcoin::hashes::hex::ToHex;
     use crate::bitcoin::hashes::{sha256, Hash};
     use crate::breez_services::tests::{breez_services_with, get_dummy_node_state};
     use crate::lnurl::pay::*;
@@ -393,7 +392,7 @@ pub(crate) mod tests {
             .await?
         {
             LnUrlPayResult::EndpointSuccess { data } => match data.payment.id {
-                s if s == inv.payment_hash().to_hex() => Ok(()),
+                s if s == hex::encode(inv.payment_hash()) => Ok(()),
                 _ => Err(anyhow!("Unexpected payment hash")),
             },
             _ => Err(anyhow!("Unexpected result")),
@@ -720,7 +719,7 @@ pub(crate) mod tests {
                 pr: Some(bolt11.clone()),
                 sa_data: sa_data.clone(),
                 iv_bytes: random::<[u8; 16]>(),
-                key_bytes: preimage.into_inner(),
+                key_bytes: preimage.to_byte_array(),
             },
         );
 

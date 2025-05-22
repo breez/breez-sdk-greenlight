@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
-use ripemd::{Digest, Ripemd160};
-
 use crate::bitcoin::{
+    absolute::Height,
     blockdata::{opcodes, script::Builder},
+    hashes::{ripemd160, Hash},
     secp256k1::{Message, Secp256k1, SecretKey},
-    util::sighash::SighashCache,
-    Address, EcdsaSighashType, PackedLockTime, Script, Sequence, Transaction, TxIn, TxOut, Witness,
+    sighash::{EcdsaSighashType, SighashCache},
+    Address, ScriptBuf, Sequence, Transaction, TxIn, TxOut, Witness,
 };
 use crate::{SwapInfo, SwapperAPI};
 
@@ -44,12 +44,12 @@ impl SegwitReceiveSwap {
     ) -> ReceiveSwapResult<Transaction> {
         Ok(Transaction {
             version: 2,
-            lock_time: PackedLockTime::ZERO,
+            lock_time: bitcoin::absolute::LockTime::ZERO,
             input: utxos
                 .iter()
                 .map(|utxo| {
                     Ok(TxIn {
-                        witness: Witness::from_vec(vec![
+                        witness: Witness::from_slice(&[
                             [1; MAX_ECDSA_SIGNATURE_SIZE].to_vec(),
                             Vec::new(),
                             [1; SEGWIT_SWAP_SCRIPT_SIZE].to_vec(),
@@ -93,17 +93,26 @@ impl SegwitReceiveSwap {
                 confirmed_height + (swap_info.lock_height as u32)
             }
         });
+        let lock_time = Height::from_consensus(lock_time)?;
 
         let input_script = create_submarine_swap_script(
             &swap_info.payment_hash,
-            &swap_info.swapper_public_key,
-            &swap_info.public_key,
+            &swap_info
+                .swapper_public_key
+                .as_slice()
+                .try_into()
+                .map_err(|_| ReceiveSwapError::generic("invalid swapper public key"))?,
+            &swap_info
+                .public_key
+                .as_slice()
+                .try_into()
+                .map_err(|_| ReceiveSwapError::generic("invalid public key"))?,
             swap_info.lock_height,
         )?;
 
         let mut tx = Transaction {
             version: 2,
-            lock_time: PackedLockTime(lock_time),
+            lock_time: bitcoin::absolute::LockTime::Blocks(lock_time),
             input: utxos
                 .iter()
                 .map(|utxo| {
@@ -138,7 +147,7 @@ impl SegwitReceiveSwap {
 
             let witness: Vec<Vec<u8>> = vec![sigvec, vec![], input_script.to_bytes()];
 
-            let w = Witness::from_vec(witness);
+            let w = Witness::from_slice(&witness);
             input.witness = w;
         }
 
@@ -155,17 +164,15 @@ impl SegwitReceiveSwap {
 
 fn create_submarine_swap_script(
     payment_hash: &[u8],
-    swapper_pub_key: &[u8],
-    payer_pub_key: &[u8],
+    swapper_pub_key: &[u8; 33],
+    payer_pub_key: &[u8; 33],
     lock_height: i64,
-) -> anyhow::Result<Script> {
-    let mut hasher = Ripemd160::new();
-    hasher.update(payment_hash);
-    let result = hasher.finalize();
+) -> anyhow::Result<ScriptBuf> {
+    let ripemd160_hash: ripemd160::Hash = ripemd160::Hash::hash(payment_hash);
 
     Ok(Builder::new()
         .push_opcode(opcodes::all::OP_HASH160)
-        .push_slice(&result)
+        .push_slice(ripemd160_hash.as_byte_array())
         .push_opcode(opcodes::all::OP_EQUAL)
         .push_opcode(opcodes::all::OP_IF)
         .push_slice(swapper_pub_key)

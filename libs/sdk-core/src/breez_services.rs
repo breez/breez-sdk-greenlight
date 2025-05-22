@@ -7,9 +7,8 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use anyhow::{anyhow, Result};
 use bip39::*;
-use bitcoin::hashes::hex::ToHex;
+use bitcoin::bip32::ChildNumber;
 use bitcoin::hashes::{sha256, Hash};
-use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::{StreamExt, TryFutureExt};
 use log::{LevelFilter, Metadata, Record};
@@ -493,8 +492,8 @@ impl BreezServices {
                             // For AES, we decrypt the contents on the fly
                             SuccessAction::Aes { data } => {
                                 let preimage = sha256::Hash::from_str(&details.payment_preimage)?;
-                                let preimage_arr: [u8; 32] = preimage.into_inner();
-                                let result = match (data, &preimage_arr).try_into() {
+                                let preimage_arr = preimage.as_byte_array();
+                                let result = match (data, preimage_arr).try_into() {
                                     Ok(data) => AesSuccessActionDataResult::Decrypted { data },
                                     Err(e) => AesSuccessActionDataResult::ErrorStatus {
                                         reason: e.to_string(),
@@ -2802,7 +2801,7 @@ impl PaymentReceiver {
 
         info!("Registering payment with LSP");
         let api_key = self.config.api_key.clone().unwrap_or_default();
-        let api_key_hash = sha256::Hash::hash(api_key.as_bytes()).to_hex();
+        let api_key_hash = format!("{:x}", sha256::Hash::hash(api_key.as_bytes()));
 
         self.lsp
             .register_payment(

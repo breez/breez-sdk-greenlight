@@ -1,3 +1,4 @@
+use log::warn;
 use serde::{Deserialize, Serialize};
 use strum_macros::Display;
 
@@ -18,6 +19,10 @@ impl From<bitcoin::network::constants::Network> for Network {
             bitcoin::network::constants::Network::Testnet => Network::Testnet,
             bitcoin::network::constants::Network::Signet => Network::Signet,
             bitcoin::network::constants::Network::Regtest => Network::Regtest,
+            _ => {
+                warn!("Unknown network: {:?}", network);
+                Network::Bitcoin
+            }
         }
     }
 }
