@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
-use bitcoin::hashes::hex::ToHex;
-use bitcoin::util::bip32::{ChildNumber, ExtendedPubKey};
+use bitcoin::bip32::{ChildNumber, ExtendedPubKey};
 use reqwest::Url;
 
 use crate::prelude::*;
@@ -47,10 +46,10 @@ pub async fn perform_lnurl_auth<C: RestClient + ?Sized, S: LnurlAuthSigner>(
         Url::from_str(&req_data.url).map_err(|e| LnUrlError::InvalidUri(e.to_string()))?;
     callback_url
         .query_pairs_mut()
-        .append_pair("sig", &sig.to_hex());
+        .append_pair("sig", &hex::encode(&sig));
     callback_url
         .query_pairs_mut()
-        .append_pair("key", &xpub.public_key.to_hex());
+        .append_pair("key", &format!("{:x}", &xpub.public_key));
     let (response, _) = rest_client.get(callback_url.as_ref()).await?;
     Ok(parse_json(&response)?)
 }

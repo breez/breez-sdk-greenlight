@@ -1,3 +1,4 @@
+use gl_client::bitcoin::{self, script::PushBytesError};
 use sdk_common::prelude::ServiceConnectivityError;
 
 use crate::{
@@ -64,6 +65,18 @@ impl From<anyhow::Error> for ReverseSwapError {
 
 impl From<hashes::hex::Error> for ReverseSwapError {
     fn from(err: hashes::hex::Error) -> Self {
+        Self::Generic(err.to_string())
+    }
+}
+
+impl From<bitcoin::absolute::Error> for ReverseSwapError {
+    fn from(err: bitcoin::absolute::Error) -> Self {
+        Self::Generic(err.to_string())
+    }
+}
+
+impl From<PushBytesError> for ReverseSwapError {
+    fn from(err: PushBytesError) -> Self {
         Self::Generic(err.to_string())
     }
 }
