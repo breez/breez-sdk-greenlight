@@ -63,4 +63,7 @@ dependencies {
     }
     /* JSON serialization */
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3'
+    /* Kotlin bindgen dependencies */
+    implementation "org.jetbrains.kotlinx:atomicfu:0.23.1" 
+    implementation("com.squareup.okio:okio:3.6.0")
 }
