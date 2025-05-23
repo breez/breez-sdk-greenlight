@@ -6145,7 +6145,7 @@ react-native-screens@3.7.2:
 
 "react-native-secure-storage@https://github.com/satimoto/react-native-secure-storage":
   version "0.1.2"
-  resolved "https://github.com/satimoto/react-native-secure-storage#e5d100a5e8f681f4a657fa613a349456954f96b7"
+  resolved "https://github.com/satimoto/react-native-secure-storage#fc6a4da0974641d9eaadc845c64f90b9f676ebca"
 
 react-native@0.70.15:
   version "0.70.15"

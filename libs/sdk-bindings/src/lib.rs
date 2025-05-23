@@ -1,9 +1,3 @@
-//! Uniffi bindings
-#[cfg(feature = "uniffi-25")]
-extern crate uniffi_25 as uniffi;
-#[cfg(feature = "uniffi-28")]
-extern crate uniffi_28 as uniffi;
-
 use std::sync::Arc;
 
 use anyhow::Result;
