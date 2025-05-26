@@ -1636,8 +1636,15 @@ impl BreezServices {
                     Ok(invoice_stream) => invoice_stream,
                     Err(e) => {
                         warn!("stream incoming payments returned error: {:?}", e);
-                        sleep(Duration::from_secs(1)).await;
-                        continue;
+                        tokio::select! {
+                            _ = sleep(Duration::from_secs(1)) => {
+                                continue
+                            }
+                            _ = shutdown_receiver.changed() => {
+                                debug!("Invoice tracking task has completed");
+                                return;
+                            }
+                        };
                     }
                 };
 
@@ -1700,7 +1707,16 @@ impl BreezServices {
                         error!("failed to sync after paid invoice: {:?}", e);
                     }
                 }
-                sleep(Duration::from_secs(1)).await;
+
+                tokio::select! {
+                    _ = sleep(Duration::from_secs(1)) => {
+                        continue
+                    }
+                    _ = shutdown_receiver.changed() => {
+                        debug!("Invoice tracking task has completed");
+                        return;
+                    }
+                };
             }
         });
     }
@@ -1717,8 +1733,15 @@ impl BreezServices {
                     Ok(log_stream) => log_stream,
                     Err(e) => {
                         warn!("stream log messages returned error: {:?}", e);
-                        sleep(Duration::from_secs(1)).await;
-                        continue;
+                        tokio::select! {
+                            _ = sleep(Duration::from_secs(1)) => {
+                                continue
+                            }
+                            _ = shutdown_receiver.changed() => {
+                                debug!("Invoice tracking task has completed");
+                                return;
+                            }
+                        };
                     }
                 };
 
@@ -1747,7 +1770,15 @@ impl BreezServices {
                     };
                 }
 
-                sleep(Duration::from_secs(1)).await;
+                tokio::select! {
+                    _ = sleep(Duration::from_secs(1)) => {
+                        continue
+                    }
+                    _ = shutdown_receiver.changed() => {
+                        debug!("Invoice tracking task has completed");
+                        return;
+                    }
+                };
             }
         });
     }
