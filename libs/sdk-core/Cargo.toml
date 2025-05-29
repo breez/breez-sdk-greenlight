@@ -20,7 +20,7 @@ anyhow = { workspace = true }
 hex = { workspace = true }
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "fc8f3dc4839bc089226dac9285746be24eb5830d" }
+], rev = "9e27dbd3a8eb9680d72ca104ee7097a34d0c83fd" }
 zbase32 = "0.1.2"
 base64 = { workspace = true }
 chrono = "0.4"
