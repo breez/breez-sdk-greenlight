@@ -122,7 +122,7 @@ jobs:
       swift-package-version: ${{ needs.pre-setup.outputs.swift-package-version || '0.0.2' }}
       publish: ${{ needs.pre-setup.outputs.publish }}
       use-dummy-binaries: ${{ needs.pre-setup.outputs.use-dummy-binaries }}
-      uniffi-25: ${{ !!needs.pre-setup.outputs.csharp-package-version || !!needs.pre-setup.outputs.golang-package-version || !!needs.pre-setup.outputs.kotlin-multiplatform-package-version || !!needs.pre-setup.outputs.maven-package-version }}
+      uniffi-25: ${{ !!needs.pre-setup.outputs.kotlin-multiplatform-package-version || !!needs.pre-setup.outputs.maven-package-version }}
     steps:
       - run: echo "set setup output variables"
 

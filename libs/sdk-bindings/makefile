@@ -54,26 +54,26 @@ darwin-universal-uniffi-25: $(SOURCES)
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.dylib ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.dylib
 	lipo -create -output ../target/darwin-universal/release/libbreez_sdk_bindings.a ../target/aarch64-apple-darwin/release/libbreez_sdk_bindings.a ../target/x86_64-apple-darwin/release/libbreez_sdk_bindings.a
 
-csharp-darwin: darwin-universal-uniffi-25
-	cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
+csharp-darwin: darwin-universal
+	cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.9.1+v0.28.3
 	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
 	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/csharp
 
 csharp-linux: $(SOURCES)
-	cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
-	cargo build --no-default-features --features uniffi-25 --release --target $(TARGET)
+	cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.9.1+v0.28.3
+	cargo build --release --target $(TARGET)
 	uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
 	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/csharp
 
-golang-darwin: darwin-universal-uniffi-25
-	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.2.1+v0.25.0
+golang-darwin: darwin-universal
+	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.3.0+v0.28.3
 	uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
 	cp ../target/darwin-universal/release/libbreez_sdk_bindings.dylib ffi/golang
 	cp -r ffi/golang/breez_sdk tests/bindings/golang/
 
 golang-linux: $(SOURCES)
-	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.2.1+v0.25.0
-	cargo build --no-default-features --features uniffi-25 --release --target $(TARGET)
+	cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.3.0+v0.28.3
+	cargo build --release --target $(TARGET)
 	uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
 	cp ../target/$(TARGET)/release/libbreez_sdk_bindings.so ffi/golang
 	cp -r ffi/golang/breez_sdk tests/bindings/golang/
