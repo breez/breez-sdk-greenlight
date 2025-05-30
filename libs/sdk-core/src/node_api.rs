@@ -10,7 +10,7 @@ use tonic::Streaming;
 use sdk_common::prelude::*;
 
 use crate::{
-    bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
+    bitcoin::bip32::{ChildNumber, ExtendedPrivKey},
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
     CustomMessage, LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment,
