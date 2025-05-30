@@ -33,6 +33,8 @@ use crate::lnurl::pay::LnUrlPayResult;
 use crate::lnurl::pay::LnUrlPaySuccessData;
 use crate::lsp::LspInformation;
 use crate::models::BackupStatus;
+use crate::models::BuyBitcoinLimitsRequest;
+use crate::models::BuyBitcoinLimitsResponse;
 use crate::models::BuyBitcoinProvider;
 use crate::models::BuyBitcoinRequest;
 use crate::models::BuyBitcoinResponse;
@@ -643,6 +645,22 @@ fn wire_buy_bitcoin_impl(port_: MessagePort, req: impl Wire2Api<BuyBitcoinReques
         move || {
             let api_req = req.wire2api();
             move |task_callback| buy_bitcoin(api_req)
+        },
+    )
+}
+fn wire_buy_bitcoin_limits_impl(
+    port_: MessagePort,
+    req: impl Wire2Api<BuyBitcoinLimitsRequest> + UnwindSafe,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap::<_, _, _, BuyBitcoinLimitsResponse, _>(
+        WrapInfo {
+            debug_name: "buy_bitcoin_limits",
+            port: Some(port_),
+            mode: FfiCallMode::Normal,
+        },
+        move || {
+            let api_req = req.wire2api();
+            move |task_callback| buy_bitcoin_limits(api_req)
         },
     )
 }
@@ -1407,6 +1425,22 @@ impl support::IntoDart for BreezEvent {
 }
 impl support::IntoDartExceptPrimitive for BreezEvent {}
 impl rust2dart::IntoIntoDart<BreezEvent> for BreezEvent {
+    fn into_into_dart(self) -> Self {
+        self
+    }
+}
+
+impl support::IntoDart for BuyBitcoinLimitsResponse {
+    fn into_dart(self) -> support::DartAbi {
+        vec![
+            self.min_buy_amount_sat.into_into_dart().into_dart(),
+            self.max_buy_amount_sat.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl support::IntoDartExceptPrimitive for BuyBitcoinLimitsResponse {}
+impl rust2dart::IntoIntoDart<BuyBitcoinLimitsResponse> for BuyBitcoinLimitsResponse {
     fn into_into_dart(self) -> Self {
         self
     }

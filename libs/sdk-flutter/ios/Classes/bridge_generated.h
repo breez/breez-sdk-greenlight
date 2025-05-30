@@ -240,6 +240,11 @@ typedef struct wire_BuyBitcoinRequest {
   struct wire_uint_8_list *redirect_url;
 } wire_BuyBitcoinRequest;
 
+typedef struct wire_BuyBitcoinLimitsRequest {
+  int32_t provider;
+  struct wire_uint_8_list *fiat_currency_code;
+} wire_BuyBitcoinLimitsRequest;
+
 typedef struct wire_RedeemOnchainFundsRequest {
   struct wire_uint_8_list *to_address;
   uint32_t sat_per_vbyte;
@@ -394,6 +399,8 @@ void wire_receive_onchain(int64_t port_, struct wire_ReceiveOnchainRequest *req)
 
 void wire_buy_bitcoin(int64_t port_, struct wire_BuyBitcoinRequest *req);
 
+void wire_buy_bitcoin_limits(int64_t port_, struct wire_BuyBitcoinLimitsRequest *req);
+
 void wire_redeem_onchain_funds(int64_t port_, struct wire_RedeemOnchainFundsRequest *req);
 
 void wire_prepare_redeem_onchain_funds(int64_t port_,
@@ -432,6 +439,8 @@ void wire_execute_command(int64_t port_, struct wire_uint_8_list *command);
 void wire_generate_diagnostic_data(int64_t port_);
 
 bool *new_box_autoadd_bool_0(bool value);
+
+struct wire_BuyBitcoinLimitsRequest *new_box_autoadd_buy_bitcoin_limits_request_0(void);
 
 struct wire_BuyBitcoinRequest *new_box_autoadd_buy_bitcoin_request_0(void);
 
@@ -557,6 +566,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_pay_onchain);
     dummy_var ^= ((int64_t) (void*) wire_receive_onchain);
     dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin);
+    dummy_var ^= ((int64_t) (void*) wire_buy_bitcoin_limits);
     dummy_var ^= ((int64_t) (void*) wire_redeem_onchain_funds);
     dummy_var ^= ((int64_t) (void*) wire_prepare_redeem_onchain_funds);
     dummy_var ^= ((int64_t) (void*) wire_list_refundables);
@@ -576,6 +586,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) wire_execute_command);
     dummy_var ^= ((int64_t) (void*) wire_generate_diagnostic_data);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_bool_0);
+    dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_limits_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_buy_bitcoin_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_check_message_request_0);
     dummy_var ^= ((int64_t) (void*) new_box_autoadd_configure_node_request_0);

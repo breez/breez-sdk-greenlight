@@ -225,6 +225,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
+  /// See [BreezServices::buy_bitcoin_limits]
+  Future<BuyBitcoinLimitsResponse> buyBitcoinLimits({required BuyBitcoinLimitsRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinLimitsConstMeta;
+
   /// See [BreezServices::redeem_onchain_funds]
   Future<RedeemOnchainFundsResponse> redeemOnchainFunds(
       {required RedeemOnchainFundsRequest req, dynamic hint});
@@ -422,6 +427,31 @@ sealed class BreezEvent with _$BreezEvent {
   const factory BreezEvent.swapUpdated({
     required SwapInfo details,
   }) = BreezEvent_SwapUpdated;
+}
+
+class BuyBitcoinLimitsRequest {
+  final BuyBitcoinProvider provider;
+
+  /// Fiat currency used for the transaction, defaults to USD
+  final String? fiatCurrencyCode;
+
+  const BuyBitcoinLimitsRequest({
+    required this.provider,
+    this.fiatCurrencyCode,
+  });
+}
+
+class BuyBitcoinLimitsResponse {
+  /// Minimum transaction buy amount in sats for given fiat currency
+  final int minBuyAmountSat;
+
+  /// Maximum transaction buy amount in sats for given fiat currency
+  final int maxBuyAmountSat;
+
+  const BuyBitcoinLimitsResponse({
+    required this.minBuyAmountSat,
+    required this.maxBuyAmountSat,
+  });
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
@@ -2700,6 +2730,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
+  Future<BuyBitcoinLimitsResponse> buyBitcoinLimits({required BuyBitcoinLimitsRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_buy_bitcoin_limits_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_buy_bitcoin_limits(port_, arg0),
+      parseSuccessData: _wire2api_buy_bitcoin_limits_response,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kBuyBitcoinLimitsConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinLimitsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "buy_bitcoin_limits",
+        argNames: ["req"],
+      );
+
   Future<RedeemOnchainFundsResponse> redeemOnchainFunds(
       {required RedeemOnchainFundsRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_redeem_onchain_funds_request(req);
@@ -3245,6 +3292,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  BuyBitcoinLimitsResponse _wire2api_buy_bitcoin_limits_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return BuyBitcoinLimitsResponse(
+      minBuyAmountSat: _wire2api_u64(arr[0]),
+      maxBuyAmountSat: _wire2api_u64(arr[1]),
+    );
   }
 
   BuyBitcoinResponse _wire2api_buy_bitcoin_response(dynamic raw) {
@@ -4240,6 +4296,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_BuyBitcoinLimitsRequest> api2wire_box_autoadd_buy_bitcoin_limits_request(
+      BuyBitcoinLimitsRequest raw) {
+    final ptr = inner.new_box_autoadd_buy_bitcoin_limits_request_0();
+    _api_fill_to_wire_buy_bitcoin_limits_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_BuyBitcoinRequest> api2wire_box_autoadd_buy_bitcoin_request(BuyBitcoinRequest raw) {
     final ptr = inner.new_box_autoadd_buy_bitcoin_request_0();
     _api_fill_to_wire_buy_bitcoin_request(raw, ptr.ref);
@@ -4590,6 +4654,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
 // Section: api_fill_to_wire
 
+  void _api_fill_to_wire_box_autoadd_buy_bitcoin_limits_request(
+      BuyBitcoinLimitsRequest apiObj, ffi.Pointer<wire_BuyBitcoinLimitsRequest> wireObj) {
+    _api_fill_to_wire_buy_bitcoin_limits_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_buy_bitcoin_request(
       BuyBitcoinRequest apiObj, ffi.Pointer<wire_BuyBitcoinRequest> wireObj) {
     _api_fill_to_wire_buy_bitcoin_request(apiObj, wireObj.ref);
@@ -4732,6 +4801,12 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_box_autoadd_static_backup_request(
       StaticBackupRequest apiObj, ffi.Pointer<wire_StaticBackupRequest> wireObj) {
     _api_fill_to_wire_static_backup_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_buy_bitcoin_limits_request(
+      BuyBitcoinLimitsRequest apiObj, wire_BuyBitcoinLimitsRequest wireObj) {
+    wireObj.provider = api2wire_buy_bitcoin_provider(apiObj.provider);
+    wireObj.fiat_currency_code = api2wire_opt_String(apiObj.fiatCurrencyCode);
   }
 
   void _api_fill_to_wire_buy_bitcoin_request(BuyBitcoinRequest apiObj, wire_BuyBitcoinRequest wireObj) {
@@ -5013,79 +5088,61 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   BreezSdkCoreWire(ffi.DynamicLibrary dynamicLibrary) : _lookup = dynamicLibrary.lookup;
 
   /// The symbols are looked up with [lookup].
-  BreezSdkCoreWire.fromLookup(ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup)
-      : _lookup = lookup;
+  BreezSdkCoreWire.fromLookup(
+    ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup,
+  ) : _lookup = lookup;
 
-  void store_dart_post_cobject(
-    DartPostCObjectFnType ptr,
-  ) {
-    return _store_dart_post_cobject(
-      ptr,
-    );
+  void store_dart_post_cobject(DartPostCObjectFnType ptr) {
+    return _store_dart_post_cobject(ptr);
   }
 
   late final _store_dart_post_cobjectPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(DartPostCObjectFnType)>>('store_dart_post_cobject');
+      _lookup<ffi.NativeFunction<ffi.Void Function(DartPostCObjectFnType)>>(
+    'store_dart_post_cobject',
+  );
   late final _store_dart_post_cobject =
       _store_dart_post_cobjectPtr.asFunction<void Function(DartPostCObjectFnType)>();
 
-  Object get_dart_object(
-    int ptr,
-  ) {
-    return _get_dart_object(
-      ptr,
-    );
+  Object get_dart_object(int ptr) {
+    return _get_dart_object(ptr);
   }
 
-  late final _get_dart_objectPtr =
-      _lookup<ffi.NativeFunction<ffi.Handle Function(ffi.UintPtr)>>('get_dart_object');
+  late final _get_dart_objectPtr = _lookup<ffi.NativeFunction<ffi.Handle Function(ffi.UintPtr)>>(
+    'get_dart_object',
+  );
   late final _get_dart_object = _get_dart_objectPtr.asFunction<Object Function(int)>();
 
-  void drop_dart_object(
-    int ptr,
-  ) {
-    return _drop_dart_object(
-      ptr,
-    );
+  void drop_dart_object(int ptr) {
+    return _drop_dart_object(ptr);
   }
 
-  late final _drop_dart_objectPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UintPtr)>>('drop_dart_object');
+  late final _drop_dart_objectPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UintPtr)>>(
+    'drop_dart_object',
+  );
   late final _drop_dart_object = _drop_dart_objectPtr.asFunction<void Function(int)>();
 
-  int new_dart_opaque(
-    Object handle,
-  ) {
-    return _new_dart_opaque(
-      handle,
-    );
+  int new_dart_opaque(Object handle) {
+    return _new_dart_opaque(handle);
   }
 
-  late final _new_dart_opaquePtr =
-      _lookup<ffi.NativeFunction<ffi.UintPtr Function(ffi.Handle)>>('new_dart_opaque');
+  late final _new_dart_opaquePtr = _lookup<ffi.NativeFunction<ffi.UintPtr Function(ffi.Handle)>>(
+    'new_dart_opaque',
+  );
   late final _new_dart_opaque = _new_dart_opaquePtr.asFunction<int Function(Object)>();
 
-  int init_frb_dart_api_dl(
-    ffi.Pointer<ffi.Void> obj,
-  ) {
-    return _init_frb_dart_api_dl(
-      obj,
-    );
+  int init_frb_dart_api_dl(ffi.Pointer<ffi.Void> obj) {
+    return _init_frb_dart_api_dl(obj);
   }
 
   late final _init_frb_dart_api_dlPtr =
-      _lookup<ffi.NativeFunction<ffi.IntPtr Function(ffi.Pointer<ffi.Void>)>>('init_frb_dart_api_dl');
+      _lookup<ffi.NativeFunction<ffi.IntPtr Function(ffi.Pointer<ffi.Void>)>>(
+    'init_frb_dart_api_dl',
+  );
   late final _init_frb_dart_api_dl =
       _init_frb_dart_api_dlPtr.asFunction<int Function(ffi.Pointer<ffi.Void>)>();
 
-  void wire_connect(
-    int port_,
-    ffi.Pointer<wire_ConnectRequest> req,
-  ) {
-    return _wire_connect(
-      port_,
-      req,
-    );
+  void wire_connect(int port_, ffi.Pointer<wire_ConnectRequest> req) {
+    return _wire_connect(port_, req);
   }
 
   late final _wire_connectPtr =
@@ -5094,60 +5151,45 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_connect =
       _wire_connectPtr.asFunction<void Function(int, ffi.Pointer<wire_ConnectRequest>)>();
 
-  void wire_is_initialized(
-    int port_,
-  ) {
-    return _wire_is_initialized(
-      port_,
-    );
+  void wire_is_initialized(int port_) {
+    return _wire_is_initialized(port_);
   }
 
-  late final _wire_is_initializedPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_is_initialized');
+  late final _wire_is_initializedPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_is_initialized',
+  );
   late final _wire_is_initialized = _wire_is_initializedPtr.asFunction<void Function(int)>();
 
-  void wire_sync(
-    int port_,
-  ) {
-    return _wire_sync(
-      port_,
-    );
+  void wire_sync(int port_) {
+    return _wire_sync(port_);
   }
 
   late final _wire_syncPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_sync');
   late final _wire_sync = _wire_syncPtr.asFunction<void Function(int)>();
 
-  void wire_node_credentials(
-    int port_,
-  ) {
-    return _wire_node_credentials(
-      port_,
-    );
+  void wire_node_credentials(int port_) {
+    return _wire_node_credentials(port_);
   }
 
-  late final _wire_node_credentialsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_node_credentials');
+  late final _wire_node_credentialsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_node_credentials',
+  );
   late final _wire_node_credentials = _wire_node_credentialsPtr.asFunction<void Function(int)>();
 
-  void wire_node_info(
-    int port_,
-  ) {
-    return _wire_node_info(
-      port_,
-    );
+  void wire_node_info(int port_) {
+    return _wire_node_info(port_);
   }
 
-  late final _wire_node_infoPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_node_info');
+  late final _wire_node_infoPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_node_info',
+  );
   late final _wire_node_info = _wire_node_infoPtr.asFunction<void Function(int)>();
 
   void wire_configure_node(
     int port_,
     ffi.Pointer<wire_ConfigureNodeRequest> req,
   ) {
-    return _wire_configure_node(
-      port_,
-      req,
-    );
+    return _wire_configure_node(port_, req);
   }
 
   late final _wire_configure_nodePtr =
@@ -5156,26 +5198,17 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_configure_node =
       _wire_configure_nodePtr.asFunction<void Function(int, ffi.Pointer<wire_ConfigureNodeRequest>)>();
 
-  void wire_disconnect(
-    int port_,
-  ) {
-    return _wire_disconnect(
-      port_,
-    );
+  void wire_disconnect(int port_) {
+    return _wire_disconnect(port_);
   }
 
-  late final _wire_disconnectPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_disconnect');
+  late final _wire_disconnectPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_disconnect',
+  );
   late final _wire_disconnect = _wire_disconnectPtr.asFunction<void Function(int)>();
 
-  void wire_sign_message(
-    int port_,
-    ffi.Pointer<wire_SignMessageRequest> req,
-  ) {
-    return _wire_sign_message(
-      port_,
-      req,
-    );
+  void wire_sign_message(int port_, ffi.Pointer<wire_SignMessageRequest> req) {
+    return _wire_sign_message(port_, req);
   }
 
   late final _wire_sign_messagePtr =
@@ -5188,10 +5221,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_CheckMessageRequest> req,
   ) {
-    return _wire_check_message(
-      port_,
-      req,
-    );
+    return _wire_check_message(port_, req);
   }
 
   late final _wire_check_messagePtr =
@@ -5200,14 +5230,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_check_message =
       _wire_check_messagePtr.asFunction<void Function(int, ffi.Pointer<wire_CheckMessageRequest>)>();
 
-  void wire_mnemonic_to_seed(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> phrase,
-  ) {
-    return _wire_mnemonic_to_seed(
-      port_,
-      phrase,
-    );
+  void wire_mnemonic_to_seed(int port_, ffi.Pointer<wire_uint_8_list> phrase) {
+    return _wire_mnemonic_to_seed(port_, phrase);
   }
 
   late final _wire_mnemonic_to_seedPtr =
@@ -5222,29 +5246,30 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     ffi.Pointer<wire_uint_8_list> api_key,
     ffi.Pointer<wire_NodeConfig> node_config,
   ) {
-    return _wire_default_config(
-      port_,
-      env_type,
-      api_key,
-      node_config,
-    );
+    return _wire_default_config(port_, env_type, api_key, node_config);
   }
 
   late final _wire_default_configPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Int32, ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_NodeConfig>)>>('wire_default_config');
-  late final _wire_default_config = _wire_default_configPtr
-      .asFunction<void Function(int, int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_NodeConfig>)>();
+          ffi.Void Function(
+            ffi.Int64,
+            ffi.Int32,
+            ffi.Pointer<wire_uint_8_list>,
+            ffi.Pointer<wire_NodeConfig>,
+          )>>('wire_default_config');
+  late final _wire_default_config = _wire_default_configPtr.asFunction<
+      void Function(
+        int,
+        int,
+        ffi.Pointer<wire_uint_8_list>,
+        ffi.Pointer<wire_NodeConfig>,
+      )>();
 
   void wire_static_backup(
     int port_,
     ffi.Pointer<wire_StaticBackupRequest> req,
   ) {
-    return _wire_static_backup(
-      port_,
-      req,
-    );
+    return _wire_static_backup(port_, req);
   }
 
   late final _wire_static_backupPtr =
@@ -5257,10 +5282,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_uint_8_list> api_key,
   ) {
-    return _wire_service_health_check(
-      port_,
-      api_key,
-    );
+    return _wire_service_health_check(port_, api_key);
   }
 
   late final _wire_service_health_checkPtr =
@@ -5269,49 +5291,35 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_service_health_check =
       _wire_service_health_checkPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_breez_events_stream(
-    int port_,
-  ) {
-    return _wire_breez_events_stream(
-      port_,
-    );
+  void wire_breez_events_stream(int port_) {
+    return _wire_breez_events_stream(port_);
   }
 
-  late final _wire_breez_events_streamPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_events_stream');
+  late final _wire_breez_events_streamPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_breez_events_stream',
+  );
   late final _wire_breez_events_stream = _wire_breez_events_streamPtr.asFunction<void Function(int)>();
 
-  void wire_breez_log_stream(
-    int port_,
-  ) {
-    return _wire_breez_log_stream(
-      port_,
-    );
+  void wire_breez_log_stream(int port_) {
+    return _wire_breez_log_stream(port_);
   }
 
-  late final _wire_breez_log_streamPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_breez_log_stream');
+  late final _wire_breez_log_streamPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_breez_log_stream',
+  );
   late final _wire_breez_log_stream = _wire_breez_log_streamPtr.asFunction<void Function(int)>();
 
-  void wire_list_lsps(
-    int port_,
-  ) {
-    return _wire_list_lsps(
-      port_,
-    );
+  void wire_list_lsps(int port_) {
+    return _wire_list_lsps(port_);
   }
 
-  late final _wire_list_lspsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_lsps');
+  late final _wire_list_lspsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_list_lsps',
+  );
   late final _wire_list_lsps = _wire_list_lspsPtr.asFunction<void Function(int)>();
 
-  void wire_connect_lsp(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> lsp_id,
-  ) {
-    return _wire_connect_lsp(
-      port_,
-      lsp_id,
-    );
+  void wire_connect_lsp(int port_, ffi.Pointer<wire_uint_8_list> lsp_id) {
+    return _wire_connect_lsp(port_, lsp_id);
   }
 
   late final _wire_connect_lspPtr =
@@ -5320,25 +5328,15 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_connect_lsp =
       _wire_connect_lspPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_lsp_id(
-    int port_,
-  ) {
-    return _wire_lsp_id(
-      port_,
-    );
+  void wire_lsp_id(int port_) {
+    return _wire_lsp_id(port_);
   }
 
   late final _wire_lsp_idPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_lsp_id');
   late final _wire_lsp_id = _wire_lsp_idPtr.asFunction<void Function(int)>();
 
-  void wire_fetch_lsp_info(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> id,
-  ) {
-    return _wire_fetch_lsp_info(
-      port_,
-      id,
-    );
+  void wire_fetch_lsp_info(int port_, ffi.Pointer<wire_uint_8_list> id) {
+    return _wire_fetch_lsp_info(port_, id);
   }
 
   late final _wire_fetch_lsp_infoPtr =
@@ -5347,37 +5345,29 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_fetch_lsp_info =
       _wire_fetch_lsp_infoPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_lsp_info(
-    int port_,
-  ) {
-    return _wire_lsp_info(
-      port_,
-    );
+  void wire_lsp_info(int port_) {
+    return _wire_lsp_info(port_);
   }
 
-  late final _wire_lsp_infoPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_lsp_info');
+  late final _wire_lsp_infoPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_lsp_info',
+  );
   late final _wire_lsp_info = _wire_lsp_infoPtr.asFunction<void Function(int)>();
 
-  void wire_close_lsp_channels(
-    int port_,
-  ) {
-    return _wire_close_lsp_channels(
-      port_,
-    );
+  void wire_close_lsp_channels(int port_) {
+    return _wire_close_lsp_channels(port_);
   }
 
-  late final _wire_close_lsp_channelsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_close_lsp_channels');
+  late final _wire_close_lsp_channelsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_close_lsp_channels',
+  );
   late final _wire_close_lsp_channels = _wire_close_lsp_channelsPtr.asFunction<void Function(int)>();
 
   void wire_register_webhook(
     int port_,
     ffi.Pointer<wire_uint_8_list> webhook_url,
   ) {
-    return _wire_register_webhook(
-      port_,
-      webhook_url,
-    );
+    return _wire_register_webhook(port_, webhook_url);
   }
 
   late final _wire_register_webhookPtr =
@@ -5390,10 +5380,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_uint_8_list> webhook_url,
   ) {
-    return _wire_unregister_webhook(
-      port_,
-      webhook_url,
-    );
+    return _wire_unregister_webhook(port_, webhook_url);
   }
 
   late final _wire_unregister_webhookPtr =
@@ -5402,37 +5389,24 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_unregister_webhook =
       _wire_unregister_webhookPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_backup(
-    int port_,
-  ) {
-    return _wire_backup(
-      port_,
-    );
+  void wire_backup(int port_) {
+    return _wire_backup(port_);
   }
 
   late final _wire_backupPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup');
   late final _wire_backup = _wire_backupPtr.asFunction<void Function(int)>();
 
-  void wire_backup_status(
-    int port_,
-  ) {
-    return _wire_backup_status(
-      port_,
-    );
+  void wire_backup_status(int port_) {
+    return _wire_backup_status(port_);
   }
 
-  late final _wire_backup_statusPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_backup_status');
+  late final _wire_backup_statusPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_backup_status',
+  );
   late final _wire_backup_status = _wire_backup_statusPtr.asFunction<void Function(int)>();
 
-  void wire_parse_invoice(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> invoice,
-  ) {
-    return _wire_parse_invoice(
-      port_,
-      invoice,
-    );
+  void wire_parse_invoice(int port_, ffi.Pointer<wire_uint_8_list> invoice) {
+    return _wire_parse_invoice(port_, invoice);
   }
 
   late final _wire_parse_invoicePtr =
@@ -5441,14 +5415,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_parse_invoice =
       _wire_parse_invoicePtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_parse_input(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> input,
-  ) {
-    return _wire_parse_input(
-      port_,
-      input,
-    );
+  void wire_parse_input(int port_, ffi.Pointer<wire_uint_8_list> input) {
+    return _wire_parse_input(port_, input);
   }
 
   late final _wire_parse_inputPtr =
@@ -5461,10 +5429,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_ListPaymentsRequest> req,
   ) {
-    return _wire_list_payments(
-      port_,
-      req,
-    );
+    return _wire_list_payments(port_, req);
   }
 
   late final _wire_list_paymentsPtr =
@@ -5473,14 +5438,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_list_payments =
       _wire_list_paymentsPtr.asFunction<void Function(int, ffi.Pointer<wire_ListPaymentsRequest>)>();
 
-  void wire_payment_by_hash(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> hash,
-  ) {
-    return _wire_payment_by_hash(
-      port_,
-      hash,
-    );
+  void wire_payment_by_hash(int port_, ffi.Pointer<wire_uint_8_list> hash) {
+    return _wire_payment_by_hash(port_, hash);
   }
 
   late final _wire_payment_by_hashPtr =
@@ -5494,28 +5453,25 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     ffi.Pointer<wire_uint_8_list> hash,
     ffi.Pointer<wire_uint_8_list> metadata,
   ) {
-    return _wire_set_payment_metadata(
-      port_,
-      hash,
-      metadata,
-    );
+    return _wire_set_payment_metadata(port_, hash, metadata);
   }
 
   late final _wire_set_payment_metadataPtr = _lookup<
       ffi.NativeFunction<
-          ffi.Void Function(ffi.Int64, ffi.Pointer<wire_uint_8_list>,
-              ffi.Pointer<wire_uint_8_list>)>>('wire_set_payment_metadata');
-  late final _wire_set_payment_metadata = _wire_set_payment_metadataPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>, ffi.Pointer<wire_uint_8_list>)>();
+          ffi.Void Function(
+            ffi.Int64,
+            ffi.Pointer<wire_uint_8_list>,
+            ffi.Pointer<wire_uint_8_list>,
+          )>>('wire_set_payment_metadata');
+  late final _wire_set_payment_metadata = _wire_set_payment_metadataPtr.asFunction<
+      void Function(
+        int,
+        ffi.Pointer<wire_uint_8_list>,
+        ffi.Pointer<wire_uint_8_list>,
+      )>();
 
-  void wire_send_payment(
-    int port_,
-    ffi.Pointer<wire_SendPaymentRequest> req,
-  ) {
-    return _wire_send_payment(
-      port_,
-      req,
-    );
+  void wire_send_payment(int port_, ffi.Pointer<wire_SendPaymentRequest> req) {
+    return _wire_send_payment(port_, req);
   }
 
   late final _wire_send_paymentPtr =
@@ -5528,15 +5484,15 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_SendSpontaneousPaymentRequest> req,
   ) {
-    return _wire_send_spontaneous_payment(
-      port_,
-      req,
-    );
+    return _wire_send_spontaneous_payment(port_, req);
   }
 
   late final _wire_send_spontaneous_paymentPtr = _lookup<
-          ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_SendSpontaneousPaymentRequest>)>>(
-      'wire_send_spontaneous_payment');
+      ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Int64,
+            ffi.Pointer<wire_SendSpontaneousPaymentRequest>,
+          )>>('wire_send_spontaneous_payment');
   late final _wire_send_spontaneous_payment = _wire_send_spontaneous_paymentPtr
       .asFunction<void Function(int, ffi.Pointer<wire_SendSpontaneousPaymentRequest>)>();
 
@@ -5544,10 +5500,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_ReceivePaymentRequest> req,
   ) {
-    return _wire_receive_payment(
-      port_,
-      req,
-    );
+    return _wire_receive_payment(port_, req);
   }
 
   late final _wire_receive_paymentPtr =
@@ -5556,14 +5509,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_receive_payment =
       _wire_receive_paymentPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceivePaymentRequest>)>();
 
-  void wire_lnurl_pay(
-    int port_,
-    ffi.Pointer<wire_LnUrlPayRequest> req,
-  ) {
-    return _wire_lnurl_pay(
-      port_,
-      req,
-    );
+  void wire_lnurl_pay(int port_, ffi.Pointer<wire_LnUrlPayRequest> req) {
+    return _wire_lnurl_pay(port_, req);
   }
 
   late final _wire_lnurl_payPtr =
@@ -5576,10 +5523,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_LnUrlWithdrawRequest> req,
   ) {
-    return _wire_lnurl_withdraw(
-      port_,
-      req,
-    );
+    return _wire_lnurl_withdraw(port_, req);
   }
 
   late final _wire_lnurl_withdrawPtr =
@@ -5592,10 +5536,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_LnUrlAuthRequestData> req_data,
   ) {
-    return _wire_lnurl_auth(
-      port_,
-      req_data,
-    );
+    return _wire_lnurl_auth(port_, req_data);
   }
 
   late final _wire_lnurl_authPtr =
@@ -5604,14 +5545,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_lnurl_auth =
       _wire_lnurl_authPtr.asFunction<void Function(int, ffi.Pointer<wire_LnUrlAuthRequestData>)>();
 
-  void wire_report_issue(
-    int port_,
-    ffi.Pointer<wire_ReportIssueRequest> req,
-  ) {
-    return _wire_report_issue(
-      port_,
-      req,
-    );
+  void wire_report_issue(int port_, ffi.Pointer<wire_ReportIssueRequest> req) {
+    return _wire_report_issue(port_, req);
   }
 
   late final _wire_report_issuePtr =
@@ -5620,38 +5555,26 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_report_issue =
       _wire_report_issuePtr.asFunction<void Function(int, ffi.Pointer<wire_ReportIssueRequest>)>();
 
-  void wire_fetch_fiat_rates(
-    int port_,
-  ) {
-    return _wire_fetch_fiat_rates(
-      port_,
-    );
+  void wire_fetch_fiat_rates(int port_) {
+    return _wire_fetch_fiat_rates(port_);
   }
 
-  late final _wire_fetch_fiat_ratesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_fetch_fiat_rates');
+  late final _wire_fetch_fiat_ratesPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_fetch_fiat_rates',
+  );
   late final _wire_fetch_fiat_rates = _wire_fetch_fiat_ratesPtr.asFunction<void Function(int)>();
 
-  void wire_list_fiat_currencies(
-    int port_,
-  ) {
-    return _wire_list_fiat_currencies(
-      port_,
-    );
+  void wire_list_fiat_currencies(int port_) {
+    return _wire_list_fiat_currencies(port_);
   }
 
-  late final _wire_list_fiat_currenciesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_fiat_currencies');
+  late final _wire_list_fiat_currenciesPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_list_fiat_currencies',
+  );
   late final _wire_list_fiat_currencies = _wire_list_fiat_currenciesPtr.asFunction<void Function(int)>();
 
-  void wire_pay_onchain(
-    int port_,
-    ffi.Pointer<wire_PayOnchainRequest> req,
-  ) {
-    return _wire_pay_onchain(
-      port_,
-      req,
-    );
+  void wire_pay_onchain(int port_, ffi.Pointer<wire_PayOnchainRequest> req) {
+    return _wire_pay_onchain(port_, req);
   }
 
   late final _wire_pay_onchainPtr =
@@ -5664,10 +5587,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_ReceiveOnchainRequest> req,
   ) {
-    return _wire_receive_onchain(
-      port_,
-      req,
-    );
+    return _wire_receive_onchain(port_, req);
   }
 
   late final _wire_receive_onchainPtr =
@@ -5676,14 +5596,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_receive_onchain =
       _wire_receive_onchainPtr.asFunction<void Function(int, ffi.Pointer<wire_ReceiveOnchainRequest>)>();
 
-  void wire_buy_bitcoin(
-    int port_,
-    ffi.Pointer<wire_BuyBitcoinRequest> req,
-  ) {
-    return _wire_buy_bitcoin(
-      port_,
-      req,
-    );
+  void wire_buy_bitcoin(int port_, ffi.Pointer<wire_BuyBitcoinRequest> req) {
+    return _wire_buy_bitcoin(port_, req);
   }
 
   late final _wire_buy_bitcoinPtr =
@@ -5692,14 +5606,24 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_buy_bitcoin =
       _wire_buy_bitcoinPtr.asFunction<void Function(int, ffi.Pointer<wire_BuyBitcoinRequest>)>();
 
+  void wire_buy_bitcoin_limits(
+    int port_,
+    ffi.Pointer<wire_BuyBitcoinLimitsRequest> req,
+  ) {
+    return _wire_buy_bitcoin_limits(port_, req);
+  }
+
+  late final _wire_buy_bitcoin_limitsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_BuyBitcoinLimitsRequest>)>>(
+          'wire_buy_bitcoin_limits');
+  late final _wire_buy_bitcoin_limits =
+      _wire_buy_bitcoin_limitsPtr.asFunction<void Function(int, ffi.Pointer<wire_BuyBitcoinLimitsRequest>)>();
+
   void wire_redeem_onchain_funds(
     int port_,
     ffi.Pointer<wire_RedeemOnchainFundsRequest> req,
   ) {
-    return _wire_redeem_onchain_funds(
-      port_,
-      req,
-    );
+    return _wire_redeem_onchain_funds(port_, req);
   }
 
   late final _wire_redeem_onchain_fundsPtr =
@@ -5712,39 +5636,35 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_PrepareRedeemOnchainFundsRequest> req,
   ) {
-    return _wire_prepare_redeem_onchain_funds(
-      port_,
-      req,
-    );
+    return _wire_prepare_redeem_onchain_funds(port_, req);
   }
 
   late final _wire_prepare_redeem_onchain_fundsPtr = _lookup<
-          ffi
-          .NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_PrepareRedeemOnchainFundsRequest>)>>(
-      'wire_prepare_redeem_onchain_funds');
-  late final _wire_prepare_redeem_onchain_funds = _wire_prepare_redeem_onchain_fundsPtr
-      .asFunction<void Function(int, ffi.Pointer<wire_PrepareRedeemOnchainFundsRequest>)>();
+      ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Int64,
+            ffi.Pointer<wire_PrepareRedeemOnchainFundsRequest>,
+          )>>('wire_prepare_redeem_onchain_funds');
+  late final _wire_prepare_redeem_onchain_funds = _wire_prepare_redeem_onchain_fundsPtr.asFunction<
+      void Function(
+        int,
+        ffi.Pointer<wire_PrepareRedeemOnchainFundsRequest>,
+      )>();
 
-  void wire_list_refundables(
-    int port_,
-  ) {
-    return _wire_list_refundables(
-      port_,
-    );
+  void wire_list_refundables(int port_) {
+    return _wire_list_refundables(port_);
   }
 
-  late final _wire_list_refundablesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_list_refundables');
+  late final _wire_list_refundablesPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_list_refundables',
+  );
   late final _wire_list_refundables = _wire_list_refundablesPtr.asFunction<void Function(int)>();
 
   void wire_prepare_refund(
     int port_,
     ffi.Pointer<wire_PrepareRefundRequest> req,
   ) {
-    return _wire_prepare_refund(
-      port_,
-      req,
-    );
+    return _wire_prepare_refund(port_, req);
   }
 
   late final _wire_prepare_refundPtr =
@@ -5753,14 +5673,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_prepare_refund =
       _wire_prepare_refundPtr.asFunction<void Function(int, ffi.Pointer<wire_PrepareRefundRequest>)>();
 
-  void wire_refund(
-    int port_,
-    ffi.Pointer<wire_RefundRequest> req,
-  ) {
-    return _wire_refund(
-      port_,
-      req,
-    );
+  void wire_refund(int port_, ffi.Pointer<wire_RefundRequest> req) {
+    return _wire_refund(port_, req);
   }
 
   late final _wire_refundPtr =
@@ -5768,26 +5682,17 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
           'wire_refund');
   late final _wire_refund = _wire_refundPtr.asFunction<void Function(int, ffi.Pointer<wire_RefundRequest>)>();
 
-  void wire_rescan_swaps(
-    int port_,
-  ) {
-    return _wire_rescan_swaps(
-      port_,
-    );
+  void wire_rescan_swaps(int port_) {
+    return _wire_rescan_swaps(port_);
   }
 
-  late final _wire_rescan_swapsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_rescan_swaps');
+  late final _wire_rescan_swapsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_rescan_swaps',
+  );
   late final _wire_rescan_swaps = _wire_rescan_swapsPtr.asFunction<void Function(int)>();
 
-  void wire_redeem_swap(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> swap_address,
-  ) {
-    return _wire_redeem_swap(
-      port_,
-      swap_address,
-    );
+  void wire_redeem_swap(int port_, ffi.Pointer<wire_uint_8_list> swap_address) {
+    return _wire_redeem_swap(port_, swap_address);
   }
 
   late final _wire_redeem_swapPtr =
@@ -5796,26 +5701,17 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_redeem_swap =
       _wire_redeem_swapPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_in_progress_swap(
-    int port_,
-  ) {
-    return _wire_in_progress_swap(
-      port_,
-    );
+  void wire_in_progress_swap(int port_) {
+    return _wire_in_progress_swap(port_);
   }
 
-  late final _wire_in_progress_swapPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_swap');
+  late final _wire_in_progress_swapPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_in_progress_swap',
+  );
   late final _wire_in_progress_swap = _wire_in_progress_swapPtr.asFunction<void Function(int)>();
 
-  void wire_list_swaps(
-    int port_,
-    ffi.Pointer<wire_ListSwapsRequest> req,
-  ) {
-    return _wire_list_swaps(
-      port_,
-      req,
-    );
+  void wire_list_swaps(int port_, ffi.Pointer<wire_ListSwapsRequest> req) {
+    return _wire_list_swaps(port_, req);
   }
 
   late final _wire_list_swapsPtr =
@@ -5828,10 +5724,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_uint_8_list> lockup_address,
   ) {
-    return _wire_claim_reverse_swap(
-      port_,
-      lockup_address,
-    );
+    return _wire_claim_reverse_swap(port_, lockup_address);
   }
 
   late final _wire_claim_reverse_swapPtr =
@@ -5844,10 +5737,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_OpenChannelFeeRequest> req,
   ) {
-    return _wire_open_channel_fee(
-      port_,
-      req,
-    );
+    return _wire_open_channel_fee(port_, req);
   }
 
   late final _wire_open_channel_feePtr =
@@ -5860,10 +5750,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     int port_,
     ffi.Pointer<wire_ReverseSwapFeesRequest> req,
   ) {
-    return _wire_fetch_reverse_swap_fees(
-      port_,
-      req,
-    );
+    return _wire_fetch_reverse_swap_fees(port_, req);
   }
 
   late final _wire_fetch_reverse_swap_feesPtr =
@@ -5872,67 +5759,53 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_fetch_reverse_swap_fees = _wire_fetch_reverse_swap_feesPtr
       .asFunction<void Function(int, ffi.Pointer<wire_ReverseSwapFeesRequest>)>();
 
-  void wire_onchain_payment_limits(
-    int port_,
-  ) {
-    return _wire_onchain_payment_limits(
-      port_,
-    );
+  void wire_onchain_payment_limits(int port_) {
+    return _wire_onchain_payment_limits(port_);
   }
 
-  late final _wire_onchain_payment_limitsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_onchain_payment_limits');
+  late final _wire_onchain_payment_limitsPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_onchain_payment_limits',
+  );
   late final _wire_onchain_payment_limits = _wire_onchain_payment_limitsPtr.asFunction<void Function(int)>();
 
   void wire_prepare_onchain_payment(
     int port_,
     ffi.Pointer<wire_PrepareOnchainPaymentRequest> req,
   ) {
-    return _wire_prepare_onchain_payment(
-      port_,
-      req,
-    );
+    return _wire_prepare_onchain_payment(port_, req);
   }
 
   late final _wire_prepare_onchain_paymentPtr = _lookup<
-          ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_PrepareOnchainPaymentRequest>)>>(
-      'wire_prepare_onchain_payment');
+      ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Int64,
+            ffi.Pointer<wire_PrepareOnchainPaymentRequest>,
+          )>>('wire_prepare_onchain_payment');
   late final _wire_prepare_onchain_payment = _wire_prepare_onchain_paymentPtr
       .asFunction<void Function(int, ffi.Pointer<wire_PrepareOnchainPaymentRequest>)>();
 
-  void wire_in_progress_onchain_payments(
-    int port_,
-  ) {
-    return _wire_in_progress_onchain_payments(
-      port_,
-    );
+  void wire_in_progress_onchain_payments(int port_) {
+    return _wire_in_progress_onchain_payments(port_);
   }
 
   late final _wire_in_progress_onchain_paymentsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_in_progress_onchain_payments');
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_in_progress_onchain_payments',
+  );
   late final _wire_in_progress_onchain_payments =
       _wire_in_progress_onchain_paymentsPtr.asFunction<void Function(int)>();
 
-  void wire_recommended_fees(
-    int port_,
-  ) {
-    return _wire_recommended_fees(
-      port_,
-    );
+  void wire_recommended_fees(int port_) {
+    return _wire_recommended_fees(port_);
   }
 
-  late final _wire_recommended_feesPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_recommended_fees');
+  late final _wire_recommended_feesPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_recommended_fees',
+  );
   late final _wire_recommended_fees = _wire_recommended_feesPtr.asFunction<void Function(int)>();
 
-  void wire_execute_command(
-    int port_,
-    ffi.Pointer<wire_uint_8_list> command,
-  ) {
-    return _wire_execute_command(
-      port_,
-      command,
-    );
+  void wire_execute_command(int port_, ffi.Pointer<wire_uint_8_list> command) {
+    return _wire_execute_command(port_, command);
   }
 
   late final _wire_execute_commandPtr =
@@ -5941,31 +5814,36 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_execute_command =
       _wire_execute_commandPtr.asFunction<void Function(int, ffi.Pointer<wire_uint_8_list>)>();
 
-  void wire_generate_diagnostic_data(
-    int port_,
-  ) {
-    return _wire_generate_diagnostic_data(
-      port_,
-    );
+  void wire_generate_diagnostic_data(int port_) {
+    return _wire_generate_diagnostic_data(port_);
   }
 
-  late final _wire_generate_diagnostic_dataPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>('wire_generate_diagnostic_data');
+  late final _wire_generate_diagnostic_dataPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64)>>(
+    'wire_generate_diagnostic_data',
+  );
   late final _wire_generate_diagnostic_data =
       _wire_generate_diagnostic_dataPtr.asFunction<void Function(int)>();
 
-  ffi.Pointer<ffi.Bool> new_box_autoadd_bool_0(
-    bool value,
-  ) {
-    return _new_box_autoadd_bool_0(
-      value,
-    );
+  ffi.Pointer<ffi.Bool> new_box_autoadd_bool_0(bool value) {
+    return _new_box_autoadd_bool_0(value);
   }
 
   late final _new_box_autoadd_bool_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Bool> Function(ffi.Bool)>>('new_box_autoadd_bool_0');
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Bool> Function(ffi.Bool)>>(
+    'new_box_autoadd_bool_0',
+  );
   late final _new_box_autoadd_bool_0 =
       _new_box_autoadd_bool_0Ptr.asFunction<ffi.Pointer<ffi.Bool> Function(bool)>();
+
+  ffi.Pointer<wire_BuyBitcoinLimitsRequest> new_box_autoadd_buy_bitcoin_limits_request_0() {
+    return _new_box_autoadd_buy_bitcoin_limits_request_0();
+  }
+
+  late final _new_box_autoadd_buy_bitcoin_limits_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_BuyBitcoinLimitsRequest> Function()>>(
+          'new_box_autoadd_buy_bitcoin_limits_request_0');
+  late final _new_box_autoadd_buy_bitcoin_limits_request_0 = _new_box_autoadd_buy_bitcoin_limits_request_0Ptr
+      .asFunction<ffi.Pointer<wire_BuyBitcoinLimitsRequest> Function()>();
 
   ffi.Pointer<wire_BuyBitcoinRequest> new_box_autoadd_buy_bitcoin_request_0() {
     return _new_box_autoadd_buy_bitcoin_request_0();
@@ -6003,7 +5881,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   late final _new_box_autoadd_connect_request_0Ptr =
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_ConnectRequest> Function()>>(
-          'new_box_autoadd_connect_request_0');
+    'new_box_autoadd_connect_request_0',
+  );
   late final _new_box_autoadd_connect_request_0 =
       _new_box_autoadd_connect_request_0Ptr.asFunction<ffi.Pointer<wire_ConnectRequest> Function()>();
 
@@ -6027,16 +5906,14 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_greenlight_node_config_0 = _new_box_autoadd_greenlight_node_config_0Ptr
       .asFunction<ffi.Pointer<wire_GreenlightNodeConfig> Function()>();
 
-  ffi.Pointer<ffi.Int64> new_box_autoadd_i64_0(
-    int value,
-  ) {
-    return _new_box_autoadd_i64_0(
-      value,
-    );
+  ffi.Pointer<ffi.Int64> new_box_autoadd_i64_0(int value) {
+    return _new_box_autoadd_i64_0(value);
   }
 
   late final _new_box_autoadd_i64_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int64> Function(ffi.Int64)>>('new_box_autoadd_i64_0');
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Int64> Function(ffi.Int64)>>(
+    'new_box_autoadd_i64_0',
+  );
   late final _new_box_autoadd_i64_0 =
       _new_box_autoadd_i64_0Ptr.asFunction<ffi.Pointer<ffi.Int64> Function(int)>();
 
@@ -6076,7 +5953,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   late final _new_box_autoadd_ln_url_pay_request_0Ptr =
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_LnUrlPayRequest> Function()>>(
-          'new_box_autoadd_ln_url_pay_request_0');
+    'new_box_autoadd_ln_url_pay_request_0',
+  );
   late final _new_box_autoadd_ln_url_pay_request_0 =
       _new_box_autoadd_ln_url_pay_request_0Ptr.asFunction<ffi.Pointer<wire_LnUrlPayRequest> Function()>();
 
@@ -6095,7 +5973,9 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   }
 
   late final _new_box_autoadd_node_config_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<wire_NodeConfig> Function()>>('new_box_autoadd_node_config_0');
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_NodeConfig> Function()>>(
+    'new_box_autoadd_node_config_0',
+  );
   late final _new_box_autoadd_node_config_0 =
       _new_box_autoadd_node_config_0Ptr.asFunction<ffi.Pointer<wire_NodeConfig> Function()>();
 
@@ -6199,7 +6079,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
 
   late final _new_box_autoadd_refund_request_0Ptr =
       _lookup<ffi.NativeFunction<ffi.Pointer<wire_RefundRequest> Function()>>(
-          'new_box_autoadd_refund_request_0');
+    'new_box_autoadd_refund_request_0',
+  );
   late final _new_box_autoadd_refund_request_0 =
       _new_box_autoadd_refund_request_0Ptr.asFunction<ffi.Pointer<wire_RefundRequest> Function()>();
 
@@ -6275,38 +6156,30 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_box_autoadd_static_backup_request_0 = _new_box_autoadd_static_backup_request_0Ptr
       .asFunction<ffi.Pointer<wire_StaticBackupRequest> Function()>();
 
-  ffi.Pointer<ffi.Uint32> new_box_autoadd_u32_0(
-    int value,
-  ) {
-    return _new_box_autoadd_u32_0(
-      value,
-    );
+  ffi.Pointer<ffi.Uint32> new_box_autoadd_u32_0(int value) {
+    return _new_box_autoadd_u32_0(value);
   }
 
   late final _new_box_autoadd_u32_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Uint32> Function(ffi.Uint32)>>('new_box_autoadd_u32_0');
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Uint32> Function(ffi.Uint32)>>(
+    'new_box_autoadd_u32_0',
+  );
   late final _new_box_autoadd_u32_0 =
       _new_box_autoadd_u32_0Ptr.asFunction<ffi.Pointer<ffi.Uint32> Function(int)>();
 
-  ffi.Pointer<ffi.Uint64> new_box_autoadd_u64_0(
-    int value,
-  ) {
-    return _new_box_autoadd_u64_0(
-      value,
-    );
+  ffi.Pointer<ffi.Uint64> new_box_autoadd_u64_0(int value) {
+    return _new_box_autoadd_u64_0(value);
   }
 
   late final _new_box_autoadd_u64_0Ptr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Uint64> Function(ffi.Uint64)>>('new_box_autoadd_u64_0');
+      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Uint64> Function(ffi.Uint64)>>(
+    'new_box_autoadd_u64_0',
+  );
   late final _new_box_autoadd_u64_0 =
       _new_box_autoadd_u64_0Ptr.asFunction<ffi.Pointer<ffi.Uint64> Function(int)>();
 
-  ffi.Pointer<wire_list_metadata_filter> new_list_metadata_filter_0(
-    int len,
-  ) {
-    return _new_list_metadata_filter_0(
-      len,
-    );
+  ffi.Pointer<wire_list_metadata_filter> new_list_metadata_filter_0(int len) {
+    return _new_list_metadata_filter_0(len);
   }
 
   late final _new_list_metadata_filter_0Ptr =
@@ -6318,9 +6191,7 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   ffi.Pointer<wire_list_payment_type_filter> new_list_payment_type_filter_0(
     int len,
   ) {
-    return _new_list_payment_type_filter_0(
-      len,
-    );
+    return _new_list_payment_type_filter_0(len);
   }
 
   late final _new_list_payment_type_filter_0Ptr =
@@ -6329,12 +6200,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_list_payment_type_filter_0 = _new_list_payment_type_filter_0Ptr
       .asFunction<ffi.Pointer<wire_list_payment_type_filter> Function(int)>();
 
-  ffi.Pointer<wire_list_swap_status> new_list_swap_status_0(
-    int len,
-  ) {
-    return _new_list_swap_status_0(
-      len,
-    );
+  ffi.Pointer<wire_list_swap_status> new_list_swap_status_0(int len) {
+    return _new_list_swap_status_0(len);
   }
 
   late final _new_list_swap_status_0Ptr =
@@ -6343,12 +6210,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_list_swap_status_0 =
       _new_list_swap_status_0Ptr.asFunction<ffi.Pointer<wire_list_swap_status> Function(int)>();
 
-  ffi.Pointer<wire_list_tlv_entry> new_list_tlv_entry_0(
-    int len,
-  ) {
-    return _new_list_tlv_entry_0(
-      len,
-    );
+  ffi.Pointer<wire_list_tlv_entry> new_list_tlv_entry_0(int len) {
+    return _new_list_tlv_entry_0(len);
   }
 
   late final _new_list_tlv_entry_0Ptr =
@@ -6357,12 +6220,8 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _new_list_tlv_entry_0 =
       _new_list_tlv_entry_0Ptr.asFunction<ffi.Pointer<wire_list_tlv_entry> Function(int)>();
 
-  ffi.Pointer<wire_uint_8_list> new_uint_8_list_0(
-    int len,
-  ) {
-    return _new_uint_8_list_0(
-      len,
-    );
+  ffi.Pointer<wire_uint_8_list> new_uint_8_list_0(int len) {
+    return _new_uint_8_list_0(len);
   }
 
   late final _new_uint_8_list_0Ptr =
@@ -6375,7 +6234,9 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   }
 
   late final _inflate_NodeConfig_GreenlightPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<NodeConfigKind> Function()>>('inflate_NodeConfig_Greenlight');
+      _lookup<ffi.NativeFunction<ffi.Pointer<NodeConfigKind> Function()>>(
+    'inflate_NodeConfig_Greenlight',
+  );
   late final _inflate_NodeConfig_Greenlight =
       _inflate_NodeConfig_GreenlightPtr.asFunction<ffi.Pointer<NodeConfigKind> Function()>();
 
@@ -6389,16 +6250,13 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _inflate_ReportIssueRequest_PaymentFailure = _inflate_ReportIssueRequest_PaymentFailurePtr
       .asFunction<ffi.Pointer<ReportIssueRequestKind> Function()>();
 
-  void free_WireSyncReturn(
-    WireSyncReturn ptr,
-  ) {
-    return _free_WireSyncReturn(
-      ptr,
-    );
+  void free_WireSyncReturn(WireSyncReturn ptr) {
+    return _free_WireSyncReturn(ptr);
   }
 
-  late final _free_WireSyncReturnPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(WireSyncReturn)>>('free_WireSyncReturn');
+  late final _free_WireSyncReturnPtr = _lookup<ffi.NativeFunction<ffi.Void Function(WireSyncReturn)>>(
+    'free_WireSyncReturn',
+  );
   late final _free_WireSyncReturn = _free_WireSyncReturnPtr.asFunction<void Function(WireSyncReturn)>();
 }
 
@@ -6734,6 +6592,13 @@ final class wire_BuyBitcoinRequest extends ffi.Struct {
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
 
   external ffi.Pointer<wire_uint_8_list> redirect_url;
+}
+
+final class wire_BuyBitcoinLimitsRequest extends ffi.Struct {
+  @ffi.Int32()
+  external int provider;
+
+  external ffi.Pointer<wire_uint_8_list> fiat_currency_code;
 }
 
 final class wire_RedeemOnchainFundsRequest extends ffi.Struct {

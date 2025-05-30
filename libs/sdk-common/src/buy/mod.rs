@@ -13,4 +13,7 @@ pub trait BuyBitcoinProviderApi: MaybeSend + MaybeSync {
         max_amount_sat: Option<u64>,
         redirect_url: Option<String>,
     ) -> Result<String>;
+
+    /// Fetches the minimum and maximum buy limits
+    async fn buy_bitcoin_limits(&self, fiat_currency_code: Option<String>) -> Result<(u64, u64)>;
 }
