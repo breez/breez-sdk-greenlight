@@ -21,12 +21,16 @@ struct MoonPayConfig {
 
     // API-specific configuration
     pub api_base_url: String,
+    pub currencies_endpoint_path: String,
     pub limits_endpoint_path: String,
     pub default_fiat_currency: String,
 }
 
 impl MoonPayConfig {
     fn new() -> Self {
+        let currencies_endpoint_path = String::from("/currencies");
+        let limits_endpoint_path = format!("{}/{{currency}}/limits", &currencies_endpoint_path);
+
         Self {
             // Shared
             api_key: String::from("pk_live_Mx5g6bpD6Etd7T0bupthv7smoTNn2Vr"),
@@ -45,7 +49,8 @@ impl MoonPayConfig {
 
             // API configuration
             api_base_url: String::from("https://api.moonpay.com/v3"),
-            limits_endpoint_path: String::from("/currencies/{currency}/limits"),
+            currencies_endpoint_path,
+            limits_endpoint_path,
             default_fiat_currency: String::from("usd"),
         }
     }
@@ -100,6 +105,13 @@ impl MoonPayConfig {
         )
     }
 
+    pub fn build_currencies_url(&self) -> String {
+        format!(
+            "{}{}?apiKey={}",
+            self.api_base_url, self.currencies_endpoint_path, self.api_key
+        )
+    }
+
     // Utility methods
     pub fn get_fiat_currency(&self, requested: Option<String>) -> String {
         requested.unwrap_or_else(|| self.default_fiat_currency.clone())
@@ -130,6 +142,13 @@ struct QuoteCurrency {
     max_buy_amount: f64,
 }
 
+#[derive(Deserialize, Debug)]
+struct CurrencyResponse {
+    #[serde(rename = "type")]
+    currency_type: String,
+    code: String,
+}
+
 pub struct MoonpayProvider {
     breez_server: Arc<BreezServer>,
 }
@@ -142,6 +161,26 @@ impl MoonpayProvider {
     // Helper method to convert BTC amount to satoshis
     fn btc_to_satoshis(btc_amount: f64) -> u64 {
         (btc_amount * 100_000_000.0) as u64
+    }
+
+    async fn is_currency_supported(&self, currency_code: &str) -> Result<bool> {
+        let config = moonpay_config();
+        let api_url = config.build_currencies_url();
+
+        let client = reqwest::Client::new();
+        let response = client.get(&api_url).send().await?;
+
+        if !response.status().is_success() {
+            return Err(anyhow::anyhow!("Failed to fetch supported currencies"));
+        }
+
+        let currencies: Vec<CurrencyResponse> = response.json().await?;
+
+        // Check if the fiat currency is supported
+        Ok(currencies.iter().any(|currency| {
+            currency.code.to_lowercase() == currency_code.to_lowercase()
+                && currency.currency_type == "fiat"
+        }))
     }
 }
 
@@ -187,6 +226,14 @@ impl BuyBitcoinProviderApi for MoonpayProvider {
         }
 
         let fiat_currency = config.get_fiat_currency(fiat_currency_code);
+
+        if !self.is_currency_supported(&fiat_currency).await? {
+            return Err(anyhow::anyhow!(
+                "Fiat currency '{}' is not supported by MoonPay",
+                fiat_currency
+            ));
+        }
+
         let api_url = config.build_limits_url(&fiat_currency);
 
         let client = reqwest::Client::new();
@@ -320,7 +367,17 @@ pub(crate) mod tests {
         assert!(url.contains("baseCurrencyCode=eur"));
         assert!(url.contains("apiKey="));
         assert!(url.contains(&config.api_key));
+    }
+
+    #[test]
+    fn test_build_currencies_url_uses_endpoint_path() {
+        let config = moonpay_config();
+        let url = config.build_currencies_url();
+
         assert!(url.starts_with(&config.api_base_url));
+        assert!(url.contains(&config.currencies_endpoint_path));
+        assert!(url.contains("apiKey="));
+        assert!(url.contains(&config.api_key));
     }
 
     #[test]
