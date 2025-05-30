@@ -324,6 +324,12 @@ pub(crate) enum Commands {
     /// [buy] Generates an URL to buy bitcoin from a 3rd party provider
     BuyBitcoin { provider: BuyBitcoinProvider },
 
+    /// [buy] Fetches buy bitcoin limits for the specified fiat currency (defaults to USD) from a 3rd party provider
+    BuyBitcoinLimits {
+        provider: BuyBitcoinProvider,
+        fiat_currency_code: Option<String>,
+    },
+
     /// [fiat] List fiat currencies
     ListFiat {},
 

@@ -225,6 +225,11 @@ abstract class BreezSdkCore {
 
   FlutterRustBridgeTaskConstMeta get kBuyBitcoinConstMeta;
 
+  /// See [BreezServices::buy_bitcoin_limits]
+  Future<BuyBitcoinLimitsResponse> buyBitcoinLimits({required BuyBitcoinLimitsRequest req, dynamic hint});
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinLimitsConstMeta;
+
   /// See [BreezServices::redeem_onchain_funds]
   Future<RedeemOnchainFundsResponse> redeemOnchainFunds(
       {required RedeemOnchainFundsRequest req, dynamic hint});
@@ -422,6 +427,31 @@ sealed class BreezEvent with _$BreezEvent {
   const factory BreezEvent.swapUpdated({
     required SwapInfo details,
   }) = BreezEvent_SwapUpdated;
+}
+
+class BuyBitcoinLimitsRequest {
+  final BuyBitcoinProvider provider;
+
+  /// Fiat currency used for the transaction, defaults to USD
+  final String? fiatCurrencyCode;
+
+  const BuyBitcoinLimitsRequest({
+    required this.provider,
+    this.fiatCurrencyCode,
+  });
+}
+
+class BuyBitcoinLimitsResponse {
+  /// Minimum transaction buy amount in sats for given fiat currency
+  final int minBuyAmountSat;
+
+  /// Maximum transaction buy amount in sats for given fiat currency
+  final int maxBuyAmountSat;
+
+  const BuyBitcoinLimitsResponse({
+    required this.minBuyAmountSat,
+    required this.maxBuyAmountSat,
+  });
 }
 
 /// Different providers will demand different behaviours when the user is trying to buy bitcoin.
@@ -2700,6 +2730,23 @@ class BreezSdkCoreImpl implements BreezSdkCore {
         argNames: ["req"],
       );
 
+  Future<BuyBitcoinLimitsResponse> buyBitcoinLimits({required BuyBitcoinLimitsRequest req, dynamic hint}) {
+    var arg0 = _platform.api2wire_box_autoadd_buy_bitcoin_limits_request(req);
+    return _platform.executeNormal(FlutterRustBridgeTask(
+      callFfi: (port_) => _platform.inner.wire_buy_bitcoin_limits(port_, arg0),
+      parseSuccessData: _wire2api_buy_bitcoin_limits_response,
+      parseErrorData: _wire2api_FrbAnyhowException,
+      constMeta: kBuyBitcoinLimitsConstMeta,
+      argValues: [req],
+      hint: hint,
+    ));
+  }
+
+  FlutterRustBridgeTaskConstMeta get kBuyBitcoinLimitsConstMeta => const FlutterRustBridgeTaskConstMeta(
+        debugName: "buy_bitcoin_limits",
+        argNames: ["req"],
+      );
+
   Future<RedeemOnchainFundsResponse> redeemOnchainFunds(
       {required RedeemOnchainFundsRequest req, dynamic hint}) {
     var arg0 = _platform.api2wire_box_autoadd_redeem_onchain_funds_request(req);
@@ -3245,6 +3292,15 @@ class BreezSdkCoreImpl implements BreezSdkCore {
       default:
         throw Exception("unreachable");
     }
+  }
+
+  BuyBitcoinLimitsResponse _wire2api_buy_bitcoin_limits_response(dynamic raw) {
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2) throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return BuyBitcoinLimitsResponse(
+      minBuyAmountSat: _wire2api_u64(arr[0]),
+      maxBuyAmountSat: _wire2api_u64(arr[1]),
+    );
   }
 
   BuyBitcoinResponse _wire2api_buy_bitcoin_response(dynamic raw) {
@@ -4240,6 +4296,14 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   }
 
   @protected
+  ffi.Pointer<wire_BuyBitcoinLimitsRequest> api2wire_box_autoadd_buy_bitcoin_limits_request(
+      BuyBitcoinLimitsRequest raw) {
+    final ptr = inner.new_box_autoadd_buy_bitcoin_limits_request_0();
+    _api_fill_to_wire_buy_bitcoin_limits_request(raw, ptr.ref);
+    return ptr;
+  }
+
+  @protected
   ffi.Pointer<wire_BuyBitcoinRequest> api2wire_box_autoadd_buy_bitcoin_request(BuyBitcoinRequest raw) {
     final ptr = inner.new_box_autoadd_buy_bitcoin_request_0();
     _api_fill_to_wire_buy_bitcoin_request(raw, ptr.ref);
@@ -4590,6 +4654,11 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
 
 // Section: api_fill_to_wire
 
+  void _api_fill_to_wire_box_autoadd_buy_bitcoin_limits_request(
+      BuyBitcoinLimitsRequest apiObj, ffi.Pointer<wire_BuyBitcoinLimitsRequest> wireObj) {
+    _api_fill_to_wire_buy_bitcoin_limits_request(apiObj, wireObj.ref);
+  }
+
   void _api_fill_to_wire_box_autoadd_buy_bitcoin_request(
       BuyBitcoinRequest apiObj, ffi.Pointer<wire_BuyBitcoinRequest> wireObj) {
     _api_fill_to_wire_buy_bitcoin_request(apiObj, wireObj.ref);
@@ -4732,6 +4801,12 @@ class BreezSdkCorePlatform extends FlutterRustBridgeBase<BreezSdkCoreWire> {
   void _api_fill_to_wire_box_autoadd_static_backup_request(
       StaticBackupRequest apiObj, ffi.Pointer<wire_StaticBackupRequest> wireObj) {
     _api_fill_to_wire_static_backup_request(apiObj, wireObj.ref);
+  }
+
+  void _api_fill_to_wire_buy_bitcoin_limits_request(
+      BuyBitcoinLimitsRequest apiObj, wire_BuyBitcoinLimitsRequest wireObj) {
+    wireObj.provider = api2wire_buy_bitcoin_provider(apiObj.provider);
+    wireObj.fiat_currency_code = api2wire_opt_String(apiObj.fiatCurrencyCode);
   }
 
   void _api_fill_to_wire_buy_bitcoin_request(BuyBitcoinRequest apiObj, wire_BuyBitcoinRequest wireObj) {
@@ -5531,6 +5606,19 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   late final _wire_buy_bitcoin =
       _wire_buy_bitcoinPtr.asFunction<void Function(int, ffi.Pointer<wire_BuyBitcoinRequest>)>();
 
+  void wire_buy_bitcoin_limits(
+    int port_,
+    ffi.Pointer<wire_BuyBitcoinLimitsRequest> req,
+  ) {
+    return _wire_buy_bitcoin_limits(port_, req);
+  }
+
+  late final _wire_buy_bitcoin_limitsPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_BuyBitcoinLimitsRequest>)>>(
+          'wire_buy_bitcoin_limits');
+  late final _wire_buy_bitcoin_limits =
+      _wire_buy_bitcoin_limitsPtr.asFunction<void Function(int, ffi.Pointer<wire_BuyBitcoinLimitsRequest>)>();
+
   void wire_redeem_onchain_funds(
     int port_,
     ffi.Pointer<wire_RedeemOnchainFundsRequest> req,
@@ -5749,6 +5837,16 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
   );
   late final _new_box_autoadd_bool_0 =
       _new_box_autoadd_bool_0Ptr.asFunction<ffi.Pointer<ffi.Bool> Function(bool)>();
+
+  ffi.Pointer<wire_BuyBitcoinLimitsRequest> new_box_autoadd_buy_bitcoin_limits_request_0() {
+    return _new_box_autoadd_buy_bitcoin_limits_request_0();
+  }
+
+  late final _new_box_autoadd_buy_bitcoin_limits_request_0Ptr =
+      _lookup<ffi.NativeFunction<ffi.Pointer<wire_BuyBitcoinLimitsRequest> Function()>>(
+          'new_box_autoadd_buy_bitcoin_limits_request_0');
+  late final _new_box_autoadd_buy_bitcoin_limits_request_0 = _new_box_autoadd_buy_bitcoin_limits_request_0Ptr
+      .asFunction<ffi.Pointer<wire_BuyBitcoinLimitsRequest> Function()>();
 
   ffi.Pointer<wire_BuyBitcoinRequest> new_box_autoadd_buy_bitcoin_request_0() {
     return _new_box_autoadd_buy_bitcoin_request_0();
@@ -6497,6 +6595,13 @@ final class wire_BuyBitcoinRequest extends ffi.Struct {
   external ffi.Pointer<wire_OpeningFeeParams> opening_fee_params;
 
   external ffi.Pointer<wire_uint_8_list> redirect_url;
+}
+
+final class wire_BuyBitcoinLimitsRequest extends ffi.Struct {
+  @ffi.Int32()
+  external int provider;
+
+  external ffi.Pointer<wire_uint_8_list> fiat_currency_code;
 }
 
 final class wire_RedeemOnchainFundsRequest extends ffi.Struct {
