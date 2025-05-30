@@ -722,6 +722,14 @@ impl BuyBitcoinApi for MockBuyBitcoinService {
             format!("{:.8}", swap_info.max_allowed_deposit as f64 / 100000000.0).as_str(),
         ))
     }
+
+    async fn buy_bitcoin_limits(
+        &self,
+        _provider: BuyBitcoinProvider,
+        _fiat_currency_code: Option<String>,
+    ) -> Result<(u64, u64)> {
+        Ok((15_000, 25_000_000))
+    }
 }
 
 pub(crate) fn rand_invoice_with_description_hash(

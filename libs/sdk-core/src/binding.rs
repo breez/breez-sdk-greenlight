@@ -37,11 +37,12 @@ use crate::error::{
 use crate::lsp::LspInformation;
 use crate::models::{Config, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
-    BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, ListSwapsRequest,
-    LnUrlAuthError, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
-    OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
-    PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
+    BackupStatus, BuyBitcoinLimitsRequest, BuyBitcoinLimitsResponse, BuyBitcoinRequest,
+    BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse, ConfigureNodeRequest,
+    ConnectRequest, EnvironmentType, ListPaymentsRequest, ListSwapsRequest, LnUrlAuthError,
+    NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse, OpenChannelFeeRequest,
+    OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse, PrepareOnchainPaymentRequest,
+    PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
     ReceiveOnchainRequest, ReceivePaymentRequest, ReceivePaymentResponse,
     RedeemOnchainFundsRequest, RedeemOnchainFundsResponse, RefundRequest, RefundResponse,
@@ -634,6 +635,11 @@ pub fn receive_onchain(req: ReceiveOnchainRequest) -> Result<SwapInfo> {
 pub fn buy_bitcoin(req: BuyBitcoinRequest) -> Result<BuyBitcoinResponse> {
     block_on(async { get_breez_services().await?.buy_bitcoin(req).await })
         .map_err(anyhow::Error::new::<ReceiveOnchainError>)
+}
+
+/// See [BreezServices::buy_bitcoin_limits]
+pub fn buy_bitcoin_limits(req: BuyBitcoinLimitsRequest) -> Result<BuyBitcoinLimitsResponse> {
+    block_on(async { get_breez_services().await?.buy_bitcoin_limits(req).await })
 }
 
 /// See [BreezServices::redeem_onchain_funds]

@@ -224,6 +224,11 @@ pub extern "C" fn wire_buy_bitcoin(port_: i64, req: *mut wire_BuyBitcoinRequest)
 }
 
 #[no_mangle]
+pub extern "C" fn wire_buy_bitcoin_limits(port_: i64, req: *mut wire_BuyBitcoinLimitsRequest) {
+    wire_buy_bitcoin_limits_impl(port_, req)
+}
+
+#[no_mangle]
 pub extern "C" fn wire_redeem_onchain_funds(port_: i64, req: *mut wire_RedeemOnchainFundsRequest) {
     wire_redeem_onchain_funds_impl(port_, req)
 }
@@ -324,6 +329,12 @@ pub extern "C" fn wire_generate_diagnostic_data(port_: i64) {
 #[no_mangle]
 pub extern "C" fn new_box_autoadd_bool_0(value: bool) -> *mut bool {
     support::new_leak_box_ptr(value)
+}
+
+#[no_mangle]
+pub extern "C" fn new_box_autoadd_buy_bitcoin_limits_request_0() -> *mut wire_BuyBitcoinLimitsRequest
+{
+    support::new_leak_box_ptr(wire_BuyBitcoinLimitsRequest::new_with_null_ptr())
 }
 
 #[no_mangle]
@@ -553,6 +564,12 @@ impl Wire2Api<bool> for *mut bool {
         unsafe { *support::box_from_leak_ptr(self) }
     }
 }
+impl Wire2Api<BuyBitcoinLimitsRequest> for *mut wire_BuyBitcoinLimitsRequest {
+    fn wire2api(self) -> BuyBitcoinLimitsRequest {
+        let wrap = unsafe { support::box_from_leak_ptr(self) };
+        Wire2Api::<BuyBitcoinLimitsRequest>::wire2api(*wrap).into()
+    }
+}
 impl Wire2Api<BuyBitcoinRequest> for *mut wire_BuyBitcoinRequest {
     fn wire2api(self) -> BuyBitcoinRequest {
         let wrap = unsafe { support::box_from_leak_ptr(self) };
@@ -740,6 +757,14 @@ impl Wire2Api<u32> for *mut u32 {
 impl Wire2Api<u64> for *mut u64 {
     fn wire2api(self) -> u64 {
         unsafe { *support::box_from_leak_ptr(self) }
+    }
+}
+impl Wire2Api<BuyBitcoinLimitsRequest> for wire_BuyBitcoinLimitsRequest {
+    fn wire2api(self) -> BuyBitcoinLimitsRequest {
+        BuyBitcoinLimitsRequest {
+            provider: self.provider.wire2api(),
+            fiat_currency_code: self.fiat_currency_code.wire2api(),
+        }
     }
 }
 
@@ -1146,6 +1171,13 @@ impl Wire2Api<Vec<u8>> for *mut wire_uint_8_list {
 
 #[repr(C)]
 #[derive(Clone)]
+pub struct wire_BuyBitcoinLimitsRequest {
+    provider: i32,
+    fiat_currency_code: *mut wire_uint_8_list,
+}
+
+#[repr(C)]
+#[derive(Clone)]
 pub struct wire_BuyBitcoinRequest {
     provider: i32,
     opening_fee_params: *mut wire_OpeningFeeParams,
@@ -1511,6 +1543,21 @@ pub trait NewWithNullPtr {
 impl<T> NewWithNullPtr for *mut T {
     fn new_with_null_ptr() -> Self {
         std::ptr::null_mut()
+    }
+}
+
+impl NewWithNullPtr for wire_BuyBitcoinLimitsRequest {
+    fn new_with_null_ptr() -> Self {
+        Self {
+            provider: Default::default(),
+            fiat_currency_code: core::ptr::null_mut(),
+        }
+    }
+}
+
+impl Default for wire_BuyBitcoinLimitsRequest {
+    fn default() -> Self {
+        Self::new_with_null_ptr()
     }
 }
 

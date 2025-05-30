@@ -1458,6 +1458,24 @@ impl BreezServices {
         })
     }
 
+    /// Fetches the minimum and maximum buy limits for Bitcoin transactions from a third party provider.
+    ///
+    /// The limits are returned in satoshis for the specified fiat currency (defaults to USD).
+    pub async fn buy_bitcoin_limits(
+        &self,
+        req: BuyBitcoinLimitsRequest,
+    ) -> Result<BuyBitcoinLimitsResponse> {
+        let (min_buy_amount_sat, max_buy_amount_sat) = self
+            .buy_bitcoin_api
+            .buy_bitcoin_limits(req.provider, req.fiat_currency_code)
+            .await?;
+
+        Ok(BuyBitcoinLimitsResponse {
+            min_buy_amount_sat,
+            max_buy_amount_sat,
+        })
+    }
+
     /// Starts the BreezServices background threads.
     ///
     /// Internal method. Should only be used as part of [BreezServices::start]
