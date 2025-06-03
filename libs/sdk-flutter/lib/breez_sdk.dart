@@ -43,6 +43,9 @@ class BreezSDK {
   Stream<BreezEvent>? _breezEventsStream;
   Stream<LogEntry>? _breezLogStream;
 
+  bool _eventsStreamInitialized = false;
+  bool _logStreamInitialized = false;
+
   /// Initializes SDK events & log streams.
   ///
   /// Call once on your Dart entrypoint file, e.g.; `lib/main.dart`.
@@ -52,17 +55,27 @@ class BreezSDK {
   }
 
   void _initializeEventsStream() {
-    _breezEventsStream ??= binding.breezEventsStream().asBroadcastStream();
+    if (!_eventsStreamInitialized) {
+      _breezEventsStream ??= binding.breezEventsStream().asBroadcastStream();
+      _eventsStreamInitialized = true;
+
+      _subscribeToEventsStream();
+    }
   }
 
-  /// Listen to node logs
   void _initializeLogStream({LevelFilter? filterLevel}) {
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      _breezLogStream ??= const EventChannel(
-        'breez_sdk_node_logs',
-      ).receiveBroadcastStream().map((log) => LogEntry(line: log["line"], level: log["level"]));
-    } else {
-      _breezLogStream ??= binding.breezLogStream(filterLevel: filterLevel).asBroadcastStream();
+    if (!_logStreamInitialized) {
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        _breezLogStream ??= const EventChannel(
+          'breez_sdk_node_logs',
+        ).receiveBroadcastStream().map((log) => LogEntry(line: log["line"], level: log["level"]));
+      } else {
+        _breezLogStream ??= binding.breezLogStream(filterLevel: filterLevel).asBroadcastStream();
+      }
+      _logStreamInitialized = true;
+
+      // Immediately subscribe to start capturing logs
+      _subscribeToLogStream();
     }
   }
 
@@ -97,6 +110,10 @@ class BreezSDK {
   ///
   /// * `req` - The connect request containing the `config` sdk configuration and `seed` node private key
   Future connect({required ConnectRequest req}) async {
+    if (!_eventsStreamInitialized || !_logStreamInitialized) {
+      initialize();
+    }
+
     await binding.connect(req: req);
     _subscribeToSdkStreams();
     await fetchNodeData();
@@ -131,6 +148,9 @@ class BreezSDK {
   Future<void> disconnect() async {
     await binding.disconnect();
     _unsubscribeFromSdkStreams();
+
+    _eventsStreamInitialized = false;
+    _logStreamInitialized = false;
   }
 
   /* Breez Services Helper API's */
@@ -464,6 +484,7 @@ class BreezSDK {
 
   /// Subscribes to BreezEvent's(new block, invoice paid, synced) stream
   void _subscribeToEventsStream() {
+    if (_breezEventsSubscription != null) return;
     _breezEventsSubscription = _breezEventsStream?.listen((event) async {
       if (event is BreezEvent_InvoicePaid) {
         _invoicePaidStream.add(event.details);
@@ -495,6 +516,8 @@ class BreezSDK {
 
   /// Subscribes to node logs stream
   void _subscribeToLogStream() {
+    if (_breezLogSubscription != null) return;
+
     _breezLogSubscription = _breezLogStream?.listen(
       (logEntry) {
         _logStreamController.add(logEntry);
@@ -508,7 +531,10 @@ class BreezSDK {
   /// Unsubscribes from SDK events & log streams.
   void _unsubscribeFromSdkStreams() {
     _breezEventsSubscription?.cancel();
+    _breezEventsSubscription = null;
+
     _breezLogSubscription?.cancel();
+    _breezLogSubscription = null;
   }
 }
 
