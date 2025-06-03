@@ -5613,9 +5613,12 @@ class BreezSdkCoreWire implements FlutterRustBridgeWireBase {
     return _wire_buy_bitcoin_limits(port_, req);
   }
 
-  late final _wire_buy_bitcoin_limitsPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int64, ffi.Pointer<wire_BuyBitcoinLimitsRequest>)>>(
-          'wire_buy_bitcoin_limits');
+  late final _wire_buy_bitcoin_limitsPtr = _lookup<
+      ffi.NativeFunction<
+          ffi.Void Function(
+            ffi.Int64,
+            ffi.Pointer<wire_BuyBitcoinLimitsRequest>,
+          )>>('wire_buy_bitcoin_limits');
   late final _wire_buy_bitcoin_limits =
       _wire_buy_bitcoin_limitsPtr.asFunction<void Function(int, ffi.Pointer<wire_BuyBitcoinLimitsRequest>)>();
 
