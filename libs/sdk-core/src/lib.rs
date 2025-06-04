@@ -157,7 +157,7 @@
 //! Join this [telegram group](https://t.me/breezsdk).
 
 #[allow(clippy::all)]
-mod bridge_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
+mod frb_generated; /* AUTO INJECTED BY flutter_rust_bridge. This line may not be accurate, and you can change it according to your needs. */
 
 #[macro_use]
 extern crate log;
@@ -176,6 +176,7 @@ pub mod lnurl;
 mod buy;
 mod lsp;
 mod lsps0;
+/// flutter_rust_bridge:ignore
 mod lsps2;
 mod models;
 mod persist;
