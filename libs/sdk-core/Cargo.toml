@@ -9,9 +9,6 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [features]
 default = []
-# Uniffi features required to build using cargo-lipo
-uniffi-25 = []
-uniffi-28 = []
 
 [dependencies]
 flutter_rust_bridge = "=1.82.6"

@@ -44,7 +44,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-android-jniLibs-uniffi-25
+          name: sdk-bindings-android-jniLibs
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/jniLibs
 
       - uses: actions/download-artifact@v4
@@ -52,24 +52,32 @@ jobs:
           name: bindings-kotlin-multiplatform
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src
 
-      - name: Copy jvmMain
-        working-directory: libs/sdk-bindings
+      - name: Move files
+        working-directory: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src
         run: |
-          cp -r bindings-kotlin-multiplatform/breez-sdk-kmp/src/jvmMain/kotlin bindings-kotlin-multiplatform/breez-sdk-kmp/src/androidMain/
+          mkdir -p androidMain/kotlin/breez_sdk
+          mkdir -p commonMain/kotlin/breez_sdk
+          mkdir -p jvmMain/kotlin/breez_sdk
+          mkdir -p nativeMain/kotlin/breez_sdk
+          mv main/kotlin/breez_sdk/breez_sdk.android.kt androidMain/kotlin/breez_sdk/
+          mv main/kotlin/breez_sdk/breez_sdk.common.kt commonMain/kotlin/breez_sdk/
+          mv main/kotlin/breez_sdk/breez_sdk.jvm.kt jvmMain/kotlin/breez_sdk/
+          mv main/kotlin/breez_sdk/breez_sdk.native.kt nativeMain/kotlin/breez_sdk/
+          rm -r main/kotlin/breez_sdk
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-aarch64-apple-ios-uniffi-25
+          name: sdk-bindings-aarch64-apple-ios
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/lib/ios-arm64
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-aarch64-apple-ios-sim-uniffi-25
+          name: sdk-bindings-aarch64-apple-ios-sim
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/lib/ios-simulator-arm64
 
       - uses: actions/download-artifact@v4
         with:
-          name: sdk-bindings-x86_64-apple-ios-uniffi-25
+          name: sdk-bindings-x86_64-apple-ios
           path: libs/sdk-bindings/bindings-kotlin-multiplatform/breez-sdk-kmp/src/lib/ios-simulator-x64
 
       - name: Build Kotlin Multiplatform project

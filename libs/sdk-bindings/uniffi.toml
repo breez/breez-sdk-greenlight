@@ -1,10 +1,13 @@
+# Kotlin https://gobley.dev/docs/bindgen#bindgen-configuration
+package_name = "breez_sdk"
+cdylib_name = "breez_sdk_bindings"
+kotlin_multiplatform = false
+kotlin_targets = ["jvm"]
+kotlin_target_version = "1.8.20"
+disable_java_cleaner = true
+
 # https://mozilla.github.io/uniffi-rs/swift/configuration.html
 [bindings.swift]
-cdylib_name = "breez_sdk_bindings"
-
-# https://mozilla.github.io/uniffi-rs/kotlin/configuration.html
-[bindings.kotlin]
-package_name = "breez_sdk"
 cdylib_name = "breez_sdk_bindings"
 
 # https://mozilla.github.io/uniffi-rs/python/configuration.html
