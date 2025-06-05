@@ -24,10 +24,12 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 31
+    namespace "com.breezsdk"
+    compileSdkVersion 34
+
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 31
+        minSdkVersion 24
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
     }
@@ -77,6 +79,9 @@ dependencies {
     // the Android platform versions of JNA (specifically libjnadispatch.so) are missing when downloading the Breez SDK from Jitpack.
     // Thereforew we ignore the version of JNA that comes with the Breez SDK from Jitpack
     // and manually add one that does include the necessary Android platoform binaries.
-    implementation("com.github.breez:breez-sdk:${getVersionFromNpmPackage()}") { exclude group:"net.java.dev.jna" } // remove for using locally built bindings during development
-    implementation("net.java.dev.jna:jna:5.8.0@aar")
+    implementation("net.java.dev.jna:jna:5.14.0@aar")
+    // Comment this line for using locally built bindings during development
+    implementation("com.github.breez:breez-sdk:${getVersionFromNpmPackage()}") { exclude group:"net.java.dev.jna" }
+    // Uncomment this line for using locally built bindings during development
+    // implementation "org.jetbrains.kotlinx:atomicfu:0.23.1"
 }

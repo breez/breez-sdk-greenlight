@@ -30,7 +30,7 @@ android-copy:
 	mkdir -p android/src/main/jniLibs/x86_64
 	mkdir -p android/src/main/jniLibs/arm64-v8a
 	mkdir -p android/src/main/jniLibs/armeabi-v7a
-	cp ../sdk-bindings/ffi/kotlin/breez_sdk/breez_sdk.kt  android/src/main/java/com/breezsdk/breez_sdk.kt
+	cp ../sdk-bindings/ffi/kotlin/main/kotlin/breez_sdk/breez_sdk.*.kt  android/src/main/java/com/breezsdk/
 	cp ../sdk-bindings/ffi/kotlin/jniLibs/x86/libbreez_sdk_bindings.so android/src/main/jniLibs/x86/libbreez_sdk_bindings.so
 	cp ../sdk-bindings/ffi/kotlin/jniLibs/x86_64/libbreez_sdk_bindings.so android/src/main/jniLibs/x86_64/libbreez_sdk_bindings.so
 	cp ../sdk-bindings/ffi/kotlin/jniLibs/arm64-v8a/libbreez_sdk_bindings.so android/src/main/jniLibs/arm64-v8a/libbreez_sdk_bindings.so
