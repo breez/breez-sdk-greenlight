@@ -13,8 +13,9 @@
 use std::future::Future;
 use std::sync::Arc;
 
+use crate::frb_generated::StreamSink;
+use crate::lnurl::pay::LnUrlPayResult;
 use anyhow::{anyhow, Result};
-use flutter_rust_bridge::StreamSink;
 use log::{Level, LevelFilter, Metadata, Record};
 use once_cell::sync::{Lazy, OnceCell};
 use sdk_common::invoice;
@@ -26,6 +27,7 @@ pub use sdk_common::prelude::{
     LocaleOverrides, LocalizedName, MessageSuccessActionData, Network, Rate, RouteHint,
     RouteHintHop, SuccessActionProcessed, Symbol, UrlSuccessActionData,
 };
+use sdk_common::prelude::{LnUrlPayError, LnUrlWithdrawError};
 use tokio::sync::Mutex;
 
 use crate::breez_services::{self, BreezEvent, BreezServices, EventListener};
@@ -224,6 +226,7 @@ pub struct _MessageSuccessActionData {
 pub struct _UrlSuccessActionData {
     pub description: String,
     pub url: String,
+    pub matches_callback_domain: bool,
 }
 
 #[frb(mirror(LnUrlPayErrorData))]
@@ -323,7 +326,7 @@ pub fn connect(req: ConnectRequest) -> Result<()> {
         match *locked {
             None => {
                 let breez_services =
-                    BreezServices::connect(req, Box::new(BindingEventListener {})).await?;
+                    BreezServices::connect(req, Box::new(BindingEventListener::new())).await?;
 
                 *locked = Some(breez_services);
                 Ok(())
@@ -341,6 +344,7 @@ pub fn is_initialized() -> bool {
     block_on(async { get_breez_services().await.is_ok() })
 }
 
+#[frb(name = "sync")]
 /// See [BreezServices::sync]
 pub fn sync() -> Result<()> {
     block_on(async { get_breez_services().await?.sync().await })
@@ -577,19 +581,19 @@ pub fn receive_payment(req: ReceivePaymentRequest) -> Result<ReceivePaymentRespo
 /*  LNURL API's */
 
 /// See [BreezServices::lnurl_pay]
-pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<crate::lnurl::pay::LnUrlPayResult> {
+pub fn lnurl_pay(req: LnUrlPayRequest) -> Result<LnUrlPayResult> {
     block_on(async { get_breez_services().await?.lnurl_pay(req).await })
-        .map_err(anyhow::Error::new::<crate::LnUrlPayError>)
+        .map_err(anyhow::Error::new::<LnUrlPayError>)
 }
 
 /// See [BreezServices::lnurl_withdraw]
 pub fn lnurl_withdraw(req: LnUrlWithdrawRequest) -> Result<LnUrlWithdrawResult> {
     block_on(async { get_breez_services().await?.lnurl_withdraw(req).await })
-        .map_err(anyhow::Error::new::<crate::LnUrlWithdrawError>)
+        .map_err(anyhow::Error::new::<LnUrlWithdrawError>)
 }
 
 /// See [BreezServices::lnurl_auth]
-pub fn lnurl_auth(req_data: crate::LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
+pub fn lnurl_auth(req_data: LnUrlAuthRequestData) -> Result<LnUrlCallbackStatus> {
     block_on(async { get_breez_services().await?.lnurl_auth(req_data).await })
         .map_err(anyhow::Error::new::<LnUrlAuthError>)
 }
@@ -788,12 +792,18 @@ pub fn generate_diagnostic_data() -> Result<String> {
 
 /*  Binding Related Logic */
 
-struct BindingEventListener;
+pub struct BindingEventListener {}
+
+impl BindingEventListener {
+    fn new() -> Self {
+        Self {}
+    }
+}
 
 impl EventListener for BindingEventListener {
     fn on_event(&self, e: BreezEvent) {
         if let Some(stream) = NOTIFICATION_STREAM.get() {
-            stream.add(e);
+            let _ = stream.add(e);
         }
     }
 }
@@ -817,7 +827,7 @@ impl log::Log for BindingLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            self.log_stream.add(LogEntry {
+            let _ = self.log_stream.add(LogEntry {
                 line: record.args().to_string(),
                 level: record.level().as_str().to_string(),
             });
