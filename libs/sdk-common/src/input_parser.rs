@@ -245,7 +245,13 @@ fn parse_bip353_record(bip353_record: String) -> Option<String> {
 
     let query_params = querystring::querify(query_part);
 
-    get_by_key(&query_params, BOLT12_PREFIX).or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
+    // If the feature is enabled, we also look for the BOLT12 Offer prefix
+    if cfg!(feature = "liquid") {
+        get_by_key(&query_params, BOLT12_PREFIX)
+            .or_else(|| get_by_key(&query_params, LNURL_PAY_PREFIX))
+    } else {
+        get_by_key(&query_params, LNURL_PAY_PREFIX)
+    }
 }
 
 fn is_valid_bip353_record(decoded: &str) -> bool {
