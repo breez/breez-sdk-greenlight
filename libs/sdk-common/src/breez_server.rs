@@ -162,7 +162,7 @@ impl BreezServer {
 
         let boltz_swapper_urls = chain_api_servers
             .into_iter()
-            .filter(|s| s.server_type == "BOLTZ_SWAPPER")
+            .filter(|s| s.server_type == "GENERAL_SWAPPER")
             .map(|s| s.server_base_url)
             .collect();
         trace!("Received boltz_swapper_urls: {boltz_swapper_urls:?}");
