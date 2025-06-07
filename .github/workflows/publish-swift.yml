@@ -80,6 +80,14 @@ jobs:
           rm bindings-swift/Sources/BreezSDK/breez_sdkFFI.h
           rm bindings-swift/Sources/BreezSDK/breez_sdkFFI.modulemap
 
+      - name: Set plist versions
+        working-directory: breez-sdk/libs/sdk-bindings/bindings-swift/breez_sdkFFI.xcframework
+        run: |
+          SHORT_VERSION=$(echo "${{ inputs.package-version }}" | grep -Eo '^(\d+\.\d+\.\d+)')
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $SHORT_VERSION" ios-arm64/breez_sdkFFI.framework/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $SHORT_VERSION" ios-arm64_x86_64-simulator/breez_sdkFFI.framework/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $SHORT_VERSION" macos-arm64_x86_64/breez_sdkFFI.framework/Info.plist
+
       - name: Compress xcframework
         working-directory: breez-sdk/libs/sdk-bindings/bindings-swift
         run: |
