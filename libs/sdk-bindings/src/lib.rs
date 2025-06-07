@@ -12,13 +12,14 @@ use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, AesSuccessActionDataResult,
     BackupFailedData, BackupStatus, BitcoinAddressData, BreezEvent, BreezServices,
-    BuyBitcoinProvider, BuyBitcoinRequest, BuyBitcoinResponse, ChannelState, CheckMessageRequest,
-    CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
-    ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
-    GreenlightCredentials, GreenlightDeviceCredentials, GreenlightNodeConfig, HealthCheckStatus,
-    InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, ListSwapsRequest,
-    LnPaymentDetails, LnUrlAuthError, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
-    LnUrlPayError, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
+    BuyBitcoinLimitsRequest, BuyBitcoinLimitsResponse, BuyBitcoinProvider, BuyBitcoinRequest,
+    BuyBitcoinResponse, ChannelState, CheckMessageRequest, CheckMessageResponse,
+    ClosedChannelPaymentDetails, Config, ConfigureNodeRequest, ConnectRequest, CurrencyInfo,
+    EnvironmentType, EventListener, FeeratePreset, FiatCurrency, GreenlightCredentials,
+    GreenlightDeviceCredentials, GreenlightNodeConfig, HealthCheckStatus, InputType,
+    InvoicePaidDetails, LNInvoice, ListPaymentsRequest, ListSwapsRequest, LnPaymentDetails,
+    LnUrlAuthError, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData, LnUrlPayError,
+    LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
     LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
     LocaleOverrides, LocalizedName, LogEntry, LogStream, LspInformation, MessageSuccessActionData,
     MetadataFilter, MetadataItem, Network, NodeConfig, NodeCredentials, NodeState,
@@ -369,6 +370,13 @@ impl BlockingBreezServices {
         req: BuyBitcoinRequest,
     ) -> Result<BuyBitcoinResponse, ReceiveOnchainError> {
         rt().block_on(self.breez_services.buy_bitcoin(req))
+    }
+
+    pub fn buy_bitcoin_limits(
+        &self,
+        req: BuyBitcoinLimitsRequest,
+    ) -> Result<BuyBitcoinLimitsResponse> {
+        rt().block_on(self.breez_services.buy_bitcoin_limits(req))
     }
 
     pub fn prepare_redeem_onchain_funds(
