@@ -14,7 +14,7 @@ uniffi-25 = []
 uniffi-28 = []
 
 [dependencies]
-flutter_rust_bridge = "=2.10.0"
+flutter_rust_bridge = "=2.9.0"
 aes = { workspace = true }
 anyhow = { workspace = true }
 hex = { workspace = true }
