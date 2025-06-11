@@ -461,7 +461,7 @@ fn prepend_if_missing(prefix: &str, input: &str) -> String {
 /// - https://<domain>/.well-known/lnurlp/<username> for clearnet domains
 /// - http://<domain>/.well-known/lnurlp/<username> for onion domains
 ///
-/// Valid characters for the username are `a-z0-9-_.`, however the function
+/// Valid characters for the username are `a-z0-9-_.+`, however the function
 /// tolerates capital letters by downcasing the address.
 ///
 /// The result is a tuple of (domain, LNURL-pay endpoint, downcased lightning address)
@@ -482,7 +482,7 @@ fn ln_address_decode(ln_address: &str) -> Result<(String, String, String)> {
 
         if !user
             .chars()
-            .all(|c| c.is_alphanumeric() || ['-', '_', '.'].contains(&c))
+            .all(|c| c.is_alphanumeric() || ['-', '_', '.', '+'].contains(&c))
         {
             return Err(anyhow!("Invalid username"));
         }
@@ -1813,7 +1813,8 @@ pub(crate) mod tests {
 
         // Valid chars are a-z0-9-_.
         assert!(lnurl_decode("user.testy_test1@domain.com").is_ok());
-        assert!(lnurl_decode("user+1@domain.com").is_err());
+        assert!(lnurl_decode("user+1@domain.com").is_ok());
+        assert!(lnurl_decode("user~@domain.com").is_err());
 
         Ok(())
     }
