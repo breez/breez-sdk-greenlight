@@ -70,7 +70,7 @@ jobs:
   
   build-bindings:
     name: Test sdk-bindings
-    runs-on: macOS-latest
+    runs-on: ubuntu-latest
     env:
       DOTNET_INSTALL_DIR: "${{ github.workspace }}/dotnet"
     steps:
@@ -92,42 +92,6 @@ jobs:
           version: "27.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup python
-        uses: actions/setup-python@v5 
-        with:
-          python-version: '3.11'
-
-      - name: Build sdk-bindings
-        working-directory: libs/sdk-bindings
-        run: cargo build
-
-      - name: Run sdk-bindings tests
-        run: |
-          curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
-          export CLASSPATH=$(pwd)/jna-5.12.1.jar;
-          cd libs/sdk-bindings
-          cargo test
-
-  build-bindings-uniffi-25:
-    name: Test bindings Uniffi 0.25
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: -uniffi-25
-          workspaces: |
-            lib -> target
-            cli -> target
-
-      - name: Install Protoc
-        uses: arduino/setup-protoc@v3
-        with:
-          version: "27.2"
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup dotnet
         uses: actions/setup-dotnet@v3
         with:
@@ -138,29 +102,37 @@ jobs:
         with:
           go-version: '1.19.9'
 
+      - name: Setup python
+        uses: actions/setup-python@v5 
+        with:
+          python-version: '3.11'
+
       - name: Build sdk-bindings
         working-directory: libs/sdk-bindings
-        run: cargo build --no-default-features --features uniffi-25
+        run: cargo build
 
       - name: Build C# bindings
         working-directory: libs/sdk-bindings       
         run: |
-          cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.8.0+v0.25.0
+          cargo install uniffi-bindgen-cs --git https://github.com/NordSecurity/uniffi-bindgen-cs --tag v0.9.1+v0.28.3
           uniffi-bindgen-cs src/breez_sdk.udl -o ffi/csharp -c ./uniffi.toml
           cp ../target/debug/libbreez_sdk_bindings.so ffi/csharp
 
       - name: Build golang bindings
         working-directory: libs/sdk-bindings       
         run: |
-          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.2.1+v0.25.0
+          cargo install uniffi-bindgen-go --git https://github.com/NordSecurity/uniffi-bindgen-go --tag v0.3.0+v0.28.3
           uniffi-bindgen-go src/breez_sdk.udl -o ffi/golang -c ./uniffi.toml
           cp ../target/debug/libbreez_sdk_bindings.so ffi/golang
           cp -r ffi/golang/breez_sdk tests/bindings/golang/
 
-      - name: Run bindings tests
-        working-directory: libs/sdk-bindings       
-        run: cargo test --no-default-features --features uniffi-25
-          
+      - name: Run sdk-bindings tests
+        run: |
+          curl -o jna-5.12.1.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar
+          export CLASSPATH=$(pwd)/jna-5.12.1.jar;
+          cd libs/sdk-bindings
+          cargo test
+
   build-cli:
     name: Test sdk-cli
     runs-on: ubuntu-latest

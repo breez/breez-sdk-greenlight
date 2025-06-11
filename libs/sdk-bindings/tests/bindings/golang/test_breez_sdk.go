@@ -24,10 +24,10 @@ func main() {
 
 	breez_sdk.SetLogStream(breezListener)
 
-	seed, err := breez_sdk.MnemonicToSeed("repeat hawk combine screen network rhythm ritual social neither casual volcano powder")
+	seed, sdkErr := breez_sdk.MnemonicToSeed("repeat hawk combine screen network rhythm ritual social neither casual volcano powder")
 
-	if err != nil {
-		log.Fatalf("MnemonicToSeed failed: %#v", err)
+	if sdkErr != nil {
+		log.Fatalf("MnemonicToSeed failed: %#v", sdkErr)
 	}
 
 	config := breez_sdk.DefaultConfig(breez_sdk.EnvironmentTypeProduction, "code", breez_sdk.NodeConfigGreenlight{
@@ -37,16 +37,16 @@ func main() {
 		},
 	})
 	connectRequest := breez_sdk.ConnectRequest{Config: config, Seed: seed}
-	sdkServices, err := breez_sdk.Connect(connectRequest, breezListener)
+	sdkServices, connectErr := breez_sdk.Connect(connectRequest, breezListener)
 
-	if err != nil {
-		log.Fatalf("Connect failed: %#v", err)
+	if connectErr != nil {
+		log.Fatalf("Connect failed: %#v", connectErr)
 	}
 
-	nodeInfo, err := sdkServices.NodeInfo()
+	nodeInfo, sdkErr := sdkServices.NodeInfo()
 
-	if err != nil {
-		log.Fatalf("NodeInfo failed: %#v", err)
+	if sdkErr != nil {
+		log.Fatalf("NodeInfo failed: %#v", sdkErr)
 	}
 
 	log.Print(nodeInfo.Id)
