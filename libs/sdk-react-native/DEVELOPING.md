@@ -81,8 +81,10 @@ To use the locally built bindings instead of integrating them remotely, make the
 		- Rename `breez_sdk.podspec` to `breez_sdk.podspec.prod`
 		- Rename `BreezSDK.podspec.dev` to `BreezSDK.podspec`
 - For Android:
-	- Comment out the following line from the dependencies section in `libs/sdk-react-native/android/build.gradle`:
+	- Comment the following line from the dependencies section in `libs/sdk-react-native/android/build.gradle`:
 		- `implementation("com.github.breez:breez-sdk:${getVersionFromNpmPackage()}") { exclude group:"net.java.dev.jna" }`
+	- Uncomment the following line from the dependencies section in `libs/sdk-react-native/android/build.gradle`:
+		- `implementation "org.jetbrains.kotlinx:atomicfu:0.23.1"`
 
 Reinstall the dependencies in the example project and run it.
 It will now use the locally built bindings.

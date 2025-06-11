@@ -24,7 +24,6 @@ import {
 } from "@breeztech/react-native-breez-sdk"
 import BuildConfig from "react-native-build-config"
 import { FileLogger } from "react-native-file-logger"
-import { generateMnemonic } from "@dreson4/react-native-quick-bip39"
 import DebugLine from "../components/DebugLine"
 import { Log } from "../utils/logging"
 import { obfuscateString } from "../utils/security"
@@ -110,7 +109,7 @@ const HomeScreen = ({ navigation }) => {
                 let mnemonic = await getSecureItem(MNEMONIC_STORE)
 
                 if (mnemonic == null) {
-                    mnemonic = generateMnemonic(256)
+                    mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
                     setSecureItem(MNEMONIC_STORE, mnemonic)
                 }
 

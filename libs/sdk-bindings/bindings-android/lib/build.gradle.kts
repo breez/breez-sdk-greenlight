@@ -1,8 +1,8 @@
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android") version "1.8.20"
+    id("org.jetbrains.kotlin.android") version "1.9.21"
     id("maven-publish")
-    kotlin("plugin.serialization") version "1.8.20"
+    kotlin("plugin.serialization") version "1.9.21"
 }
 
 repositories {
@@ -11,7 +11,8 @@ repositories {
 }
 
 android {
-    compileSdk = 33
+    namespace = "technology.breez"
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 24
@@ -38,10 +39,12 @@ android {
 }
 
 dependencies {
+    implementation("com.squareup.okio:okio:3.6.0")
     implementation("net.java.dev.jna:jna:5.14.0@aar")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")
 }
 
 val libraryVersion: String by project
