@@ -21,35 +21,14 @@ on:
         required: false
         type: boolean
         default: false
-      uniffi-25:
-        description: 'If true, builds additional bindings for Uniffi 0.25'
-        required: false
-        type: boolean
-        default: false
 
 jobs:
-  setup:
-    name: Setup
-    runs-on: ubuntu-latest
-    steps:
-      - id: set-matrix
-        run: |
-          if [ ${{ inputs.uniffi-25 }} == true ]; then
-            echo "::set-output name=matrix::['', '-uniffi-25']"
-          else
-            echo "::set-output name=matrix::['']"
-          fi
-    outputs:
-      uniffi-matrix: ${{ steps.set-matrix.outputs.matrix }}
-
   build:
     if: ${{ !inputs.use-dummy-binaries }}
     runs-on: macOS-latest
-    name: build ${{ matrix.target }}${{ matrix.uniffi }}
-    needs: setup
+    name: build ${{ matrix.target }}
     strategy:
       matrix:
-        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
         target: [
           aarch64-apple-ios,
           x86_64-apple-ios,
@@ -76,7 +55,6 @@ jobs:
 
     - uses: Swatinem/rust-cache@v2
       with:
-        key: ${{ matrix.uniffi }}
         workspaces: libs
 
     - name: Install xcode
@@ -85,34 +63,21 @@ jobs:
         xcode-version: latest-stable
 
     - name: Build sdk-bindings
-      if: matrix.uniffi != '-uniffi-25'
       working-directory: libs/sdk-bindings
       env:
         IPHONEOS_DEPLOYMENT_TARGET: 12.0
       run: cargo build --release --target ${{ matrix.target }}
 
-    - name: Build sdk-bindings Uniffi 0.25
-      if: matrix.uniffi == '-uniffi-25'
-      working-directory: libs/sdk-bindings
-      env:
-        IPHONEOS_DEPLOYMENT_TARGET: 12.0
-      run: cargo build --no-default-features --features=uniffi-25 --release --target ${{ matrix.target }}
-    
     - name: Archive release
       uses: actions/upload-artifact@v4
       with:
-        name: sdk-bindings-${{ matrix.target }}${{ matrix.uniffi }}
+        name: sdk-bindings-${{ matrix.target }}
         path: libs/target/${{ matrix.target }}/release/libbreez_sdk_bindings.a
 
   merge:
     runs-on: macOS-latest
-    needs:
-    - setup
-    - build
-    name: build ios-universal${{ matrix.uniffi }}
-    strategy:
-      matrix:
-        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
+    needs: build
+    name: build ios-universal
     steps:
     - uses: actions/download-artifact@v4
       with:
@@ -121,12 +86,12 @@ jobs:
 
     - uses: actions/download-artifact@v4
       with:
-        name: sdk-bindings-x86_64-apple-ios${{ matrix.uniffi }}
+        name: sdk-bindings-x86_64-apple-ios
         path: x86_64-apple-ios
 
     - uses: actions/download-artifact@v4
       with:
-        name: sdk-bindings-aarch64-apple-ios-sim${{ matrix.uniffi }}
+        name: sdk-bindings-aarch64-apple-ios-sim
         path: aarch64-apple-ios-sim
 
     - name: Build iOS universal
@@ -141,25 +106,23 @@ jobs:
     - name: Archive release
       uses: actions/upload-artifact@v4
       with:
-        name: sdk-bindings-ios-universal${{ matrix.uniffi }}
+        name: sdk-bindings-ios-universal
         path: |
           ios-universal/libbreez_sdk_bindings.a
 
     - name: Archive release
       uses: actions/upload-artifact@v4
       with:
-        name: sdk-bindings-ios-universal-sim${{ matrix.uniffi }}
+        name: sdk-bindings-ios-universal-sim
         path: |
           ios-universal-sim/libbreez_sdk_bindings.a
 
   build-dummies:
     if: ${{ inputs.use-dummy-binaries }}
     runs-on: ubuntu-latest
-    name: build dummies ${{ matrix.target }}${{ matrix.uniffi }}
-    needs: setup
+    name: build dummies ${{ matrix.target }}
     strategy:
       matrix:
-        uniffi: ${{ fromJson(needs.setup.outputs.uniffi-matrix) }}
         target: [
           aarch64-apple-ios,
           x86_64-apple-ios,
@@ -175,5 +138,5 @@ jobs:
       - name: Upload dummy ios ${{ matrix.target }} artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sdk-bindings-${{ matrix.target }}${{ matrix.uniffi }}
+          name: sdk-bindings-${{ matrix.target }}
           path: ./*

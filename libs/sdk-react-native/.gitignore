@@ -68,7 +68,7 @@ android/keystores/debug.keystore
 lib/
 
 # bindings (used for local development only)
-android/src/main/java/com/breezsdk/breez_sdk.kt
+android/src/main/java/com/breezsdk/breez_sdk.*.kt
 android/src/main/jniLibs
 ios/include/*
 ios/libs/*
