@@ -51,7 +51,7 @@ strum_macros = { workspace = true }
 tempfile = "3"
 thiserror = { workspace = true }
 const_format = "0.2"
-miniz_oxide = "0.7.1"
+miniz_oxide = "0.8.1-rc1"
 tokio-stream = "0.1.14"
 serde_with = "3.3.0"
 regex = { workspace = true }
