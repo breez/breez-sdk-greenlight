@@ -32,3 +32,9 @@ impl From<Network> for bitcoin::network::constants::Network {
         }
     }
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct BoltzSwapperUrls {
+    pub boltz_url: String,
+    pub proxy_url: String,
+}
