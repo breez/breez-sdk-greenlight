@@ -1988,11 +1988,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   BuyBitcoinRequest dco_decode_buy_bitcoin_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3) throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 4) throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return BuyBitcoinRequest(
       provider: dco_decode_buy_bitcoin_provider(arr[0]),
       openingFeeParams: dco_decode_opt_box_autoadd_opening_fee_params(arr[1]),
       redirectUrl: dco_decode_opt_String(arr[2]),
+      fiatCurrencyCode: dco_decode_opt_String(arr[3]),
     );
   }
 
@@ -3934,10 +3935,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     var var_provider = sse_decode_buy_bitcoin_provider(deserializer);
     var var_openingFeeParams = sse_decode_opt_box_autoadd_opening_fee_params(deserializer);
     var var_redirectUrl = sse_decode_opt_String(deserializer);
+    var var_fiatCurrencyCode = sse_decode_opt_String(deserializer);
     return BuyBitcoinRequest(
       provider: var_provider,
       openingFeeParams: var_openingFeeParams,
       redirectUrl: var_redirectUrl,
+      fiatCurrencyCode: var_fiatCurrencyCode,
     );
   }
 
@@ -6332,6 +6335,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_buy_bitcoin_provider(self.provider, serializer);
     sse_encode_opt_box_autoadd_opening_fee_params(self.openingFeeParams, serializer);
     sse_encode_opt_String(self.redirectUrl, serializer);
+    sse_encode_opt_String(self.fiatCurrencyCode, serializer);
   }
 
   @protected

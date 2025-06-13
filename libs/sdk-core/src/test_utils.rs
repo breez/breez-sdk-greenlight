@@ -715,6 +715,7 @@ impl BuyBitcoinApi for MockBuyBitcoinService {
         _provider: BuyBitcoinProvider,
         swap_info: &SwapInfo,
         _redirect_url: Option<String>,
+        _fiat_currency_code: Option<String>,
     ) -> Result<String> {
         Ok(format!(
             "https://mock.moonpay?wa={}&ma={}",

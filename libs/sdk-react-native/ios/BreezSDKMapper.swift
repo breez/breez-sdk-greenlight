@@ -186,8 +186,15 @@ enum BreezSDKMapper {
             }
             redirectUrl = redirectUrlTmp
         }
+        var fiatCurrencyCode: String?
+        if hasNonNilKey(data: buyBitcoinRequest, key: "fiatCurrencyCode") {
+            guard let fiatCurrencyCodeTmp = buyBitcoinRequest["fiatCurrencyCode"] as? String else {
+                throw SdkError.Generic(message: errUnexpectedValue(fieldName: "fiatCurrencyCode"))
+            }
+            fiatCurrencyCode = fiatCurrencyCodeTmp
+        }
 
-        return BuyBitcoinRequest(provider: provider, openingFeeParams: openingFeeParams, redirectUrl: redirectUrl)
+        return BuyBitcoinRequest(provider: provider, openingFeeParams: openingFeeParams, redirectUrl: redirectUrl, fiatCurrencyCode: fiatCurrencyCode)
     }
 
     static func dictionaryOf(buyBitcoinRequest: BuyBitcoinRequest) -> [String: Any?] {
@@ -195,6 +202,7 @@ enum BreezSDKMapper {
             "provider": valueOf(buyBitcoinProvider: buyBitcoinRequest.provider),
             "openingFeeParams": buyBitcoinRequest.openingFeeParams == nil ? nil : dictionaryOf(openingFeeParams: buyBitcoinRequest.openingFeeParams!),
             "redirectUrl": buyBitcoinRequest.redirectUrl == nil ? nil : buyBitcoinRequest.redirectUrl,
+            "fiatCurrencyCode": buyBitcoinRequest.fiatCurrencyCode == nil ? nil : buyBitcoinRequest.fiatCurrencyCode,
         ]
     }
 

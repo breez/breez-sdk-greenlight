@@ -502,6 +502,7 @@ dictionary BuyBitcoinRequest {
     BuyBitcoinProvider provider;
     OpeningFeeParams? opening_fee_params = null;
     string? redirect_url = null;
+    string? fiat_currency_code = null;
 };
 
 dictionary BuyBitcoinResponse {

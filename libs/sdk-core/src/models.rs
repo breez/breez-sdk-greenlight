@@ -976,6 +976,8 @@ pub struct BuyBitcoinRequest {
     ///
     /// For Moonpay, see <https://dev.moonpay.com/docs/on-ramp-configure-user-journey-params>
     pub redirect_url: Option<String>,
+    /// Fiat currency used for the transaction, defaults to USD
+    pub fiat_currency_code: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
