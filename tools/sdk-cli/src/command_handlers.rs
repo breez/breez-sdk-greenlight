@@ -6,12 +6,12 @@ use std::time::SystemTime;
 use anyhow::{anyhow, ensure, Context, Error, Result};
 use breez_sdk_core::InputType::{LnUrlAuth, LnUrlPay, LnUrlWithdraw};
 use breez_sdk_core::{
-    parse, BreezEvent, BreezServices, BuyBitcoinRequest, CheckMessageRequest, ConnectRequest,
-    EventListener, GreenlightCredentials, ListPaymentsRequest, ListSwapsRequest, LnUrlPayRequest,
-    LnUrlWithdrawRequest, MetadataFilter, PayOnchainRequest, PrepareOnchainPaymentRequest,
-    PrepareRedeemOnchainFundsRequest, PrepareRefundRequest, ReceiveOnchainRequest,
-    ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest, ReportIssueRequest,
-    ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendPaymentRequest,
+    parse, BreezEvent, BreezServices, BuyBitcoinLimitsRequest, BuyBitcoinRequest,
+    CheckMessageRequest, ConnectRequest, EventListener, GreenlightCredentials, ListPaymentsRequest,
+    ListSwapsRequest, LnUrlPayRequest, LnUrlWithdrawRequest, MetadataFilter, PayOnchainRequest,
+    PrepareOnchainPaymentRequest, PrepareRedeemOnchainFundsRequest, PrepareRefundRequest,
+    ReceiveOnchainRequest, ReceivePaymentRequest, RedeemOnchainFundsRequest, RefundRequest,
+    ReportIssueRequest, ReportPaymentFailureDetails, ReverseSwapFeesRequest, SendPaymentRequest,
     SendSpontaneousPaymentRequest, SignMessageRequest, StaticBackupRequest, SwapAmountType,
 };
 use breez_sdk_core::{GreenlightNodeConfig, NodeConfig};
@@ -604,6 +604,26 @@ impl CommandHandler {
                     })
                     .await?;
                 Ok(format!("Here your {provider:?} url: {}", res.url))
+            }
+            Commands::BuyBitcoinLimits {
+                provider,
+                fiat_currency_code,
+            } => {
+                let currency = fiat_currency_code
+                    .clone()
+                    .unwrap_or_else(|| "USD".to_string());
+                let res = self
+                    .sdk()?
+                    .buy_bitcoin_limits(BuyBitcoinLimitsRequest {
+                        provider: provider.clone(),
+                        fiat_currency_code,
+                    })
+                    .await?;
+
+                Ok(format!(
+                    "Buy Bitcoin limits for {} using {:?}:\n  Minimum: {} sats\n  Maximum: {} sats",
+                    currency, provider, res.min_buy_amount_sat, res.max_buy_amount_sat
+                ))
             }
             Commands::Backup {} => {
                 self.sdk()?.backup().await?;
