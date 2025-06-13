@@ -120,7 +120,7 @@ fun asBitcoinAddressData(bitcoinAddressData: ReadableMap): BitcoinAddressData? {
 fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap =
     readableMapOf(
         "address" to bitcoinAddressData.address,
-        "network" to bitcoinAddressData.network.name.lowercase(),
+        "network" to snakeToLowerCamelCase(bitcoinAddressData.network.name),
         "amountSat" to bitcoinAddressData.amountSat,
         "label" to bitcoinAddressData.label,
         "message" to bitcoinAddressData.message,
@@ -162,7 +162,7 @@ fun asBuyBitcoinRequest(buyBitcoinRequest: ReadableMap): BuyBitcoinRequest? {
 
 fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap =
     readableMapOf(
-        "provider" to buyBitcoinRequest.provider.name.lowercase(),
+        "provider" to snakeToLowerCamelCase(buyBitcoinRequest.provider.name),
         "openingFeeParams" to buyBitcoinRequest.openingFeeParams?.let { readableMapOf(it) },
         "redirectUrl" to buyBitcoinRequest.redirectUrl,
     )
@@ -321,7 +321,7 @@ fun asClosedChannelPaymentDetails(closedChannelPaymentDetails: ReadableMap): Clo
 
 fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): ReadableMap =
     readableMapOf(
-        "state" to closedChannelPaymentDetails.state.name.lowercase(),
+        "state" to snakeToLowerCamelCase(closedChannelPaymentDetails.state.name),
         "fundingTxid" to closedChannelPaymentDetails.fundingTxid,
         "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
         "closingTxid" to closedChannelPaymentDetails.closingTxid,
@@ -387,7 +387,7 @@ fun readableMapOf(config: Config): ReadableMap =
         "chainnotifierUrl" to config.chainnotifierUrl,
         "mempoolspaceUrl" to config.mempoolspaceUrl,
         "workingDir" to config.workingDir,
-        "network" to config.network.name.lowercase(),
+        "network" to snakeToLowerCamelCase(config.network.name),
         "paymentTimeoutSec" to config.paymentTimeoutSec,
         "defaultLspId" to config.defaultLspId,
         "apiKey" to config.apiKey,
@@ -745,7 +745,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
 fun readableMapOf(lnInvoice: LnInvoice): ReadableMap =
     readableMapOf(
         "bolt11" to lnInvoice.bolt11,
-        "network" to lnInvoice.network.name.lowercase(),
+        "network" to snakeToLowerCamelCase(lnInvoice.network.name),
         "payeePubkey" to lnInvoice.payeePubkey,
         "paymentHash" to lnInvoice.paymentHash,
         "description" to lnInvoice.description,
@@ -1986,11 +1986,11 @@ fun asPayment(payment: ReadableMap): Payment? {
 fun readableMapOf(payment: Payment): ReadableMap =
     readableMapOf(
         "id" to payment.id,
-        "paymentType" to payment.paymentType.name.lowercase(),
+        "paymentType" to snakeToLowerCamelCase(payment.paymentType.name),
         "paymentTime" to payment.paymentTime,
         "amountMsat" to payment.amountMsat,
         "feeMsat" to payment.feeMsat,
-        "status" to payment.status.name.lowercase(),
+        "status" to snakeToLowerCamelCase(payment.status.name),
         "error" to payment.error,
         "description" to payment.description,
         "details" to readableMapOf(payment.details),
@@ -2066,7 +2066,7 @@ fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): P
 fun readableMapOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest): ReadableMap =
     readableMapOf(
         "amountSat" to prepareOnchainPaymentRequest.amountSat,
-        "amountType" to prepareOnchainPaymentRequest.amountType.name.lowercase(),
+        "amountType" to snakeToLowerCamelCase(prepareOnchainPaymentRequest.amountType.name),
         "claimTxFeerate" to prepareOnchainPaymentRequest.claimTxFeerate,
     )
 
@@ -2744,7 +2744,7 @@ fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap =
         "lockupTxid" to reverseSwapInfo.lockupTxid,
         "claimTxid" to reverseSwapInfo.claimTxid,
         "onchainAmountSat" to reverseSwapInfo.onchainAmountSat,
-        "status" to reverseSwapInfo.status.name.lowercase(),
+        "status" to snakeToLowerCamelCase(reverseSwapInfo.status.name),
     )
 
 fun asReverseSwapInfoList(arr: ReadableArray): List<ReverseSwapInfo> {
@@ -3020,7 +3020,7 @@ fun asServiceHealthCheckResponse(serviceHealthCheckResponse: ReadableMap): Servi
 
 fun readableMapOf(serviceHealthCheckResponse: ServiceHealthCheckResponse): ReadableMap =
     readableMapOf(
-        "status" to serviceHealthCheckResponse.status.name.lowercase(),
+        "status" to snakeToLowerCamelCase(serviceHealthCheckResponse.status.name),
     )
 
 fun asServiceHealthCheckResponseList(arr: ReadableArray): List<ServiceHealthCheckResponse> {
@@ -3265,7 +3265,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap =
         "unconfirmedSats" to swapInfo.unconfirmedSats,
         "confirmedSats" to swapInfo.confirmedSats,
         "totalIncomingTxs" to swapInfo.totalIncomingTxs,
-        "status" to swapInfo.status.name.lowercase(),
+        "status" to snakeToLowerCamelCase(swapInfo.status.name),
         "refundTxIds" to readableArrayOf(swapInfo.refundTxIds),
         "unconfirmedTxIds" to readableArrayOf(swapInfo.unconfirmedTxIds),
         "confirmedTxIds" to readableArrayOf(swapInfo.confirmedTxIds),
@@ -4172,14 +4172,14 @@ fun pushToArray(
         is MetadataFilter -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
-        is PaymentTypeFilter -> array.pushString(value.name.lowercase())
+        is PaymentTypeFilter -> array.pushString(snakeToLowerCamelCase(value.name))
         is Rate -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
         is RouteHintHop -> array.pushMap(readableMapOf(value))
         is String -> array.pushString(value)
         is SwapInfo -> array.pushMap(readableMapOf(value))
-        is SwapStatus -> array.pushString(value.name.lowercase())
+        is SwapStatus -> array.pushString(snakeToLowerCamelCase(value.name))
         is TlvEntry -> array.pushMap(readableMapOf(value))
         is UByte -> array.pushInt(value.toInt())
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
@@ -4256,7 +4256,14 @@ fun errUnexpectedType(typeName: String): String = "Unexpected type $typeName"
 
 fun errUnexpectedValue(fieldName: String): String = "Unexpected value for optional field $fieldName"
 
-fun camelToUpperSnakeCase(str: String): String {
-    val pattern = "(?<=.)[A-Z]".toRegex()
-    return str.replace(pattern, "_$0").uppercase()
-}
+fun camelToUpperSnakeCase(str: String): String =
+    "(?<=.)[A-Z]"
+        .toRegex()
+        .replace(str) {
+            "_${it.value}"
+        }.uppercase()
+
+fun snakeToLowerCamelCase(str: String): String =
+    "_[a-zA-Z]".toRegex().replace(str.lowercase()) {
+        it.value.replace("_", "").uppercase()
+    }
