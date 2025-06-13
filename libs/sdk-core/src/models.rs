@@ -976,27 +976,14 @@ pub struct BuyBitcoinRequest {
     ///
     /// For Moonpay, see <https://dev.moonpay.com/docs/on-ramp-configure-user-journey-params>
     pub redirect_url: Option<String>,
+    /// Fiat currency used for the transaction, defaults to USD
+    pub fiat_currency_code: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BuyBitcoinResponse {
     pub url: String,
     pub opening_fee_params: Option<OpeningFeeParams>,
-}
-
-#[derive(Serialize)]
-pub struct BuyBitcoinLimitsRequest {
-    pub provider: BuyBitcoinProvider,
-    /// Fiat currency used for the transaction, defaults to USD
-    pub fiat_currency_code: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct BuyBitcoinLimitsResponse {
-    /// Minimum transaction buy amount in sats for given fiat currency
-    pub min_buy_amount_sat: u64,
-    /// Maximum transaction buy amount in sats for given fiat currency
-    pub max_buy_amount_sat: u64,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

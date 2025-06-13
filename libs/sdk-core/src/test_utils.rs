@@ -715,20 +715,13 @@ impl BuyBitcoinApi for MockBuyBitcoinService {
         _provider: BuyBitcoinProvider,
         swap_info: &SwapInfo,
         _redirect_url: Option<String>,
+        _fiat_currency_code: Option<String>,
     ) -> Result<String> {
         Ok(format!(
             "https://mock.moonpay?wa={}&ma={}",
             swap_info.bitcoin_address.as_str(),
             format!("{:.8}", swap_info.max_allowed_deposit as f64 / 100000000.0).as_str(),
         ))
-    }
-
-    async fn buy_bitcoin_limits(
-        &self,
-        _provider: BuyBitcoinProvider,
-        _fiat_currency_code: Option<String>,
-    ) -> Result<(u64, u64)> {
-        Ok((15_000, 25_000_000))
     }
 }
 

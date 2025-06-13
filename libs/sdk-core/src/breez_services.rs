@@ -1449,30 +1449,17 @@ impl BreezServices {
             .await?;
         let url = self
             .buy_bitcoin_api
-            .buy_bitcoin(req.provider, &swap_info, req.redirect_url)
+            .buy_bitcoin(
+                req.provider,
+                &swap_info,
+                req.redirect_url,
+                req.fiat_currency_code,
+            )
             .await?;
 
         Ok(BuyBitcoinResponse {
             url,
             opening_fee_params: swap_info.channel_opening_fees,
-        })
-    }
-
-    /// Fetches the minimum and maximum buy limits for Bitcoin transactions from a third party provider.
-    ///
-    /// The limits are returned in satoshis for the specified fiat currency (defaults to USD).
-    pub async fn buy_bitcoin_limits(
-        &self,
-        req: BuyBitcoinLimitsRequest,
-    ) -> Result<BuyBitcoinLimitsResponse> {
-        let (min_buy_amount_sat, max_buy_amount_sat) = self
-            .buy_bitcoin_api
-            .buy_bitcoin_limits(req.provider, req.fiat_currency_code)
-            .await?;
-
-        Ok(BuyBitcoinLimitsResponse {
-            min_buy_amount_sat,
-            max_buy_amount_sat,
         })
     }
 
@@ -3420,6 +3407,7 @@ pub(crate) mod tests {
                 provider: BuyBitcoinProvider::Moonpay,
                 opening_fee_params: None,
                 redirect_url: None,
+                fiat_currency_code: None,
             })
             .await?
             .url;

@@ -13,14 +13,8 @@ pub(crate) trait BuyBitcoinApi: Send + Sync {
         provider: BuyBitcoinProvider,
         swap_info: &SwapInfo,
         redirect_url: Option<String>,
-    ) -> Result<String>;
-
-    /// Fetches the minimum and maximum buy limits
-    async fn buy_bitcoin_limits(
-        &self,
-        provider: BuyBitcoinProvider,
         fiat_currency_code: Option<String>,
-    ) -> Result<(u64, u64)>;
+    ) -> Result<String>;
 }
 
 pub(crate) struct BuyBitcoinService {
@@ -41,6 +35,7 @@ impl BuyBitcoinApi for BuyBitcoinService {
         provider: BuyBitcoinProvider,
         swap_info: &SwapInfo,
         redirect_url: Option<String>,
+        fiat_currency_code: Option<String>,
     ) -> Result<String> {
         match provider {
             BuyBitcoinProvider::Moonpay => {
@@ -50,21 +45,8 @@ impl BuyBitcoinApi for BuyBitcoinService {
                         None,
                         Some(swap_info.max_allowed_deposit as u64),
                         redirect_url,
+                        fiat_currency_code,
                     )
-                    .await
-            }
-        }
-    }
-
-    async fn buy_bitcoin_limits(
-        &self,
-        provider: BuyBitcoinProvider,
-        fiat_currency_code: Option<String>,
-    ) -> Result<(u64, u64)> {
-        match provider {
-            BuyBitcoinProvider::Moonpay => {
-                self.moonpay_provider
-                    .buy_bitcoin_limits(fiat_currency_code)
                     .await
             }
         }
