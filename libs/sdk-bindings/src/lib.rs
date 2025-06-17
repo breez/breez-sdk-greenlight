@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use breez_sdk_core::lnurl::pay::{LnUrlPayResult, LnUrlPaySuccessData};
+use breez_sdk_core::logger::{get_filter_level, init_env_logger};
 use breez_sdk_core::{
     error::*, mnemonic_to_seed as sdk_mnemonic_to_seed, parse as sdk_parse_input,
     parse_invoice as sdk_parse_invoice, AesSuccessActionDataDecrypted, AesSuccessActionDataResult,
@@ -10,7 +11,7 @@ use breez_sdk_core::{
     CheckMessageResponse, ClosedChannelPaymentDetails, Config, ConfigureNodeRequest,
     ConnectRequest, CurrencyInfo, EnvironmentType, EventListener, FeeratePreset, FiatCurrency,
     GreenlightCredentials, GreenlightDeviceCredentials, GreenlightNodeConfig, HealthCheckStatus,
-    InputType, InvoicePaidDetails, LNInvoice, ListPaymentsRequest, ListSwapsRequest,
+    InputType, InvoicePaidDetails, LNInvoice, LevelFilter, ListPaymentsRequest, ListSwapsRequest,
     LnPaymentDetails, LnUrlAuthError, LnUrlAuthRequestData, LnUrlCallbackStatus, LnUrlErrorData,
     LnUrlPayError, LnUrlPayErrorData, LnUrlPayRequest, LnUrlPayRequestData, LnUrlWithdrawError,
     LnUrlWithdrawRequest, LnUrlWithdrawRequestData, LnUrlWithdrawResult, LnUrlWithdrawSuccessData,
@@ -30,35 +31,69 @@ use breez_sdk_core::{
     SuccessActionProcessed, SwapAmountType, SwapInfo, SwapStatus, Symbol, TlvEntry,
     UnspentTransactionOutput, UrlSuccessActionData,
 };
-use log::{Level, LevelFilter, Metadata, Record};
-use once_cell::sync::{Lazy, OnceCell};
+use env_logger::Target;
+use log::{
+    error, max_level, set_boxed_logger, set_max_level, Log, Metadata, Record, STATIC_MAX_LEVEL,
+};
+use once_cell::sync::Lazy;
+use std::sync::Once;
 
 static RT: Lazy<tokio::runtime::Runtime> = Lazy::new(|| tokio::runtime::Runtime::new().unwrap());
-static LOG_INIT: OnceCell<bool> = OnceCell::new();
+static INIT_UNIFFI_LOGGER: Once = Once::new();
 
-struct BindingLogger {
+pub fn init_uniffi_logger(log_stream: Box<dyn LogStream>, filter_level: Option<LevelFilter>) {
+    INIT_UNIFFI_LOGGER.call_once(|| {
+        UniFFILogger::set_log_stream(log_stream, filter_level);
+    });
+}
+
+pub struct UniFFILogger {
+    env_logger: env_logger::Logger,
     log_stream: Box<dyn LogStream>,
 }
 
-impl BindingLogger {
-    fn init(log_stream: Box<dyn LogStream>) {
-        let binding_logger = BindingLogger { log_stream };
-        log::set_boxed_logger(Box::new(binding_logger)).unwrap();
-        log::set_max_level(LevelFilter::Trace);
+impl UniFFILogger {
+    fn set_log_stream(log_stream: Box<dyn LogStream>, filter_level: Option<LevelFilter>) {
+        let filter_level = get_filter_level(filter_level);
+        assert!(
+            filter_level <= STATIC_MAX_LEVEL,
+            "Should respect STATIC_MAX_LEVEL={:?}, which is done in compile time. level{:?}",
+            STATIC_MAX_LEVEL,
+            filter_level
+        );
+
+        let env_logger = init_env_logger(Some(Target::Stdout), Some(filter_level));
+
+        let uniffi_logger = UniFFILogger {
+            env_logger,
+            log_stream,
+        };
+        set_boxed_logger(Box::new(uniffi_logger))
+            .unwrap_or_else(|_| error!("Log stream already created."));
+        set_max_level(filter_level);
+    }
+
+    fn record_to_entry(record: &Record) -> LogEntry {
+        LogEntry {
+            line: format!("{}", record.args()),
+            level: format!("{}", record.level()),
+        }
     }
 }
 
-impl log::Log for BindingLogger {
-    fn enabled(&self, m: &Metadata) -> bool {
+impl Log for UniFFILogger {
+    fn enabled(&self, metadata: &Metadata) -> bool {
         // ignore the internal uniffi log to prevent infinite loop.
-        m.level() <= Level::Trace && *m.target() != *"breez_sdk_bindings::uniffi_binding"
+        return metadata.level() <= max_level()
+            && *metadata.target() != *"breez_sdk_bindings::uniffi_binding";
     }
 
     fn log(&self, record: &Record) {
-        self.log_stream.log(LogEntry {
-            line: record.args().to_string(),
-            level: record.level().as_str().to_string(),
-        });
+        let metadata = record.metadata();
+        if self.enabled(metadata) && self.env_logger.enabled(metadata) {
+            let entry = Self::record_to_entry(record);
+            self.log_stream.log(entry);
+        }
     }
     fn flush(&self) {}
 }
@@ -108,11 +143,11 @@ pub fn connect(
 }
 
 /// If used, this must be called before `connect`
-pub fn set_log_stream(log_stream: Box<dyn LogStream>) -> SdkResult<()> {
-    LOG_INIT.set(true).map_err(|_| SdkError::Generic {
-        err: "Log stream already created".into(),
-    })?;
-    BindingLogger::init(log_stream);
+pub fn set_log_stream(
+    log_stream: Box<dyn LogStream>,
+    filter_level: Option<LevelFilter>,
+) -> SdkResult<()> {
+    init_uniffi_logger(log_stream, filter_level);
     Ok(())
 }
 
