@@ -1459,7 +1459,10 @@ impl BreezServices {
     async fn start_background_tasks(self: &Arc<BreezServices>) -> SdkResult<()> {
         // start the signer
         let (shutdown_signer_sender, signer_signer_receiver) = watch::channel(());
+        debug!("Starting signer");
         self.start_signer(signer_signer_receiver).await;
+
+        debug!("Starting node keep alive");
         self.start_node_keep_alive(self.shutdown_sender.subscribe())
             .await;
 
@@ -1478,21 +1481,27 @@ impl BreezServices {
         }
 
         // start backup watcher
+        debug!("Starting backup watcher");
         self.start_backup_watcher().await?;
 
         //track backup events
+        debug!("Tracking backup events");
         self.track_backup_events().await;
 
         //track swap events
+        debug!("Tracking swap events");
         self.track_swap_events().await;
 
         // track paid invoices
+        debug!("Tracking paid invoices");
         self.track_invoices().await;
 
         // track new blocks
+        debug!("Tracking new blocks");
         self.track_new_blocks().await;
 
         // track logs
+        debug!("Tracking logs");
         self.track_logs().await;
 
         // Stop signer on shutdown
