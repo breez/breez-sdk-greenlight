@@ -82,7 +82,7 @@ abstract class BreezSdkBindingsApi extends BaseApi {
 
   Stream<BreezEvent> crateBindingBreezEventsStream();
 
-  Stream<LogEntry> crateBindingBreezLogStream();
+  Stream<LogEntry> crateBindingBreezLogStream({LevelFilter? filterLevel});
 
   Future<BuyBitcoinResponse> crateBindingBuyBitcoin({required BuyBitcoinRequest req});
 
@@ -300,18 +300,19 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       const TaskConstMeta(debugName: "breez_events_stream", argNames: ["s"]);
 
   @override
-  Stream<LogEntry> crateBindingBreezLogStream() {
+  Stream<LogEntry> crateBindingBreezLogStream({LevelFilter? filterLevel}) {
     final s = RustStreamSink<LogEntry>();
     unawaited(
       handler.executeNormal(
         NormalTask(
           callFfi: (port_) {
             var arg0 = cst_encode_StreamSink_log_entry_Dco(s);
-            return wire.wire__crate__binding__breez_log_stream(port_, arg0);
+            var arg1 = cst_encode_opt_box_autoadd_level_filter(filterLevel);
+            return wire.wire__crate__binding__breez_log_stream(port_, arg0, arg1);
           },
           codec: DcoCodec(decodeSuccessData: dco_decode_unit, decodeErrorData: dco_decode_AnyhowException),
           constMeta: kCrateBindingBreezLogStreamConstMeta,
-          argValues: [s],
+          argValues: [s, filterLevel],
           apiImpl: this,
         ),
       ),
@@ -320,7 +321,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   TaskConstMeta get kCrateBindingBreezLogStreamConstMeta =>
-      const TaskConstMeta(debugName: "breez_log_stream", argNames: ["s"]);
+      const TaskConstMeta(debugName: "breez_log_stream", argNames: ["s", "filterLevel"]);
 
   @override
   Future<BuyBitcoinResponse> crateBindingBuyBitcoin({required BuyBitcoinRequest req}) {
@@ -1692,6 +1693,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  LevelFilter dco_decode_box_autoadd_level_filter(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_level_filter(raw);
+  }
+
+  @protected
   ListPaymentsRequest dco_decode_box_autoadd_list_payments_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_list_payments_request(raw);
@@ -2208,6 +2215,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       bolt11: dco_decode_String(arr[1]),
       payment: dco_decode_opt_box_autoadd_payment(arr[2]),
     );
+  }
+
+  @protected
+  LevelFilter dco_decode_level_filter(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return LevelFilter.values[raw as int];
   }
 
   @protected
@@ -2739,6 +2752,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   PlatformInt64? dco_decode_opt_box_autoadd_i_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_i_64(raw);
+  }
+
+  @protected
+  LevelFilter? dco_decode_opt_box_autoadd_level_filter(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_level_filter(raw);
   }
 
   @protected
@@ -3616,6 +3635,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  LevelFilter sse_decode_box_autoadd_level_filter(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_level_filter(deserializer));
+  }
+
+  @protected
   ListPaymentsRequest sse_decode_box_autoadd_list_payments_request(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_list_payments_request(deserializer));
@@ -4159,6 +4184,13 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     var var_bolt11 = sse_decode_String(deserializer);
     var var_payment = sse_decode_opt_box_autoadd_payment(deserializer);
     return InvoicePaidDetails(paymentHash: var_paymentHash, bolt11: var_bolt11, payment: var_payment);
+  }
+
+  @protected
+  LevelFilter sse_decode_level_filter(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return LevelFilter.values[inner];
   }
 
   @protected
@@ -4877,6 +4909,17 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_i_64(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  LevelFilter? sse_decode_opt_box_autoadd_level_filter(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_level_filter(deserializer));
     } else {
       return null;
     }
@@ -5725,6 +5768,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   }
 
   @protected
+  int cst_encode_level_filter(LevelFilter raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    return cst_encode_i_32(raw.index);
+  }
+
+  @protected
   int cst_encode_network(Network raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     return cst_encode_i_32(raw.index);
@@ -5996,6 +6045,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   void sse_encode_box_autoadd_invoice_paid_details(InvoicePaidDetails self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_invoice_paid_details(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_level_filter(LevelFilter self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_level_filter(self, serializer);
   }
 
   @protected
@@ -6507,6 +6562,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_String(self.paymentHash, serializer);
     sse_encode_String(self.bolt11, serializer);
     sse_encode_opt_box_autoadd_payment(self.payment, serializer);
+  }
+
+  @protected
+  void sse_encode_level_filter(LevelFilter self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -7031,6 +7092,16 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_i_64(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_level_filter(LevelFilter? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_level_filter(self, serializer);
     }
   }
 

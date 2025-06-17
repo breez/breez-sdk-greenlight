@@ -18,6 +18,7 @@ workspace = true
 anyhow = { workspace = true }
 breez-sdk-core = { path = "../sdk-core" }
 sdk-common = { path = "../sdk-common" }
+env_logger = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 uniffi = { package = "uniffi", version = "0.28.0", features = [ "bindgen-tests", "cli" ] }

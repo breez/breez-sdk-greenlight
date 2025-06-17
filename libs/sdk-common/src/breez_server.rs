@@ -15,6 +15,7 @@ use crate::grpc::swapper_client::SwapperClient;
 use crate::grpc::taproot_swapper_client::TaprootSwapperClient;
 use crate::grpc::transport::{GrpcClient, Transport};
 use crate::grpc::{ChainApiServersRequest, PingRequest};
+use crate::model::BoltzSwapperUrls;
 use crate::prelude::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use crate::with_connection_retry;
 
@@ -144,7 +145,9 @@ impl BreezServer {
         Ok(mempoolspace_urls)
     }
 
-    pub async fn fetch_boltz_swapper_urls(&self) -> Result<Vec<String>, ServiceConnectivityError> {
+    pub async fn fetch_boltz_swapper_urls(
+        &self,
+    ) -> Result<BoltzSwapperUrls, ServiceConnectivityError> {
         let mut client = self.get_information_client().await;
 
         let chain_api_servers =
@@ -160,14 +163,29 @@ impl BreezServer {
                 .servers;
         trace!("Received chain_api_servers: {chain_api_servers:?}");
 
-        let boltz_swapper_urls = chain_api_servers
-            .into_iter()
-            .filter(|s| s.server_type == "BOLTZ_SWAPPER")
-            .map(|s| s.server_base_url)
-            .collect();
-        trace!("Received boltz_swapper_urls: {boltz_swapper_urls:?}");
+        let boltz_url = chain_api_servers
+            .iter()
+            .find(|s| s.server_type == "BOLTZ_SWAPPER")
+            .map(|s| s.server_base_url.clone())
+            .ok_or(ServiceConnectivityError::new(
+                ServiceConnectivityErrorKind::Other,
+                "Failed to find boltz url".to_string(),
+            ))?;
 
-        Ok(boltz_swapper_urls)
+        let proxy_url = chain_api_servers
+            .iter()
+            .find(|s| s.server_type == "GENERAL_SWAPPER")
+            .map(|s| s.server_base_url.clone())
+            .ok_or(ServiceConnectivityError::new(
+                ServiceConnectivityErrorKind::Other,
+                "Failed to find boltz proxy url".to_string(),
+            ))?;
+        trace!("Received boltz_url: {boltz_url:?}, proxy_url: {proxy_url:?}");
+
+        Ok(BoltzSwapperUrls {
+            boltz_url,
+            proxy_url,
+        })
     }
 }
 

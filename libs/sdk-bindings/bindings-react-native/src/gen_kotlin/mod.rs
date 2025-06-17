@@ -90,31 +90,33 @@ pub mod filters {
         type_name: &str,
         ci: &ComponentInterface,
     ) -> Result<String, askama::Error> {
-        let res: Result<String, askama::Error> = match type_name {
-            "Boolean" => Ok("array.pushBoolean(value)".to_string()),
-            "Double" => Ok("array.pushDouble(value)".to_string()),
-            "Int" => Ok("array.pushInt(value)".to_string()),
-            "ReadableArray" => Ok("array.pushArray(value)".to_string()),
-            "ReadableMap" => Ok("array.pushMap(value)".to_string()),
-            "String" => Ok("array.pushString(value)".to_string()),
-            "UByte" => Ok("array.pushInt(value.toInt())".to_string()),
-            "UInt" => Ok("array.pushInt(value.toInt())".to_string()),
-            "UShort" => Ok("array.pushInt(value.toInt())".to_string()),
-            "ULong" => Ok("array.pushDouble(value.toDouble())".to_string()),
-            _ => match ci.get_type(type_name) {
-                Some(t) => match t {
-                    Type::Enum(inner) => {
-                        let enum_def = ci.get_enum_definition(&inner).unwrap();
-                        match enum_def.is_flat() {
-                            true => Ok("array.pushString(value.name.lowercase())".to_string()),
-                            false => Ok("array.pushMap(readableMapOf(value))".to_string()),
+        let res: Result<String, askama::Error> =
+            match type_name {
+                "Boolean" => Ok("array.pushBoolean(value)".to_string()),
+                "Double" => Ok("array.pushDouble(value)".to_string()),
+                "Int" => Ok("array.pushInt(value)".to_string()),
+                "ReadableArray" => Ok("array.pushArray(value)".to_string()),
+                "ReadableMap" => Ok("array.pushMap(value)".to_string()),
+                "String" => Ok("array.pushString(value)".to_string()),
+                "UByte" => Ok("array.pushInt(value.toInt())".to_string()),
+                "UInt" => Ok("array.pushInt(value.toInt())".to_string()),
+                "UShort" => Ok("array.pushInt(value.toInt())".to_string()),
+                "ULong" => Ok("array.pushDouble(value.toDouble())".to_string()),
+                _ => match ci.get_type(type_name) {
+                    Some(t) => match t {
+                        Type::Enum(inner) => {
+                            let enum_def = ci.get_enum_definition(&inner).unwrap();
+                            match enum_def.is_flat() {
+                                true => Ok("array.pushString(snakeToLowerCamelCase(value.name))"
+                                    .to_string()),
+                                false => Ok("array.pushMap(readableMapOf(value))".to_string()),
+                            }
                         }
-                    }
-                    _ => Ok("array.pushMap(readableMapOf(value))".to_string()),
+                        _ => Ok("array.pushMap(readableMapOf(value))".to_string()),
+                    },
+                    None => unimplemented!("known type: {type_name}"),
                 },
-                None => unimplemented!("known type: {type_name}"),
-            },
-        };
+            };
         res
     }
 
@@ -152,9 +154,11 @@ pub mod filters {
                 match enum_def.is_flat() {
                     true => match optional {
                         true => Ok(format!(
-                            "{obj_name}.{field_name}?.let {{ it.name.lowercase() }}"
+                            "{obj_name}.{field_name}?.let {{ snakeToLowerCamelCase(it.name) }}"
                         )),
-                        false => Ok(format!("{obj_name}.{field_name}.name.lowercase()")),
+                        false => Ok(format!(
+                            "snakeToLowerCamelCase({obj_name}.{field_name}.name)"
+                        )),
                     },
                     false => match optional {
                         true => Ok(format!(

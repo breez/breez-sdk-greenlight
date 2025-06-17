@@ -22,12 +22,13 @@ zbase32 = "0.1.2"
 base64 = { workspace = true }
 chrono = "0.4"
 ecies = { version = "0.2.6", default-features = false, features = ["pure"] }
-env_logger = "0.10"
+env_logger = { workspace = true }
 futures = "0.3.30"
 ripemd = "0.1"
 rand = "0.8"
 tiny-bip39 = "1"
 tokio = { workspace = true }
+parking_lot = "0.12.3"
 prost = { workspace = true }
 rusqlite = { workspace = true }
 rusqlite_migration = "1.0"
