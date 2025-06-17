@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -8,7 +9,7 @@ use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use futures::TryFutureExt;
-use reqwest::{header::CONTENT_TYPE, Body};
+use gl_client::pb::incoming_payment;
 use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde::Serialize;
