@@ -16,7 +16,6 @@ use std::sync::Arc;
 use crate::frb_generated::StreamSink;
 use crate::lnurl::pay::LnUrlPayResult;
 use anyhow::{anyhow, Result};
-use flutter_rust_bridge::StreamSink;
 use once_cell::sync::{Lazy, OnceCell};
 use sdk_common::invoice;
 pub use sdk_common::prelude::{
@@ -41,8 +40,8 @@ use crate::lsp::LspInformation;
 use crate::models::{Config, LevelFilter, LogEntry, NodeState, Payment, SwapInfo};
 use crate::{
     BackupStatus, BuyBitcoinRequest, BuyBitcoinResponse, CheckMessageRequest, CheckMessageResponse,
-    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, LnUrlAuthError,
-    MaxReverseSwapAmountResponse, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
+    ConfigureNodeRequest, ConnectRequest, EnvironmentType, ListPaymentsRequest, ListSwapsRequest,
+    LnUrlAuthError, NodeConfig, NodeCredentials, OnchainPaymentLimitsResponse,
     OpenChannelFeeRequest, OpenChannelFeeResponse, PayOnchainRequest, PayOnchainResponse,
     PrepareOnchainPaymentRequest, PrepareOnchainPaymentResponse, PrepareRedeemOnchainFundsRequest,
     PrepareRedeemOnchainFundsResponse, PrepareRefundRequest, PrepareRefundResponse,
@@ -125,7 +124,7 @@ impl Log for DartLogger {
         if self.env_logger.enabled(record.metadata()) {
             let entry = Self::record_to_entry(record);
             if let Some(sink) = &*DART_LOGGER_STREAM_SINK.read() {
-                sink.add(entry);
+                let _ = sink.add(entry);
             }
         }
     }
