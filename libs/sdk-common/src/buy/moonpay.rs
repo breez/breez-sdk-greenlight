@@ -117,7 +117,7 @@ impl MoonPayConfig {
         requested.unwrap_or_else(|| self.default_fiat_currency.clone())
     }
 
-    pub fn is_api_key_valid(&self) -> bool {
+    pub fn has_valid_api_key_format(&self) -> bool {
         self.api_key.starts_with("pk_") && self.api_key.len() > 10
     }
 }
@@ -166,7 +166,7 @@ impl MoonpayProvider {
     async fn buy_bitcoin_limits(&self, fiat_currency_code: Option<String>) -> Result<(u64, u64)> {
         let config = moonpay_config();
 
-        if !config.is_api_key_valid() {
+        if !config.has_valid_api_key_format() {
             return Err(anyhow::anyhow!("Invalid MoonPay API key format"));
         }
 
@@ -300,7 +300,7 @@ impl BuyBitcoinProviderApi for MoonpayProvider {
     ) -> Result<String> {
         let config = moonpay_config();
 
-        if !config.is_api_key_valid() {
+        if !config.has_valid_api_key_format() {
             return Err(anyhow::anyhow!("Invalid MoonPay API key format"));
         }
 
@@ -416,7 +416,7 @@ pub(crate) mod tests {
         let config = moonpay_config();
 
         // Test shared config
-        assert!(config.is_api_key_valid());
+        assert!(config.has_valid_api_key_format());
         assert_eq!(config.btc_currency_code, "btc");
 
         // Test widget config
@@ -466,12 +466,12 @@ pub(crate) mod tests {
     #[test]
     fn test_api_key_validation() {
         let mut config = moonpay_config();
-        assert!(config.is_api_key_valid());
+        assert!(config.has_valid_api_key_format());
 
         config.api_key = "invalid_key".to_string();
-        assert!(!config.is_api_key_valid());
+        assert!(!config.has_valid_api_key_format());
 
         config.api_key = "pk_".to_string();
-        assert!(!config.is_api_key_valid());
+        assert!(!config.has_valid_api_key_format());
     }
 }
