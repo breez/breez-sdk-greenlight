@@ -14,67 +14,64 @@ use chrono::Utc;
 
 /* env_logger */
 
-const ENV_LOGGER_FILTER: &str = r#"
-debug,
-breez_sdk_core::backup=info,
-breez_sdk_core::breez_services=info,
-breez_sdk_core::input_parser=warn,
-breez_sdk_core::persist::reverseswap=info,
-breez_sdk_core::reverseswap=info,
-sdk_common=debug,
-gl_client::node=info,
-gl_client::node::service=info,
-gl_client::tls=info,
-gl_client::scheduler=info,
-gl_client::signer=info,
-gl_client=debug,
+fn create_adaptive_filter(client_level: LevelFilter) -> String {
+    let sdk_level = match client_level {
+        LevelFilter::Error => "error",
+        LevelFilter::Warn => "warn",
+        LevelFilter::Info => "info",
+        LevelFilter::Debug => "debug",
+        LevelFilter::Trace => "trace",
+        LevelFilter::Off => return String::new(),
+    };
+
+    format!(
+        r#"
+{sdk_level},
+breez_sdk_core::backup={sdk_level},
+breez_sdk_core::breez_services={sdk_level},
+breez_sdk_core::input_parser={sdk_level},
+breez_sdk_core::persist::reverseswap={sdk_level},
+breez_sdk_core::reverseswap={sdk_level},
+sdk_common={sdk_level},
+gl_client::{sdk_level},
+gl_client::node={sdk_level},
+gl_client::node::service={sdk_level},
+gl_client::tls={sdk_level},
+gl_client::scheduler={sdk_level},
+gl_client::signer={sdk_level},
 h2=warn,
-h2::client=info,
-h2::codec::framed_read=warn,
-h2::codec::framed_write=warn,
-h2::proto::connection=info,
-h2::proto::settings=info,
 hyper=warn,
-hyper::client::connect::dns=info,
-hyper::client::connect::https=info,
 lightning_signer=warn,
-lightning_signer::node=warn,
 reqwest=warn,
-reqwest::connect=warn,
 rustls=warn,
-rustls::anchors=warn,
-rustls::conn=warn,
-rustls::client::common=warn,
-rustls::client::hs=warn,
-rustls::client::tls13=warn,
 rustyline=warn,
 rusqlite_migration=warn,
 tower::buffer::worker=warn,
 vls_protocol_signer=warn,
-vls_protocol_signer::handler::HandlerBuilder::do_build=warn
-"#;
+"#
+    )
+}
 
 pub fn init_env_logger(target: Option<Target>, filter_level: Option<LevelFilter>) -> Logger {
+    let filter_level = filter_level.unwrap_or(LevelFilter::Debug);
+    let filter_string = create_adaptive_filter(filter_level);
+
     let mut binding = Builder::new();
-    let builder = binding
-        .parse_filters(ENV_LOGGER_FILTER)
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "[{} {} {}:{}] {}",
-                Utc::now().to_rfc3339(),
-                record.level(),
-                record.module_path().unwrap_or("unknown"),
-                record.line().unwrap_or(0),
-                record.args()
-            )
-        });
+    let builder = binding.parse_filters(&filter_string).format(|buf, record| {
+        writeln!(
+            buf,
+            "[{} {} {}:{}] {}",
+            Utc::now().to_rfc3339(),
+            record.level(),
+            record.module_path().unwrap_or("unknown"),
+            record.line().unwrap_or(0),
+            record.args()
+        )
+    });
     if let Some(target) = target {
         builder.target(target);
     }
-    if let Some(filter_level) = filter_level {
-        builder.filter_level(filter_level);
-    }
+    builder.filter_level(filter_level);
     builder.build()
 }
 
