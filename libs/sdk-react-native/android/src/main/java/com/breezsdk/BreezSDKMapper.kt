@@ -157,7 +157,17 @@ fun asBuyBitcoinRequest(buyBitcoinRequest: ReadableMap): BuyBitcoinRequest? {
             null
         }
     val redirectUrl = if (hasNonNullKey(buyBitcoinRequest, "redirectUrl")) buyBitcoinRequest.getString("redirectUrl") else null
-    return BuyBitcoinRequest(provider, openingFeeParams, redirectUrl)
+    val fiatCurrencyCode =
+        if (hasNonNullKey(
+                buyBitcoinRequest,
+                "fiatCurrencyCode",
+            )
+        ) {
+            buyBitcoinRequest.getString("fiatCurrencyCode")
+        } else {
+            null
+        }
+    return BuyBitcoinRequest(provider, openingFeeParams, redirectUrl, fiatCurrencyCode)
 }
 
 fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap =
@@ -165,6 +175,7 @@ fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap =
         "provider" to snakeToLowerCamelCase(buyBitcoinRequest.provider.name),
         "openingFeeParams" to buyBitcoinRequest.openingFeeParams?.let { readableMapOf(it) },
         "redirectUrl" to buyBitcoinRequest.redirectUrl,
+        "fiatCurrencyCode" to buyBitcoinRequest.fiatCurrencyCode,
     )
 
 fun asBuyBitcoinRequestList(arr: ReadableArray): List<BuyBitcoinRequest> {
