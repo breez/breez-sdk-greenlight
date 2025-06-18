@@ -122,10 +122,6 @@ impl MoonPayConfig {
     }
 }
 
-fn moonpay_config() -> MoonPayConfig {
-    MoonPayConfig::new()
-}
-
 #[derive(Deserialize, Debug)]
 struct MoonPayLimitsResponse {
     #[serde(rename = "quoteCurrency")]
@@ -164,7 +160,7 @@ impl MoonpayProvider {
     }
 
     async fn buy_bitcoin_limits(&self, fiat_currency_code: Option<String>) -> Result<(u64, u64)> {
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
 
         if !config.has_valid_api_key_format() {
             return Err(anyhow::anyhow!("Invalid MoonPay API key format"));
@@ -268,7 +264,7 @@ impl MoonpayProvider {
     }
 
     async fn is_currency_supported(&self, currency_code: &str) -> Result<bool> {
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
         let api_url = config.build_currencies_url();
 
         let client = reqwest::Client::new();
@@ -298,7 +294,7 @@ impl BuyBitcoinProviderApi for MoonpayProvider {
         redirect_url: Option<String>,
         fiat_currency_code: Option<String>,
     ) -> Result<String> {
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
 
         if !config.has_valid_api_key_format() {
             return Err(anyhow::anyhow!("Invalid MoonPay API key format"));
@@ -338,7 +334,7 @@ pub(crate) mod tests {
     async fn test_sign_moonpay_url() -> Result<(), Box<dyn std::error::Error>> {
         let wallet_address = "a wallet address".to_string();
         let quote_amount = "a quote amount".to_string();
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
 
         let url = config.create_widget_url(
             wallet_address.clone(),
@@ -375,7 +371,7 @@ pub(crate) mod tests {
         let wallet_address = "a wallet address".to_string();
         let quote_amount = "a quote amount".to_string();
         let redirect_url = "https://test.moonpay.url/receipt".to_string();
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
 
         let url = config.create_widget_url(
             wallet_address.clone(),
@@ -413,7 +409,7 @@ pub(crate) mod tests {
 
     #[test]
     fn test_moonpay_config_structure() {
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
 
         // Test shared config
         assert!(config.has_valid_api_key_format());
@@ -431,7 +427,7 @@ pub(crate) mod tests {
 
     #[test]
     fn test_build_limits_url_uses_endpoint_path() {
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
         let url = config.build_limits_url("eur");
 
         assert!(url.starts_with(&config.api_base_url));
@@ -443,7 +439,7 @@ pub(crate) mod tests {
 
     #[test]
     fn test_build_currencies_url_uses_endpoint_path() {
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
         let url = config.build_currencies_url();
 
         assert!(url.starts_with(&config.api_base_url));
@@ -454,7 +450,7 @@ pub(crate) mod tests {
 
     #[test]
     fn test_get_fiat_currency() {
-        let config = moonpay_config();
+        let config = MoonPayConfig::new();
 
         // Test with provided currency
         assert_eq!(config.get_fiat_currency(Some("eur".to_string())), "eur");
@@ -465,7 +461,7 @@ pub(crate) mod tests {
 
     #[test]
     fn test_api_key_validation() {
-        let mut config = moonpay_config();
+        let mut config = MoonPayConfig::new();
         assert!(config.has_valid_api_key_format());
 
         config.api_key = "invalid_key".to_string();
