@@ -57,8 +57,8 @@ use lazy_static::lazy_static;
 use log::{
     max_level, set_boxed_logger, set_max_level, warn, Log, Metadata, Record, STATIC_MAX_LEVEL,
 };
-use parking_lot::RwLock;
 use std::sync::Once;
+use std::sync::RwLock;
 
 use env_logger::{Logger, Target};
 
@@ -96,7 +96,7 @@ struct DartLogger {
 
 impl DartLogger {
     fn set_stream_sink(stream_sink: StreamSink<LogEntry>) {
-        let mut guard = DART_LOGGER_STREAM_SINK.write();
+        let mut guard = DART_LOGGER_STREAM_SINK.write().expect("RwLock poisoned");
         if guard.is_some() {
             warn!(
                 "BindingLogger::set_stream_sink but already exist a sink, thus overriding. \
@@ -104,7 +104,6 @@ impl DartLogger {
             );
         }
         *guard = Some(stream_sink);
-        drop(guard)
     }
 
     fn record_to_entry(record: &Record) -> LogEntry {
@@ -123,8 +122,10 @@ impl Log for DartLogger {
     fn log(&self, record: &Record) {
         if self.env_logger.enabled(record.metadata()) {
             let entry = Self::record_to_entry(record);
-            if let Some(sink) = &*DART_LOGGER_STREAM_SINK.read() {
-                let _ = sink.add(entry);
+            if let Ok(guard) = DART_LOGGER_STREAM_SINK.read() {
+                if let Some(sink) = &*guard {
+                    let _ = sink.add(entry);
+                }
             }
         }
     }
