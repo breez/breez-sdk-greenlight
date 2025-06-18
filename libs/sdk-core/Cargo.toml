@@ -32,7 +32,6 @@ ripemd = "0.1"
 rand = "0.8"
 tiny-bip39 = "1"
 tokio = { workspace = true }
-parking_lot = "0.12.3"
 prost = { workspace = true }
 rusqlite = { workspace = true }
 rusqlite_migration = "1.0"
