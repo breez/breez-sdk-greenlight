@@ -109,9 +109,9 @@ class BreezSDK {
   /// # Arguments
   ///
   /// * `req` - The connect request containing the `config` sdk configuration and `seed` node private key
-  Future connect({required ConnectRequest req}) async {
+  Future connect({required ConnectRequest req, LevelFilter? filterLevel}) async {
     if (!_eventsStreamInitialized || !_logStreamInitialized) {
-      initialize();
+      initialize(filterLevel: filterLevel);
     }
 
     await binding.connect(req: req);
