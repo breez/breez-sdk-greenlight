@@ -36,7 +36,8 @@ class ConfirmTransactionJob(
 
     override fun start(breezSDK: BlockingBreezServices) {
         try {
-            val request = Json.decodeFromString(AddressTxsConfirmedRequest.serializer(), payload)
+            val decoder = Json { ignoreUnknownKeys = true }
+            val request = decoder.decodeFromString(AddressTxsConfirmedRequest.serializer(), payload)
             this.bitcoinAddress = request.address
         } catch (e: Exception) {
             logger.log(TAG, "Failed to decode payload: ${e.message}", "WARN")
