@@ -53,7 +53,8 @@ class LnurlPayInfoJob(
     override fun start(breezSDK: BlockingBreezServices) {
         var request: LnurlInfoRequest? = null
         try {
-            request = Json.decodeFromString(LnurlInfoRequest.serializer(), payload)
+            val decoder = Json { ignoreUnknownKeys = true }
+            request = decoder.decodeFromString(LnurlInfoRequest.serializer(), payload)
             // Get the fee parameters offered by the LSP for opening a new channel
             val ofp = breezSDK.openChannelFee(OpenChannelFeeRequest(amountMsat = null)).feeParams
             // Calculate the maximum receivable amount within the fee limit (in millisatoshis)
