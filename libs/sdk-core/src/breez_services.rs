@@ -256,15 +256,15 @@ impl BreezServices {
     ///
     /// This calls [NodeAPI::configure_node] to make changes to the active node's configuration.
     /// Configuring the [ConfigureNodeRequest::close_to_address] only needs to be done one time
-    /// when registering the node or when the close to address need to be changed. Otherwise it is
-    /// stored by the node and used when neccessary.
+    /// when registering the node or when the close to address needs to be changed. Otherwise, it is
+    /// stored by the node and used when necessary.
     pub async fn configure_node(&self, req: ConfigureNodeRequest) -> SdkResult<()> {
         Ok(self.node_api.configure_node(req.close_to_address).await?)
     }
 
     /// Pay a bolt11 invoice
     ///
-    /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.
+    /// Calling `send_payment` ensures that the payment is not already completed; if so, it will result in an error.
     /// If the invoice doesn't specify an amount, the amount is taken from the `amount_msat` arg.
     pub async fn send_payment(
         &self,
@@ -586,7 +586,7 @@ impl BreezServices {
     }
 
     /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination
-    /// and generates the `LnUrlAuthRequestData` payload needed here. The second step is user approval of auth action.
+    /// and generates the `LnUrlAuthRequestData` payload needed here. The second step is user approval of the auth action.
     ///
     /// This call will sign `k1` of the LNURL endpoint (`req_data`) on `secp256k1` using `linkingPrivKey` and DER-encodes the signature.
     /// If they match the endpoint requirements, the LNURL auth request is made. A successful result here means the client signature is verified.
@@ -813,7 +813,7 @@ impl BreezServices {
 
     /// Close all channels with the current LSP.
     ///
-    /// Should be called  when the user wants to close all the channels.
+    /// Should be called when the user wants to close all the channels.
     pub async fn close_lsp_channels(&self) -> SdkResult<Vec<String>> {
         let lsp = self.lsp_info().await?;
         let tx_ids = self.node_api.close_peer_channels(lsp.pubkey).await?;
@@ -827,9 +827,9 @@ impl BreezServices {
     /// If set, and the operation requires a new channel, the SDK will use the given fee params.
     /// The provided [OpeningFeeParams] need to be valid at the time of swap redeeming.
     ///
-    /// Since we only allow one in-progress swap this method will return error if there is currently
+    /// Since we only allow one in-progress swap, this method will return an error if there is currently
     /// a swap waiting for confirmation to be redeemed and by that complete the swap.
-    /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
+    /// In such a case, the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
     /// The returned [SwapInfo] contains the created swap details. The channel opening fees are
     /// available at [SwapInfo::channel_opening_fees].
@@ -956,7 +956,7 @@ impl BreezServices {
     /// The returned amount is the sum of the max amount that can be sent on each channel
     /// minus the expected fees.
     /// This is possible since the route to the swapper node is known in advance and is expected
-    /// to consist of maximum 3 hops.
+    /// to consist of a maximum of 3 hops.
     async fn max_reverse_swap_amount(&self) -> SdkResult<u64> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
@@ -1125,7 +1125,7 @@ impl BreezServices {
     }
 
     /// Execute a command directly on the NodeAPI interface.
-    /// Mainly used to debugging.
+    /// Mainly used for debugging.
     pub async fn execute_dev_command(&self, command: String) -> SdkResult<String> {
         let dev_cmd_res = DevCommand::from_str(&command);
 
@@ -1163,7 +1163,7 @@ impl BreezServices {
         Ok(crate::serializer::to_string_pretty(&result)?)
     }
 
-    /// This method sync the local state with the remote node state.
+    /// This method syncs the local state with the remote node state.
     /// The synced items are as follows:
     /// * node state - General information about the node and its liquidity status
     /// * channels - The list of channels and their status
@@ -1411,7 +1411,7 @@ impl BreezServices {
     }
 
     /// Get the static backup data from the persistent storage.
-    /// This data enables the user to recover the node in an external core ligntning node.
+    /// This data enables the user to recover the node in an external core lightning node.
     /// See here for instructions on how to recover using this data: <https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup>
     pub fn static_backup(req: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
         let storage = SqliteStorage::new(req.working_dir);
