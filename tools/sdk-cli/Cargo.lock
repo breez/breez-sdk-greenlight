@@ -95,13 +95,14 @@ checksum = "e8fd72866655d1904d6b0997d0b07ba561047d070fbe29de039031c641b61217"
 
 [[package]]
 name = "ahash"
-version = "0.8.3"
+version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c99f64d1e06488f620f932677e24bc6e2897582980441ae90a671415bd7ec2f"
+checksum = "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75"
 dependencies = [
  "cfg-if 1.0.0",
  "once_cell",
  "version_check",
+ "zerocopy",
 ]
 
 [[package]]
@@ -1186,9 +1187,9 @@ dependencies = [
 
 [[package]]
 name = "fallible-iterator"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4443176a9f2c162692bd3d352d745ef9413eec5782a80d8fd6f8a1ac692a07f7"
+checksum = "2acce4a10f12dc2fb14a218589d4f1f62ef011b2d0cc4b3cb1bba8e94da14649"
 
 [[package]]
 name = "fallible-streaming-iterator"
@@ -1553,26 +1554,20 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hashbrown"
-version = "0.13.2"
+version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
+checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
- "ahash 0.8.3",
+ "ahash 0.8.12",
 ]
 
 [[package]]
-name = "hashbrown"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c6201b9ff9fd90a5a3bac2e56a830d0caa509576f0e503818ee82c181b3437a"
-
-[[package]]
 name = "hashlink"
-version = "0.8.2"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0761a1b9491c4f2e3d66aa0f62d0fba0af9a0e2852e4d48ea506632a4b56e6aa"
+checksum = "6ba4ff7128dee98c7dc9794b6a411377e1404dba1c97deb8d1a55297bd25d8af"
 dependencies = [
- "hashbrown 0.13.2",
+ "hashbrown 0.14.5",
 ]
 
 [[package]]
@@ -2071,7 +2066,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d5477fe2230a79769d8dc68e0eabf5437907c0457a5614a9e8dddb67f65eb65d"
 dependencies = [
  "equivalent",
- "hashbrown 0.14.0",
+ "hashbrown 0.14.5",
  "serde",
 ]
 
@@ -2238,9 +2233,9 @@ dependencies = [
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.26.0"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "afc22eff61b133b115c6e8c74e818c628d6d5e7a502afea6f64dee076dd94326"
+checksum = "0c10584274047cb335c23d3e61bcef8e323adae7c5c8c760540f73610177fc3f"
 dependencies = [
  "cc",
  "pkg-config",
@@ -3417,9 +3412,9 @@ dependencies = [
 
 [[package]]
 name = "rusqlite"
-version = "0.29.0"
+version = "0.31.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "549b9d036d571d42e6e85d1c1425e2ac83491075078ca9a15be021c56b1641f2"
+checksum = "b838eba278d213a8beaf485bd313fd580ca4505a00d5871caeb1457c55322cae"
 dependencies = [
  "bitflags 2.4.0",
  "fallible-iterator",
@@ -3432,9 +3427,9 @@ dependencies = [
 
 [[package]]
 name = "rusqlite_migration"
-version = "1.0.2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef7dd29a4426624704d5966416682fb7ab3682f724986e9e3893eaca44accabc"
+checksum = "55709bc01054c69e2f1cefdc886642b5e6376a8db3c86f761be0c423eebf178b"
 dependencies = [
  "log",
  "rusqlite",
@@ -5359,6 +5354,26 @@ name = "zbase32"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0f9079049688da5871a7558ddacb7f04958862c703e68258594cb7a862b5e33f"
+
+[[package]]
+name = "zerocopy"
+version = "0.8.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1039dd0d3c310cf05de012d8a39ff557cb0d23087fd44cad61df08fc31907a2f"
+dependencies = [
+ "zerocopy-derive",
+]
+
+[[package]]
+name = "zerocopy-derive"
+version = "0.8.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9ecf5b4cc5364572d7f4c329661bcc82724222973f2cab6f050a4e5c22f75181"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.98",
+]
 
 [[package]]
 name = "zerofrom"
