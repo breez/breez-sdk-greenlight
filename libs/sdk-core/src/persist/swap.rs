@@ -309,11 +309,11 @@ impl SwapStorage for SqliteStorage {
         }
 
         if let Some(from_timestamp) = req.from_timestamp {
-            where_clauses.push(format!("swaps.created_at >= {}", from_timestamp));
+            where_clauses.push(format!("swaps.created_at >= {from_timestamp}"));
         }
 
         if let Some(to_timestamp) = req.to_timestamp {
-            where_clauses.push(format!("swaps.created_at < {}", to_timestamp));
+            where_clauses.push(format!("swaps.created_at < {to_timestamp}"));
         }
 
         let where_clause = match where_clauses.is_empty() {
@@ -324,12 +324,12 @@ impl SwapStorage for SqliteStorage {
         let mut query = self.select_swap_query(&where_clause, "");
 
         match req.limit {
-            Some(limit) => query.push_str(&format!("LIMIT {}\n", limit)),
+            Some(limit) => query.push_str(&format!("LIMIT {limit}\n")),
             None => query.push_str("LIMIT -1\n"),
         }
 
         if let Some(offset) = req.offset {
-            query.push_str(&format!("OFFSET {}\n", offset));
+            query.push_str(&format!("OFFSET {offset}\n"));
         }
 
         let mut stmt = con.prepare(&query)?;
@@ -502,9 +502,8 @@ impl SqliteStorage {
              LEFT JOIN swaps_info ON swaps.bitcoin_address = swaps_info.bitcoin_address
              LEFT JOIN sync.swaps_fees as swaps_fees ON swaps.bitcoin_address = swaps_fees.bitcoin_address
              LEFT JOIN sync.swap_refunds as swap_refunds ON swaps.bitcoin_address = swap_refunds.bitcoin_address
-            WHERE {}
-            ",
-            where_clause
+            WHERE {where_clause}
+            "
         )
     }
 }

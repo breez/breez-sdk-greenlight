@@ -1041,7 +1041,7 @@ impl NodeAPI for Greenlight {
                 let req = gl_client::pb::GlConfig { close_to_addr };
                 with_connection_retry!(client.configure(req.clone()))
                     .await
-                    .map_err(|e| NodeError::Generic(format!("Unable to set node config: {}", e)))?;
+                    .map_err(|e| NodeError::Generic(format!("Unable to set node config: {e}")))?;
             }
             None => {
                 let mut client = self.get_node_client().await?;
@@ -1052,7 +1052,7 @@ impl NodeAPI for Greenlight {
                 with_connection_retry!(client.del_datastore(req.clone()))
                     .await
                     .map_err(|e| {
-                        NodeError::Generic(format!("Unable to delete node config: {}", e))
+                        NodeError::Generic(format!("Unable to delete node config: {e}"))
                     })?;
             }
         }
@@ -1291,8 +1291,7 @@ impl NodeAPI for Greenlight {
 
         if amount_to_pay_msat > total_msat {
             return Err(NodeError::RouteNotFound(format!(
-                "Amount too high, max amount is {} msat",
-                total_msat
+                "Amount too high, max amount is {total_msat} msat"
             )));
         }
 
