@@ -295,7 +295,7 @@ async fn bip353_parse(input: &str) -> Option<String> {
     }
 
     // Query for TXT records of a domain
-    let dns_name = format!("{}.{}.{}", local_part, USER_BITCOIN_PAYMENT_PREFIX, domain);
+    let dns_name = format!("{local_part}.{USER_BITCOIN_PAYMENT_PREFIX}.{domain}");
     let bip353_record = match dns_resolver::txt_lookup(dns_name).await {
         Ok(records) => extract_bip353_record(records)?,
         Err(e) => {
@@ -1660,9 +1660,9 @@ pub(crate) mod tests {
 
         for lnurl_pay in [
             lnurl_pay_encoded.to_uppercase().as_str(),
-            format!("lightning:{}", lnurl_pay_encoded).as_str(),
+            format!("lightning:{lnurl_pay_encoded}").as_str(),
             format!("lightning:{}", lnurl_pay_encoded.to_uppercase()).as_str(),
-            format!("LIGHTNING:{}", lnurl_pay_encoded).as_str(),
+            format!("LIGHTNING:{lnurl_pay_encoded}").as_str(),
             format!("LIGHTNING:{}", lnurl_pay_encoded.to_uppercase()).as_str(),
         ] {
             assert!(matches!(
@@ -2122,7 +2122,7 @@ pub(crate) mod tests {
                 "External payment"
             );
         } else {
-            panic!("Expected LnUrlPay, got {:?}", input_type);
+            panic!("Expected LnUrlPay, got {input_type:?}");
         }
 
         Ok(())
@@ -2163,7 +2163,7 @@ pub(crate) mod tests {
         if let InputType::BitcoinAddress { address } = input_type {
             assert_eq!(address.address, bitcoin_address);
         } else {
-            panic!("Expected BitcoinAddress, got {:?}", input_type);
+            panic!("Expected BitcoinAddress, got {input_type:?}");
         }
 
         let input_type =
@@ -2171,7 +2171,7 @@ pub(crate) mod tests {
         if let InputType::Bolt11 { invoice } = input_type {
             assert_eq!(invoice.bolt11, bolt11);
         } else {
-            panic!("Expected Bolt11, got {:?}", input_type);
+            panic!("Expected Bolt11, got {input_type:?}");
         }
 
         Ok(())

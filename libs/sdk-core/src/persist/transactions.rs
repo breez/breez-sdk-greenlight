@@ -152,8 +152,7 @@ impl SqliteStorage {
         ensure_sdk!(
             new_metadata.len() <= METADATA_MAX_LEN,
             PersistError::Generic(format!(
-                "Max metadata size ({} characters) has been exceeded",
-                METADATA_MAX_LEN
+                "Max metadata size ({METADATA_MAX_LEN} characters) has been exceeded"
             ))
         );
 
@@ -470,7 +469,7 @@ fn filter_to_where_clause(
                 "payment_type in ({})",
                 type_filter_clause
                     .iter()
-                    .map(|t| format!("'{}'", t))
+                    .map(|t| format!("'{t}'"))
                     .collect::<Vec<_>>()
                     .join(", ")
             ));

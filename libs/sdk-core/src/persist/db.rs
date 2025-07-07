@@ -30,8 +30,8 @@ pub(crate) struct SqliteStorage {
 
 impl SqliteStorage {
     pub fn new(working_dir: String) -> SqliteStorage {
-        let main_db_file = format!("{}/storage.sql", working_dir);
-        let sync_db_file = format!("{}/sync_storage.sql", working_dir);
+        let main_db_file = format!("{working_dir}/storage.sql");
+        let sync_db_file = format!("{working_dir}/sync_storage.sql");
         let (events_publisher, _) = broadcast::channel::<HookEvent>(100);
 
         SqliteStorage {

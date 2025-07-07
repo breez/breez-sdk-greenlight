@@ -683,8 +683,7 @@ impl BTCSendSwap {
             .collect();
         match rsis.is_empty() {
             true => Err(ReverseSwapError::Generic(format!(
-                "Reverse swap address {} was not found",
-                lockup_address
+                "Reverse swap address {lockup_address} was not found"
             ))),
             false => Ok(self.claim_reverse_swaps(rsis).await?),
         }

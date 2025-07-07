@@ -868,7 +868,7 @@ pub(crate) mod tests {
         let pay_req = get_test_pay_req_data(0, 100_000, 0);
         let user_amount_msat = 50_000;
 
-        let amount_arg = format!("amount={}", user_amount_msat);
+        let amount_arg = format!("amount={user_amount_msat}");
         let user_comment = "test comment".to_string();
         let comment_arg = format!("comment={user_comment}");
 

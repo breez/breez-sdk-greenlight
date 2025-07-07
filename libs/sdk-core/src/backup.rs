@@ -508,7 +508,7 @@ mod tests {
                             }
                         }
                         Err(e) => {
-                            panic!("Failed to receive event: {}", e);
+                            panic!("Failed to receive event: {e}");
                         }
                     }
                 }

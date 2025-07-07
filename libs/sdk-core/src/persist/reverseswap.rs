@@ -191,9 +191,8 @@ impl SqliteStorage {
              {fields}
             FROM sync.reverse_swaps
              LEFT JOIN reverse_swaps_info ON reverse_swaps.id = reverse_swaps_info.id
-            WHERE {}
-            ",
-            where_clause
+            WHERE {where_clause}
+            "
         )
     }
 }
