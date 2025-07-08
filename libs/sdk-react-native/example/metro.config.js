@@ -1,22 +1,28 @@
-/**
- * Metro configuration for React Native
- * https://github.com/facebook/react-native
- *
- * @format
- */
-const { getDefaultConfig } = require("metro-config")
-const { resolver: defaultResolver } = getDefaultConfig.getDefaultValues()
+const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const path = require('path');
 
-module.exports = {
-    resolver: {
-        ...defaultResolver,
-    },
-    transformer: {
-        getTransformOptions: async () => ({
-            transform: {
-                experimentalImportSupport: false,
-                inlineRequires: true
-            }
-        })
-    }
-}
+/**
+ * Metro configuration
+ * https://reactnative.dev/docs/metro
+ *
+ * @type {import('metro-config').MetroConfig}
+ */
+const config = {
+  watchFolders: [
+    // Add path to the sdk-react-native directory
+    path.resolve(__dirname, '../'),
+  ],
+  resolver: {
+    // Make sure Metro can resolve modules from the parent directory
+    extraNodeModules: new Proxy(
+      {},
+      {
+        get: (target, name) => {
+          return path.join(__dirname, `node_modules/${name}`);
+        },
+      },
+    ),
+  },
+};
+
+module.exports = mergeConfig(getDefaultConfig(__dirname), config);
