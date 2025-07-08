@@ -11,7 +11,7 @@ import {
     EnvironmentType,
     fetchFiatRates,
     fetchReverseSwapFees,
-    inProgressReverseSwaps,
+    inProgressOnchainPayments,
     lspInfo,
     listFiatCurrencies,
     mnemonicToSeed,
@@ -142,8 +142,8 @@ const HomeScreen = ({ navigation }) => {
                 const revSwapFees = await fetchReverseSwapFees({ sendAmountSat: null })
                 addLine("revSwapFees", JSON.stringify(revSwapFees))
 
-                const inProgressRevSwaps = await inProgressReverseSwaps()
-                addLine("inProgressRevSwaps", JSON.stringify(inProgressRevSwaps))
+                const inProgressOnchainPaymentsRes = await inProgressOnchainPayments()
+                addLine("inProgressOnchainPayments", JSON.stringify(inProgressOnchainPaymentsRes))
 
                 const buyBitcoinResult = await buyBitcoin({
                     provider: BuyBitcoinProvider.MOONPAY,
