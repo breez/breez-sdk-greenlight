@@ -1,7 +1,7 @@
 name: breez_sdk
 description: Flutter bindings for the Breez SDK
 repository: https://github.com/breez/breez-sdk-flutter
-version: 0.8.1-rc2
+version: 0.8.1-rc3
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
