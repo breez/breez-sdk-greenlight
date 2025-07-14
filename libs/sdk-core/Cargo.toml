@@ -11,7 +11,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 default = []
 
 [dependencies]
-flutter_rust_bridge = "=2.9.0"
+flutter_rust_bridge = "=2.11.1"
 aes = { workspace = true }
 anyhow = { workspace = true }
 hex = { workspace = true }
