@@ -5,7 +5,6 @@ use anyhow::Result;
 use serde_json::Value;
 use tokio::sync::{mpsc, watch};
 use tokio_stream::Stream;
-use tonic::Streaming;
 
 use sdk_common::prelude::*;
 
@@ -180,10 +179,10 @@ pub trait NodeAPI: Send + Sync {
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::IncomingPayment>>;
+    ) -> NodeResult<Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::IncomingPayment> + Send>>>;
     async fn stream_log_messages(
         &self,
-    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>>;
+    ) -> NodeResult<Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::LogEntry> + Send>>>;
     async fn static_backup(&self) -> NodeResult<Vec<String>>;
     async fn execute_command(&self, command: String) -> NodeResult<Value>;
     async fn generate_diagnostic_data(&self) -> NodeResult<Value>;
