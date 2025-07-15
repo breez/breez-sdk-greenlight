@@ -64,6 +64,7 @@ async fn main() -> Result<()> {
             }
             Err(ReadlineError::Eof) => {
                 info!("CTRL-D");
+                show_results(command_handler.exit().await);
                 break;
             }
             Err(err) => {
