@@ -113,6 +113,15 @@ pub struct FetchBolt11Result {
     pub payer_amount_msat: Option<u64>,
 }
 
+#[derive(Debug, Clone)]
+pub struct IncomingPayment {
+    pub label: String,
+    pub payment_hash: Vec<u8>,
+    pub preimage: Vec<u8>,
+    pub amount_msat: u64,
+    pub bolt11: String,
+}
+
 /// Trait covering functions affecting the LN node
 #[cfg_attr(test, mockall::automock)]
 #[tonic::async_trait]
@@ -179,10 +188,10 @@ pub trait NodeAPI: Send + Sync {
     async fn close_peer_channels(&self, node_id: String) -> NodeResult<Vec<String>>;
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::IncomingPayment> + Send>>>;
+    ) -> NodeResult<Pin<Box<dyn Stream<Item = IncomingPayment> + Send>>>;
     async fn stream_log_messages(
         &self,
-    ) -> NodeResult<Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::LogEntry> + Send>>>;
+    ) -> NodeResult<Pin<Box<dyn Stream<Item = String> + Send>>>;
     async fn static_backup(&self) -> NodeResult<Vec<String>>;
     async fn execute_command(&self, command: String) -> NodeResult<Value>;
     async fn generate_diagnostic_data(&self) -> NodeResult<Value>;

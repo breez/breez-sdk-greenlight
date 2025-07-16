@@ -24,7 +24,7 @@ use gl_client::pb::cln::{
     ListclosedchannelsClosedchannels, ListpaysPays, ListpeerchannelsChannels, ListsendpaysPayments,
     PreapproveinvoiceRequest, SendpayRequest, SendpayRoute, WaitsendpayRequest,
 };
-use gl_client::pb::{OffChainPayment, TrampolinePayRequest};
+use gl_client::pb::{incoming_payment, TrampolinePayRequest};
 use gl_client::scheduler::Scheduler;
 use gl_client::signer::model::greenlight::{amount, scheduler};
 use gl_client::signer::Signer;
@@ -49,7 +49,9 @@ use crate::bitcoin::{
 };
 use crate::lightning::util::message_signing::verify;
 use crate::lightning_invoice::{RawBolt11Invoice, SignedRawBolt11Invoice};
-use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
+use crate::node_api::{
+    CreateInvoiceRequest, FetchBolt11Result, IncomingPayment, NodeAPI, NodeError, NodeResult,
+};
 use crate::persist::cache::NodeStateStorage;
 use crate::persist::db::SqliteStorage;
 use crate::persist::send_pays::{SendPay, SendPayStatus};
@@ -1752,16 +1754,23 @@ impl NodeAPI for Greenlight {
 
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<
-        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::IncomingPayment> + Send>>,
-    > {
+    ) -> NodeResult<Pin<Box<dyn Stream<Item = IncomingPayment> + Send>>> {
         let mut client = self.get_client().await?;
         let req = gl_client::signer::model::greenlight::StreamIncomingFilter {};
         let stream = with_connection_retry!(client.stream_incoming(req.clone()))
             .await?
             .into_inner();
         Ok(Box::pin(stream.filter_map(|msg| match msg {
-            Ok(msg) => Some(msg),
+            Ok(msg) => match msg.details {
+                Some(incoming_payment::Details::Offchain(p)) => Some(IncomingPayment {
+                    label: p.label,
+                    payment_hash: p.payment_hash,
+                    preimage: p.preimage,
+                    amount_msat: amount_to_msat(&p.amount.unwrap_or_default()),
+                    bolt11: p.bolt11,
+                }),
+                _ => None,
+            },
             Err(e) => {
                 debug!("failed to receive message: {e}");
                 None
@@ -1769,18 +1778,14 @@ impl NodeAPI for Greenlight {
         })))
     }
 
-    async fn stream_log_messages(
-        &self,
-    ) -> NodeResult<
-        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::LogEntry> + Send>>,
-    > {
+    async fn stream_log_messages(&self) -> NodeResult<Pin<Box<dyn Stream<Item = String> + Send>>> {
         let mut client = self.get_client().await?;
         let req = gl_client::signer::model::greenlight::StreamLogRequest {};
         let stream = with_connection_retry!(client.stream_log(req.clone()))
             .await?
             .into_inner();
         Ok(Box::pin(stream.filter_map(|msg| match msg {
-            Ok(msg) => Some(msg),
+            Ok(msg) => Some(msg.line),
             Err(e) => {
                 debug!("failed to receive log message: {e}");
                 None
@@ -2283,17 +2288,16 @@ impl TryFrom<SendPayAgg> for Payment {
     }
 }
 
-//pub(crate) fn offchain_payment_to_transaction
-impl TryFrom<OffChainPayment> for Payment {
+impl TryFrom<IncomingPayment> for Payment {
     type Error = NodeError;
 
-    fn try_from(p: OffChainPayment) -> std::result::Result<Self, Self::Error> {
+    fn try_from(p: IncomingPayment) -> std::result::Result<Self, Self::Error> {
         let ln_invoice = parse_invoice(&p.bolt11)?;
         Ok(Payment {
             id: hex::encode(p.payment_hash.clone()),
             payment_type: PaymentType::Received,
             payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
-            amount_msat: amount_to_msat(&p.amount.unwrap_or_default()),
+            amount_msat: p.amount_msat,
             fee_msat: 0,
             status: PaymentStatus::Complete,
             error: None,
