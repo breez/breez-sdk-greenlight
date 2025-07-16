@@ -48,7 +48,9 @@ use crate::lsp::LspInformation;
 use crate::models::{
     LspAPI, NodeState, Payment, ReverseSwapServiceAPI, SwapperAPI, SyncResponse, TlvEntry,
 };
-use crate::node_api::{CreateInvoiceRequest, FetchBolt11Result, NodeAPI, NodeError, NodeResult};
+use crate::node_api::{
+    CreateInvoiceRequest, FetchBolt11Result, IncomingPayment, NodeAPI, NodeError, NodeResult,
+};
 use crate::swap_in::TaprootSwapperAPI;
 use crate::swap_out::boltzswap::{BoltzApiCreateReverseSwapResponse, BoltzApiReverseSwapStatus};
 use crate::swap_out::error::{ReverseSwapError, ReverseSwapResult};
@@ -438,17 +440,11 @@ impl NodeAPI for MockNodeAPI {
     }
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<
-        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::IncomingPayment> + Send>>,
-    > {
+    ) -> NodeResult<Pin<Box<dyn Stream<Item = IncomingPayment> + Send>>> {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
-    async fn stream_log_messages(
-        &self,
-    ) -> NodeResult<
-        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::LogEntry> + Send>>,
-    > {
+    async fn stream_log_messages(&self) -> NodeResult<Pin<Box<dyn Stream<Item = String> + Send>>> {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
