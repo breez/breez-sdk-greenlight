@@ -36,7 +36,6 @@ use tokio::join;
 use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::{sleep, Instant, MissedTickBehavior};
 use tokio_stream::StreamExt;
-use tonic::Streaming;
 
 use crate::bitcoin::bech32::{u5, ToBase32};
 use crate::bitcoin::blockdata::constants::WITNESS_SCALE_FACTOR;
@@ -1753,24 +1752,40 @@ impl NodeAPI for Greenlight {
 
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::IncomingPayment>> {
+    ) -> NodeResult<
+        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::IncomingPayment> + Send>>,
+    > {
         let mut client = self.get_client().await?;
         let req = gl_client::signer::model::greenlight::StreamIncomingFilter {};
         let stream = with_connection_retry!(client.stream_incoming(req.clone()))
             .await?
             .into_inner();
-        Ok(stream)
+        Ok(Box::pin(stream.filter_map(|msg| match msg {
+            Ok(msg) => Some(msg),
+            Err(e) => {
+                debug!("failed to receive message: {e}");
+                None
+            }
+        })))
     }
 
     async fn stream_log_messages(
         &self,
-    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>> {
+    ) -> NodeResult<
+        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::LogEntry> + Send>>,
+    > {
         let mut client = self.get_client().await?;
         let req = gl_client::signer::model::greenlight::StreamLogRequest {};
         let stream = with_connection_retry!(client.stream_log(req.clone()))
             .await?
             .into_inner();
-        Ok(stream)
+        Ok(Box::pin(stream.filter_map(|msg| match msg {
+            Ok(msg) => Some(msg),
+            Err(e) => {
+                debug!("failed to receive log message: {e}");
+                None
+            }
+        })))
     }
 
     async fn static_backup(&self) -> NodeResult<Vec<String>> {
@@ -1925,22 +1940,17 @@ impl NodeAPI for Greenlight {
         &self,
     ) -> NodeResult<Pin<Box<dyn Stream<Item = Result<CustomMessage>> + Send>>> {
         let stream = {
-            let mut client = match self.get_client().await {
-                Ok(c) => Ok(c),
-                Err(e) => Err(anyhow!("{}", e)),
-            }?;
+            let mut client = self.get_client().await?;
             let req = gl_client::signer::model::greenlight::StreamCustommsgRequest {};
-            match with_connection_retry!(client.stream_custommsg(req.clone())).await {
-                Ok(s) => Ok(s),
-                Err(e) => Err(anyhow!("{}", e)),
-            }?
-            .into_inner()
+            with_connection_retry!(client.stream_custommsg(req.clone()))
+                .await?
+                .into_inner()
         };
 
         Ok(Box::pin(stream.filter_map(|msg| {
             let msg = match msg {
                 Ok(msg) => msg,
-                Err(e) => return Some(Err(anyhow!("failed to receive message: {}", e))),
+                Err(e) => return Some(Err(anyhow!("failed to receive message: {e}"))),
             };
 
             if msg.payload.len() < 2 {

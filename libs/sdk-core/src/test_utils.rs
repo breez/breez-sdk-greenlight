@@ -28,7 +28,7 @@ use tokio::sync::{mpsc, watch, Mutex};
 use tokio::time::sleep;
 use tokio_stream::Stream;
 use tokio_stream::StreamExt;
-use tonic::{Status, Streaming};
+use tonic::Status;
 
 use crate::backup::{BackupState, BackupTransport};
 use crate::bitcoin::hashes::hex::ToHex;
@@ -438,13 +438,17 @@ impl NodeAPI for MockNodeAPI {
     }
     async fn stream_incoming_payments(
         &self,
-    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::IncomingPayment>> {
+    ) -> NodeResult<
+        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::IncomingPayment> + Send>>,
+    > {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
     async fn stream_log_messages(
         &self,
-    ) -> NodeResult<Streaming<gl_client::signer::model::greenlight::LogEntry>> {
+    ) -> NodeResult<
+        Pin<Box<dyn Stream<Item = gl_client::signer::model::greenlight::LogEntry> + Send>>,
+    > {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
