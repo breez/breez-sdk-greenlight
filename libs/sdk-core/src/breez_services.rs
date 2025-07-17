@@ -819,10 +819,14 @@ impl BreezServices {
     ///
     /// Should be called when the user wants to close all the channels.
     pub async fn close_lsp_channels(&self) -> SdkResult<Vec<String>> {
-        let lsp = self.lsp_info().await?;
-        let tx_ids = self.node_api.close_peer_channels(lsp.pubkey).await?;
+        let lsps = self.get_lsps().await?;
+        let mut all_txids = Vec::new();
+        for lsp in lsps {
+            let txids = self.node_api.close_peer_channels(lsp.pubkey).await?;
+            all_txids.extend(txids);
+        }
         self.sync().await?;
-        Ok(tx_ids)
+        Ok(all_txids)
     }
 
     /// Onchain receive swap API
@@ -1395,6 +1399,10 @@ impl BreezServices {
     /// Convenience method to look up LSP info based on current LSP ID
     pub async fn lsp_info(&self) -> SdkResult<LspInformation> {
         get_lsp(self.persister.clone(), self.lsp_api.clone()).await
+    }
+
+    async fn get_lsps(&self) -> SdkResult<Vec<LspInformation>> {
+        get_lsps(self.persister.clone(), self.lsp_api.clone()).await
     }
 
     /// Get the recommended fees for onchain transactions
@@ -2874,22 +2882,27 @@ async fn get_lsp(
         })
 }
 
-async fn get_lsp_by_id(
+async fn get_lsps(
     persister: Arc<SqliteStorage>,
     lsp_api: Arc<dyn LspAPI>,
-    lsp_id: &str,
-) -> SdkResult<Option<LspInformation>> {
+) -> SdkResult<Vec<LspInformation>> {
     let node_pubkey = persister
         .get_node_state()?
         .ok_or(SdkError::generic("Node info not found"))?
         .id;
 
-    Ok(lsp_api
-        .list_lsps(node_pubkey)
+    lsp_api.list_lsps(node_pubkey).await
+}
+
+async fn get_lsp_by_id(
+    persister: Arc<SqliteStorage>,
+    lsp_api: Arc<dyn LspAPI>,
+    lsp_id: &str,
+) -> SdkResult<Option<LspInformation>> {
+    Ok(get_lsps(persister, lsp_api)
         .await?
-        .iter()
-        .find(|&lsp| lsp.id.as_str() == lsp_id)
-        .cloned())
+        .into_iter()
+        .find(|lsp| lsp.id.as_str() == lsp_id))
 }
 
 /// Convenience method to get all LSPs (active and historical) relevant for registering or
