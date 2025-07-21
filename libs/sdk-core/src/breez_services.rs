@@ -32,6 +32,8 @@ use crate::error::{
     RedeemOnchainResult, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
 use crate::greenlight::{GLBackupTransport, Greenlight};
+#[cfg(feature = "ldk")]
+use crate::ldk::{Ldk, LdkBackupTransport};
 use crate::lnurl::auth::SdkLnurlAuthSigner;
 use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
@@ -2399,7 +2401,13 @@ impl BreezServicesBuilder {
 
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
-        if node_api.is_none() {
+
+        #[cfg(feature = "ldk")]
+        let ldk_feature = true;
+        #[cfg(not(feature = "ldk"))]
+        let ldk_feature = false;
+        // Keep the code not under the feature flag to avoid warnings.
+        if node_api.is_none() && !ldk_feature {
             let greenlight = Greenlight::connect(
                 self.config.clone(),
                 self.seed.clone().unwrap(),
@@ -2411,6 +2419,19 @@ impl BreezServicesBuilder {
             node_api = Some(gl_arc.clone());
             if backup_transport.is_none() {
                 backup_transport = Some(Arc::new(GLBackupTransport { inner: gl_arc }));
+            }
+        }
+        #[cfg(feature = "ldk")]
+        if node_api.is_none() {
+            let ldk = Ldk::build(
+                self.config.clone(),
+                &self.seed.clone().unwrap(),
+                restore_only,
+            )
+            .await;
+            node_api = Some(Arc::new(ldk));
+            if backup_transport.is_none() {
+                backup_transport = Some(Arc::new(LdkBackupTransport {}));
             }
         }
 

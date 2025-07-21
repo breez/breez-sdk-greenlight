@@ -171,6 +171,8 @@ pub mod error;
 #[rustfmt::skip]
 mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenlight; greenlight::node_api
 mod greenlight;
+#[cfg(feature = "ldk")]
+mod ldk;
 #[rustfmt::skip]
 pub mod lnurl;
 mod buy;
