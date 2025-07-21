@@ -12,7 +12,6 @@ use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
 use chrono::Local;
 use futures::{StreamExt, TryFutureExt};
-use gl_client::pb::incoming_payment;
 use log::{LevelFilter, Metadata, Record};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
@@ -1665,8 +1664,8 @@ impl BreezServices {
                         }
                     };
 
-                    let i = match paid_invoice_res {
-                        Some(i) => i,
+                    let p = match paid_invoice_res {
+                        Some(p) => p,
                         None => {
                             debug!("invoice stream got None");
                             break;
@@ -1674,11 +1673,6 @@ impl BreezServices {
                     };
 
                     debug!("invoice stream got new invoice");
-                    let p = match i.details {
-                        Some(incoming_payment::Details::Offchain(p)) => p,
-                        _ => continue,
-                    };
-
                     let mut payment: Option<crate::models::Payment> = p.clone().try_into().ok();
                     if let Some(ref p) = payment {
                         let res = cloned
@@ -1756,7 +1750,7 @@ impl BreezServices {
                     };
 
                     match log_message_res {
-                        Some(l) => info!("node-logs: {}", l.line),
+                        Some(l) => info!("node-logs: {l}"),
                         None => {
                             // stream is closed, renew it
                             break;
