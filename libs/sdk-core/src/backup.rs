@@ -253,7 +253,7 @@ impl BackupWorker {
                 self.notify(BreezEvent::BackupSucceeded).await
             }
             Err(e) => {
-                error!("backup sync failed {}", e);
+                error!("backup sync failed {e}");
                 self.notify(BreezEvent::BackupFailed {
                     details: BackupFailedData {
                         error: e.to_string(),
@@ -267,7 +267,7 @@ impl BackupWorker {
         match notify_res {
             Ok(r) => Ok(r),
             Err(e) => {
-                error!("failed to notify backup event {}", e);
+                error!("failed to notify backup event {e}");
                 Err(e)
             }
         }
@@ -330,7 +330,7 @@ impl BackupWorker {
                 Ok(())
             }
             Err(e) => {
-                error!("Sync failed: {}", e);
+                error!("Sync failed: {e}");
                 Err(e)
             }
         }
