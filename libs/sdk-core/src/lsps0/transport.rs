@@ -107,7 +107,7 @@ impl Transport {
                                 Some(msg) => match msg {
                                     Ok(msg) => msg,
                                     Err(e) => {
-                                        warn!("connection to custom message stream errored: {}", e);
+                                        warn!("connection to custom message stream errored: {e}");
                                         break;
                                     }
                                 },
@@ -166,13 +166,10 @@ impl Transport {
                         Err(e) => match e {
                             Error::Deserialization(e) => {
                                 // TODO: Drop connection to LSP?
-                                warn!(
-                                    "LSPS0: Got invalid notification {:?} for id {}: {}",
-                                    msg, id, e
-                                );
+                                warn!("LSPS0: Got invalid notification {msg:?} for id {id}: {e}");
                             }
                             _ => {
-                                debug!("LSPS0: Notification listener dropped for id {}", id);
+                                debug!("LSPS0: Notification listener dropped for id {id}");
                                 let mut notification_handlers =
                                     self.notification_handlers.write().await;
                                 (*notification_handlers).remove(&id);
@@ -181,8 +178,7 @@ impl Transport {
                     }
                 } else {
                     info!(
-                        "LSPS0: got notification without listener: method: {}, params: {:?}",
-                        method, params
+                        "LSPS0: got notification without listener: method: {method}, params: {params:?}"
                     );
                 }
             }
@@ -199,10 +195,7 @@ impl Transport {
                         debug!("LSPS0: got response, but listener dropped");
                     }
                 } else {
-                    debug!(
-                        "LSPS0: got response without listener: id: {}, result: {:?}",
-                        id, result
-                    );
+                    debug!("LSPS0: got response without listener: id: {id}, result: {result:?}");
                 }
             }
             RpcServerMessageBody::Error { id, error } => {
@@ -218,10 +211,7 @@ impl Transport {
                         debug!("LSPS0: got error response, but listener dropped");
                     }
                 } else {
-                    debug!(
-                        "LSPS0: got error without listener: id: {}, error: {:?}",
-                        id, error
-                    );
+                    debug!("LSPS0: got error without listener: id: {id}, error: {error:?}");
                 }
             }
         }

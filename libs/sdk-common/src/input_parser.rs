@@ -256,10 +256,7 @@ fn parse_bip353_record(bip353_record: String) -> Option<String> {
 
 fn is_valid_bip353_record(decoded: &str) -> bool {
     if !decoded.to_lowercase().starts_with(BIP353_PREFIX) {
-        error!(
-            "Invalid decoded TXT data (doesn't begin with: {})",
-            BIP353_PREFIX
-        );
+        error!("Invalid decoded TXT data (doesn't begin with: {BIP353_PREFIX})");
 
         return false;
     }
@@ -299,7 +296,7 @@ async fn bip353_parse(input: &str) -> Option<String> {
     let bip353_record = match dns_resolver::txt_lookup(dns_name).await {
         Ok(records) => extract_bip353_record(records)?,
         Err(e) => {
-            debug!("No BIP353 TXT records found: {}", e);
+            debug!("No BIP353 TXT records found: {e}");
             return None;
         }
     };
