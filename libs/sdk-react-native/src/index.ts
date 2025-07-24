@@ -651,7 +651,8 @@ export enum ChannelState {
 
 export enum EnvironmentType {
     PRODUCTION = "production",
-    STAGING = "staging"
+    STAGING = "staging",
+    REGTEST = "regtest"
 }
 
 export enum FeeratePreset {

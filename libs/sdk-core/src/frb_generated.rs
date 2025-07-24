@@ -1658,6 +1658,7 @@ impl CstDecode<crate::models::EnvironmentType> for i32 {
         match self {
             0 => crate::models::EnvironmentType::Production,
             1 => crate::models::EnvironmentType::Staging,
+            2 => crate::models::EnvironmentType::Regtest,
             _ => unreachable!("Invalid variant for EnvironmentType: {}", self),
         }
     }
@@ -2161,6 +2162,7 @@ impl SseDecode for crate::models::EnvironmentType {
         return match inner {
             0 => crate::models::EnvironmentType::Production,
             1 => crate::models::EnvironmentType::Staging,
+            2 => crate::models::EnvironmentType::Regtest,
             _ => unreachable!("Invalid variant for EnvironmentType: {}", inner),
         };
     }
@@ -4531,6 +4533,7 @@ impl flutter_rust_bridge::IntoDart for crate::models::EnvironmentType {
         match self {
             Self::Production => 0.into_dart(),
             Self::Staging => 1.into_dart(),
+            Self::Regtest => 2.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -6731,6 +6734,7 @@ impl SseEncode for crate::models::EnvironmentType {
             match self {
                 crate::models::EnvironmentType::Production => 0,
                 crate::models::EnvironmentType::Staging => 1,
+                crate::models::EnvironmentType::Regtest => 2,
                 _ => {
                     unimplemented!("");
                 }

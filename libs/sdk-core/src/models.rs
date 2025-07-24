@@ -504,6 +504,22 @@ impl Config {
             node_config,
         }
     }
+
+    pub fn regtest(api_key: String, node_config: NodeConfig) -> Self {
+        Config {
+            breezserver: REGTEST_BREEZSERVER_URL.to_string(),
+            chainnotifier_url: "https://chainnotifier.breez.technology".to_string(),
+            mempoolspace_url: Some(REGTEST_MEMPOOL_URL.to_string()),
+            working_dir: ".".to_string(),
+            network: Regtest,
+            payment_timeout_sec: 60,
+            default_lsp_id: None,
+            api_key: Some(api_key),
+            maxfee_percent: 0.5,
+            exemptfee_msat: 20000,
+            node_config,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -531,6 +547,8 @@ pub enum EnvironmentType {
     Production,
     #[strum(serialize = "staging")]
     Staging,
+    #[strum(serialize = "regtest")]
+    Regtest,
 }
 
 /// Client-specific credentials to connect to and manage a Greenlight node in the cloud

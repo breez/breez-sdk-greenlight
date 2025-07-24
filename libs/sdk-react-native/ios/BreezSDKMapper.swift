@@ -4178,6 +4178,9 @@ enum BreezSDKMapper {
         case "staging":
             return EnvironmentType.staging
 
+        case "regtest":
+            return EnvironmentType.regtest
+
         default: throw SdkError.Generic(message: "Invalid variant \(environmentType) for enum EnvironmentType")
         }
     }
@@ -4189,6 +4192,9 @@ enum BreezSDKMapper {
 
         case .staging:
             return "staging"
+
+        case .regtest:
+            return "regtest"
         }
     }
 
