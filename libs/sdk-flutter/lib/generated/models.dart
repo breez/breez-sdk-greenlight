@@ -225,7 +225,7 @@ class ConnectRequest {
 }
 
 /// Indicates the different kinds of supported environments for [crate::BreezServices].
-enum EnvironmentType { Production, Staging }
+enum EnvironmentType { Production, Staging, Regtest }
 
 /// Client-specific credentials to connect to and manage a Greenlight node in the cloud
 class GreenlightCredentials {

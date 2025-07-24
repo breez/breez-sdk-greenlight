@@ -1418,6 +1418,7 @@ impl BreezServices {
         match env_type {
             EnvironmentType::Production => Config::production(api_key, node_config),
             EnvironmentType::Staging => Config::staging(api_key, node_config),
+            EnvironmentType::Regtest => Config::regtest(api_key, node_config),
         }
     }
 

@@ -24,6 +24,8 @@ pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bs1.breez.technology:443"
 #[cfg(all(target_family = "wasm", target_os = "unknown"))]
 pub static PRODUCTION_BREEZSERVER_URL: &str = "https://bsw1.breez.technology";
 pub static STAGING_BREEZSERVER_URL: &str = "https://bs1-st.breez.technology:443";
+pub static REGTEST_BREEZSERVER_URL: &str = "http://localhost:8888";
+pub static REGTEST_MEMPOOL_URL: &str = "http://localhost:8999/api";
 
 pub struct BreezServer {
     grpc_client: Mutex<GrpcClient>,

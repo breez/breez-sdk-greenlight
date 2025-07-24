@@ -110,6 +110,7 @@ enum RedeemOnchainError {
 enum EnvironmentType {
     "Production",
     "Staging",
+    "Regtest",
 };
 
 enum Network {
