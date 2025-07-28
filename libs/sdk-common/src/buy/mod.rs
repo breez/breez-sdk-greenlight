@@ -12,5 +12,6 @@ pub trait BuyBitcoinProviderApi: MaybeSend + MaybeSync {
         locked_amount_sat: Option<u64>,
         max_amount_sat: Option<u64>,
         redirect_url: Option<String>,
+        fiat_currency_code: Option<String>,
     ) -> Result<String>;
 }
