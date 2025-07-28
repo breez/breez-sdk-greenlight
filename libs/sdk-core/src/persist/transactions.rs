@@ -98,7 +98,7 @@ impl SqliteStorage {
         let mut stmt = con.prepare("DELETE FROM payments where is_pseudo=1")?;
         let res = stmt.execute([])?;
         if res > 0 {
-            debug!("deleted {} pseudo-payments", res);
+            debug!("deleted {res} pseudo-payments");
         }
 
         Ok(())

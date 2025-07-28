@@ -96,7 +96,7 @@ impl SqliteStorage {
         match SqliteStorage::migrate_sync_db(sync_data_file.clone()) {
             Ok(_) => {}
             Err(e) => {
-                log::error!("Failed to migrate sync db, probably local db is older than remote, skipping migration: {}", e);
+                log::error!("Failed to migrate sync db, probably local db is older than remote, skipping migration: {e}");
             }
         }
 
