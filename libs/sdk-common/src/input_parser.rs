@@ -32,7 +32,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ```
 /// use sdk_common::prelude::{InputType::*, parse};
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() {
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd", None).await, Ok(BitcoinAddress{address: _}) ));
 ///     assert!(matches!( parse("1andreas3batLhQa2FawWjeyjCqyBzypd?amount=0.00002000", None).await, Ok(BitcoinAddress{address: _}) ));
@@ -53,7 +53,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ```
 /// use sdk_common::prelude::{InputType::*, parse};
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() {
 ///     let invoice = "lnbc110n1p38q3gtpp5ypz09jrd8p993snjwnm68cph4ftwp22le34xd4r8ftspwshxhmnsdqqxqyjw5qcqpxsp5htlg8ydpywvsa7h3u4hdn77ehs4z4e844em0apjyvmqfkzqhhd2q9qgsqqqyssqszpxzxt9uuqzymr7zxcdccj5g69s8q7zzjs7sgxn9ejhnvdh6gqjcy22mss2yexunagm5r2gqczh8k24cwrqml3njskm548aruhpwssq9nvrvz";
 ///     assert!(matches!( parse(invoice, None).await, Ok(Bolt11{invoice: _}) ));
@@ -70,7 +70,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ```
 /// use sdk_common::prelude::{InputType::*, parse};
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() {
 ///     assert!(matches!( parse("https://breez.technology", None).await, Ok(Url{url: _}) ));
 ///     assert!(matches!( parse("https://breez.technology/test-path", None).await, Ok(Url{url: _}) ));
@@ -83,7 +83,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ```no_run
 /// use sdk_common::prelude::{InputType::*, parse};
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() {
 ///     assert!(matches!( parse("https://breez.technology?lightning=lnurl1d...", None).await, Ok(LnUrlWithdraw{data: _}) ));
 /// }
@@ -100,7 +100,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 /// use anyhow::Result;
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() -> Result<()> {
 ///     let lnurl_pay_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttsv9un7um9wdekjmmw84jxywf5x43rvv35xgmr2enrxanr2cfcvsmnwe3jxcukvde48qukgdec89snwde3vfjxvepjxpjnjvtpxd3kvdnxx5crxwpjvyunsephsz36jf";
 ///
@@ -127,7 +127,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ```no_run
 /// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() {
 ///     let lnurl_withdraw_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4exctthd96xserjv9mn7um9wdekjmmw843xxwpexdnxzen9vgunsvfexq6rvdecx93rgdmyxcuxverrvcursenpxvukzv3c8qunsdecx33nzwpnvg6ryc3hv93nzvecxgcxgwp3h33lxk";
 ///
@@ -150,7 +150,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ```no_run
 /// use sdk_common::prelude::{InputType::*, LnUrlRequestData::*, parse};
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() {
 ///     let lnurl_auth_url = "lnurl1dp68gurn8ghj7mr0vdskc6r0wd6z7mrww4excttvdankjm3lw3skw0tvdankjm3xdvcn6vtp8q6n2dfsx5mrjwtrxdjnqvtzv56rzcnyv3jrxv3sxqmkyenrvv6kve3exv6nqdtyv43nqcmzvdsnvdrzx33rsenxx5unqc3cxgeqgntfgu";
 ///
@@ -167,7 +167,7 @@ const BIP353_PREFIX: &str = "bitcoin:";
 /// ```no_run
 /// use sdk_common::prelude::{ExternalInputParser, InputType::*, parse};
 ///
-/// #[tokio::main]
+/// #[tokio::main(flavor = "current_thread")]
 /// async fn main() {
 ///     let external_parser = ExternalInputParser {
 ///         provider_id: "provider_id".to_string(),
