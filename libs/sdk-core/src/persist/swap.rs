@@ -381,16 +381,11 @@ impl SqliteStorage {
         row: &Row,
         prefix: &str,
     ) -> PersistResult<SwapInfo, rusqlite::Error> {
-        let status: i32 = row
-            .get::<&str, Option<i32>>(format!("{prefix}status").as_str())?
-            .unwrap_or(SwapStatus::Initial as i32);
-        let status: SwapStatus = status.try_into().unwrap_or(SwapStatus::Initial);
-        let refund_txs_raw: String = row
-            .get::<&str, Option<String>>(format!("{prefix}refund_tx_ids").as_str())?
-            .unwrap_or("[]".to_string());
-        let refund_tx_ids: Vec<String> = serde_json::from_str(refund_txs_raw.as_str()).unwrap();
-        // let t: Vec<String> =
-        //     serde_json::from_value(refund_txs_raw).map_err(|e| FromSqlError::InvalidType)?;
+        let status_raw: i32 = row.get(format!("{prefix}status").as_str())?;
+        let status = SwapStatus::try_from(status_raw).unwrap_or(SwapStatus::Initial);
+        let refund_tx_ids: StringArray = row
+            .get::<&str, Option<StringArray>>(format!("{prefix}refund_tx_ids").as_str())?
+            .unwrap_or(StringArray(vec![]));
 
         let unconfirmed_tx_ids: StringArray = row
             .get::<&str, Option<StringArray>>(format!("{prefix}unconfirmed_tx_ids").as_str())?
@@ -399,6 +394,7 @@ impl SqliteStorage {
             .get::<&str, Option<StringArray>>(format!("{prefix}confirmed_tx_ids").as_str())?
             .unwrap_or(StringArray(vec![]));
         let bitcoin_address = row.get(format!("{prefix}bitcoin_address").as_str())?;
+
         Ok(SwapInfo {
             bitcoin_address,
             created_at: row.get(format!("{prefix}created_at").as_str())?,
@@ -423,7 +419,7 @@ impl SqliteStorage {
                 .get::<&str, Option<u64>>(format!("{prefix}total_incoming_txs").as_str())?
                 .unwrap_or_default(),
             status,
-            refund_tx_ids,
+            refund_tx_ids: refund_tx_ids.0,
             unconfirmed_tx_ids: unconfirmed_tx_ids.0,
             confirmed_tx_ids: confirmed_txs_raw.0,
             min_allowed_deposit: row.get(format!("{prefix}min_allowed_deposit").as_str())?,
