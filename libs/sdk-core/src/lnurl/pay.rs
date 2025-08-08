@@ -33,11 +33,11 @@ pub(crate) mod tests {
     use std::sync::Arc;
 
     use anyhow::{anyhow, Result};
-    use gl_client::bitcoin::hashes::hex::ToHex;
     use rand::random;
     use serde_json::json;
 
 	use crate::PaymentStatus;
+    use crate::bitcoin::hashes::hex::ToHex;
     use crate::bitcoin::hashes::{sha256, Hash};
     use crate::breez_services::tests::{breez_services_with, get_dummy_node_state};
     use crate::lnurl::pay::*;

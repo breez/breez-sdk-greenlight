@@ -2288,45 +2288,6 @@ impl TryFrom<SendPayAgg> for Payment {
     }
 }
 
-impl TryFrom<IncomingPayment> for Payment {
-    type Error = NodeError;
-
-    fn try_from(p: IncomingPayment) -> std::result::Result<Self, Self::Error> {
-        let ln_invoice = parse_invoice(&p.bolt11)?;
-        Ok(Payment {
-            id: hex::encode(p.payment_hash.clone()),
-            payment_type: PaymentType::Received,
-            payment_time: SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64,
-            amount_msat: p.amount_msat,
-            fee_msat: 0,
-            status: PaymentStatus::Complete,
-            error: None,
-            description: ln_invoice.description,
-            details: PaymentDetails::Ln {
-                data: LnPaymentDetails {
-                    payment_hash: hex::encode(p.payment_hash),
-                    label: p.label,
-                    destination_pubkey: ln_invoice.payee_pubkey,
-                    payment_preimage: hex::encode(p.preimage),
-                    keysend: false,
-                    bolt11: p.bolt11,
-                    lnurl_success_action: None, // For received payments, this is None
-                    lnurl_pay_domain: None,     // For received payments, this is None
-                    lnurl_pay_comment: None,    // For received payments, this is None
-                    lnurl_metadata: None,       // For received payments, this is None
-                    ln_address: None,
-                    lnurl_withdraw_endpoint: None,
-                    swap_info: None,
-                    reverse_swap_info: None,
-                    pending_expiration_block: None,
-                    open_channel_bolt11: None,
-                },
-            },
-            metadata: None,
-        })
-    }
-}
-
 /// Construct a lightning transaction from an invoice
 impl TryFrom<cln::ListinvoicesInvoices> for Payment {
     type Error = NodeError;
