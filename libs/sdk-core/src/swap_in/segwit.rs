@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use gl_client::bitcoin::{
+use ripemd::{Digest, Ripemd160};
+
+use crate::bitcoin::{
     blockdata::{opcodes, script::Builder},
     secp256k1::{Message, Secp256k1, SecretKey},
     util::sighash::SighashCache,
     Address, EcdsaSighashType, PackedLockTime, Script, Sequence, Transaction, TxIn, TxOut, Witness,
 };
-use ripemd::{Digest, Ripemd160};
-
 use crate::{SwapInfo, SwapperAPI};
 
 use super::{

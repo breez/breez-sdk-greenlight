@@ -20,6 +20,7 @@ gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = 
 ], rev = "c09c1be59994b35aadfe4747b78bcdc8fffbe45a" }
 zbase32 = "0.1.2"
 base64 = { workspace = true }
+bitcoin = { workspace = true, features = ["serde", "rand"] }
 chrono = "0.4"
 ecies = { version = "0.2.6", default-features = false, features = ["pure"] }
 env_logger = "0.10"

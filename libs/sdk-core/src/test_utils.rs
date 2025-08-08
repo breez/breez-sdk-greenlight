@@ -5,13 +5,6 @@ use std::{mem, vec};
 
 use anyhow::{Error, Result};
 use chrono::{SecondsFormat, Utc};
-use gl_client::bitcoin::blockdata::opcodes::all::{
-    OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CSV, OP_EQUALVERIFY, OP_HASH160,
-};
-use gl_client::bitcoin::blockdata::script;
-use gl_client::bitcoin::hashes::ripemd160;
-use gl_client::bitcoin::util::taproot::{TaprootBuilder, TaprootSpendInfo};
-use gl_client::bitcoin::{Address, Script, Sequence, XOnlyPublicKey};
 use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
@@ -29,12 +22,18 @@ use tokio_stream::StreamExt;
 use tonic::Status;
 
 use crate::backup::{BackupState, BackupTransport};
+use crate::bitcoin::blockdata::opcodes::all::{
+    OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CSV, OP_EQUALVERIFY, OP_HASH160,
+};
+use crate::bitcoin::blockdata::script;
 use crate::bitcoin::hashes::hex::ToHex;
+use crate::bitcoin::hashes::ripemd160;
 use crate::bitcoin::hashes::{sha256, Hash};
 use crate::bitcoin::secp256k1::ecdsa::RecoverableSignature;
 use crate::bitcoin::secp256k1::{KeyPair, Message, PublicKey, Secp256k1};
 use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
-use crate::bitcoin::Network;
+use crate::bitcoin::util::taproot::{TaprootBuilder, TaprootSpendInfo};
+use crate::bitcoin::{Address, Network, Script, Sequence, XOnlyPublicKey};
 use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::buy::BuyBitcoinApi;
 use crate::chain::{ChainService, OnchainTx, Outspend, RecommendedFees, TxStatus};
