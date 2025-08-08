@@ -13,6 +13,7 @@ pub(crate) trait BuyBitcoinApi: Send + Sync {
         provider: BuyBitcoinProvider,
         swap_info: &SwapInfo,
         redirect_url: Option<String>,
+        fiat_currency_code: Option<String>,
     ) -> Result<String>;
 }
 
@@ -34,6 +35,7 @@ impl BuyBitcoinApi for BuyBitcoinService {
         provider: BuyBitcoinProvider,
         swap_info: &SwapInfo,
         redirect_url: Option<String>,
+        fiat_currency_code: Option<String>,
     ) -> Result<String> {
         match provider {
             BuyBitcoinProvider::Moonpay => {
@@ -43,6 +45,7 @@ impl BuyBitcoinApi for BuyBitcoinService {
                         None,
                         Some(swap_info.max_allowed_deposit as u64),
                         redirect_url,
+                        fiat_currency_code,
                     )
                     .await
             }

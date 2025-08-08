@@ -301,6 +301,7 @@ typedef struct wire_cst_buy_bitcoin_request {
   int32_t provider;
   struct wire_cst_opening_fee_params *opening_fee_params;
   struct wire_cst_list_prim_u_8_strict *redirect_url;
+  struct wire_cst_list_prim_u_8_strict *fiat_currency_code;
 } wire_cst_buy_bitcoin_request;
 
 typedef struct wire_cst_check_message_request {
