@@ -34,10 +34,10 @@ pub(crate) mod tests {
 
     use anyhow::{anyhow, Result};
     use gl_client::bitcoin::hashes::hex::ToHex;
-    use gl_client::pb::cln::pay_response::PayStatus;
     use rand::random;
     use serde_json::json;
 
+	use crate::PaymentStatus;
     use crate::bitcoin::hashes::{sha256, Hash};
     use crate::breez_services::tests::{breez_services_with, get_dummy_node_state};
     use crate::lnurl::pay::*;
@@ -726,7 +726,7 @@ pub(crate) mod tests {
 
         let mock_node_api = MockNodeAPI::new(get_dummy_node_state());
         let model_payment = mock_node_api
-            .add_dummy_payment_for(bolt11, Some(preimage), Some(PayStatus::Pending))
+            .add_dummy_payment_for(bolt11, Some(preimage), Some(PaymentStatus::Pending))
             .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];
@@ -816,7 +816,7 @@ pub(crate) mod tests {
 
         let mock_node_api = MockNodeAPI::new(get_dummy_node_state());
         let model_payment = mock_node_api
-            .add_dummy_payment_for(bolt11, Some(preimage), Some(PayStatus::Pending))
+            .add_dummy_payment_for(bolt11, Some(preimage), Some(PaymentStatus::Pending))
             .await?;
 
         let known_payments: Vec<crate::models::Payment> = vec![model_payment];

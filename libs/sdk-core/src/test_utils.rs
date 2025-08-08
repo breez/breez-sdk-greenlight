@@ -12,8 +12,6 @@ use gl_client::bitcoin::blockdata::script;
 use gl_client::bitcoin::hashes::ripemd160;
 use gl_client::bitcoin::util::taproot::{TaprootBuilder, TaprootSpendInfo};
 use gl_client::bitcoin::{Address, Script, Sequence, XOnlyPublicKey};
-use gl_client::pb::cln::pay_response::PayStatus;
-use gl_client::pb::cln::Amount;
 use rand::distributions::uniform::{SampleRange, SampleUniform};
 use rand::distributions::{Alphanumeric, DistString, Standard};
 use rand::rngs::OsRng;
@@ -46,7 +44,8 @@ use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
 use crate::lsp::LspInformation;
 use crate::models::{
-    LspAPI, NodeState, Payment, ReverseSwapServiceAPI, SwapperAPI, SyncResponse, TlvEntry,
+    LnPaymentDetails, LspAPI, NodeState, Payment, PaymentDetails, PaymentStatus, PaymentType,
+    ReverseSwapServiceAPI, SwapperAPI, SyncResponse, TlvEntry,
 };
 use crate::node_api::{
     CreateInvoiceRequest, FetchBolt11Result, IncomingPayment, NodeAPI, NodeError, NodeResult,
@@ -305,7 +304,7 @@ pub struct MockNodeAPI {
     /// Each call to [MockNodeAPI::add_dummy_payment_for] will add the new payment here such that
     /// [NodeAPI::pull_changed], which is called in [BreezServices::sync], always retrieves the newly
     /// added test payments
-    cloud_payments: Mutex<Vec<gl_client::pb::cln::ListpaysPays>>,
+    cloud_payments: Mutex<Vec<Payment>>,
     node_state: NodeState,
     on_send_custom_message: Box<dyn Fn(CustomMessage) -> NodeResult<()> + Sync + Send>,
     on_stream_custom_messages: Mutex<mpsc::Receiver<CustomMessage>>,
@@ -515,7 +514,7 @@ impl NodeAPI for MockNodeAPI {
 impl MockNodeAPI {
     pub fn new(node_state: NodeState) -> Self {
         Self {
-            cloud_payments: Mutex::new(vec![]),
+            cloud_payments: Mutex::new(Vec::new()),
             node_state,
             on_send_custom_message: Box::new(|_| Ok(())),
             on_stream_custom_messages: {
@@ -533,13 +532,13 @@ impl MockNodeAPI {
         &self,
         bolt11: String,
         preimage: Option<sha256::Hash>,
-        status: Option<PayStatus>,
+        status: Option<PaymentStatus>,
     ) -> NodeResult<Payment> {
         let inv = bolt11
             .parse::<crate::lightning_invoice::Bolt11Invoice>()
             .map_err(|e| NodeError::Generic(e.to_string()))?;
 
-        self.add_dummy_payment(inv, preimage, status).await
+        Ok(self.add_dummy_payment(inv, preimage, status).await)
     }
 
     /// Adds a dummy payment with random attributes.
@@ -547,7 +546,7 @@ impl MockNodeAPI {
         let preimage = sha256::Hash::hash(&rand_vec_u8(10));
         let inv = rand_invoice_with_description_hash_and_preimage("test".into(), preimage)?;
 
-        self.add_dummy_payment(inv, Some(preimage), None).await
+        Ok(self.add_dummy_payment(inv, Some(preimage), None).await)
     }
 
     /// Adds a dummy payment.
@@ -555,51 +554,60 @@ impl MockNodeAPI {
         &self,
         inv: crate::lightning_invoice::Bolt11Invoice,
         preimage: Option<sha256::Hash>,
-        status: Option<PayStatus>,
-    ) -> NodeResult<Payment> {
-        let gl_payment = gl_client::pb::cln::ListpaysPays {
-            payment_hash: hex::decode(inv.payment_hash().to_hex())?,
-            bolt11: Some(inv.to_string()),
-            amount_msat: inv.amount_milli_satoshis().map(|msat| Amount { msat }),
-            amount_sent_msat: inv.amount_milli_satoshis().map(|msat| Amount { msat }),
-            preimage: match preimage {
-                Some(preimage) => Some(hex::decode(preimage.to_hex())?),
-                None => Some(rand_vec_u8(32)),
-            },
-            status: status.unwrap_or(PayStatus::Complete).into(),
-            created_at: random(),
-            destination: Some(rand_vec_u8(32)),
-            completed_at: random(),
-            label: None,
+        status: Option<PaymentStatus>,
+    ) -> Payment {
+        let preimage = match preimage {
+            Some(preimage) => preimage.to_hex(),
+            None => hex::encode(rand_vec_u8(32)),
+        };
+        let payment = Payment {
+            id: inv.payment_hash().to_hex(),
+            payment_type: PaymentType::Sent,
+            payment_time: random::<i64>(),
+            amount_msat: inv.amount_milli_satoshis().unwrap_or_default(),
+            fee_msat: 0,
+            status: status.unwrap_or(PaymentStatus::Complete),
+            error: None,
             description: None,
-            bolt12: None,
-            erroronion: None,
-            number_of_parts: None,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: inv.payment_hash().to_hex(),
+                    label: String::new(),
+                    destination_pubkey: hex::encode(rand_vec_u8(32)),
+                    payment_preimage: preimage,
+                    keysend: false,
+                    bolt11: inv.to_string(),
+                    lnurl_success_action: None,
+                    lnurl_pay_domain: None,
+                    lnurl_pay_comment: None,
+                    lnurl_metadata: None,
+                    ln_address: None,
+                    lnurl_withdraw_endpoint: None,
+                    swap_info: None,
+                    reverse_swap_info: None,
+                    pending_expiration_block: None,
+                    open_channel_bolt11: None,
+                },
+            },
+            metadata: None,
         };
 
-        self.save_payment_for_future_sync_updates(gl_payment.clone())
-            .await
+        self.save_payment_for_future_sync_updates(payment).await
     }
 
     /// Include payment in the result of [MockNodeAPI::pull_changed].
-    async fn save_payment_for_future_sync_updates(
-        &self,
-        gl_payment: gl_client::pb::cln::ListpaysPays,
-    ) -> NodeResult<Payment> {
+    async fn save_payment_for_future_sync_updates(&self, payment: Payment) -> Payment {
         let mut cloud_payments = self.cloud_payments.lock().await;
 
         // Only store it if a payment with the same ID doesn't already exist
         // This allows us to initialize a MockBreezServer with a list of known payments using
         // breez_services::tests::breez_services_with(vec), but not replace them when
         // send_payment is called in tests for those payments.
-        let gl_payment = match cloud_payments
-            .iter()
-            .find(|p| p.payment_hash == gl_payment.payment_hash)
-        {
+        match cloud_payments.iter().find(|p| p.id == payment.id) {
             None => {
                 // If payment is not already known, add it to the list and return it
-                cloud_payments.push(gl_payment.clone());
-                gl_payment
+                cloud_payments.push(payment.clone());
+                payment
             }
             Some(p) => {
                 // If a payment already exists (by ID), then do not replace it and return it
@@ -607,9 +615,7 @@ impl MockNodeAPI {
                 // on mock breez service init
                 p.clone()
             }
-        };
-
-        gl_payment.try_into()
+        }
     }
 
     pub fn set_on_send_custom_message(
