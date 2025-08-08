@@ -31,6 +31,7 @@ use crate::error::{
     ConnectError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError,
     RedeemOnchainResult, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
+#[cfg(feature = "greenlight")]
 use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::lnurl::auth::SdkLnurlAuthSigner;
 use crate::lnurl::pay::*;
@@ -2400,6 +2401,7 @@ impl BreezServicesBuilder {
 
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
+        #[cfg(feature = "greenlight")]
         if node_api.is_none() {
             let greenlight = Greenlight::connect(
                 self.config.clone(),

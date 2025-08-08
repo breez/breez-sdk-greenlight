@@ -8,7 +8,8 @@ name = "breez_sdk_core"
 crate-type = ["staticlib", "cdylib", "lib"]
 
 [features]
-default = []
+default = ["greenlight"]
+greenlight = ["dep:gl-client"]
 
 [dependencies]
 flutter_rust_bridge = "=2.9.0"
@@ -17,7 +18,7 @@ anyhow = { workspace = true }
 hex = { workspace = true }
 gl-client = { git = "https://github.com/Blockstream/greenlight.git", features = [
     "permissive",
-], rev = "c09c1be59994b35aadfe4747b78bcdc8fffbe45a" }
+], rev = "c09c1be59994b35aadfe4747b78bcdc8fffbe45a", optional = true }
 zbase32 = "0.1.2"
 base64 = { workspace = true }
 bitcoin = { workspace = true, features = ["serde", "rand"] }

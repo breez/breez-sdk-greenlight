@@ -4,6 +4,7 @@ use crate::models::NodeState;
 
 use super::{db::SqliteStorage, error::PersistResult};
 
+#[cfg(feature = "greenlight")]
 const KEY_GL_CREDENTIALS: &str = "gl_credentials";
 const KEY_LAST_BACKUP_TIME: &str = "last_backup_time";
 const KEY_SYNC_STATE: &str = "sync_state";
@@ -82,10 +83,12 @@ impl SqliteStorage {
         })
     }
 
+    #[cfg(feature = "greenlight")]
     pub fn set_gl_credentials(&self, creds: Vec<u8>) -> PersistResult<()> {
         self.update_cached_item(KEY_GL_CREDENTIALS, hex::encode(creds))
     }
 
+    #[cfg(feature = "greenlight")]
     pub fn get_gl_credentials(&self) -> PersistResult<Option<Vec<u8>>> {
         match self.get_cached_item(KEY_GL_CREDENTIALS)? {
             Some(str) => Ok(Some(hex::decode(str)?)),
