@@ -4,21 +4,19 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use gl_client::{
-    bitcoin::{
-        blockdata::constants::WITNESS_SCALE_FACTOR,
-        consensus::encode,
-        hashes::sha256,
-        secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
-        Address, AddressType, Network, OutPoint, Script, Sequence, TxIn, Witness,
-    },
-    lightning_invoice::Bolt11Invoice,
-};
 use rand::Rng;
 use sdk_common::ensure_sdk;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{broadcast, Mutex};
 
+use crate::bitcoin::{
+    blockdata::constants::WITNESS_SCALE_FACTOR,
+    consensus::encode,
+    hashes::sha256,
+    secp256k1::{Message, PublicKey, Secp256k1, SecretKey},
+    Address, AddressType, Network, OutPoint, Script, Sequence, TxIn, Witness,
+};
+use crate::lightning_invoice::Bolt11Invoice;
 use crate::{
     breez_services::{OpenChannelParams, Receiver},
     chain::ChainService,

@@ -1,13 +1,13 @@
 use std::sync::Arc;
 
-use gl_client::bitcoin::{
+use sdk_common::prelude::{LnUrlError, LnUrlResult, LnurlAuthSigner};
+
+use crate::node_api::NodeAPI;
+use crate::bitcoin::{
     hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine},
     secp256k1::{Message, Secp256k1},
     util::bip32::{ChildNumber, ExtendedPubKey},
 };
-use sdk_common::prelude::{LnUrlError, LnUrlResult, LnurlAuthSigner};
-
-use crate::node_api::NodeAPI;
 
 pub(crate) struct SdkLnurlAuthSigner {
     node_api: Arc<dyn NodeAPI>,

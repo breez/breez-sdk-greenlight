@@ -1,10 +1,11 @@
 use std::time::SystemTimeError;
 
-use gl_client::{bitcoin, lightning_invoice::ParseOrSemanticError};
 use hex::FromHexError;
 use secp256k1::musig::{MusigSignError, MusigTweakErr};
 use thiserror::Error;
 
+use crate::bitcoin;
+use crate::lightning_invoice::ParseOrSemanticError;
 use crate::{
     error::{ReceivePaymentError, SdkError},
     node_api::NodeError,
