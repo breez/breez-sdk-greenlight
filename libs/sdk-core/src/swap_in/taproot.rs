@@ -3,7 +3,14 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use gl_client::bitcoin::{
+use rand::Rng;
+use sdk_common::tonic_wrap;
+use secp256k1::musig::{
+    MusigAggNonce, MusigKeyAggCache, MusigPartialSignature, MusigPubNonce, MusigSecRand,
+    MusigSession,
+};
+
+use crate::bitcoin::{
     self,
     blockdata::{
         opcodes::all::{OP_CHECKSIG, OP_CHECKSIGVERIFY, OP_CSV, OP_EQUALVERIFY, OP_HASH160},
@@ -19,13 +26,6 @@ use gl_client::bitcoin::{
     Address, Network, PackedLockTime, SchnorrSighashType, Script, Sequence, Transaction, TxIn,
     TxOut, Witness, XOnlyPublicKey,
 };
-use rand::Rng;
-use sdk_common::tonic_wrap;
-use secp256k1::musig::{
-    MusigAggNonce, MusigKeyAggCache, MusigPartialSignature, MusigPubNonce, MusigSecRand,
-    MusigSession,
-};
-
 use crate::{NodeState, OpeningFeeParams, SwapInfo, SwapStatus};
 
 use super::{

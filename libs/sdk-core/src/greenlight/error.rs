@@ -122,12 +122,6 @@ impl From<crate::bitcoin::util::address::Error> for NodeError {
     }
 }
 
-impl From<crate::bitcoin::util::bip32::Error> for NodeError {
-    fn from(err: crate::bitcoin::util::bip32::Error) -> Self {
-        Self::Generic(err.to_string())
-    }
-}
-
 impl From<hex::FromHexError> for NodeError {
     fn from(err: hex::FromHexError) -> Self {
         Self::Generic(err.to_string())

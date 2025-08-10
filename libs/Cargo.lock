@@ -728,6 +728,7 @@ dependencies = [
  "aes 0.8.4",
  "anyhow",
  "base64 0.13.1",
+ "bitcoin 0.29.2",
  "chrono",
  "const_format",
  "ecies",

@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::pin::Pin;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::Result;
 use serde_json::Value;
@@ -12,7 +13,7 @@ use crate::{
     bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey},
     lightning_invoice::RawBolt11Invoice,
     persist::error::PersistError,
-    CustomMessage, LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment,
+    CustomMessage, LnUrlAuthError, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentType,PaymentDetails,LnPaymentDetails,PaymentStatus,
     PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
     RouteHint, RouteHintHop, SyncResponse, TlvEntry,
 };
@@ -77,6 +78,12 @@ impl NodeError {
     }
 }
 
+impl From<crate::bitcoin::util::bip32::Error> for NodeError {
+    fn from(err: crate::bitcoin::util::bip32::Error) -> Self {
+        Self::Generic(err.to_string())
+    }
+}
+
 impl From<NodeError> for sdk_common::prelude::LnUrlError {
     fn from(value: NodeError) -> Self {
         match value {
@@ -120,6 +127,46 @@ pub struct IncomingPayment {
     pub preimage: Vec<u8>,
     pub amount_msat: u64,
     pub bolt11: String,
+}
+
+impl TryFrom<IncomingPayment> for Payment {
+    type Error = NodeError;
+
+    fn try_from(p: IncomingPayment) -> std::result::Result<Self, Self::Error> {
+		let payment_time = SystemTime::now().duration_since(UNIX_EPOCH).map_err(|e| NodeError::Generic(format!("{e}")))?.as_secs() as i64;
+        let ln_invoice = parse_invoice(&p.bolt11)?;
+        Ok(Payment {
+            id: hex::encode(p.payment_hash.clone()),
+            payment_type: PaymentType::Received,
+            payment_time,
+            amount_msat: p.amount_msat,
+            fee_msat: 0,
+            status: PaymentStatus::Complete,
+            error: None,
+            description: ln_invoice.description,
+            details: PaymentDetails::Ln {
+                data: LnPaymentDetails {
+                    payment_hash: hex::encode(p.payment_hash),
+                    label: p.label,
+                    destination_pubkey: ln_invoice.payee_pubkey,
+                    payment_preimage: hex::encode(p.preimage),
+                    keysend: false,
+                    bolt11: p.bolt11,
+                    lnurl_success_action: None, // For received payments, this is None
+                    lnurl_pay_domain: None,     // For received payments, this is None
+                    lnurl_pay_comment: None,    // For received payments, this is None
+                    lnurl_metadata: None,       // For received payments, this is None
+                    ln_address: None,
+                    lnurl_withdraw_endpoint: None,
+                    swap_info: None,
+                    reverse_swap_info: None,
+                    pending_expiration_block: None,
+                    open_channel_bolt11: None,
+                },
+            },
+            metadata: None,
+        })
+    }
 }
 
 /// Trait covering functions affecting the LN node
