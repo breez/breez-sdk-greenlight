@@ -1,4 +1,5 @@
-import { NativeModules, Platform, EmitterSubscription, NativeEventEmitter } from "react-native"
+import { NativeModules, Platform, NativeEventEmitter } from "react-native"
+import type { EmitterSubscription } from "react-native"
 
 const LINKING_ERROR =
     `The package 'react-native-breez-sdk' doesn't seem to be linked. Make sure: \n\n` +
