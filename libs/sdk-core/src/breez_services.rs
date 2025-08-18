@@ -31,7 +31,6 @@ use crate::error::{
     ConnectError, ReceiveOnchainError, ReceiveOnchainResult, ReceivePaymentError,
     RedeemOnchainResult, SdkError, SdkResult, SendOnchainError, SendPaymentError,
 };
-use crate::greenlight::{GLBackupTransport, Greenlight};
 use crate::lnurl::auth::SdkLnurlAuthSigner;
 use crate::lnurl::pay::*;
 use crate::lsp::LspInformation;
@@ -2401,17 +2400,16 @@ impl BreezServicesBuilder {
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
         if node_api.is_none() {
-            let greenlight = Greenlight::connect(
+            let (node_impl, backup_transport_impl) = node_builder::build_node(
                 self.config.clone(),
                 self.seed.clone().unwrap(),
                 restore_only,
                 persister.clone(),
             )
             .await?;
-            let gl_arc = Arc::new(greenlight);
-            node_api = Some(gl_arc.clone());
+            node_api = Some(node_impl);
             if backup_transport.is_none() {
-                backup_transport = Some(Arc::new(GLBackupTransport { inner: gl_arc }));
+                backup_transport = Some(backup_transport_impl);
             }
         }
 
