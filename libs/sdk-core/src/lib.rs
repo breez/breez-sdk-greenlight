@@ -170,6 +170,7 @@ mod crypt;
 pub mod error;
 #[rustfmt::skip]
 mod node_api; // flutter_rust_bridge_codegen: has to be defined before greenlight; greenlight::node_api
+#[cfg(feature = "greenlight")]
 mod greenlight;
 #[rustfmt::skip]
 pub mod lnurl;
@@ -179,6 +180,7 @@ mod lsps0;
 /// flutter_rust_bridge:ignore
 mod lsps2;
 mod models;
+mod node_builder;
 mod persist;
 mod serializer;
 mod support;

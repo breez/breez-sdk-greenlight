@@ -58,6 +58,7 @@ use crate::persist::send_pays::{SendPay, SendPayStatus};
 use crate::{models::*, LspInformation};
 use crate::{NodeConfig, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse};
 
+const KEY_GL_CREDENTIALS: &str = "gl_credentials";
 const MAX_PAYMENT_AMOUNT_MSAT: u64 = 4294967000;
 const MAX_INBOUND_LIQUIDITY_MSAT: u64 = 4000000000;
 const TRAMPOLINE_BASE_FEE_MSAT: u64 = 4000;
@@ -162,7 +163,7 @@ impl Greenlight {
                 let encrypted_creds = sym_encrypt(encryption_key_slice, &creds.to_bytes());
                 match encrypted_creds {
                     Some(c) => {
-                        persister.set_gl_credentials(c)?;
+                        persister.update_cached_item(KEY_GL_CREDENTIALS, hex::encode(c))?;
                         Greenlight::new(config, seed, creds.clone(), persister)
                     }
                     None => Err(NodeError::generic("Failed to encrypt credentials")),
@@ -304,8 +305,9 @@ impl Greenlight {
         .to_bytes();
         let legacy_encryption_key_slice = legacy_encryption_key.as_slice();
 
-        match persister.get_gl_credentials()? {
+        match persister.get_cached_item(KEY_GL_CREDENTIALS)? {
             Some(encrypted_creds) => {
+                let encrypted_creds = hex::decode(encrypted_creds)?;
                 let mut decrypted_credentials =
                     sym_decrypt(encryption_key_slice, encrypted_creds.as_slice());
                 if decrypted_credentials.is_none() {
