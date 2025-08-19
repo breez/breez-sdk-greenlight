@@ -10,6 +10,8 @@ crate-type = ["staticlib", "cdylib", "lib"]
 [features]
 default = ["greenlight"]
 greenlight = ["dep:gl-client"]
+# Enable LDK (Lightning Development Kit) node implementation
+ldk = ["dep:ldk-node"]
 
 [dependencies]
 flutter_rust_bridge = "=2.9.0"
@@ -58,6 +60,7 @@ tokio-stream = "0.1.14"
 serde_with = "3.3.0"
 regex = { workspace = true }
 ryu = "1.0.18"
+ldk-node = { version = "0.6.2", optional = true }
 
 [dev-dependencies]
 mockall = "0.13.1"

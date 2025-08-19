@@ -332,16 +332,13 @@ impl BreezServices {
                 Ok(res) => Some(res),
                 Err(e) => {
                     if e.to_string().contains("missing balance") {
-                        debug!(
-                            "trampoline payment failed due to insufficient balance: {:?}",
-                            e
-                        );
+                        debug!("trampoline payment failed due to insufficient balance: {e:?}");
                         return Err(SendPaymentError::InsufficientBalance {
                             err: "Trampoline payment failed".into(),
                         });
                     }
 
-                    warn!("trampoline payment failed: {:?}", e);
+                    warn!("trampoline payment failed: {e:?}");
                     None
                 }
             }
@@ -366,7 +363,7 @@ impl BreezServices {
             }
         };
 
-        debug!("payment returned {:?}", payment_res);
+        debug!("payment returned {payment_res:?}");
         let payment = self
             .on_payment_completed(
                 parsed_invoice.payee_pubkey.clone(),
@@ -966,7 +963,7 @@ impl BreezServices {
     async fn max_reverse_swap_amount(&self) -> SdkResult<u64> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
-        info!("max_reverse_swap_amount last_hop={:?}", last_hop);
+        info!("max_reverse_swap_amount last_hop={last_hop:?}");
         // calculate the largest payment we can send over this route using maximum 3 hops
         // as follows:
         // User Node -> LSP Node -> Routing Node -> Swapper Node
@@ -1226,7 +1223,7 @@ impl BreezServices {
         self.persister.delete_pseudo_payments()?;
         self.persister.insert_or_update_payments(&payments, false)?;
         let duration = start.elapsed();
-        info!("Sync duration: {:?}", duration);
+        info!("Sync duration: {duration:?}");
 
         // update the cached sync state
         self.persister.set_sync_state(&new_data.sync_state)?;
@@ -1370,22 +1367,16 @@ impl BreezServices {
     }
 
     async fn on_event(&self, e: BreezEvent) -> Result<()> {
-        debug!("breez services got event {:?}", e);
+        debug!("breez services got event {e:?}");
         self.notify_event_listeners(e.clone()).await
     }
 
     async fn notify_event_listeners(&self, e: BreezEvent) -> Result<()> {
         if let Err(err) = self.btc_receive_swapper.on_event(e.clone()).await {
-            debug!(
-                "btc_receive_swapper failed to process event {:?}: {:?}",
-                e, err
-            )
+            debug!("btc_receive_swapper failed to process event {e:?}: {err:?}")
         };
         if let Err(err) = self.btc_send_swapper.on_event(e.clone()).await {
-            debug!(
-                "btc_send_swapper failed to process event {:?}: {:?}",
-                e, err
-            )
+            debug!("btc_send_swapper failed to process event {e:?}: {err:?}")
         };
 
         if self.event_listener.is_some() {
@@ -1585,11 +1576,11 @@ impl BreezServices {
                     backup_event = events_stream.recv() => {
                         if let Ok(e) = backup_event {
                             if let Err(err) = cloned.notify_event_listeners(e).await {
-                                error!("error handling backup event: {:?}", err);
+                                error!("error handling backup event: {err:?}");
                             }
                         }
                         let backup_status = cloned.backup_status();
-                        info!("backup status: {:?}", backup_status);
+                        info!("backup status: {backup_status:?}");
                     },
                     _ = shutdown_receiver.changed() => {
                         debug!("Backup watcher task completed");
@@ -1611,14 +1602,14 @@ impl BreezServices {
                     swap_event = swap_events_stream.recv() => {
                         if let Ok(e) = swap_event {
                             if let Err(err) = cloned.notify_event_listeners(e).await {
-                                error!("error handling swap event: {:?}", err);
+                                error!("error handling swap event: {err:?}");
                             }
                         }
                     },
                     rev_swap_event = rev_swap_events_stream.recv() => {
                         if let Ok(e) = rev_swap_event {
                             if let Err(err) = cloned.notify_event_listeners(e).await {
-                                error!("error handling reverse swap event: {:?}", err);
+                                error!("error handling reverse swap event: {err:?}");
                             }
                         }
                     },
@@ -1642,7 +1633,7 @@ impl BreezServices {
                 let mut invoice_stream = match cloned.node_api.stream_incoming_payments().await {
                     Ok(invoice_stream) => invoice_stream,
                     Err(e) => {
-                        warn!("stream incoming payments returned error: {:?}", e);
+                        warn!("stream incoming payments returned error: {e:?}");
                         tokio::select! {
                             _ = sleep(Duration::from_secs(1)) => {
                                 continue
@@ -1699,7 +1690,7 @@ impl BreezServices {
                         })
                         .await;
                     if let Err(e) = cloned.do_sync(true).await {
-                        error!("failed to sync after paid invoice: {:?}", e);
+                        error!("failed to sync after paid invoice: {e:?}");
                     }
                 }
 
@@ -1727,7 +1718,7 @@ impl BreezServices {
                 let mut log_stream = match cloned.node_api.stream_log_messages().await {
                     Ok(log_stream) => log_stream,
                     Err(e) => {
-                        warn!("stream log messages returned error: {:?}", e);
+                        warn!("stream log messages returned error: {e:?}");
                         tokio::select! {
                             _ = sleep(Duration::from_secs(1)) => {
                                 continue
@@ -1791,12 +1782,12 @@ impl BreezServices {
                 let next_block = match cloned.chain_service.current_tip().await {
                     Ok(next_block) => next_block,
                     Err(e) => {
-                        error!("failed to fetch next block {}", e);
+                        error!("failed to fetch next block {e}");
                         continue;
                     }
                 };
 
-                debug!("got tip {:?}", next_block);
+                debug!("got tip {next_block:?}");
                 if next_block > current_block {
                     _ = cloned.sync().await;
                     _ = cloned
@@ -1940,7 +1931,7 @@ impl BreezServices {
         let maybe_outspend: Option<Outspend> = match maybe_outspend_res {
             Ok(s) => s,
             Err(e) => {
-                error!("Failed to lookup channel closing data: {:?}", e);
+                error!("Failed to lookup channel closing data: {e:?}");
                 None
             }
         };
@@ -2759,20 +2750,20 @@ impl PaymentReceiver {
                 return Ok(String::from(invoice));
             }
 
-            info!("Adding lsp hint: {:?}", lsp_hint);
+            info!("Adding lsp hint: {lsp_hint:?}");
             let modified =
                 add_routing_hints(invoice, true, &vec![lsp_hint], parsed_invoice.amount_msat)?;
 
             let invoice = self.node_api.sign_invoice(modified).await?;
-            info!("Signed invoice with hint = {}", invoice);
+            info!("Signed invoice with hint = {invoice}");
             return Ok(invoice);
         }
 
         if parsed_invoice.routing_hints.is_empty() {
-            info!("Adding custom hints: {:?}", hints);
+            info!("Adding custom hints: {hints:?}");
             let modified = add_routing_hints(invoice, false, &hints, parsed_invoice.amount_msat)?;
             let invoice = self.node_api.sign_invoice(modified).await?;
-            info!("Signed invoice with hints = {}", invoice);
+            info!("Signed invoice with hints = {invoice}");
             return Ok(invoice);
         }
 
@@ -2797,7 +2788,7 @@ impl PaymentReceiver {
                 htlc_maximum_msat: None,
             }],
         };
-        info!("Adding open channel hint: {:?}", open_channel_hint);
+        info!("Adding open channel hint: {open_channel_hint:?}");
         let invoice_with_hint = add_routing_hints(
             invoice,
             false,

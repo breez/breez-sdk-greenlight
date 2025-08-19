@@ -68,7 +68,7 @@ async fn main() -> Result<()> {
                 break;
             }
             Err(err) => {
-                error!("Error: {:?}", err);
+                error!("Error: {err:?}");
                 break;
             }
         }
