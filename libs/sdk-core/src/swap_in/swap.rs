@@ -1241,7 +1241,7 @@ mod tests {
 
     use std::sync::Arc;
 
-    use gl_client::bitcoin::Network;
+    use bitcoin::Network;
     use mockall::predicate;
 
     use crate::{
