@@ -353,10 +353,10 @@ impl BTCReceiveSwap {
     pub(crate) async fn on_event(&self, e: BreezEvent) -> ReceiveSwapResult<()> {
         match e {
             BreezEvent::NewBlock { block: tip } => {
-                debug!("got chain event {:?}", e);
+                debug!("got chain event {e:?}");
                 self.set_tip(tip).await;
                 if let Err(e) = self.execute_pending_swaps(tip).await {
-                    error!("Failed to execute pending swaps: {}", e);
+                    error!("Failed to execute pending swaps: {e}");
                 }
             }
 
@@ -585,7 +585,7 @@ impl BTCReceiveSwap {
             },
         };
 
-        debug!("Error getting paid for swap: {}", message);
+        debug!("Error getting paid for swap: {message}");
         self.swap_storage
             .update_swap_redeem_error(swap_info.bitcoin_address.clone(), message.clone())?;
         self.emit_swap_updated(&swap_info.bitcoin_address)?;

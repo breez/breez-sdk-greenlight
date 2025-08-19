@@ -500,7 +500,7 @@ impl Greenlight {
             }
             _ => a,
         });
-        info!("pending_onchain_balance is {}", pending_onchain_balance);
+        info!("pending_onchain_balance is {pending_onchain_balance}");
         Ok(pending_onchain_balance)
     }
 
@@ -549,7 +549,7 @@ impl Greenlight {
                 hop.channel.clone()
             )))?;
 
-            info!("found channel in route: {:?}", first_channel);
+            info!("found channel in route: {first_channel:?}");
             hops.push(PaymentPathEdge {
                 base_fee_msat: first_channel.base_fee_millisatoshi as u64,
                 fee_per_millionth: first_channel.fee_per_millionth as u64,
@@ -1329,10 +1329,7 @@ impl NodeAPI for Greenlight {
                 to_pay_msat,
                 invoice.min_final_cltv_expiry_delta,
             );
-            info!(
-                "send_pay route to pay: {:?}, received_amount = {}",
-                route, to_pay_msat
-            );
+            info!("send_pay route to pay: {route:?}, received_amount = {to_pay_msat}");
             self.wait_channel_reestablished(&max.path).await?;
             // We send the part using the node API
             let req = SendpayRequest {
@@ -2057,8 +2054,7 @@ impl NodeAPI for Greenlight {
                 match maybe_policy {
                     Some((fees_base_msat, fees_proportional_millionths, cltv_delta)) => {
                         debug!(
-                            "For peer {}: remote base {} proportional {} cltv_delta {}",
-                            peer_id_str, fees_base_msat, fees_proportional_millionths, cltv_delta,
+                            "For peer {peer_id_str}: remote base {fees_base_msat} proportional {fees_proportional_millionths} cltv_delta {cltv_delta}",
                         );
                         let hint = RouteHint {
                             hops: vec![RouteHintHop {
@@ -2077,10 +2073,10 @@ impl NodeAPI for Greenlight {
                                 htlc_maximum_msat: None,
                             }],
                         };
-                        info!("Generating hint hop as routing hint: {:?}", hint);
+                        info!("Generating hint hop as routing hint: {hint:?}");
                         hints.push(hint);
                     }
-                    _ => debug!("No source channel found for peer: {:?}", peer_id_str),
+                    _ => debug!("No source channel found for peer: {peer_id_str:?}"),
                 };
             }
         }
@@ -2172,7 +2168,7 @@ fn update_payment_expirations(
         }
         payments_res.push(payment);
     }
-    info!("pending htlc payments {:?}", payments_res);
+    info!("pending htlc payments {payments_res:?}");
     Ok(payments_res)
 }
 
