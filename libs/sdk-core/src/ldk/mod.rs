@@ -1,4 +1,5 @@
 mod backup_transport;
+mod config;
 mod node_api;
 
 pub(crate) use backup_transport::LdkBackupTransport;
