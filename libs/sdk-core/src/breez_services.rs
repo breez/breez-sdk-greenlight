@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::fs::OpenOptions;
-use std::io::Write;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -10,10 +8,8 @@ use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
-use chrono::Local;
 use futures::TryFutureExt;
 use gl_client::pb::incoming_payment;
-use log::{LevelFilter, Metadata, Record};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde::Serialize;
@@ -260,15 +256,15 @@ impl BreezServices {
     ///
     /// This calls [NodeAPI::configure_node] to make changes to the active node's configuration.
     /// Configuring the [ConfigureNodeRequest::close_to_address] only needs to be done one time
-    /// when registering the node or when the close to address need to be changed. Otherwise it is
-    /// stored by the node and used when neccessary.
+    /// when registering the node or when the close to address needs to be changed. Otherwise, it is
+    /// stored by the node and used when necessary.
     pub async fn configure_node(&self, req: ConfigureNodeRequest) -> SdkResult<()> {
         Ok(self.node_api.configure_node(req.close_to_address).await?)
     }
 
     /// Pay a bolt11 invoice
     ///
-    /// Calling `send_payment` ensures that the payment is not already completed, if so it will result in an error.
+    /// Calling `send_payment` ensures that the payment is not already completed; if so, it will result in an error.
     /// If the invoice doesn't specify an amount, the amount is taken from the `amount_msat` arg.
     pub async fn send_payment(
         &self,
@@ -279,7 +275,7 @@ impl BreezServices {
         let current_time = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
         if invoice_expiration < current_time {
             return Err(SendPaymentError::InvoiceExpired {
-                err: format!("Invoice expired at {}", invoice_expiration),
+                err: format!("Invoice expired at {invoice_expiration}"),
             });
         }
         let invoice_amount_msat = parsed_invoice.amount_msat.unwrap_or_default();
@@ -590,7 +586,7 @@ impl BreezServices {
     }
 
     /// Third and last step of LNURL-auth. The first step is `parse()`, which also validates the LNURL destination
-    /// and generates the `LnUrlAuthRequestData` payload needed here. The second step is user approval of auth action.
+    /// and generates the `LnUrlAuthRequestData` payload needed here. The second step is user approval of the auth action.
     ///
     /// This call will sign `k1` of the LNURL endpoint (`req_data`) on `secp256k1` using `linkingPrivKey` and DER-encodes the signature.
     /// If they match the endpoint requirements, the LNURL auth request is made. A successful result here means the client signature is verified.
@@ -817,7 +813,7 @@ impl BreezServices {
 
     /// Close all channels with the current LSP.
     ///
-    /// Should be called  when the user wants to close all the channels.
+    /// Should be called when the user wants to close all the channels.
     pub async fn close_lsp_channels(&self) -> SdkResult<Vec<String>> {
         let lsp = self.lsp_info().await?;
         let tx_ids = self.node_api.close_peer_channels(lsp.pubkey).await?;
@@ -831,9 +827,9 @@ impl BreezServices {
     /// If set, and the operation requires a new channel, the SDK will use the given fee params.
     /// The provided [OpeningFeeParams] need to be valid at the time of swap redeeming.
     ///
-    /// Since we only allow one in-progress swap this method will return error if there is currently
+    /// Since we only allow one in-progress swap, this method will return an error if there is currently
     /// a swap waiting for confirmation to be redeemed and by that complete the swap.
-    /// In such case the [BreezServices::in_progress_swap] can be used to query the live swap status.
+    /// In such a case, the [BreezServices::in_progress_swap] can be used to query the live swap status.
     ///
     /// The returned [SwapInfo] contains the created swap details. The channel opening fees are
     /// available at [SwapInfo::channel_opening_fees].
@@ -960,7 +956,7 @@ impl BreezServices {
     /// The returned amount is the sum of the max amount that can be sent on each channel
     /// minus the expected fees.
     /// This is possible since the route to the swapper node is known in advance and is expected
-    /// to consist of maximum 3 hops.
+    /// to consist of a maximum of 3 hops.
     async fn max_reverse_swap_amount(&self) -> SdkResult<u64> {
         // fetch the last hop hints from the swapper
         let last_hop = self.btc_send_swapper.last_hop_for_payment().await?;
@@ -1129,7 +1125,7 @@ impl BreezServices {
     }
 
     /// Execute a command directly on the NodeAPI interface.
-    /// Mainly used to debugging.
+    /// Mainly used for debugging.
     pub async fn execute_dev_command(&self, command: String) -> SdkResult<String> {
         let dev_cmd_res = DevCommand::from_str(&command);
 
@@ -1167,7 +1163,7 @@ impl BreezServices {
         Ok(crate::serializer::to_string_pretty(&result)?)
     }
 
-    /// This method sync the local state with the remote node state.
+    /// This method syncs the local state with the remote node state.
     /// The synced items are as follows:
     /// * node state - General information about the node and its liquidity status
     /// * channels - The list of channels and their status
@@ -1415,7 +1411,7 @@ impl BreezServices {
     }
 
     /// Get the static backup data from the persistent storage.
-    /// This data enables the user to recover the node in an external core ligntning node.
+    /// This data enables the user to recover the node in an external core lightning node.
     /// See here for instructions on how to recover using this data: <https://docs.corelightning.org/docs/backup-and-recovery#backing-up-using-static-channel-backup>
     pub fn static_backup(req: StaticBackupRequest) -> SdkResult<StaticBackupResponse> {
         let storage = SqliteStorage::new(req.working_dir);
@@ -1767,7 +1763,21 @@ impl BreezServices {
                     };
 
                     match log_message_res {
-                        Ok(Some(l)) => info!("node-logs: {}", l.line),
+                        Ok(Some(l)) => {
+                            let prefix_len = l.line.find(':').map_or(0, |len| len + 2);
+                            let log_message = l.line.split_at(prefix_len).1.trim_start();
+                            match l.line.to_ascii_lowercase().as_str() {
+                                s if s.starts_with("broken") => {
+                                    error!("node-logs: {}", log_message)
+                                }
+                                s if s.starts_with("unusual") => {
+                                    warn!("node-logs: {}", log_message)
+                                }
+                                s if s.starts_with("info") => info!("node-logs: {}", log_message),
+                                s if s.starts_with("debug") => debug!("node-logs: {}", log_message),
+                                _ => trace!("node-logs: {}", l.line),
+                            }
+                        }
                         Ok(None) => {
                             // stream is closed, renew it
                             break;
@@ -1848,84 +1858,6 @@ impl BreezServices {
                 Err(e) => error!("Failed to fetch mempool.space URLs: {e}"),
             }
         });
-
-        Ok(())
-    }
-
-    /// Configures a global SDK logger that will log to file and will forward log events to
-    /// an optional application-specific logger.
-    ///
-    /// If called, it should be called before any SDK methods (for example, before `connect`).
-    ///
-    /// It must be called only once in the application lifecycle. Alternatively, If the application
-    /// already uses a globally-registered logger, this method shouldn't be called at all.
-    ///
-    /// ### Arguments
-    ///
-    /// - `log_dir`: Location where the the SDK log file will be created. The directory must already exist.
-    ///
-    /// - `app_logger`: Optional application logger.
-    ///
-    /// If the application is to use it's own logger, but would also like the SDK to log SDK-specific
-    /// log output to a file in the configured `log_dir`, then do not register the
-    /// app-specific logger as a global logger and instead call this method with the app logger as an arg.
-    ///
-    /// ### Logging Configuration
-    ///
-    /// Setting `breez_sdk_core::input_parser=debug` will include in the logs the raw payloads received
-    /// when interacting with JSON endpoints, for example those used during all LNURL workflows.
-    ///
-    /// ### Errors
-    ///
-    /// An error is thrown if the log file cannot be created in the working directory.
-    ///
-    /// An error is thrown if a global logger is already configured.
-    pub fn init_logging(log_dir: &str, app_logger: Option<Box<dyn log::Log>>) -> Result<()> {
-        let target_log_file = Box::new(
-            OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(format!("{log_dir}/sdk.log"))
-                .map_err(|e| anyhow!("Can't create log file: {e}"))?,
-        );
-        let logger = env_logger::Builder::new()
-            .target(env_logger::Target::Pipe(target_log_file))
-            .parse_filters(
-                r#"
-                info,
-                breez_sdk_core=debug,
-                sdk_common=debug,
-                gl_client=debug,
-                h2=warn,
-                hyper=warn,
-                lightning_signer=warn,
-                reqwest=warn,
-                rustls=warn,
-                rustyline=warn,
-                vls_protocol_signer=warn
-            "#,
-            )
-            .format(|buf, record| {
-                writeln!(
-                    buf,
-                    "[{} {} {}:{}] {}",
-                    Local::now().format("%Y-%m-%d %H:%M:%S%.3f"),
-                    record.level(),
-                    record.module_path().unwrap_or("unknown"),
-                    record.line().unwrap_or(0),
-                    record.args()
-                )
-            })
-            .build();
-
-        let global_logger = GlobalSdkLogger {
-            logger,
-            log_listener: app_logger,
-        };
-
-        log::set_boxed_logger(Box::new(global_logger))
-            .map_err(|e| anyhow!("Failed to set global logger: {e}"))?;
-        log::set_max_level(LevelFilter::Trace);
 
         Ok(())
     }
@@ -2260,32 +2192,6 @@ impl BreezServices {
         });
         Ok(res)
     }
-}
-
-struct GlobalSdkLogger {
-    /// SDK internal logger, which logs to file
-    logger: env_logger::Logger,
-    /// Optional external log listener, that can receive a stream of log statements
-    log_listener: Option<Box<dyn log::Log>>,
-}
-impl log::Log for GlobalSdkLogger {
-    fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= log::Level::Trace
-    }
-
-    fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            self.logger.log(record);
-
-            if let Some(s) = &self.log_listener.as_ref() {
-                if s.enabled(record.metadata()) {
-                    s.log(record);
-                }
-            }
-        }
-    }
-
-    fn flush(&self) {}
 }
 
 /// A helper struct to configure and build BreezServices

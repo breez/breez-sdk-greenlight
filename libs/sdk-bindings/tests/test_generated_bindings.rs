@@ -1,18 +1,11 @@
-#[cfg(feature = "uniffi-28")]
-extern crate uniffi_28 as uniffi;
-
-#[cfg(feature = "uniffi-25")]
 use std::process::Command;
 
-#[cfg(feature = "uniffi-28")]
 uniffi::build_foreign_language_testcases!(
     "tests/bindings/test_breez_sdk.swift",
-    "tests/bindings/test_breez_sdk.kts",
     "tests/bindings/test_breez_sdk.py"
 );
 
 #[test]
-#[cfg(feature = "uniffi-25")]
 fn test_csharp() {
     let output = Command::new("dotnet")
         .arg("run")
@@ -27,7 +20,6 @@ fn test_csharp() {
 }
 
 #[test]
-#[cfg(feature = "uniffi-25")]
 fn test_golang() {
     let output = Command::new("go")
         .env(

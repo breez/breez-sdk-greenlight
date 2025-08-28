@@ -14,5 +14,5 @@ fn set_git_revision_hash() {
     if rev.is_empty() {
         return;
     }
-    println!("cargo:rustc-env=SDK_GIT_HASH={}", rev);
+    println!("cargo:rustc-env=SDK_GIT_HASH={rev}");
 }

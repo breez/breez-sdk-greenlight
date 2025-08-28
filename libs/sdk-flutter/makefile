@@ -12,7 +12,7 @@ init:
 all: ios android
 
 flutter_rust_bridge:
-	cargo install flutter_rust_bridge_codegen --version 2.9.0
+	cargo install flutter_rust_bridge_codegen --version 2.9.0 --locked
 	mkdir -p ./lib/generated
 	flutter_rust_bridge_codegen generate
 
@@ -31,7 +31,7 @@ android: $(SOURCES) flutter_rust_bridge
 	rm -rf android/src/main/kotlin/breez_sdk
 	rm -rf android/src/main/kotlin/breez_sdk_notification
 	cp -r ../sdk-bindings/ffi/kotlin/jniLibs android/src/main/
-	cp -r ../sdk-bindings/ffi/kotlin/breez_sdk android/src/main/kotlin/
+	cp -r ../sdk-bindings/ffi/kotlin/main/kotlin/breez_sdk android/src/main/kotlin/
 	cp -r ../sdk-bindings/bindings-android/lib/src/main/kotlin/breez_sdk_notification android/src/main/kotlin/
 
 ## desktop: compiles for x86_64-unknown-linux-gnu by default, other targets can be specified

@@ -25,6 +25,7 @@ aes = "0.8"
 anyhow = { version = "1.0.79", features = ["backtrace"] }
 async-trait = "0.1.86"
 base64 = "0.13.0"
+env_logger = "0.10"
 bitcoin = "=0.29.2" # Same version as used in gl-client
 hex = "0.4"
 lightning = "=0.0.118" # Same version as used in gl-client
@@ -35,7 +36,7 @@ prost = "^0.11"
 regex = "1.8.1"
 # Pin reqwest until https://github.com/seanmonstar/reqwest/issues/2719 is solved
 reqwest = { version = "=0.12.18", features = ["json"] }
-rusqlite = { version = "0.29", features = [
+rusqlite = { version = "0.31", features = [
   "serde_json",
   "bundled",
   "backup",
