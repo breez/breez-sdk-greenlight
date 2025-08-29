@@ -2576,20 +2576,27 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   LspInformation dco_decode_lsp_information(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 11) throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    if (arr.length != 12) throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
     return LspInformation(
-      id: dco_decode_String(arr[0]),
-      name: dco_decode_String(arr[1]),
-      widgetUrl: dco_decode_String(arr[2]),
-      pubkey: dco_decode_String(arr[3]),
-      host: dco_decode_String(arr[4]),
-      baseFeeMsat: dco_decode_i_64(arr[5]),
-      feeRate: dco_decode_f_64(arr[6]),
-      timeLockDelta: dco_decode_u_32(arr[7]),
-      minHtlcMsat: dco_decode_i_64(arr[8]),
-      lspPubkey: dco_decode_list_prim_u_8_strict(arr[9]),
-      openingFeeParamsList: dco_decode_opening_fee_params_menu(arr[10]),
+      mode: dco_decode_lsp_mode(arr[0]),
+      id: dco_decode_String(arr[1]),
+      name: dco_decode_String(arr[2]),
+      widgetUrl: dco_decode_String(arr[3]),
+      pubkey: dco_decode_String(arr[4]),
+      host: dco_decode_String(arr[5]),
+      baseFeeMsat: dco_decode_i_64(arr[6]),
+      feeRate: dco_decode_f_64(arr[7]),
+      timeLockDelta: dco_decode_u_32(arr[8]),
+      minHtlcMsat: dco_decode_i_64(arr[9]),
+      lspPubkey: dco_decode_list_prim_u_8_strict(arr[10]),
+      openingFeeParamsList: dco_decode_opening_fee_params_menu(arr[11]),
     );
+  }
+
+  @protected
+  LspMode dco_decode_lsp_mode(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return LspMode.values[raw as int];
   }
 
   @protected
@@ -4674,6 +4681,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   LspInformation sse_decode_lsp_information(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_mode = sse_decode_lsp_mode(deserializer);
     var var_id = sse_decode_String(deserializer);
     var var_name = sse_decode_String(deserializer);
     var var_widgetUrl = sse_decode_String(deserializer);
@@ -4686,6 +4694,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     var var_lspPubkey = sse_decode_list_prim_u_8_strict(deserializer);
     var var_openingFeeParamsList = sse_decode_opening_fee_params_menu(deserializer);
     return LspInformation(
+      mode: var_mode,
       id: var_id,
       name: var_name,
       widgetUrl: var_widgetUrl,
@@ -4698,6 +4707,13 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
       lspPubkey: var_lspPubkey,
       openingFeeParamsList: var_openingFeeParamsList,
     );
+  }
+
+  @protected
+  LspMode sse_decode_lsp_mode(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return LspMode.values[inner];
   }
 
   @protected
@@ -5722,6 +5738,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   int cst_encode_i_32(int raw) {
     // Codec=Cst (C-struct based), see doc to use other codecs
     return raw;
+  }
+
+  @protected
+  int cst_encode_lsp_mode(LspMode raw) {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    return cst_encode_i_32(raw.index);
   }
 
   @protected
@@ -6879,6 +6901,7 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
   @protected
   void sse_encode_lsp_information(LspInformation self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_lsp_mode(self.mode, serializer);
     sse_encode_String(self.id, serializer);
     sse_encode_String(self.name, serializer);
     sse_encode_String(self.widgetUrl, serializer);
@@ -6890,6 +6913,12 @@ class BreezSdkBindingsApiImpl extends BreezSdkBindingsApiImplPlatform implements
     sse_encode_i_64(self.minHtlcMsat, serializer);
     sse_encode_list_prim_u_8_strict(self.lspPubkey, serializer);
     sse_encode_opening_fee_params_menu(self.openingFeeParamsList, serializer);
+  }
+
+  @protected
+  void sse_encode_lsp_mode(LspMode self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected

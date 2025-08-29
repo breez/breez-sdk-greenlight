@@ -1,11 +1,7 @@
 package com.breezsdk
 import breez_sdk.*
 import com.facebook.react.bridge.*
-import com.facebook.react.modules.core.DeviceEventManagerModule.RCTDeviceEventEmitter
-import java.io.File
 import java.util.*
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 
 fun asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: ReadableMap): AesSuccessActionDataDecrypted? {
     if (!validateMandatoryFields(
@@ -1469,6 +1465,7 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
     if (!validateMandatoryFields(
             lspInformation,
             arrayOf(
+                "mode",
                 "id",
                 "name",
                 "widgetUrl",
@@ -1485,6 +1482,7 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
     ) {
         return null
     }
+    val mode = lspInformation.getString("mode")?.let { asLspMode(it) }!!
     val id = lspInformation.getString("id")!!
     val name = lspInformation.getString("name")!!
     val widgetUrl = lspInformation.getString("widgetUrl")!!
@@ -1497,6 +1495,7 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
     val lspPubkey = lspInformation.getArray("lspPubkey")?.let { asUByteList(it) }!!
     val openingFeeParamsList = lspInformation.getMap("openingFeeParamsList")?.let { asOpeningFeeParamsMenu(it) }!!
     return LspInformation(
+        mode,
         id,
         name,
         widgetUrl,
@@ -1513,6 +1512,7 @@ fun asLspInformation(lspInformation: ReadableMap): LspInformation? {
 
 fun readableMapOf(lspInformation: LspInformation): ReadableMap =
     readableMapOf(
+        "mode" to snakeToLowerCamelCase(lspInformation.mode.name),
         "id" to lspInformation.id,
         "name" to lspInformation.name,
         "widgetUrl" to lspInformation.widgetUrl,
@@ -3858,6 +3858,19 @@ fun asLnUrlWithdrawResultList(arr: ReadableArray): List<LnUrlWithdrawResult> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asLnUrlWithdrawResult(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asLspMode(type: String): LspMode = LspMode.valueOf(camelToUpperSnakeCase(type))
+
+fun asLspModeList(arr: ReadableArray): List<LspMode> {
+    val list = ArrayList<LspMode>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asLspMode(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }

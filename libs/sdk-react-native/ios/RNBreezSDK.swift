@@ -5,8 +5,8 @@ import Foundation
 class RNBreezSDK: RCTEventEmitter {
     static let TAG: String = "BreezSDK"
 
-    static var emitter: RCTEventEmitter!
-    static var hasListeners: Bool = false
+    public static var emitter: RCTEventEmitter!
+    public static var hasListeners: Bool = false
 
     private var breezServices: BlockingBreezServices!
 

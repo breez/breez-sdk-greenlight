@@ -14,9 +14,16 @@ use sdk_common::prelude::BreezServer;
 use sdk_common::with_connection_retry;
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub enum LspMode {
+    Breez,
+    LSPS5,
+}
+
 /// Details of supported LSP
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LspInformation {
+    pub mode: LspMode,
     pub id: String,
 
     /// The name of of LSP
@@ -50,6 +57,7 @@ impl LspInformation {
     /// Validation may fail if [LspInformation.opening_fee_params_list] has invalid entries
     fn try_from(lsp_id: &str, lsp_info: grpc::LspInformation) -> Result<Self> {
         let info = LspInformation {
+            mode: LspMode::Breez,
             id: lsp_id.to_string(),
             name: lsp_info.name,
             widget_url: lsp_info.widget_url,
@@ -214,7 +222,7 @@ impl LspAPI for BreezServer {
 
 #[cfg(test)]
 mod tests {
-    use crate::{LspInformation, OpeningFeeParams};
+    use crate::{LspInformation, LspMode, OpeningFeeParams};
 
     use super::OpeningFeeParamsMenu;
     use anyhow::Result;
@@ -236,6 +244,7 @@ mod tests {
         }
 
         let mut lsp_info = LspInformation {
+            mode: LspMode::Breez,
             id: "id".to_string(),
             name: "test lsp".to_string(),
             widget_url: "".to_string(),

@@ -1692,6 +1692,16 @@ impl CstDecode<i64> for i64 {
         self
     }
 }
+impl CstDecode<crate::lsp::LspMode> for i32 {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    fn cst_decode(self) -> crate::lsp::LspMode {
+        match self {
+            0 => crate::lsp::LspMode::Breez,
+            1 => crate::lsp::LspMode::LSPS5,
+            _ => unreachable!("Invalid variant for LspMode: {}", self),
+        }
+    }
+}
 impl CstDecode<crate::binding::Network> for i32 {
     // Codec=Cst (C-struct based), see doc to use other codecs
     fn cst_decode(self) -> crate::binding::Network {
@@ -2899,6 +2909,7 @@ impl SseDecode for crate::models::LogEntry {
 impl SseDecode for crate::lsp::LspInformation {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_mode = <crate::lsp::LspMode>::sse_decode(deserializer);
         let mut var_id = <String>::sse_decode(deserializer);
         let mut var_name = <String>::sse_decode(deserializer);
         let mut var_widgetUrl = <String>::sse_decode(deserializer);
@@ -2912,6 +2923,7 @@ impl SseDecode for crate::lsp::LspInformation {
         let mut var_openingFeeParamsList =
             <crate::models::OpeningFeeParamsMenu>::sse_decode(deserializer);
         return crate::lsp::LspInformation {
+            mode: var_mode,
             id: var_id,
             name: var_name,
             widget_url: var_widgetUrl,
@@ -2923,6 +2935,18 @@ impl SseDecode for crate::lsp::LspInformation {
             min_htlc_msat: var_minHtlcMsat,
             lsp_pubkey: var_lspPubkey,
             opening_fee_params_list: var_openingFeeParamsList,
+        };
+    }
+}
+
+impl SseDecode for crate::lsp::LspMode {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::lsp::LspMode::Breez,
+            1 => crate::lsp::LspMode::LSPS5,
+            _ => unreachable!("Invalid variant for LspMode: {}", inner),
         };
     }
 }
@@ -5192,6 +5216,7 @@ impl flutter_rust_bridge::IntoIntoDart<crate::models::LogEntry> for crate::model
 impl flutter_rust_bridge::IntoDart for crate::lsp::LspInformation {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
+            self.mode.into_into_dart().into_dart(),
             self.id.into_into_dart().into_dart(),
             self.name.into_into_dart().into_dart(),
             self.widget_url.into_into_dart().into_dart(),
@@ -5210,6 +5235,22 @@ impl flutter_rust_bridge::IntoDart for crate::lsp::LspInformation {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::lsp::LspInformation {}
 impl flutter_rust_bridge::IntoIntoDart<crate::lsp::LspInformation> for crate::lsp::LspInformation {
     fn into_into_dart(self) -> crate::lsp::LspInformation {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::lsp::LspMode {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Breez => 0.into_dart(),
+            Self::LSPS5 => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::lsp::LspMode {}
+impl flutter_rust_bridge::IntoIntoDart<crate::lsp::LspMode> for crate::lsp::LspMode {
+    fn into_into_dart(self) -> crate::lsp::LspMode {
         self
     }
 }
@@ -7301,6 +7342,7 @@ impl SseEncode for crate::models::LogEntry {
 impl SseEncode for crate::lsp::LspInformation {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::lsp::LspMode>::sse_encode(self.mode, serializer);
         <String>::sse_encode(self.id, serializer);
         <String>::sse_encode(self.name, serializer);
         <String>::sse_encode(self.widget_url, serializer);
@@ -7312,6 +7354,22 @@ impl SseEncode for crate::lsp::LspInformation {
         <i64>::sse_encode(self.min_htlc_msat, serializer);
         <Vec<u8>>::sse_encode(self.lsp_pubkey, serializer);
         <crate::models::OpeningFeeParamsMenu>::sse_encode(self.opening_fee_params_list, serializer);
+    }
+}
+
+impl SseEncode for crate::lsp::LspMode {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::lsp::LspMode::Breez => 0,
+                crate::lsp::LspMode::LSPS5 => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 
@@ -9495,6 +9553,7 @@ mod io {
         // Codec=Cst (C-struct based), see doc to use other codecs
         fn cst_decode(self) -> crate::lsp::LspInformation {
             crate::lsp::LspInformation {
+                mode: self.mode.cst_decode(),
                 id: self.id.cst_decode(),
                 name: self.name.cst_decode(),
                 widget_url: self.widget_url.cst_decode(),
@@ -10709,6 +10768,7 @@ mod io {
     impl NewWithNullPtr for wire_cst_lsp_information {
         fn new_with_null_ptr() -> Self {
             Self {
+                mode: Default::default(),
                 id: core::ptr::null_mut(),
                 name: core::ptr::null_mut(),
                 widget_url: core::ptr::null_mut(),
@@ -13198,6 +13258,7 @@ mod io {
     #[repr(C)]
     #[derive(Clone, Copy)]
     pub struct wire_cst_lsp_information {
+        mode: i32,
         id: *mut wire_cst_list_prim_u_8_strict,
         name: *mut wire_cst_list_prim_u_8_strict,
         widget_url: *mut wire_cst_list_prim_u_8_strict,

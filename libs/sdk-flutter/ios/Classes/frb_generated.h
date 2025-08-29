@@ -595,6 +595,7 @@ typedef struct wire_cst_opening_fee_params_menu {
 } wire_cst_opening_fee_params_menu;
 
 typedef struct wire_cst_lsp_information {
+  int32_t mode;
   struct wire_cst_list_prim_u_8_strict *id;
   struct wire_cst_list_prim_u_8_strict *name;
   struct wire_cst_list_prim_u_8_strict *widget_url;

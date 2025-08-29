@@ -1675,6 +1675,11 @@ enum BreezSDKMapper {
     }
 
     static func asLspInformation(lspInformation: [String: Any?]) throws -> LspInformation {
+        guard let modeTmp = lspInformation["mode"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "mode", typeName: "LspInformation"))
+        }
+        let mode = try asLspMode(lspMode: modeTmp)
+
         guard let id = lspInformation["id"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "id", typeName: "LspInformation"))
         }
@@ -1710,11 +1715,12 @@ enum BreezSDKMapper {
         }
         let openingFeeParamsList = try asOpeningFeeParamsMenu(openingFeeParamsMenu: openingFeeParamsListTmp)
 
-        return LspInformation(id: id, name: name, widgetUrl: widgetUrl, pubkey: pubkey, host: host, baseFeeMsat: baseFeeMsat, feeRate: feeRate, timeLockDelta: timeLockDelta, minHtlcMsat: minHtlcMsat, lspPubkey: lspPubkey, openingFeeParamsList: openingFeeParamsList)
+        return LspInformation(mode: mode, id: id, name: name, widgetUrl: widgetUrl, pubkey: pubkey, host: host, baseFeeMsat: baseFeeMsat, feeRate: feeRate, timeLockDelta: timeLockDelta, minHtlcMsat: minHtlcMsat, lspPubkey: lspPubkey, openingFeeParamsList: openingFeeParamsList)
     }
 
     static func dictionaryOf(lspInformation: LspInformation) -> [String: Any?] {
         return [
+            "mode": valueOf(lspMode: lspInformation.mode),
             "id": lspInformation.id,
             "name": lspInformation.name,
             "widgetUrl": lspInformation.widgetUrl,
@@ -4655,6 +4661,45 @@ enum BreezSDKMapper {
                 list.append(lnUrlWithdrawResult)
             } else {
                 throw SdkError.Generic(message: errUnexpectedType(typeName: "LnUrlWithdrawResult"))
+            }
+        }
+        return list
+    }
+
+    static func asLspMode(lspMode: String) throws -> LspMode {
+        switch lspMode {
+        case "breez":
+            return LspMode.breez
+
+        case "lsps5":
+            return LspMode.lsps5
+
+        default: throw SdkError.Generic(message: "Invalid variant \(lspMode) for enum LspMode")
+        }
+    }
+
+    static func valueOf(lspMode: LspMode) -> String {
+        switch lspMode {
+        case .breez:
+            return "breez"
+
+        case .lsps5:
+            return "lsps5"
+        }
+    }
+
+    static func arrayOf(lspModeList: [LspMode]) -> [String] {
+        return lspModeList.map { v -> String in return valueOf(lspMode: v) }
+    }
+
+    static func asLspModeList(arr: [Any]) throws -> [LspMode] {
+        var list = [LspMode]()
+        for value in arr {
+            if let val = value as? String {
+                var lspMode = try asLspMode(lspMode: val)
+                list.append(lspMode)
+            } else {
+                throw SdkError.Generic(message: errUnexpectedType(typeName: "LspMode"))
             }
         }
         return list

@@ -9,6 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 /// Details of supported LSP
 class LspInformation {
+  final LspMode mode;
   final String id;
 
   /// The name of of LSP
@@ -38,6 +39,7 @@ class LspInformation {
   final OpeningFeeParamsMenu openingFeeParamsList;
 
   const LspInformation({
+    required this.mode,
     required this.id,
     required this.name,
     required this.widgetUrl,
@@ -53,6 +55,7 @@ class LspInformation {
 
   @override
   int get hashCode =>
+      mode.hashCode ^
       id.hashCode ^
       name.hashCode ^
       widgetUrl.hashCode ^
@@ -70,6 +73,7 @@ class LspInformation {
       identical(this, other) ||
       other is LspInformation &&
           runtimeType == other.runtimeType &&
+          mode == other.mode &&
           id == other.id &&
           name == other.name &&
           widgetUrl == other.widgetUrl &&
@@ -82,3 +86,5 @@ class LspInformation {
           lspPubkey == other.lspPubkey &&
           openingFeeParamsList == other.openingFeeParamsList;
 }
+
+enum LspMode { Breez, LSPS5 }

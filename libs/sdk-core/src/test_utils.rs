@@ -41,7 +41,7 @@ use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::invoice::{InvoiceError, InvoiceResult};
 use crate::lightning::ln::PaymentSecret;
 use crate::lightning_invoice::{Currency, InvoiceBuilder, RawBolt11Invoice};
-use crate::lsp::LspInformation;
+use crate::lsp::{LspInformation, LspMode};
 use crate::models::{
     LnPaymentDetails, LspAPI, NodeState, Payment, PaymentDetails, PaymentStatus, PaymentType,
     ReverseSwapServiceAPI, SwapperAPI, SyncResponse, TlvEntry,
@@ -644,6 +644,7 @@ impl MockBreezServer {
 impl LspAPI for MockBreezServer {
     async fn list_lsps(&self, _node_pubkey: String) -> SdkResult<Vec<LspInformation>> {
         Ok(vec![LspInformation {
+            mode: LspMode::Breez,
             id: self.lsp_id(),
             name: "test lsp".to_string(),
             widget_url: "".to_string(),

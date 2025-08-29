@@ -420,6 +420,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   LspInformation dco_decode_lsp_information(dynamic raw);
 
   @protected
+  LspMode dco_decode_lsp_mode(dynamic raw);
+
+  @protected
   MessageSuccessActionData dco_decode_message_success_action_data(dynamic raw);
 
   @protected
@@ -1082,6 +1085,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   LspInformation sse_decode_lsp_information(SseDeserializer deserializer);
+
+  @protected
+  LspMode sse_decode_lsp_mode(SseDeserializer deserializer);
 
   @protected
   MessageSuccessActionData sse_decode_message_success_action_data(SseDeserializer deserializer);
@@ -3223,6 +3229,7 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
 
   @protected
   void cst_api_fill_to_wire_lsp_information(LspInformation apiObj, wire_cst_lsp_information wireObj) {
+    wireObj.mode = cst_encode_lsp_mode(apiObj.mode);
     wireObj.id = cst_encode_String(apiObj.id);
     wireObj.name = cst_encode_String(apiObj.name);
     wireObj.widget_url = cst_encode_String(apiObj.widgetUrl);
@@ -3787,6 +3794,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   int cst_encode_i_32(int raw);
 
   @protected
+  int cst_encode_lsp_mode(LspMode raw);
+
+  @protected
   int cst_encode_network(Network raw);
 
   @protected
@@ -4261,6 +4271,9 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
   void sse_encode_lsp_information(LspInformation self, SseSerializer serializer);
 
   @protected
+  void sse_encode_lsp_mode(LspMode self, SseSerializer serializer);
+
+  @protected
   void sse_encode_message_success_action_data(MessageSuccessActionData self, SseSerializer serializer);
 
   @protected
@@ -4560,14 +4573,14 @@ class BreezSdkBindingsWire implements BaseWire {
   BreezSdkBindingsWire.fromLookup(ffi.Pointer<T> Function<T extends ffi.NativeType>(String symbolName) lookup)
     : _lookup = lookup;
 
-  void store_dart_post_cobject(DartPostCObjectFnType ptr) {
+  void store_dart_post_cobject(int ptr) {
     return _store_dart_post_cobject(ptr);
   }
 
-  late final _store_dart_post_cobjectPtr =
-      _lookup<ffi.NativeFunction<ffi.Void Function(DartPostCObjectFnType)>>('store_dart_post_cobject');
-  late final _store_dart_post_cobject = _store_dart_post_cobjectPtr
-      .asFunction<void Function(DartPostCObjectFnType)>();
+  late final _store_dart_post_cobjectPtr = _lookup<ffi.NativeFunction<ffi.Void Function(ffi.Int)>>(
+    'store_dart_post_cobject',
+  );
+  late final _store_dart_post_cobject = _store_dart_post_cobjectPtr.asFunction<void Function(int)>();
 
   void wire__crate__binding__backup(int port_) {
     return _wire__crate__binding__backup(port_);
@@ -5374,16 +5387,16 @@ class BreezSdkBindingsWire implements BaseWire {
   late final _cst_new_box_autoadd_bitcoin_address_data = _cst_new_box_autoadd_bitcoin_address_dataPtr
       .asFunction<ffi.Pointer<wire_cst_bitcoin_address_data> Function()>();
 
-  ffi.Pointer<ffi.Bool> cst_new_box_autoadd_bool(bool value) {
+  ffi.Pointer<bool> cst_new_box_autoadd_bool(ffi.Pointer<bool> value) {
     return _cst_new_box_autoadd_bool(value);
   }
 
   late final _cst_new_box_autoadd_boolPtr =
-      _lookup<ffi.NativeFunction<ffi.Pointer<ffi.Bool> Function(ffi.Bool)>>(
+      _lookup<ffi.NativeFunction<ffi.Pointer<bool> Function(ffi.Pointer<bool>)>>(
         'frbgen_breez_sdk_cst_new_box_autoadd_bool',
       );
   late final _cst_new_box_autoadd_bool = _cst_new_box_autoadd_boolPtr
-      .asFunction<ffi.Pointer<ffi.Bool> Function(bool)>();
+      .asFunction<ffi.Pointer<bool> Function(ffi.Pointer<bool>)>();
 
   ffi.Pointer<wire_cst_breez_event> cst_new_box_autoadd_breez_event() {
     return _cst_new_box_autoadd_breez_event();
@@ -6202,13 +6215,6 @@ class BreezSdkBindingsWire implements BaseWire {
       .asFunction<int Function()>();
 }
 
-typedef DartPort = ffi.Int64;
-typedef DartDartPort = int;
-typedef DartPostCObjectFnTypeFunction = ffi.Bool Function(DartPort port_id, ffi.Pointer<ffi.Void> message);
-typedef DartDartPostCObjectFnTypeFunction =
-    bool Function(DartDartPort port_id, ffi.Pointer<ffi.Void> message);
-typedef DartPostCObjectFnType = ffi.Pointer<ffi.NativeFunction<DartPostCObjectFnTypeFunction>>;
-
 final class wire_cst_binding_event_listener extends ffi.Opaque {}
 
 final class wire_cst_BreezEvent_NewBlock extends ffi.Struct {
@@ -6267,9 +6273,10 @@ final class wire_cst_url_success_action_data extends ffi.Struct {
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> url;
 
-  @ffi.Bool()
   external bool matches_callback_domain;
 }
+
+typedef bool = ffi.NativeFunction<ffi.Int Function(ffi.Pointer<ffi.Int>)>;
 
 final class wire_cst_SuccessActionProcessed_Url extends ffi.Struct {
   external ffi.Pointer<wire_cst_url_success_action_data> data;
@@ -6400,7 +6407,6 @@ final class wire_cst_ln_payment_details extends ffi.Struct {
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> payment_preimage;
 
-  @ffi.Bool()
   external bool keysend;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> bolt11;
@@ -6702,7 +6708,7 @@ final class wire_cst_connect_request extends ffi.Struct {
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> seed;
 
-  external ffi.Pointer<ffi.Bool> restore_only;
+  external ffi.Pointer<bool> restore_only;
 }
 
 final class wire_cst_reverse_swap_fees_request extends ffi.Struct {
@@ -6740,7 +6746,7 @@ final class wire_cst_list_payments_request extends ffi.Struct {
 
   external ffi.Pointer<ffi.Int64> to_timestamp;
 
-  external ffi.Pointer<ffi.Bool> include_failures;
+  external ffi.Pointer<bool> include_failures;
 
   external ffi.Pointer<ffi.Uint32> offset;
 
@@ -6792,7 +6798,6 @@ final class wire_cst_ln_url_pay_request_data extends ffi.Struct {
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> domain;
 
-  @ffi.Bool()
   external bool allows_nostr;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> nostr_pubkey;
@@ -6806,14 +6811,13 @@ final class wire_cst_ln_url_pay_request extends ffi.Struct {
   @ffi.Uint64()
   external int amount_msat;
 
-  @ffi.Bool()
   external bool use_trampoline;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> comment;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> payment_label;
 
-  external ffi.Pointer<ffi.Bool> validate_success_action_url;
+  external ffi.Pointer<bool> validate_success_action_url;
 }
 
 final class wire_cst_ln_url_withdraw_request_data extends ffi.Struct {
@@ -6899,7 +6903,7 @@ final class wire_cst_prepare_refund_request extends ffi.Struct {
   @ffi.Uint32()
   external int sat_per_vbyte;
 
-  external ffi.Pointer<ffi.Bool> unilateral;
+  external ffi.Pointer<bool> unilateral;
 }
 
 final class wire_cst_receive_onchain_request extends ffi.Struct {
@@ -6916,7 +6920,7 @@ final class wire_cst_receive_payment_request extends ffi.Struct {
 
   external ffi.Pointer<wire_cst_opening_fee_params> opening_fee_params;
 
-  external ffi.Pointer<ffi.Bool> use_description_hash;
+  external ffi.Pointer<bool> use_description_hash;
 
   external ffi.Pointer<ffi.Uint32> expiry;
 
@@ -6938,7 +6942,7 @@ final class wire_cst_refund_request extends ffi.Struct {
   @ffi.Uint32()
   external int sat_per_vbyte;
 
-  external ffi.Pointer<ffi.Bool> unilateral;
+  external ffi.Pointer<bool> unilateral;
 }
 
 final class wire_cst_report_payment_failure_details extends ffi.Struct {
@@ -6965,7 +6969,6 @@ final class wire_cst_report_issue_request extends ffi.Struct {
 final class wire_cst_send_payment_request extends ffi.Struct {
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> bolt11;
 
-  @ffi.Bool()
   external bool use_trampoline;
 
   external ffi.Pointer<ffi.Uint64> amount_msat;
@@ -7055,6 +7058,9 @@ final class wire_cst_opening_fee_params_menu extends ffi.Struct {
 }
 
 final class wire_cst_lsp_information extends ffi.Struct {
+  @ffi.Int32()
+  external int mode;
+
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> id;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> name;
@@ -7102,7 +7108,7 @@ final class wire_cst_symbol extends ffi.Struct {
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> template_;
 
-  external ffi.Pointer<ffi.Bool> rtl;
+  external ffi.Pointer<bool> rtl;
 
   external ffi.Pointer<ffi.Uint32> position;
 }
@@ -7218,7 +7224,6 @@ final class wire_cst_unspent_transaction_output extends ffi.Struct {
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> address;
 
-  @ffi.Bool()
   external bool reserved;
 }
 
@@ -7230,7 +7235,6 @@ final class wire_cst_list_unspent_transaction_output extends ffi.Struct {
 }
 
 final class wire_cst_backup_status extends ffi.Struct {
-  @ffi.Bool()
   external bool backed_up;
 
   external ffi.Pointer<ffi.Uint64> last_backup_time;
@@ -7243,7 +7247,6 @@ final class wire_cst_buy_bitcoin_response extends ffi.Struct {
 }
 
 final class wire_cst_check_message_response extends ffi.Struct {
-  @ffi.Bool()
   external bool is_valid;
 }
 
