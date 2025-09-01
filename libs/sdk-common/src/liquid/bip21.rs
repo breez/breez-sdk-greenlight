@@ -1,4 +1,4 @@
-use bitcoin::util::amount::ParseAmountError;
+use bitcoin::amount::ParseAmountError;
 use bitcoin::Denomination;
 use elements::{
     address::{Address, AddressError, AddressParams},

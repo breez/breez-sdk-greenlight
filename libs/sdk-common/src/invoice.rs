@@ -12,8 +12,7 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "liquid")]
 use {
-    bitcoin::hashes::hex::ToHex as BitcoinHashToHex, lightning_with_bolt12::ln::msgs::DecodeError,
-    lightning_with_bolt12::offers::offer::Offer,
+    lightning_with_bolt12::ln::msgs::DecodeError, lightning_with_bolt12::offers::offer::Offer,
     lightning_with_bolt12::offers::parse::Bolt12ParseError,
 };
 
@@ -438,7 +437,7 @@ pub fn parse_bolt12_offer(input: &str) -> Result<LNOffer, Bolt12ParseError> {
                 blinded_hops: path
                     .blinded_hops()
                     .iter()
-                    .map(|hop| hop.blinded_node_id.to_hex())
+                    .map(|hop| hop.blinded_node_id.serialize().encode_hex::<String>())
                     .collect(),
             })
             .collect::<Vec<LnOfferBlindedPath>>(),
