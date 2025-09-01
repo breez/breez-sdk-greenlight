@@ -58,12 +58,13 @@ wasm-bindgen = "0.2.100"
 maybe-sync = "0.1.1"
 
 [dev-dependencies]
-bitcoin = { workspace = true, features = ["rand"] }
+rand = "0.8"
 
 [target.'cfg(not(all(target_family = "wasm", target_os = "unknown")))'.dev-dependencies]
 tokio = { workspace = true, features = ["sync", "rt"] }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dev-dependencies]
+getrandom = { version = "0.2", features = ["js"] }
 wasm-bindgen-test = "0.3.33"
 tokio = { workspace = true, features = ["rt", "macros"] }
 
