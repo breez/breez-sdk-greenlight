@@ -408,7 +408,7 @@ impl NodeAPI for MockNodeAPI {
         Err(NodeError::Generic("Not implemented".to_string()))
     }
 
-    async fn start_signer(&self, _shutdown: mpsc::Receiver<()>) {}
+    async fn start(&self, _shutdown: mpsc::Receiver<()>) {}
 
     async fn start_keep_alive(&self, _shutdown: watch::Receiver<()>) {}
 

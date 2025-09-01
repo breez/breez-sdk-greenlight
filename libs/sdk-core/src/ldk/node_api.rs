@@ -174,7 +174,7 @@ impl NodeAPI for Ldk {
         Err(NodeError::generic("LDK implementation not yet available"))
     }
 
-    async fn start_signer(&self, mut shutdown: mpsc::Receiver<()>) {
+    async fn start(&self, mut shutdown: mpsc::Receiver<()>) {
         debug!("Starting LDK Node");
         if let Err(e) = self.node.start() {
             error!("Failed to start LDK Node: {e}");

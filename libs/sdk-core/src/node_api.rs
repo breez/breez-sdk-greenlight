@@ -228,7 +228,7 @@ pub trait NodeAPI: Send + Sync {
         &self,
         req: PrepareRedeemOnchainFundsRequest,
     ) -> NodeResult<PrepareRedeemOnchainFundsResponse>;
-    async fn start_signer(&self, shutdown: mpsc::Receiver<()>);
+    async fn start(&self, shutdown: mpsc::Receiver<()>);
     async fn start_keep_alive(&self, shutdown: watch::Receiver<()>);
     async fn connect_peer(&self, node_id: String, addr: String) -> NodeResult<()>;
     async fn sign_invoice(&self, invoice: RawBolt11Invoice) -> NodeResult<String>;
