@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.79", features = ["backtrace"] }
-breez-sdk-core = { path = "../../libs/sdk-core"}
+breez-sdk-core = { path = "../../libs/sdk-core", default-features = false }
 log = "0.4"
 once_cell = "1"
 qrcode-rs = { version = "0.1", default-features = false }
@@ -15,6 +15,12 @@ tiny-bip39 = "1"
 tokio = { version = "1", features = ["rt-multi-thread"] }
 serde = { version = "1.0", features = ["derive"] }
 clap = { version = "4", features = ["derive"] }
+
+[features]
+default = ["breez-sdk-core/greenlight"]
+# Run LDK Node backed version as
+# cargo run --no-default-features --features ldk
+ldk = ["breez-sdk-core/ldk"]
 
 # Consider using the profile for faster incremental builds as
 # cargo run --profile=dev-stripped
