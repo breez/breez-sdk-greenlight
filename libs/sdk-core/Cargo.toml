@@ -60,7 +60,9 @@ tokio-stream = "0.1.14"
 serde_with = "3.3.0"
 regex = { workspace = true }
 ryu = "1.0.18"
-ldk-node = { version = "0.6.2", optional = true }
+# Waiting for "Introduce Runtime object allowng to detect outer runtime context"
+# to be released https://github.com/lightningdevkit/ldk-node/pull/543.
+ldk-node = { git = "https://github.com/lightningdevkit/ldk-node", rev = "fd29ab5", optional = true }
 
 [dev-dependencies]
 mockall = "0.13.1"

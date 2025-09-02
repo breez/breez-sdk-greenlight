@@ -1518,7 +1518,7 @@ impl BreezServices {
             loop {
                 let (tx, rx) = mpsc::channel(1);
                 let is_shutdown = tokio::select! {
-                    _ = node_api.start_signer(rx) => {
+                    _ = node_api.start(rx) => {
                         tokio::time::sleep(Duration::from_secs(1)).await;
                         false
                     }

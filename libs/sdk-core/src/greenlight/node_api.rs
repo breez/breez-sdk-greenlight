@@ -1590,7 +1590,7 @@ impl NodeAPI for Greenlight {
     }
 
     /// Starts the signer that listens in a loop until the shutdown signal is received
-    async fn start_signer(&self, shutdown: mpsc::Receiver<()>) {
+    async fn start(&self, shutdown: mpsc::Receiver<()>) {
         match self.get_signer().await.run_forever(shutdown).await {
             Ok(_) => info!("signer exited gracefully"),
             Err(e) => error!("signer exited with error: {e}"),

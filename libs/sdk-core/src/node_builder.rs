@@ -20,7 +20,7 @@ pub async fn build_node(
     // TODO: Add NodeConfig::Ldk variant once the feature is developed.
     #[cfg(feature = "ldk")]
     {
-        let ldk = Ldk::build(config, &seed, restore_only).await;
+        let ldk = Ldk::build(config, &seed, restore_only).await?;
         let ldk = Arc::new(ldk);
         let backup_transport = Arc::new(LdkBackupTransport {});
         return Ok((ldk, backup_transport));
