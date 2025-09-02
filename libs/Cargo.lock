@@ -915,6 +915,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tonic 0.8.3",
+ "vss-client",
  "zbase32",
 ]
 

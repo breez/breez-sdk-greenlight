@@ -11,7 +11,7 @@ crate-type = ["staticlib", "cdylib", "lib"]
 default = ["greenlight"]
 greenlight = ["dep:gl-client"]
 # Enable LDK (Lightning Development Kit) node implementation
-ldk = ["dep:ldk-node"]
+ldk = ["dep:ldk-node", "dep:vss-client"]
 
 [dependencies]
 flutter_rust_bridge = "=2.9.0"
@@ -63,6 +63,7 @@ ryu = "1.0.18"
 # Waiting for "Introduce Runtime object allowng to detect outer runtime context"
 # to be released https://github.com/lightningdevkit/ldk-node/pull/543.
 ldk-node = { git = "https://github.com/lightningdevkit/ldk-node", rev = "fd29ab5", optional = true }
+vss-client = { version = "0.3.1", default-features = false, optional = true }
 
 [dev-dependencies]
 mockall = "0.13.1"
