@@ -1,4 +1,4 @@
-use crate::ldk::store::time_lock::{LockData, LockedBy, TimeLock};
+use crate::ldk::store::time_lock::{LockData, LockedBy, PreviousHolder, TimeLock};
 use crate::ldk::store::versioned_store::{Error, VersionedStore};
 use std::time::{Duration, SystemTime};
 use tokio::sync::Mutex;
@@ -44,15 +44,14 @@ impl<S: VersionedStore + Send + Sync> LockingStore<S> {
     /// 2. If no lock exists, create one for this instance
     /// 3. If a lock exists, verify it's not held by another instance
     /// 4. If the lock is held by another instance, return a `Conflict` error
-    pub async fn new(instance_id: String, store: S) -> Result<Self, Error> {
+    pub async fn new(instance_id: String, store: S) -> Result<(Self, PreviousHolder), Error> {
         let (lock_data, version) = store.get(Self::KEY.to_string()).await?.unwrap_or_default();
         let lock_data = LockData::decode(&lock_data)
             .map_err(|e| Error::Internal(format!("Failed to decode lock_data: {e:?}")))?;
-        let tl = TimeLock::new(Self::LOCK_DURATION, instance_id, lock_data).map_err(
-            |LockedBy(instance_id)| {
+        let (tl, previous_holder) = TimeLock::new(Self::LOCK_DURATION, instance_id, lock_data)
+            .map_err(|LockedBy(instance_id)| {
                 Error::Conflict(format!("Remote lock aquired by `{instance_id}`"))
-            },
-        )?;
+            })?;
         let versioned_tl = Mutex::new(VersionedTimeLock { tl, version });
 
         let locking_store = Self {
@@ -61,7 +60,7 @@ impl<S: VersionedStore + Send + Sync> LockingStore<S> {
         };
         locking_store.lock().await?;
 
-        Ok(locking_store)
+        Ok((locking_store, previous_holder))
     }
 
     /// Refreshes the distributed lock to extend its duration.
@@ -93,8 +92,7 @@ impl<S: VersionedStore + Send + Sync> LockingStore<S> {
             .put(Self::KEY.to_string(), value, versioned_tl.version)
             .await?;
         versioned_tl.version += 1;
-        versioned_tl.tl.update_lock(&lock_data);
-        Ok(lock_data.locked_until)
+        Ok(versioned_tl.tl.update_lock(&lock_data))
     }
 
     /// Releases the distributed lock.
@@ -165,9 +163,11 @@ mod tests {
     async fn test_locking_store() {
         let store = MockVersionedStore::default();
         let instance_id_1 = "instance_1".to_string();
-        let locking_store = LockingStore::new(instance_id_1, store.clone())
+        let (locking_store, previous_holder) = LockingStore::new(instance_id_1, store.clone())
             .await
             .unwrap();
+        assert_eq!(previous_holder, PreviousHolder::RemoteInstance);
+
         // Lock was aquired, store can be accessed.
         locking_store
             .put("key".to_string(), "value".as_bytes().to_vec(), 1)
@@ -192,9 +192,11 @@ mod tests {
             .unwrap_err();
 
         // Another instance tries to acquire the lock again.
-        let locking_store2 = LockingStore::new(instance_id_2.clone(), store.clone())
-            .await
-            .unwrap();
+        let (locking_store2, previous_holder) =
+            LockingStore::new(instance_id_2.clone(), store.clone())
+                .await
+                .unwrap();
+        assert_eq!(previous_holder, PreviousHolder::RemoteInstance);
         locking_store2
             .put("key".to_string(), "value2".as_bytes().to_vec(), 2)
             .await
@@ -206,8 +208,6 @@ mod tests {
         // The instance crashed before releasing the lock.
         drop(locking_store2);
         // but it can instantly reaquire the lock.
-        let _locking_store2 = LockingStore::new(instance_id_2, store.clone())
-            .await
-            .unwrap();
+        let _locking_store2 = LockingStore::new(instance_id_2, store).await.unwrap();
     }
 }
