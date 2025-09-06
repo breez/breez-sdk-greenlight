@@ -16,6 +16,13 @@ pub struct TimeLock {
     locked_until: SystemTime,
 }
 
+/// Indicates whether the lock was previously held by the local or a remote instance.
+#[derive(Debug, Eq, PartialEq)]
+pub enum PreviousHolder {
+    LocalInstance,
+    RemoteInstance,
+}
+
 /// Represents the owner of a lock when a resource is currently locked by another instance.
 #[derive(Debug, Eq, PartialEq)]
 pub struct LockedBy(pub String);
@@ -39,27 +46,32 @@ impl TimeLock {
     ///
     /// # Returns
     ///
-    /// * `Ok(TimeLock)` - If the lock can be acquired or if it's already owned by this instance
+    /// * `Ok((TimeLock, PreviousHolder))` - If the lock can be acquired or if it's already
+    ///   owned by this instance, along with information about who previously held the lock
     /// * `Err(LockedBy(instance_id))` - If the resource is currently locked by another instance
     pub fn new(
         lock_duration: Duration,
         instance_id: String,
         latest_lock_data: LockData,
-    ) -> Result<Self, LockedBy> {
+    ) -> Result<(Self, PreviousHolder), LockedBy> {
+        debug_assert!(lock_duration > Self::CLOCK_SKEW_LEEWAY);
+        debug_assert!(!instance_id.is_empty());
         if instance_id == latest_lock_data.instance_id {
-            Ok(Self {
+            let tl = Self {
                 lock_duration,
                 instance_id,
                 locked_until: latest_lock_data.locked_until,
-            })
+            };
+            Ok((tl, PreviousHolder::LocalInstance))
         } else if SystemTime::now() < latest_lock_data.locked_until + Self::CLOCK_SKEW_LEEWAY {
             Err(LockedBy(latest_lock_data.instance_id))
         } else {
-            Ok(Self {
+            let tl = Self {
                 lock_duration,
                 instance_id,
                 locked_until: UNIX_EPOCH,
-            })
+            };
+            Ok((tl, PreviousHolder::RemoteInstance))
         }
     }
 
@@ -99,9 +111,14 @@ impl TimeLock {
     ///
     /// This method is used to synchronize the local lock state with data from persistent
     /// storage. It should only be called with lock data that belongs to this instance.
-    pub fn update_lock(&mut self, lock_data: &LockData) {
+    ///
+    /// # Returns
+    ///
+    /// The updated `locked_until` timestamp after applying the new lock data.
+    pub fn update_lock(&mut self, lock_data: &LockData) -> SystemTime {
         debug_assert!(self.instance_id == lock_data.instance_id);
         self.locked_until = lock_data.locked_until;
+        self.locked_until
     }
 }
 
@@ -113,14 +130,14 @@ impl TimeLock {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LockData {
     /// The timestamp when the lock expires.
-    pub locked_until: SystemTime,
+    locked_until: SystemTime,
 
     /// The unique identifier of the instance that holds the lock.
     ///
     /// This field identifies which instance currently owns the lock. It's used
     /// to determine if a lock attempt should succeed (same instance) or fail
     /// (different instance with active lock).
-    pub instance_id: String,
+    instance_id: String,
 }
 
 impl LockData {
@@ -200,8 +217,10 @@ mod tests {
             locked_until: UNIX_EPOCH, // Expired lock
             instance_id: "other-instance".to_string(),
         };
-        let time_lock = TimeLock::new(lock_duration, instance_id, latest_lock_data).unwrap();
+        let (time_lock, previous_holder) =
+            TimeLock::new(lock_duration, instance_id, latest_lock_data).unwrap();
         assert!(!time_lock.is_locked());
+        assert_eq!(previous_holder, PreviousHolder::RemoteInstance);
     }
 
     #[test]
@@ -226,8 +245,10 @@ mod tests {
             locked_until: past_time,
             instance_id: instance_id.clone(),
         };
-        let time_lock = TimeLock::new(lock_duration, instance_id, latest_lock_data).unwrap();
+        let (time_lock, previous_holder) =
+            TimeLock::new(lock_duration, instance_id, latest_lock_data).unwrap();
         assert!(!time_lock.is_locked());
+        assert_eq!(previous_holder, PreviousHolder::LocalInstance);
     }
 
     #[test]
@@ -239,8 +260,10 @@ mod tests {
             locked_until: future_time,
             instance_id: instance_id.clone(),
         };
-        let time_lock = TimeLock::new(lock_duration, instance_id, latest_lock_data).unwrap();
+        let (time_lock, previous_holder) =
+            TimeLock::new(lock_duration, instance_id, latest_lock_data).unwrap();
         assert!(time_lock.is_locked());
+        assert_eq!(previous_holder, PreviousHolder::LocalInstance);
     }
 
     #[test]
@@ -252,16 +275,18 @@ mod tests {
             instance_id: "other-instance".to_string(),
         };
 
-        let mut time_lock =
+        let (mut time_lock, previous_holder) =
             TimeLock::new(lock_duration, instance_id.clone(), latest_lock_data).unwrap();
         assert!(!time_lock.is_locked());
+        assert_eq!(previous_holder, PreviousHolder::RemoteInstance);
 
         // Get next lock
         let lock_data = time_lock.next_lock();
         assert_eq!(lock_data.instance_id, instance_id);
 
         // Update lock with new data
-        time_lock.update_lock(&lock_data);
+        let updated_time = time_lock.update_lock(&lock_data);
+        assert_eq!(updated_time, lock_data.locked_until);
         assert!(time_lock.is_locked());
 
         // Unlock
@@ -277,7 +302,7 @@ mod tests {
         let instance_id_2 = "instance-2".to_string();
 
         // Instance 1 creates a lock
-        let time_lock_1 = TimeLock::new(
+        let (time_lock_1, previous_holder) = TimeLock::new(
             lock_duration,
             instance_id_1.clone(),
             LockData {
@@ -286,6 +311,7 @@ mod tests {
             },
         )
         .unwrap();
+        assert_eq!(previous_holder, PreviousHolder::RemoteInstance);
 
         let lock_data_1 = time_lock_1.next_lock();
 
