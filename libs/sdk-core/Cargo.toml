@@ -60,9 +60,12 @@ tokio-stream = "0.1.14"
 serde_with = "3.3.0"
 regex = { workspace = true }
 ryu = "1.0.18"
-# Waiting for "Introduce Runtime object allowng to detect outer runtime context"
-# to be released https://github.com/lightningdevkit/ldk-node/pull/543.
-ldk-node = { git = "https://github.com/lightningdevkit/ldk-node", rev = "fd29ab5", optional = true }
+# Waiting for features to to be released:
+# - "Introduce Runtime object allowng to detect outer runtime context"
+#    https://github.com/lightningdevkit/ldk-node/pull/543
+# - "Add receive_via_jit_channel_for_hash() method"
+#   https://github.com/lightningdevkit/ldk-node/pull/608
+ldk-node = { git = "https://github.com/lightningdevkit/ldk-node", rev = "fdaa759f2485189319f5b5b7d046c2b0de281e23", optional = true }
 vss-client = { version = "0.3.1", default-features = false, optional = true }
 
 [dev-dependencies]

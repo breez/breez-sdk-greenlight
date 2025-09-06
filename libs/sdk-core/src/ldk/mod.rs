@@ -1,5 +1,6 @@
 mod backup_transport;
 mod config;
+mod error;
 mod node_api;
 mod store;
 

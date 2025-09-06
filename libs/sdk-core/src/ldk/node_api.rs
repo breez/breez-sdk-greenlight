@@ -3,9 +3,14 @@ use std::collections::HashSet;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use ldk_node::bitcoin::hashes::sha256::Hash as Sha256;
+use ldk_node::bitcoin::hashes::Hash;
 use ldk_node::bitcoin::secp256k1::PublicKey;
 use ldk_node::lightning::ln::msgs::SocketAddress;
+use ldk_node::lightning_invoice::{Bolt11InvoiceDescription, Description};
+use ldk_node::lightning_types::payment::{PaymentHash, PaymentPreimage};
 use ldk_node::{Builder, Node};
+use rand::Rng;
 use sdk_common::ensure_sdk;
 use sdk_common::prelude::Network;
 use serde_json::Value;
@@ -87,8 +92,51 @@ impl NodeAPI for Ldk {
         Err(NodeError::generic("LDK implementation not yet available"))
     }
 
-    async fn create_invoice(&self, _request: CreateInvoiceRequest) -> NodeResult<String> {
-        Err(NodeError::generic("LDK implementation not yet available"))
+    async fn create_invoice(&self, request: CreateInvoiceRequest) -> NodeResult<String> {
+        let use_description_hash = request.use_description_hash.unwrap_or(false);
+        let description = if use_description_hash {
+            let hash = Sha256::hash(request.description.as_bytes());
+            Bolt11InvoiceDescription::Hash(ldk_node::lightning_invoice::Sha256(hash))
+        } else {
+            let description = Description::new(request.description).map_err(|e| {
+                NodeError::Generic(format!("Failed to create invoice description: {e}"))
+            })?;
+            Bolt11InvoiceDescription::Direct(description)
+        };
+
+        let preimage = match request.preimage {
+            Some(preimage) => {
+                let preimage = preimage
+                    .as_slice()
+                    .try_into()
+                    .map_err(|e| NodeError::Generic(format!("Invalid preimage given: {e}")))?;
+                PaymentPreimage(preimage)
+            }
+            None => PaymentPreimage(rand::thread_rng().gen::<[u8; 32]>()),
+        };
+        let payment_hash: PaymentHash = preimage.into();
+        let expiry = request.expiry.unwrap_or(3600);
+
+        // TODO: Store preimage, check if already exists, return InvoicePreimageAlreadyExists.
+        // TODO: Store bolt11.
+
+        let payments = self.node.bolt11_payment();
+        let invoice = match request.payer_amount_msat {
+            Some(payer_amount_msat) => {
+                let max_total_lsp_fee_limit_msat = Some(payer_amount_msat - request.amount_msat);
+                payments.receive_via_jit_channel_for_hash(
+                    payer_amount_msat,
+                    &description,
+                    expiry,
+                    max_total_lsp_fee_limit_msat,
+                    payment_hash,
+                )
+            }
+            None => {
+                payments.receive_for_hash(request.amount_msat, &description, expiry, payment_hash)
+            }
+        }?;
+        Ok(invoice.to_string())
     }
 
     async fn delete_invoice(&self, _bolt11: String) -> NodeResult<()> {
