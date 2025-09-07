@@ -2731,7 +2731,7 @@ checksum = "830d08ce1d1d941e6b30645f1a0eb5643013d835ce3779a5fc208261dbe10f55"
 [[package]]
 name = "ldk-node"
 version = "0.7.0+git"
-source = "git+https://github.com/lightningdevkit/ldk-node?rev=fd29ab5#fd29ab5707b8e12570bcfe61446e486b1bb58d2b"
+source = "git+https://github.com/lightningdevkit/ldk-node?rev=fdaa759f2485189319f5b5b7d046c2b0de281e23#fdaa759f2485189319f5b5b7d046c2b0de281e23"
 dependencies = [
  "base64 0.22.1",
  "bdk_chain",
