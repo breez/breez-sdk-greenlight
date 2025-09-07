@@ -56,7 +56,7 @@ tempfile = "3"
 thiserror = { workspace = true }
 const_format = "0.2"
 miniz_oxide = "0.7.1"
-tokio-stream = "0.1.14"
+tokio-stream = { version = "0.1.14", features = ["sync"] }
 serde_with = "3.3.0"
 regex = { workspace = true }
 ryu = "1.0.18"

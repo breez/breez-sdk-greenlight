@@ -14,11 +14,14 @@ use rand::Rng;
 use sdk_common::ensure_sdk;
 use sdk_common::prelude::Network;
 use serde_json::Value;
-use tokio::sync::{mpsc, watch};
-use tokio_stream::Stream;
+use tokio::sync::{broadcast, mpsc, watch};
+use tokio_stream::wrappers::errors::BroadcastStreamRecvError::Lagged;
+use tokio_stream::wrappers::BroadcastStream;
+use tokio_stream::{Stream, StreamExt};
 
 use crate::bitcoin::secp256k1::Secp256k1;
 use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
+use crate::ldk::event_handling::start_event_handling;
 use crate::lightning_invoice::RawBolt11Invoice;
 use crate::node_api::{
     CreateInvoiceRequest, FetchBolt11Result, IncomingPayment, NodeAPI, NodeError, NodeResult,
@@ -33,6 +36,7 @@ pub(crate) struct Ldk {
     network: Network,
     seed: [u8; 64],
     node: Arc<Node>,
+    incoming_payments_tx: broadcast::Sender<IncomingPayment>,
 }
 
 impl Ldk {
@@ -74,10 +78,14 @@ impl Ldk {
             .map_err(|e| NodeError::Generic(format!("Fail to build LDK Node: {e}")))?;
         let node = Arc::new(node);
         debug!("LDK Node was built");
+
+        let (incoming_payments_tx, _) = broadcast::channel(10);
+
         Ok(Self {
             network: config.network,
             seed,
             node,
+            incoming_payments_tx,
         })
     }
 }
@@ -222,7 +230,7 @@ impl NodeAPI for Ldk {
         Err(NodeError::generic("LDK implementation not yet available"))
     }
 
-    async fn start(&self, mut shutdown: mpsc::Receiver<()>) {
+    async fn start(&self, shutdown: mpsc::Receiver<()>) {
         debug!("Starting LDK Node");
         if let Err(e) = self.node.start() {
             error!("Failed to start LDK Node: {e}");
@@ -230,7 +238,14 @@ impl NodeAPI for Ldk {
         }
         debug!("LDK Node started");
 
-        _ = shutdown.recv().await;
+        debug!("Starting event handling");
+        start_event_handling(
+            Arc::clone(&self.node),
+            self.incoming_payments_tx.clone(),
+            shutdown,
+        )
+        .await;
+
         debug!("Stopping LDK Node");
         if let Err(e) = self.node.stop() {
             error!("Error on stopping LDK Node: {e}");
@@ -257,8 +272,11 @@ impl NodeAPI for Ldk {
     async fn stream_incoming_payments(
         &self,
     ) -> NodeResult<Pin<Box<dyn Stream<Item = IncomingPayment> + Send>>> {
-        // TODO: Implement.
-        Ok(Box::pin(futures::stream::pending()))
+        let stream = BroadcastStream::new(self.incoming_payments_tx.subscribe()).filter_map(|r| {
+            r.map_err(|Lagged(n)| warn!("Incoming payments stream missed {n} events"))
+                .ok()
+        });
+        Ok(Box::pin(stream))
     }
 
     async fn stream_log_messages(&self) -> NodeResult<Pin<Box<dyn Stream<Item = String> + Send>>> {
