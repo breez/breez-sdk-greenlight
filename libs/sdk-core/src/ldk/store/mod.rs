@@ -1,4 +1,5 @@
 mod locking_store;
+pub mod mirroring_store;
 #[cfg(test)]
 mod mock_versioned_store;
 mod time_lock;
