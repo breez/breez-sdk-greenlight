@@ -1517,23 +1517,20 @@ impl BreezServices {
         tokio::spawn(async move {
             loop {
                 let (tx, rx) = mpsc::channel(1);
-                let is_shutdown = tokio::select! {
-                    _ = node_api.start(rx) => {
+                let mut node_future = node_api.start(rx);
+                tokio::select! {
+                    _ = &mut node_future => {
+                        warn!("Node exited itself, restarting");
                         tokio::time::sleep(Duration::from_secs(1)).await;
-                        false
-                    }
-
+                      }
                     _ = shutdown_receiver.changed() => {
-                        true
+                        debug!("Shutting down node");
+                        drop(tx);
+                        debug!("Waiting for node to shut down");
+                        node_future.await;
+                        return;
                     }
                 };
-
-                debug!("shutting down signer");
-                drop(tx); // Dropping the sender explicitly to notify the receiver.
-
-                if is_shutdown {
-                    return;
-                }
             }
         });
     }
@@ -2676,7 +2673,7 @@ impl Receiver for PaymentReceiver {
                 cltv: Some(req.cltv.unwrap_or(144)),
             })
             .await?;
-        info!("Invoice created {}", invoice);
+        info!("Invoice created {invoice}");
 
         let open_channel_params = match open_channel_needed {
             true => Some(OpenChannelParams {
