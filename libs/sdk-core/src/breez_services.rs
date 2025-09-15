@@ -1502,8 +1502,9 @@ impl BreezServices {
         let mut shutdown_receiver = self.shutdown_sender.subscribe();
         tokio::spawn(async move {
             _ = shutdown_receiver.changed().await;
-            _ = shutdown_signer_sender.send(());
             debug!("Received the signal to exit signer");
+            _ = shutdown_signer_sender.send(());
+            shutdown_signer_sender.closed().await;
         });
 
         self.init_chainservice_urls().await?;
