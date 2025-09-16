@@ -27,9 +27,9 @@ use crate::node_api::{
     CreateInvoiceRequest, FetchBolt11Result, IncomingPayment, NodeAPI, NodeError, NodeResult,
 };
 use crate::{
-    CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, NodeState, Payment,
-    PaymentResponse, PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse,
-    RouteHint, RouteHintHop, SyncResponse, TlvEntry,
+    CustomMessage, LspInformation, MaxChannelAmount, NodeCredentials, Payment, PaymentResponse,
+    PrepareRedeemOnchainFundsRequest, PrepareRedeemOnchainFundsResponse, RouteHint, RouteHintHop,
+    SyncResponse, TlvEntry,
 };
 
 pub(crate) struct Ldk {
@@ -160,10 +160,11 @@ impl NodeAPI for Ldk {
         _sync_state: Option<Value>,
         _match_local_balance: bool,
     ) -> NodeResult<SyncResponse> {
-        // TODO: Implement.
+        // TODO: Complete.
+        let node = &*self.node;
         Ok(SyncResponse {
             sync_state: Value::Null,
-            node_state: NodeState::default(),
+            node_state: node.into(),
             payments: Vec::new(),
             channels: Vec::new(),
         })
