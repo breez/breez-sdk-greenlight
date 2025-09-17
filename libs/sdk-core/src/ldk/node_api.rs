@@ -13,6 +13,7 @@ use ldk_node::lightning_invoice::{Bolt11InvoiceDescription, Description};
 use ldk_node::lightning_types::payment::{PaymentHash, PaymentPreimage};
 use ldk_node::{Builder, Node};
 use rand::Rng;
+use sdk_common::bitcoin::hashes::hex::ToHex;
 use sdk_common::ensure_sdk;
 use sdk_common::invoice::parse_invoice;
 use sdk_common::prelude::Network;
@@ -28,6 +29,7 @@ use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::grpc;
 use crate::ldk::event_handling::start_event_handling;
+use crate::ldk::store_builder::{build_locking_store, build_vss_store};
 use crate::lightning_invoice::RawBolt11Invoice;
 use crate::models::{
     LspAPI, OpeningFeeParams, OpeningFeeParamsMenu, ReceivePaymentRequest, ReceivePaymentResponse,
@@ -50,6 +52,7 @@ pub(crate) struct Ldk {
     node: Arc<Node>,
     incoming_payments_tx: broadcast::Sender<IncomingPayment>,
     preimages: PreimageStore,
+    remote_lock_shutdown_tx: mpsc::Sender<()>,
 }
 
 impl Ldk {
@@ -83,6 +86,23 @@ impl Ldk {
             .map_err(|e| NodeError::Generic(format!("Invalid LSP address: {e}")))?;
         builder.set_liquidity_source_lsps2(lsps2, address, None);
 
+        let store_id = match config.network {
+            Network::Regtest => {
+                // Regtest instance of VSS does not implement authentication,
+                // that is why the hash of the seed is used to avoid collisions.
+                let seed_hash = Sha256::hash(&seed).to_hex();
+                format!("{seed_hash}/ldk_node")
+            }
+            _ => "ldk_node".to_string(),
+        };
+        let vss_store = build_vss_store(ldk_config.vss_url.to_string(), store_id);
+
+        // It is not possible to use oneshot here, because `oneshot::Sender::send()`
+        // consumes itself, not allowing to call `closed()` method after.
+        let (remote_lock_shutdown_tx, remote_lock_shutdown_rx) = mpsc::channel(1);
+        let _locking_store =
+            build_locking_store(&config.working_dir, vss_store, remote_lock_shutdown_rx).await?;
+
         // TODO: Use remote/local storage.
         builder.set_storage_dir_path(config.working_dir);
 
@@ -100,6 +120,7 @@ impl Ldk {
             node,
             incoming_payments_tx,
             preimages: PreimageStore::default(),
+            remote_lock_shutdown_tx,
         })
     }
 
@@ -265,12 +286,20 @@ impl NodeAPI for Ldk {
             shutdown,
         )
         .await;
+        info!("Event handling stopped");
 
         debug!("Stopping LDK Node");
         if let Err(e) = self.node.stop() {
             error!("Error on stopping LDK Node: {e}");
         }
         debug!("LDK Node stopped");
+
+        debug!("Stopping remote lock refreshing");
+        let _ = self.remote_lock_shutdown_tx.send(()).await;
+        debug!("Waiting for remote lock refreshing stopped");
+        self.remote_lock_shutdown_tx.closed().await;
+
+        debug!("Exiting Ldk::start()");
     }
 
     async fn start_keep_alive(&self, _shutdown: watch::Receiver<()>) {
