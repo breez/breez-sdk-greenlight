@@ -163,7 +163,7 @@ pub struct BreezServices {
     chain_service: Arc<dyn ChainService>,
     persister: Arc<SqliteStorage>,
     rest_client: Arc<dyn RestClient>,
-    payment_receiver: Arc<PaymentReceiver>,
+    payment_receiver: Arc<dyn Receiver>,
     btc_receive_swapper: Arc<BTCReceiveSwap>,
     btc_send_swapper: Arc<BTCSendSwap>,
     event_listener: Option<Box<dyn EventListener>>,
@@ -2386,21 +2386,32 @@ impl BreezServicesBuilder {
             .unwrap_or_else(|| Arc::new(SqliteStorage::new(self.config.working_dir.clone())));
         persister.init()?;
 
+        // breez_server provides both FiatAPI & LspAPI implementations
+        let breez_server = Arc::new(
+            BreezServer::new(self.config.breezserver.clone(), self.config.api_key.clone())
+                .map_err(|e| ConnectError::ServiceConnectivity {
+                    err: format!("Failed to create BreezServer: {e}"),
+                })?,
+        );
+
         let mut node_api = self.node_api.clone();
         let mut backup_transport = self.backup_transport.clone();
+        let mut lsp_api = self.lsp_api.clone();
+        let mut receiver = None;
         if node_api.is_none() {
-            let (node_impl, backup_transport_impl) = node_builder::build_node(
+            let node_impls = node_builder::build_node(
                 self.config.clone(),
                 self.seed.clone().unwrap(),
                 restore_only,
                 persister.clone(),
             )
             .await?;
-            node_api = Some(node_impl);
-            if backup_transport.is_none() {
-                backup_transport = Some(backup_transport_impl);
-            }
+            node_api = Some(node_impls.node);
+            backup_transport = backup_transport.or(Some(node_impls.backup_transport));
+            lsp_api = lsp_api.or(node_impls.lsp);
+            receiver = node_impls.receiver;
         }
+        let lsp_api = lsp_api.unwrap_or_else(|| breez_server.clone());
 
         if backup_transport.is_none() {
             return Err(ConnectError::Generic {
@@ -2435,14 +2446,6 @@ impl BreezServicesBuilder {
             legacy_backup_encryption_key.to_priv().to_bytes(),
         );
 
-        // breez_server provides both FiatAPI & LspAPI implementations
-        let breez_server = Arc::new(
-            BreezServer::new(self.config.breezserver.clone(), self.config.api_key.clone())
-                .map_err(|e| ConnectError::ServiceConnectivity {
-                    err: format!("Failed to create BreezServer: {e}"),
-                })?,
-        );
-
         // Ensure breez server connection is established in the background
         let cloned_breez_server = breez_server.clone();
         tokio::spawn(async move {
@@ -2456,11 +2459,13 @@ impl BreezServicesBuilder {
             persister.set_lsp(self.config.default_lsp_id.clone().unwrap(), None)?;
         }
 
-        let payment_receiver = Arc::new(PaymentReceiver {
-            config: self.config.clone(),
-            node_api: unwrapped_node_api.clone(),
-            lsp: breez_server.clone(),
-            persister: persister.clone(),
+        let payment_receiver = receiver.unwrap_or_else(|| {
+            Arc::new(PaymentReceiver {
+                config: self.config.clone(),
+                node_api: unwrapped_node_api.clone(),
+                lsp: lsp_api.clone(),
+                persister: persister.clone(),
+            })
         });
 
         let rest_client: Arc<dyn RestClient> = match self.rest_client.clone() {
@@ -2537,7 +2542,7 @@ impl BreezServicesBuilder {
             config: self.config.clone(),
             started: Mutex::new(false),
             node_api: unwrapped_node_api.clone(),
-            lsp_api: self.lsp_api.clone().unwrap_or_else(|| breez_server.clone()),
+            lsp_api,
             fiat_api: self
                 .fiat_api
                 .clone()
