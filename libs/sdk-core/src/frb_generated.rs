@@ -139,6 +139,7 @@ fn wire__crate__binding__breez_events_stream_impl(
 fn wire__crate__binding__breez_log_stream_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     s: impl CstDecode<StreamSink<crate::models::LogEntry, flutter_rust_bridge::for_generated::DcoCodec>>,
+    filter_level: impl CstDecode<Option<crate::models::LevelFilter>>,
 ) {
     FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::DcoCodec, _, _>(
         flutter_rust_bridge::for_generated::TaskInfo {
@@ -148,10 +149,11 @@ fn wire__crate__binding__breez_log_stream_impl(
         },
         move || {
             let api_s = s.cst_decode();
+            let api_filter_level = filter_level.cst_decode();
             move |context| {
                 transform_result_dco::<_, _, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
-                        let output_ok = crate::binding::breez_log_stream(api_s)?;
+                        let output_ok = crate::binding::breez_log_stream(api_s, api_filter_level)?;
                         Ok(output_ok)
                     })(),
                 )
@@ -1692,6 +1694,20 @@ impl CstDecode<i64> for i64 {
         self
     }
 }
+impl CstDecode<crate::models::LevelFilter> for i32 {
+    // Codec=Cst (C-struct based), see doc to use other codecs
+    fn cst_decode(self) -> crate::models::LevelFilter {
+        match self {
+            0 => crate::models::LevelFilter::Off,
+            1 => crate::models::LevelFilter::Error,
+            2 => crate::models::LevelFilter::Warn,
+            3 => crate::models::LevelFilter::Info,
+            4 => crate::models::LevelFilter::Debug,
+            5 => crate::models::LevelFilter::Trace,
+            _ => unreachable!("Invalid variant for LevelFilter: {}", self),
+        }
+    }
+}
 impl CstDecode<crate::binding::Network> for i32 {
     // Codec=Cst (C-struct based), see doc to use other codecs
     fn cst_decode(self) -> crate::binding::Network {
@@ -2313,6 +2329,22 @@ impl SseDecode for crate::breez_services::InvoicePaidDetails {
             payment_hash: var_paymentHash,
             bolt11: var_bolt11,
             payment: var_payment,
+        };
+    }
+}
+
+impl SseDecode for crate::models::LevelFilter {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::models::LevelFilter::Off,
+            1 => crate::models::LevelFilter::Error,
+            2 => crate::models::LevelFilter::Warn,
+            3 => crate::models::LevelFilter::Info,
+            4 => crate::models::LevelFilter::Debug,
+            5 => crate::models::LevelFilter::Trace,
+            _ => unreachable!("Invalid variant for LevelFilter: {}", inner),
         };
     }
 }
@@ -3140,6 +3172,17 @@ impl SseDecode for Option<i64> {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         if (<bool>::sse_decode(deserializer)) {
             return Some(<i64>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::models::LevelFilter> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::models::LevelFilter>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -4721,6 +4764,26 @@ impl flutter_rust_bridge::IntoIntoDart<crate::breez_services::InvoicePaidDetails
     for crate::breez_services::InvoicePaidDetails
 {
     fn into_into_dart(self) -> crate::breez_services::InvoicePaidDetails {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::models::LevelFilter {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Off => 0.into_dart(),
+            Self::Error => 1.into_dart(),
+            Self::Warn => 2.into_dart(),
+            Self::Info => 3.into_dart(),
+            Self::Debug => 4.into_dart(),
+            Self::Trace => 5.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::models::LevelFilter {}
+impl flutter_rust_bridge::IntoIntoDart<crate::models::LevelFilter> for crate::models::LevelFilter {
+    fn into_into_dart(self) -> crate::models::LevelFilter {
         self
     }
 }
@@ -6872,6 +6935,26 @@ impl SseEncode for crate::breez_services::InvoicePaidDetails {
     }
 }
 
+impl SseEncode for crate::models::LevelFilter {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::models::LevelFilter::Off => 0,
+                crate::models::LevelFilter::Error => 1,
+                crate::models::LevelFilter::Warn => 2,
+                crate::models::LevelFilter::Info => 3,
+                crate::models::LevelFilter::Debug => 4,
+                crate::models::LevelFilter::Trace => 5,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for Vec<String> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -7477,6 +7560,16 @@ impl SseEncode for Option<i64> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <i64>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::models::LevelFilter> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::models::LevelFilter>::sse_encode(value, serializer);
         }
     }
 }
@@ -8477,6 +8570,13 @@ mod io {
         fn cst_decode(self) -> crate::breez_services::InvoicePaidDetails {
             let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
             CstDecode::<crate::breez_services::InvoicePaidDetails>::cst_decode(*wrap).into()
+        }
+    }
+    impl CstDecode<crate::models::LevelFilter> for *mut i32 {
+        // Codec=Cst (C-struct based), see doc to use other codecs
+        fn cst_decode(self) -> crate::models::LevelFilter {
+            let wrap = unsafe { flutter_rust_bridge::for_generated::box_from_leak_ptr(self) };
+            CstDecode::<crate::models::LevelFilter>::cst_decode(*wrap).into()
         }
     }
     impl CstDecode<crate::models::ListPaymentsRequest> for *mut wire_cst_list_payments_request {
@@ -11501,8 +11601,9 @@ mod io {
     pub extern "C" fn frbgen_breez_sdk_wire__crate__binding__breez_log_stream(
         port_: i64,
         s: *mut wire_cst_list_prim_u_8_strict,
+        filter_level: *mut i32,
     ) {
-        wire__crate__binding__breez_log_stream_impl(port_, s)
+        wire__crate__binding__breez_log_stream_impl(port_, s, filter_level)
     }
 
     #[unsafe(no_mangle)]
@@ -12032,6 +12133,11 @@ mod io {
         flutter_rust_bridge::for_generated::new_leak_box_ptr(
             wire_cst_invoice_paid_details::new_with_null_ptr(),
         )
+    }
+
+    #[unsafe(no_mangle)]
+    pub extern "C" fn frbgen_breez_sdk_cst_new_box_autoadd_level_filter(value: i32) -> *mut i32 {
+        flutter_rust_bridge::for_generated::new_leak_box_ptr(value)
     }
 
     #[unsafe(no_mangle)]

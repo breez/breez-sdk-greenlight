@@ -13,9 +13,9 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'binding.freezed.dart';
 
-// These functions are ignored because they are not marked as `pub`: `block_on`, `get_breez_services`, `init`, `new`, `rt`
-// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `BindingLogger`, `LnUrlPayError`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `enabled`, `flush`, `log`
+// These functions are ignored because they are not marked as `pub`: `block_on`, `get_breez_services`, `init_dart_logger`, `new`, `record_to_entry`, `rt`, `set_stream_sink`
+// These types are ignored because they are neither used by any `pub` functions nor (for structs and enums) marked `#[frb(unignore)]`: `DART_LOGGER_STREAM_SINK`, `DartLogger`, `LnUrlPayError`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `deref`, `enabled`, `flush`, `initialize`, `log`
 
 /// Wrapper around [BreezServices::connect] which also initializes SDK logging
 Future<void> connect({required ConnectRequest req}) =>
@@ -75,7 +75,8 @@ Future<ServiceHealthCheckResponse> serviceHealthCheck({required String apiKey}) 
 Stream<BreezEvent> breezEventsStream() => BreezSdkBindings.instance.api.crateBindingBreezEventsStream();
 
 /// If used, this must be called before `connect`. It can only be called once.
-Stream<LogEntry> breezLogStream() => BreezSdkBindings.instance.api.crateBindingBreezLogStream();
+Stream<LogEntry> breezLogStream({LevelFilter? filterLevel}) =>
+    BreezSdkBindings.instance.api.crateBindingBreezLogStream(filterLevel: filterLevel);
 
 /// See [BreezServices::list_lsps]
 Future<List<LspInformation>> listLsps() => BreezSdkBindings.instance.api.crateBindingListLsps();

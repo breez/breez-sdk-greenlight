@@ -940,7 +940,8 @@ void frbgen_breez_sdk_wire__crate__binding__breez_events_stream(int64_t port_,
                                                                 struct wire_cst_list_prim_u_8_strict *s);
 
 void frbgen_breez_sdk_wire__crate__binding__breez_log_stream(int64_t port_,
-                                                             struct wire_cst_list_prim_u_8_strict *s);
+                                                             struct wire_cst_list_prim_u_8_strict *s,
+                                                             int32_t *filter_level);
 
 void frbgen_breez_sdk_wire__crate__binding__buy_bitcoin(int64_t port_,
                                                         struct wire_cst_buy_bitcoin_request *req);
@@ -1129,6 +1130,8 @@ int64_t *frbgen_breez_sdk_cst_new_box_autoadd_i_64(int64_t value);
 
 struct wire_cst_invoice_paid_details *frbgen_breez_sdk_cst_new_box_autoadd_invoice_paid_details(void);
 
+int32_t *frbgen_breez_sdk_cst_new_box_autoadd_level_filter(int32_t value);
+
 struct wire_cst_list_payments_request *frbgen_breez_sdk_cst_new_box_autoadd_list_payments_request(void);
 
 struct wire_cst_list_swaps_request *frbgen_breez_sdk_cst_new_box_autoadd_list_swaps_request(void);
@@ -1269,6 +1272,7 @@ static int64_t dummy_method_to_enforce_bundling(void) {
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_greenlight_node_config);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_i_64);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_invoice_paid_details);
+    dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_level_filter);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_list_payments_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_list_swaps_request);
     dummy_var ^= ((int64_t) (void*) frbgen_breez_sdk_cst_new_box_autoadd_ln_invoice);

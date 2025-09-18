@@ -19,21 +19,21 @@ const BreezSDK = NativeModules.RNBreezSDK
 
 const BreezSDKEmitter = new NativeEventEmitter(BreezSDK)
 
-export interface AesSuccessActionDataDecrypted {
+export type AesSuccessActionDataDecrypted = {
     description: string
     plaintext: string
 }
 
-export interface BackupFailedData {
+export type BackupFailedData = {
     error: string
 }
 
-export interface BackupStatus {
+export type BackupStatus = {
     backedUp: boolean
     lastBackupTime?: number
 }
 
-export interface BitcoinAddressData {
+export type BitcoinAddressData = {
     address: string
     network: Network
     amountSat?: number
@@ -41,35 +41,35 @@ export interface BitcoinAddressData {
     message?: string
 }
 
-export interface BuyBitcoinRequest {
+export type BuyBitcoinRequest = {
     provider: BuyBitcoinProvider
     openingFeeParams?: OpeningFeeParams
     redirectUrl?: string
 }
 
-export interface BuyBitcoinResponse {
+export type BuyBitcoinResponse = {
     url: string
     openingFeeParams?: OpeningFeeParams
 }
 
-export interface CheckMessageRequest {
+export type CheckMessageRequest = {
     message: string
     pubkey: string
     signature: string
 }
 
-export interface CheckMessageResponse {
+export type CheckMessageResponse = {
     isValid: boolean
 }
 
-export interface ClosedChannelPaymentDetails {
+export type ClosedChannelPaymentDetails = {
     state: ChannelState
     fundingTxid: string
     shortChannelId?: string
     closingTxid?: string
 }
 
-export interface Config {
+export type Config = {
     breezserver: string
     chainnotifierUrl: string
     mempoolspaceUrl?: string
@@ -83,17 +83,17 @@ export interface Config {
     nodeConfig: NodeConfig
 }
 
-export interface ConfigureNodeRequest {
+export type ConfigureNodeRequest = {
     closeToAddress?: string
 }
 
-export interface ConnectRequest {
+export type ConnectRequest = {
     config: Config
     seed: number[]
     restoreOnly?: boolean
 }
 
-export interface CurrencyInfo {
+export type CurrencyInfo = {
     name: string
     fractionSize: number
     spacing?: number
@@ -103,32 +103,32 @@ export interface CurrencyInfo {
     localeOverrides: LocaleOverrides[]
 }
 
-export interface FiatCurrency {
+export type FiatCurrency = {
     id: string
     info: CurrencyInfo
 }
 
-export interface GreenlightCredentials {
+export type GreenlightCredentials = {
     developerKey: number[]
     developerCert: number[]
 }
 
-export interface GreenlightDeviceCredentials {
+export type GreenlightDeviceCredentials = {
     device: number[]
 }
 
-export interface GreenlightNodeConfig {
+export type GreenlightNodeConfig = {
     partnerCredentials?: GreenlightCredentials
     inviteCode?: string
 }
 
-export interface InvoicePaidDetails {
+export type InvoicePaidDetails = {
     paymentHash: string
     bolt11: string
     payment?: Payment
 }
 
-export interface LnInvoice {
+export type LnInvoice = {
     bolt11: string
     network: Network
     payeePubkey: string
@@ -143,7 +143,7 @@ export interface LnInvoice {
     minFinalCltvExpiryDelta: number
 }
 
-export interface ListPaymentsRequest {
+export type ListPaymentsRequest = {
     filters?: PaymentTypeFilter[]
     metadataFilters?: MetadataFilter[]
     fromTimestamp?: number
@@ -153,15 +153,7 @@ export interface ListPaymentsRequest {
     limit?: number
 }
 
-export interface ListSwapsRequest {
-    status?: SwapStatus[]
-    fromTimestamp?: number
-    toTimestamp?: number
-    offset?: number
-    limit?: number
-}
-
-export interface LnPaymentDetails {
+export type LnPaymentDetails = {
     paymentHash: string
     label: string
     destinationPubkey: string
@@ -180,23 +172,23 @@ export interface LnPaymentDetails {
     pendingExpirationBlock?: number
 }
 
-export interface LnUrlAuthRequestData {
+export type LnUrlAuthRequestData = {
     k1: string
     domain: string
     url: string
     action?: string
 }
 
-export interface LnUrlErrorData {
+export type LnUrlErrorData = {
     reason: string
 }
 
-export interface LnUrlPayErrorData {
+export type LnUrlPayErrorData = {
     paymentHash: string
     reason: string
 }
 
-export interface LnUrlPayRequest {
+export type LnUrlPayRequest = {
     data: LnUrlPayRequestData
     amountMsat: number
     useTrampoline: boolean
@@ -205,7 +197,7 @@ export interface LnUrlPayRequest {
     validateSuccessActionUrl?: boolean
 }
 
-export interface LnUrlPayRequestData {
+export type LnUrlPayRequestData = {
     callback: string
     minSendable: number
     maxSendable: number
@@ -217,18 +209,18 @@ export interface LnUrlPayRequestData {
     lnAddress?: string
 }
 
-export interface LnUrlPaySuccessData {
+export type LnUrlPaySuccessData = {
     successAction?: SuccessActionProcessed
     payment: Payment
 }
 
-export interface LnUrlWithdrawRequest {
+export type LnUrlWithdrawRequest = {
     data: LnUrlWithdrawRequestData
     amountMsat: number
     description?: string
 }
 
-export interface LnUrlWithdrawRequestData {
+export type LnUrlWithdrawRequestData = {
     callback: string
     k1: string
     defaultDescription: string
@@ -236,27 +228,27 @@ export interface LnUrlWithdrawRequestData {
     maxWithdrawable: number
 }
 
-export interface LnUrlWithdrawSuccessData {
+export type LnUrlWithdrawSuccessData = {
     invoice: LnInvoice
 }
 
-export interface LocaleOverrides {
+export type LocaleOverrides = {
     locale: string
     spacing?: number
     symbol: SymbolType
 }
 
-export interface LocalizedName {
+export type LocalizedName = {
     locale: string
     name: string
 }
 
-export interface LogEntry {
+export type LogEntry = {
     line: string
     level: string
 }
 
-export interface LspInformation {
+export type LspInformation = {
     id: string
     name: string
     widgetUrl: string
@@ -270,21 +262,25 @@ export interface LspInformation {
     openingFeeParamsList: OpeningFeeParamsMenu
 }
 
-export interface MessageSuccessActionData {
+export type MaxReverseSwapAmountResponse = {
+    totalSat: number
+}
+
+export type MessageSuccessActionData = {
     message: string
 }
 
-export interface MetadataFilter {
+export type MetadataFilter = {
     jsonPath: string
     jsonValue: string
 }
 
-export interface MetadataItem {
+export type MetadataItem = {
     key: string
     value: string
 }
 
-export interface NodeState {
+export type NodeState = {
     id: string
     blockHeight: number
     channelsBalanceMsat: number
@@ -300,23 +296,23 @@ export interface NodeState {
     totalInboundLiquidityMsats: number
 }
 
-export interface OnchainPaymentLimitsResponse {
+export type OnchainPaymentLimitsResponse = {
     minSat: number
     maxSat: number
     maxPayableSat: number
 }
 
-export interface OpenChannelFeeRequest {
+export type OpenChannelFeeRequest = {
     amountMsat?: number
     expiry?: number
 }
 
-export interface OpenChannelFeeResponse {
+export type OpenChannelFeeResponse = {
     feeMsat?: number
     feeParams: OpeningFeeParams
 }
 
-export interface OpeningFeeParams {
+export type OpeningFeeParams = {
     minMsat: number
     proportional: number
     validUntil: string
@@ -325,20 +321,20 @@ export interface OpeningFeeParams {
     promise: string
 }
 
-export interface OpeningFeeParamsMenu {
+export type OpeningFeeParamsMenu = {
     values: OpeningFeeParams[]
 }
 
-export interface PayOnchainRequest {
+export type PayOnchainRequest = {
     recipientAddress: string
     prepareRes: PrepareOnchainPaymentResponse
 }
 
-export interface PayOnchainResponse {
+export type PayOnchainResponse = {
     reverseSwapInfo: ReverseSwapInfo
 }
 
-export interface Payment {
+export type Payment = {
     id: string
     paymentType: PaymentType
     paymentTime: number
@@ -351,20 +347,20 @@ export interface Payment {
     metadata?: string
 }
 
-export interface PaymentFailedData {
+export type PaymentFailedData = {
     error: string
     nodeId: string
     invoice?: LnInvoice
     label?: string
 }
 
-export interface PrepareOnchainPaymentRequest {
+export type PrepareOnchainPaymentRequest = {
     amountSat: number
     amountType: SwapAmountType
     claimTxFeerate: number
 }
 
-export interface PrepareOnchainPaymentResponse {
+export type PrepareOnchainPaymentResponse = {
     feesHash: string
     feesPercentage: number
     feesLockup: number
@@ -374,38 +370,37 @@ export interface PrepareOnchainPaymentResponse {
     totalFees: number
 }
 
-export interface PrepareRedeemOnchainFundsRequest {
+export type PrepareRedeemOnchainFundsRequest = {
     toAddress: string
     satPerVbyte: number
 }
 
-export interface PrepareRedeemOnchainFundsResponse {
+export type PrepareRedeemOnchainFundsResponse = {
     txWeight: number
     txFeeSat: number
 }
 
-export interface PrepareRefundRequest {
+export type PrepareRefundRequest = {
     swapAddress: string
     toAddress: string
     satPerVbyte: number
-    unilateral?: boolean
 }
 
-export interface PrepareRefundResponse {
+export type PrepareRefundResponse = {
     refundTxWeight: number
     refundTxFeeSat: number
 }
 
-export interface Rate {
+export type Rate = {
     coin: string
     value: number
 }
 
-export interface ReceiveOnchainRequest {
+export type ReceiveOnchainRequest = {
     openingFeeParams?: OpeningFeeParams
 }
 
-export interface ReceivePaymentRequest {
+export type ReceivePaymentRequest = {
     amountMsat: number
     description: string
     preimage?: number[]
@@ -415,13 +410,13 @@ export interface ReceivePaymentRequest {
     cltv?: number
 }
 
-export interface ReceivePaymentResponse {
+export type ReceivePaymentResponse = {
     lnInvoice: LnInvoice
     openingFeeParams?: OpeningFeeParams
     openingFeeMsat?: number
 }
 
-export interface RecommendedFees {
+export type RecommendedFees = {
     fastestFee: number
     halfHourFee: number
     hourFee: number
@@ -429,37 +424,36 @@ export interface RecommendedFees {
     minimumFee: number
 }
 
-export interface RedeemOnchainFundsRequest {
+export type RedeemOnchainFundsRequest = {
     toAddress: string
     satPerVbyte: number
 }
 
-export interface RedeemOnchainFundsResponse {
+export type RedeemOnchainFundsResponse = {
     txid: number[]
 }
 
-export interface RefundRequest {
+export type RefundRequest = {
     swapAddress: string
     toAddress: string
     satPerVbyte: number
-    unilateral?: boolean
 }
 
-export interface RefundResponse {
+export type RefundResponse = {
     refundTxId: string
 }
 
-export interface ReportPaymentFailureDetails {
+export type ReportPaymentFailureDetails = {
     paymentHash: string
     comment?: string
 }
 
-export interface ReverseSwapFeesRequest {
+export type ReverseSwapFeesRequest = {
     sendAmountSat?: number
     claimTxFeerate?: number
 }
 
-export interface ReverseSwapInfo {
+export type ReverseSwapInfo = {
     id: string
     claimPubkey: string
     lockupTxid?: string
@@ -468,7 +462,7 @@ export interface ReverseSwapInfo {
     status: ReverseSwapStatus
 }
 
-export interface ReverseSwapPairInfo {
+export type ReverseSwapPairInfo = {
     min: number
     max: number
     feesHash: string
@@ -478,11 +472,11 @@ export interface ReverseSwapPairInfo {
     totalFees?: number
 }
 
-export interface RouteHint {
+export type RouteHint = {
     hops: RouteHintHop[]
 }
 
-export interface RouteHintHop {
+export type RouteHintHop = {
     srcNodeId: string
     shortChannelId: string
     feesBaseMsat: number
@@ -492,45 +486,56 @@ export interface RouteHintHop {
     htlcMaximumMsat?: number
 }
 
-export interface SendPaymentRequest {
+export type SendOnchainRequest = {
+    amountSat: number
+    onchainRecipientAddress: string
+    pairHash: string
+    satPerVbyte: number
+}
+
+export type SendOnchainResponse = {
+    reverseSwapInfo: ReverseSwapInfo
+}
+
+export type SendPaymentRequest = {
     bolt11: string
     useTrampoline: boolean
     amountMsat?: number
     label?: string
 }
 
-export interface SendPaymentResponse {
+export type SendPaymentResponse = {
     payment: Payment
 }
 
-export interface SendSpontaneousPaymentRequest {
+export type SendSpontaneousPaymentRequest = {
     nodeId: string
     amountMsat: number
     extraTlvs?: TlvEntry[]
     label?: string
 }
 
-export interface ServiceHealthCheckResponse {
+export type ServiceHealthCheckResponse = {
     status: HealthCheckStatus
 }
 
-export interface SignMessageRequest {
+export type SignMessageRequest = {
     message: string
 }
 
-export interface SignMessageResponse {
+export type SignMessageResponse = {
     signature: string
 }
 
-export interface StaticBackupRequest {
+export type StaticBackupRequest = {
     workingDir: string
 }
 
-export interface StaticBackupResponse {
+export type StaticBackupResponse = {
     backup?: string[]
 }
 
-export interface SwapInfo {
+export type SwapInfo = {
     bitcoinAddress: string
     createdAt: number
     lockHeight: number
@@ -557,19 +562,19 @@ export interface SwapInfo {
     confirmedAt?: number
 }
 
-export interface SymbolType {
+export type SymbolType = {
     grapheme?: string
     template?: string
     rtl?: boolean
     position?: number
 }
 
-export interface TlvEntry {
+export type TlvEntry = {
     fieldNumber: number
     value: number[]
 }
 
-export interface UnspentTransactionOutput {
+export type UnspentTransactionOutput = {
     txid: number[]
     outnum: number
     amountMillisatoshi: number
@@ -577,7 +582,7 @@ export interface UnspentTransactionOutput {
     reserved: boolean
 }
 
-export interface UrlSuccessActionData {
+export type UrlSuccessActionData = {
     description: string
     url: string
     matchesCallbackDomain: boolean
@@ -693,7 +698,6 @@ export type InputType = {
 } | {
     type: InputTypeVariant.LN_URL_PAY,
     data: LnUrlPayRequestData
-    bip353Address?: string
 } | {
     type: InputTypeVariant.LN_URL_WITHDRAW,
     data: LnUrlWithdrawRequestData
@@ -703,6 +707,15 @@ export type InputType = {
 } | {
     type: InputTypeVariant.LN_URL_ERROR,
     data: LnUrlErrorData
+}
+
+export enum LevelFilter {
+    OFF = "off",
+    ERROR = "error",
+    WARN = "warn",
+    INFO = "info",
+    DEBUG = "debug",
+    TRACE = "trace"
 }
 
 export enum LnUrlCallbackStatusVariant {
@@ -762,7 +775,7 @@ export enum NodeConfigVariant {
     GREENLIGHT = "greenlight"
 }
 
-export interface NodeConfig {
+export type NodeConfig = {
     type: NodeConfigVariant.GREENLIGHT,
     config: GreenlightNodeConfig
 }
@@ -771,7 +784,7 @@ export enum NodeCredentialsVariant {
     GREENLIGHT = "greenlight"
 }
 
-export interface NodeCredentials {
+export type NodeCredentials = {
     type: NodeCredentialsVariant.GREENLIGHT,
     credentials: GreenlightDeviceCredentials
 }
@@ -811,7 +824,7 @@ export enum ReportIssueRequestVariant {
     PAYMENT_FAILURE = "paymentFailure"
 }
 
-export interface ReportIssueRequest {
+export type ReportIssueRequest = {
     type: ReportIssueRequestVariant.PAYMENT_FAILURE,
     data: ReportPaymentFailureDetails
 }
@@ -860,17 +873,17 @@ export type LogStream = (logEntry: LogEntry) => void
 
 export const connect = async (req: ConnectRequest, listener: EventListener): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkEvent", listener)
-
+    
     await BreezSDK.connect(req)
 
     return subscription
 }
 
-export const setLogStream = async (logStream: LogStream): Promise<EmitterSubscription> => {
+export const setLogStream = async (logStream: LogStream, filterLevel?: LevelFilter): Promise<EmitterSubscription> => {
     const subscription = BreezSDKEmitter.addListener("breezSdkLog", logStream)
 
     try {
-        await BreezSDK.setLogStream()
+        await BreezSDK.setLogStream(filterLevel)
     } catch {}
 
     return subscription
@@ -1081,11 +1094,6 @@ export const refund = async (req: RefundRequest): Promise<RefundResponse> => {
     return response
 }
 
-export const listSwaps = async (req: ListSwapsRequest): Promise<SwapInfo[]> => {
-    const response = await BreezSDK.listSwaps(req)
-    return response
-}
-
 export const fetchReverseSwapFees = async (req: ReverseSwapFeesRequest): Promise<ReverseSwapPairInfo> => {
     const response = await BreezSDK.fetchReverseSwapFees(req)
     return response
@@ -1106,8 +1114,23 @@ export const inProgressOnchainPayments = async (): Promise<ReverseSwapInfo[]> =>
     return response
 }
 
+export const inProgressReverseSwaps = async (): Promise<ReverseSwapInfo[]> => {
+    const response = await BreezSDK.inProgressReverseSwaps()
+    return response
+}
+
 export const claimReverseSwap = async (lockupAddress: string): Promise<void> => {
     await BreezSDK.claimReverseSwap(lockupAddress)
+}
+
+export const maxReverseSwapAmount = async (): Promise<MaxReverseSwapAmountResponse> => {
+    const response = await BreezSDK.maxReverseSwapAmount()
+    return response
+}
+
+export const sendOnchain = async (req: SendOnchainRequest): Promise<SendOnchainResponse> => {
+    const response = await BreezSDK.sendOnchain(req)
+    return response
 }
 
 export const payOnchain = async (req: PayOnchainRequest): Promise<PayOnchainResponse> => {
