@@ -8,8 +8,7 @@ use bip39::*;
 use bitcoin::hashes::hex::ToHex;
 use bitcoin::hashes::{sha256, Hash};
 use bitcoin::util::bip32::ChildNumber;
-use futures::TryFutureExt;
-use gl_client::pb::incoming_payment;
+use futures::{StreamExt, TryFutureExt};
 use sdk_common::grpc;
 use sdk_common::prelude::*;
 use serde::Serialize;
@@ -1745,22 +1744,22 @@ impl BreezServices {
                     };
 
                     match log_message_res {
-                        Ok(Some(l)) => {
-                            let prefix_len = l.line.find(':').map_or(0, |len| len + 2);
-                            let log_message = l.line.split_at(prefix_len).1.trim_start();
-                            match l.line.to_ascii_lowercase().as_str() {
+                        Some(l) => {
+                            let prefix_len = l.find(':').map_or(0, |len| len + 2);
+                            let log_message = l.split_at(prefix_len).1.trim_start();
+                            match l.to_ascii_lowercase().as_str() {
                                 s if s.starts_with("broken") => {
-                                    error!("node-logs: {}", log_message)
+                                    error!("node-logs: {log_message}")
                                 }
                                 s if s.starts_with("unusual") => {
-                                    warn!("node-logs: {}", log_message)
+                                    warn!("node-logs: {log_message}")
                                 }
-                                s if s.starts_with("info") => info!("node-logs: {}", log_message),
-                                s if s.starts_with("debug") => debug!("node-logs: {}", log_message),
-                                _ => trace!("node-logs: {}", l.line),
+                                s if s.starts_with("info") => info!("node-logs: {log_message}"),
+                                s if s.starts_with("debug") => debug!("node-logs: {log_message}"),
+                                _ => trace!("node-logs: {l}"),
                             }
                         }
-                        Ok(None) => {
+                        None => {
                             // stream is closed, renew it
                             break;
                         }
