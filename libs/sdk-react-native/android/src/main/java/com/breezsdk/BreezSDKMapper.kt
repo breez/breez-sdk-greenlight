@@ -20,7 +20,10 @@ fun asAesSuccessActionDataDecrypted(aesSuccessActionDataDecrypted: ReadableMap):
     }
     val description = aesSuccessActionDataDecrypted.getString("description")!!
     val plaintext = aesSuccessActionDataDecrypted.getString("plaintext")!!
-    return AesSuccessActionDataDecrypted(description, plaintext)
+    return AesSuccessActionDataDecrypted(
+        description,
+        plaintext,
+    )
 }
 
 fun readableMapOf(aesSuccessActionDataDecrypted: AesSuccessActionDataDecrypted): ReadableMap =
@@ -51,7 +54,9 @@ fun asBackupFailedData(backupFailedData: ReadableMap): BackupFailedData? {
         return null
     }
     val error = backupFailedData.getString("error")!!
-    return BackupFailedData(error)
+    return BackupFailedData(
+        error,
+    )
 }
 
 fun readableMapOf(backupFailedData: BackupFailedData): ReadableMap =
@@ -82,7 +87,10 @@ fun asBackupStatus(backupStatus: ReadableMap): BackupStatus? {
     }
     val backedUp = backupStatus.getBoolean("backedUp")
     val lastBackupTime = if (hasNonNullKey(backupStatus, "lastBackupTime")) backupStatus.getDouble("lastBackupTime").toULong() else null
-    return BackupStatus(backedUp, lastBackupTime)
+    return BackupStatus(
+        backedUp,
+        lastBackupTime,
+    )
 }
 
 fun readableMapOf(backupStatus: BackupStatus): ReadableMap =
@@ -118,13 +126,19 @@ fun asBitcoinAddressData(bitcoinAddressData: ReadableMap): BitcoinAddressData? {
     val amountSat = if (hasNonNullKey(bitcoinAddressData, "amountSat")) bitcoinAddressData.getDouble("amountSat").toULong() else null
     val label = if (hasNonNullKey(bitcoinAddressData, "label")) bitcoinAddressData.getString("label") else null
     val message = if (hasNonNullKey(bitcoinAddressData, "message")) bitcoinAddressData.getString("message") else null
-    return BitcoinAddressData(address, network, amountSat, label, message)
+    return BitcoinAddressData(
+        address,
+        network,
+        amountSat,
+        label,
+        message,
+    )
 }
 
 fun readableMapOf(bitcoinAddressData: BitcoinAddressData): ReadableMap =
     readableMapOf(
         "address" to bitcoinAddressData.address,
-        "network" to snakeToLowerCamelCase(bitcoinAddressData.network.name),
+        "network" to bitcoinAddressData.network.name.lowercase(),
         "amountSat" to bitcoinAddressData.amountSat,
         "label" to bitcoinAddressData.label,
         "message" to bitcoinAddressData.message,
@@ -161,12 +175,16 @@ fun asBuyBitcoinRequest(buyBitcoinRequest: ReadableMap): BuyBitcoinRequest? {
             null
         }
     val redirectUrl = if (hasNonNullKey(buyBitcoinRequest, "redirectUrl")) buyBitcoinRequest.getString("redirectUrl") else null
-    return BuyBitcoinRequest(provider, openingFeeParams, redirectUrl)
+    return BuyBitcoinRequest(
+        provider,
+        openingFeeParams,
+        redirectUrl,
+    )
 }
 
 fun readableMapOf(buyBitcoinRequest: BuyBitcoinRequest): ReadableMap =
     readableMapOf(
-        "provider" to snakeToLowerCamelCase(buyBitcoinRequest.provider.name),
+        "provider" to buyBitcoinRequest.provider.name.lowercase(),
         "openingFeeParams" to buyBitcoinRequest.openingFeeParams?.let { readableMapOf(it) },
         "redirectUrl" to buyBitcoinRequest.redirectUrl,
     )
@@ -201,7 +219,10 @@ fun asBuyBitcoinResponse(buyBitcoinResponse: ReadableMap): BuyBitcoinResponse? {
         } else {
             null
         }
-    return BuyBitcoinResponse(url, openingFeeParams)
+    return BuyBitcoinResponse(
+        url,
+        openingFeeParams,
+    )
 }
 
 fun readableMapOf(buyBitcoinResponse: BuyBitcoinResponse): ReadableMap =
@@ -236,7 +257,11 @@ fun asCheckMessageRequest(checkMessageRequest: ReadableMap): CheckMessageRequest
     val message = checkMessageRequest.getString("message")!!
     val pubkey = checkMessageRequest.getString("pubkey")!!
     val signature = checkMessageRequest.getString("signature")!!
-    return CheckMessageRequest(message, pubkey, signature)
+    return CheckMessageRequest(
+        message,
+        pubkey,
+        signature,
+    )
 }
 
 fun readableMapOf(checkMessageRequest: CheckMessageRequest): ReadableMap =
@@ -268,7 +293,9 @@ fun asCheckMessageResponse(checkMessageResponse: ReadableMap): CheckMessageRespo
         return null
     }
     val isValid = checkMessageResponse.getBoolean("isValid")
-    return CheckMessageResponse(isValid)
+    return CheckMessageResponse(
+        isValid,
+    )
 }
 
 fun readableMapOf(checkMessageResponse: CheckMessageResponse): ReadableMap =
@@ -320,12 +347,17 @@ fun asClosedChannelPaymentDetails(closedChannelPaymentDetails: ReadableMap): Clo
         } else {
             null
         }
-    return ClosedChannelPaymentDetails(state, fundingTxid, shortChannelId, closingTxid)
+    return ClosedChannelPaymentDetails(
+        state,
+        fundingTxid,
+        shortChannelId,
+        closingTxid,
+    )
 }
 
 fun readableMapOf(closedChannelPaymentDetails: ClosedChannelPaymentDetails): ReadableMap =
     readableMapOf(
-        "state" to snakeToLowerCamelCase(closedChannelPaymentDetails.state.name),
+        "state" to closedChannelPaymentDetails.state.name.lowercase(),
         "fundingTxid" to closedChannelPaymentDetails.fundingTxid,
         "shortChannelId" to closedChannelPaymentDetails.shortChannelId,
         "closingTxid" to closedChannelPaymentDetails.closingTxid,
@@ -391,7 +423,7 @@ fun readableMapOf(config: Config): ReadableMap =
         "chainnotifierUrl" to config.chainnotifierUrl,
         "mempoolspaceUrl" to config.mempoolspaceUrl,
         "workingDir" to config.workingDir,
-        "network" to snakeToLowerCamelCase(config.network.name),
+        "network" to config.network.name.lowercase(),
         "paymentTimeoutSec" to config.paymentTimeoutSec,
         "defaultLspId" to config.defaultLspId,
         "apiKey" to config.apiKey,
@@ -429,7 +461,9 @@ fun asConfigureNodeRequest(configureNodeRequest: ReadableMap): ConfigureNodeRequ
         } else {
             null
         }
-    return ConfigureNodeRequest(closeToAddress)
+    return ConfigureNodeRequest(
+        closeToAddress,
+    )
 }
 
 fun readableMapOf(configureNodeRequest: ConfigureNodeRequest): ReadableMap =
@@ -462,7 +496,11 @@ fun asConnectRequest(connectRequest: ReadableMap): ConnectRequest? {
     val config = connectRequest.getMap("config")?.let { asConfig(it) }!!
     val seed = connectRequest.getArray("seed")?.let { asUByteList(it) }!!
     val restoreOnly = if (hasNonNullKey(connectRequest, "restoreOnly")) connectRequest.getBoolean("restoreOnly") else null
-    return ConnectRequest(config, seed, restoreOnly)
+    return ConnectRequest(
+        config,
+        seed,
+        restoreOnly,
+    )
 }
 
 fun readableMapOf(connectRequest: ConnectRequest): ReadableMap =
@@ -503,7 +541,15 @@ fun asCurrencyInfo(currencyInfo: ReadableMap): CurrencyInfo? {
     val uniqSymbol = if (hasNonNullKey(currencyInfo, "uniqSymbol")) currencyInfo.getMap("uniqSymbol")?.let { asSymbol(it) } else null
     val localizedName = currencyInfo.getArray("localizedName")?.let { asLocalizedNameList(it) }!!
     val localeOverrides = currencyInfo.getArray("localeOverrides")?.let { asLocaleOverridesList(it) }!!
-    return CurrencyInfo(name, fractionSize, spacing, symbol, uniqSymbol, localizedName, localeOverrides)
+    return CurrencyInfo(
+        name,
+        fractionSize,
+        spacing,
+        symbol,
+        uniqSymbol,
+        localizedName,
+        localeOverrides,
+    )
 }
 
 fun readableMapOf(currencyInfo: CurrencyInfo): ReadableMap =
@@ -541,7 +587,10 @@ fun asFiatCurrency(fiatCurrency: ReadableMap): FiatCurrency? {
     }
     val id = fiatCurrency.getString("id")!!
     val info = fiatCurrency.getMap("info")?.let { asCurrencyInfo(it) }!!
-    return FiatCurrency(id, info)
+    return FiatCurrency(
+        id,
+        info,
+    )
 }
 
 fun readableMapOf(fiatCurrency: FiatCurrency): ReadableMap =
@@ -574,7 +623,10 @@ fun asGreenlightCredentials(greenlightCredentials: ReadableMap): GreenlightCrede
     }
     val developerKey = greenlightCredentials.getArray("developerKey")?.let { asUByteList(it) }!!
     val developerCert = greenlightCredentials.getArray("developerCert")?.let { asUByteList(it) }!!
-    return GreenlightCredentials(developerKey, developerCert)
+    return GreenlightCredentials(
+        developerKey,
+        developerCert,
+    )
 }
 
 fun readableMapOf(greenlightCredentials: GreenlightCredentials): ReadableMap =
@@ -605,7 +657,9 @@ fun asGreenlightDeviceCredentials(greenlightDeviceCredentials: ReadableMap): Gre
         return null
     }
     val device = greenlightDeviceCredentials.getArray("device")?.let { asUByteList(it) }!!
-    return GreenlightDeviceCredentials(device)
+    return GreenlightDeviceCredentials(
+        device,
+    )
 }
 
 fun readableMapOf(greenlightDeviceCredentials: GreenlightDeviceCredentials): ReadableMap =
@@ -645,7 +699,10 @@ fun asGreenlightNodeConfig(greenlightNodeConfig: ReadableMap): GreenlightNodeCon
             null
         }
     val inviteCode = if (hasNonNullKey(greenlightNodeConfig, "inviteCode")) greenlightNodeConfig.getString("inviteCode") else null
-    return GreenlightNodeConfig(partnerCredentials, inviteCode)
+    return GreenlightNodeConfig(
+        partnerCredentials,
+        inviteCode,
+    )
 }
 
 fun readableMapOf(greenlightNodeConfig: GreenlightNodeConfig): ReadableMap =
@@ -679,7 +736,11 @@ fun asInvoicePaidDetails(invoicePaidDetails: ReadableMap): InvoicePaidDetails? {
     val paymentHash = invoicePaidDetails.getString("paymentHash")!!
     val bolt11 = invoicePaidDetails.getString("bolt11")!!
     val payment = if (hasNonNullKey(invoicePaidDetails, "payment")) invoicePaidDetails.getMap("payment")?.let { asPayment(it) } else null
-    return InvoicePaidDetails(paymentHash, bolt11, payment)
+    return InvoicePaidDetails(
+        paymentHash,
+        bolt11,
+        payment,
+    )
 }
 
 fun readableMapOf(invoicePaidDetails: InvoicePaidDetails): ReadableMap =
@@ -749,7 +810,7 @@ fun asLnInvoice(lnInvoice: ReadableMap): LnInvoice? {
 fun readableMapOf(lnInvoice: LnInvoice): ReadableMap =
     readableMapOf(
         "bolt11" to lnInvoice.bolt11,
-        "network" to snakeToLowerCamelCase(lnInvoice.network.name),
+        "network" to lnInvoice.network.name.lowercase(),
         "payeePubkey" to lnInvoice.payeePubkey,
         "paymentHash" to lnInvoice.paymentHash,
         "description" to lnInvoice.description,
@@ -820,7 +881,15 @@ fun asListPaymentsRequest(listPaymentsRequest: ReadableMap): ListPaymentsRequest
         }
     val offset = if (hasNonNullKey(listPaymentsRequest, "offset")) listPaymentsRequest.getInt("offset").toUInt() else null
     val limit = if (hasNonNullKey(listPaymentsRequest, "limit")) listPaymentsRequest.getInt("limit").toUInt() else null
-    return ListPaymentsRequest(filters, metadataFilters, fromTimestamp, toTimestamp, includeFailures, offset, limit)
+    return ListPaymentsRequest(
+        filters,
+        metadataFilters,
+        fromTimestamp,
+        toTimestamp,
+        includeFailures,
+        offset,
+        limit,
+    )
 }
 
 fun readableMapOf(listPaymentsRequest: ListPaymentsRequest): ReadableMap =
@@ -839,42 +908,6 @@ fun asListPaymentsRequestList(arr: ReadableArray): List<ListPaymentsRequest> {
     for (value in arr.toArrayList()) {
         when (value) {
             is ReadableMap -> list.add(asListPaymentsRequest(value)!!)
-            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
-        }
-    }
-    return list
-}
-
-fun asListSwapsRequest(listSwapsRequest: ReadableMap): ListSwapsRequest? {
-    if (!validateMandatoryFields(
-            listSwapsRequest,
-            arrayOf(),
-        )
-    ) {
-        return null
-    }
-    val status = if (hasNonNullKey(listSwapsRequest, "status")) listSwapsRequest.getArray("status")?.let { asSwapStatusList(it) } else null
-    val fromTimestamp = if (hasNonNullKey(listSwapsRequest, "fromTimestamp")) listSwapsRequest.getDouble("fromTimestamp").toLong() else null
-    val toTimestamp = if (hasNonNullKey(listSwapsRequest, "toTimestamp")) listSwapsRequest.getDouble("toTimestamp").toLong() else null
-    val offset = if (hasNonNullKey(listSwapsRequest, "offset")) listSwapsRequest.getInt("offset").toUInt() else null
-    val limit = if (hasNonNullKey(listSwapsRequest, "limit")) listSwapsRequest.getInt("limit").toUInt() else null
-    return ListSwapsRequest(status, fromTimestamp, toTimestamp, offset, limit)
-}
-
-fun readableMapOf(listSwapsRequest: ListSwapsRequest): ReadableMap =
-    readableMapOf(
-        "status" to listSwapsRequest.status?.let { readableArrayOf(it) },
-        "fromTimestamp" to listSwapsRequest.fromTimestamp,
-        "toTimestamp" to listSwapsRequest.toTimestamp,
-        "offset" to listSwapsRequest.offset,
-        "limit" to listSwapsRequest.limit,
-    )
-
-fun asListSwapsRequestList(arr: ReadableArray): List<ListSwapsRequest> {
-    val list = ArrayList<ListSwapsRequest>()
-    for (value in arr.toArrayList()) {
-        when (value) {
-            is ReadableMap -> list.add(asListSwapsRequest(value)!!)
             else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
         }
     }
@@ -1020,7 +1053,12 @@ fun asLnUrlAuthRequestData(lnUrlAuthRequestData: ReadableMap): LnUrlAuthRequestD
     val domain = lnUrlAuthRequestData.getString("domain")!!
     val url = lnUrlAuthRequestData.getString("url")!!
     val action = if (hasNonNullKey(lnUrlAuthRequestData, "action")) lnUrlAuthRequestData.getString("action") else null
-    return LnUrlAuthRequestData(k1, domain, url, action)
+    return LnUrlAuthRequestData(
+        k1,
+        domain,
+        url,
+        action,
+    )
 }
 
 fun readableMapOf(lnUrlAuthRequestData: LnUrlAuthRequestData): ReadableMap =
@@ -1053,7 +1091,9 @@ fun asLnUrlErrorData(lnUrlErrorData: ReadableMap): LnUrlErrorData? {
         return null
     }
     val reason = lnUrlErrorData.getString("reason")!!
-    return LnUrlErrorData(reason)
+    return LnUrlErrorData(
+        reason,
+    )
 }
 
 fun readableMapOf(lnUrlErrorData: LnUrlErrorData): ReadableMap =
@@ -1085,7 +1125,10 @@ fun asLnUrlPayErrorData(lnUrlPayErrorData: ReadableMap): LnUrlPayErrorData? {
     }
     val paymentHash = lnUrlPayErrorData.getString("paymentHash")!!
     val reason = lnUrlPayErrorData.getString("reason")!!
-    return LnUrlPayErrorData(paymentHash, reason)
+    return LnUrlPayErrorData(
+        paymentHash,
+        reason,
+    )
 }
 
 fun readableMapOf(lnUrlPayErrorData: LnUrlPayErrorData): ReadableMap =
@@ -1132,7 +1175,14 @@ fun asLnUrlPayRequest(lnUrlPayRequest: ReadableMap): LnUrlPayRequest? {
         } else {
             null
         }
-    return LnUrlPayRequest(data, amountMsat, useTrampoline, comment, paymentLabel, validateSuccessActionUrl)
+    return LnUrlPayRequest(
+        data,
+        amountMsat,
+        useTrampoline,
+        comment,
+        paymentLabel,
+        validateSuccessActionUrl,
+    )
 }
 
 fun readableMapOf(lnUrlPayRequest: LnUrlPayRequest): ReadableMap =
@@ -1237,7 +1287,10 @@ fun asLnUrlPaySuccessData(lnUrlPaySuccessData: ReadableMap): LnUrlPaySuccessData
             null
         }
     val payment = lnUrlPaySuccessData.getMap("payment")?.let { asPayment(it) }!!
-    return LnUrlPaySuccessData(successAction, payment)
+    return LnUrlPaySuccessData(
+        successAction,
+        payment,
+    )
 }
 
 fun readableMapOf(lnUrlPaySuccessData: LnUrlPaySuccessData): ReadableMap =
@@ -1271,7 +1324,11 @@ fun asLnUrlWithdrawRequest(lnUrlWithdrawRequest: ReadableMap): LnUrlWithdrawRequ
     val data = lnUrlWithdrawRequest.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!
     val amountMsat = lnUrlWithdrawRequest.getDouble("amountMsat").toULong()
     val description = if (hasNonNullKey(lnUrlWithdrawRequest, "description")) lnUrlWithdrawRequest.getString("description") else null
-    return LnUrlWithdrawRequest(data, amountMsat, description)
+    return LnUrlWithdrawRequest(
+        data,
+        amountMsat,
+        description,
+    )
 }
 
 fun readableMapOf(lnUrlWithdrawRequest: LnUrlWithdrawRequest): ReadableMap =
@@ -1311,7 +1368,13 @@ fun asLnUrlWithdrawRequestData(lnUrlWithdrawRequestData: ReadableMap): LnUrlWith
     val defaultDescription = lnUrlWithdrawRequestData.getString("defaultDescription")!!
     val minWithdrawable = lnUrlWithdrawRequestData.getDouble("minWithdrawable").toULong()
     val maxWithdrawable = lnUrlWithdrawRequestData.getDouble("maxWithdrawable").toULong()
-    return LnUrlWithdrawRequestData(callback, k1, defaultDescription, minWithdrawable, maxWithdrawable)
+    return LnUrlWithdrawRequestData(
+        callback,
+        k1,
+        defaultDescription,
+        minWithdrawable,
+        maxWithdrawable,
+    )
 }
 
 fun readableMapOf(lnUrlWithdrawRequestData: LnUrlWithdrawRequestData): ReadableMap =
@@ -1345,7 +1408,9 @@ fun asLnUrlWithdrawSuccessData(lnUrlWithdrawSuccessData: ReadableMap): LnUrlWith
         return null
     }
     val invoice = lnUrlWithdrawSuccessData.getMap("invoice")?.let { asLnInvoice(it) }!!
-    return LnUrlWithdrawSuccessData(invoice)
+    return LnUrlWithdrawSuccessData(
+        invoice,
+    )
 }
 
 fun readableMapOf(lnUrlWithdrawSuccessData: LnUrlWithdrawSuccessData): ReadableMap =
@@ -1378,7 +1443,11 @@ fun asLocaleOverrides(localeOverrides: ReadableMap): LocaleOverrides? {
     val locale = localeOverrides.getString("locale")!!
     val spacing = if (hasNonNullKey(localeOverrides, "spacing")) localeOverrides.getInt("spacing").toUInt() else null
     val symbol = localeOverrides.getMap("symbol")?.let { asSymbol(it) }!!
-    return LocaleOverrides(locale, spacing, symbol)
+    return LocaleOverrides(
+        locale,
+        spacing,
+        symbol,
+    )
 }
 
 fun readableMapOf(localeOverrides: LocaleOverrides): ReadableMap =
@@ -1412,7 +1481,10 @@ fun asLocalizedName(localizedName: ReadableMap): LocalizedName? {
     }
     val locale = localizedName.getString("locale")!!
     val name = localizedName.getString("name")!!
-    return LocalizedName(locale, name)
+    return LocalizedName(
+        locale,
+        name,
+    )
 }
 
 fun readableMapOf(localizedName: LocalizedName): ReadableMap =
@@ -1445,7 +1517,10 @@ fun asLogEntry(logEntry: ReadableMap): LogEntry? {
     }
     val line = logEntry.getString("line")!!
     val level = logEntry.getString("level")!!
-    return LogEntry(line, level)
+    return LogEntry(
+        line,
+        level,
+    )
 }
 
 fun readableMapOf(logEntry: LogEntry): ReadableMap =
@@ -1537,6 +1612,38 @@ fun asLspInformationList(arr: ReadableArray): List<LspInformation> {
     return list
 }
 
+fun asMaxReverseSwapAmountResponse(maxReverseSwapAmountResponse: ReadableMap): MaxReverseSwapAmountResponse? {
+    if (!validateMandatoryFields(
+            maxReverseSwapAmountResponse,
+            arrayOf(
+                "totalSat",
+            ),
+        )
+    ) {
+        return null
+    }
+    val totalSat = maxReverseSwapAmountResponse.getDouble("totalSat").toULong()
+    return MaxReverseSwapAmountResponse(
+        totalSat,
+    )
+}
+
+fun readableMapOf(maxReverseSwapAmountResponse: MaxReverseSwapAmountResponse): ReadableMap =
+    readableMapOf(
+        "totalSat" to maxReverseSwapAmountResponse.totalSat,
+    )
+
+fun asMaxReverseSwapAmountResponseList(arr: ReadableArray): List<MaxReverseSwapAmountResponse> {
+    val list = ArrayList<MaxReverseSwapAmountResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asMaxReverseSwapAmountResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asMessageSuccessActionData(messageSuccessActionData: ReadableMap): MessageSuccessActionData? {
     if (!validateMandatoryFields(
             messageSuccessActionData,
@@ -1548,7 +1655,9 @@ fun asMessageSuccessActionData(messageSuccessActionData: ReadableMap): MessageSu
         return null
     }
     val message = messageSuccessActionData.getString("message")!!
-    return MessageSuccessActionData(message)
+    return MessageSuccessActionData(
+        message,
+    )
 }
 
 fun readableMapOf(messageSuccessActionData: MessageSuccessActionData): ReadableMap =
@@ -1580,7 +1689,10 @@ fun asMetadataFilter(metadataFilter: ReadableMap): MetadataFilter? {
     }
     val jsonPath = metadataFilter.getString("jsonPath")!!
     val jsonValue = metadataFilter.getString("jsonValue")!!
-    return MetadataFilter(jsonPath, jsonValue)
+    return MetadataFilter(
+        jsonPath,
+        jsonValue,
+    )
 }
 
 fun readableMapOf(metadataFilter: MetadataFilter): ReadableMap =
@@ -1613,7 +1725,10 @@ fun asMetadataItem(metadataItem: ReadableMap): MetadataItem? {
     }
     val key = metadataItem.getString("key")!!
     val value = metadataItem.getString("value")!!
-    return MetadataItem(key, value)
+    return MetadataItem(
+        key,
+        value,
+    )
 }
 
 fun readableMapOf(metadataItem: MetadataItem): ReadableMap =
@@ -1728,7 +1843,11 @@ fun asOnchainPaymentLimitsResponse(onchainPaymentLimitsResponse: ReadableMap): O
     val minSat = onchainPaymentLimitsResponse.getDouble("minSat").toULong()
     val maxSat = onchainPaymentLimitsResponse.getDouble("maxSat").toULong()
     val maxPayableSat = onchainPaymentLimitsResponse.getDouble("maxPayableSat").toULong()
-    return OnchainPaymentLimitsResponse(minSat, maxSat, maxPayableSat)
+    return OnchainPaymentLimitsResponse(
+        minSat,
+        maxSat,
+        maxPayableSat,
+    )
 }
 
 fun readableMapOf(onchainPaymentLimitsResponse: OnchainPaymentLimitsResponse): ReadableMap =
@@ -1768,7 +1887,10 @@ fun asOpenChannelFeeRequest(openChannelFeeRequest: ReadableMap): OpenChannelFeeR
             null
         }
     val expiry = if (hasNonNullKey(openChannelFeeRequest, "expiry")) openChannelFeeRequest.getInt("expiry").toUInt() else null
-    return OpenChannelFeeRequest(amountMsat, expiry)
+    return OpenChannelFeeRequest(
+        amountMsat,
+        expiry,
+    )
 }
 
 fun readableMapOf(openChannelFeeRequest: OpenChannelFeeRequest): ReadableMap =
@@ -1800,7 +1922,10 @@ fun asOpenChannelFeeResponse(openChannelFeeResponse: ReadableMap): OpenChannelFe
     }
     val feeMsat = if (hasNonNullKey(openChannelFeeResponse, "feeMsat")) openChannelFeeResponse.getDouble("feeMsat").toULong() else null
     val feeParams = openChannelFeeResponse.getMap("feeParams")?.let { asOpeningFeeParams(it) }!!
-    return OpenChannelFeeResponse(feeMsat, feeParams)
+    return OpenChannelFeeResponse(
+        feeMsat,
+        feeParams,
+    )
 }
 
 fun readableMapOf(openChannelFeeResponse: OpenChannelFeeResponse): ReadableMap =
@@ -1841,7 +1966,14 @@ fun asOpeningFeeParams(openingFeeParams: ReadableMap): OpeningFeeParams? {
     val maxIdleTime = openingFeeParams.getInt("maxIdleTime").toUInt()
     val maxClientToSelfDelay = openingFeeParams.getInt("maxClientToSelfDelay").toUInt()
     val promise = openingFeeParams.getString("promise")!!
-    return OpeningFeeParams(minMsat, proportional, validUntil, maxIdleTime, maxClientToSelfDelay, promise)
+    return OpeningFeeParams(
+        minMsat,
+        proportional,
+        validUntil,
+        maxIdleTime,
+        maxClientToSelfDelay,
+        promise,
+    )
 }
 
 fun readableMapOf(openingFeeParams: OpeningFeeParams): ReadableMap =
@@ -1876,7 +2008,9 @@ fun asOpeningFeeParamsMenu(openingFeeParamsMenu: ReadableMap): OpeningFeeParamsM
         return null
     }
     val values = openingFeeParamsMenu.getArray("values")?.let { asOpeningFeeParamsList(it) }!!
-    return OpeningFeeParamsMenu(values)
+    return OpeningFeeParamsMenu(
+        values,
+    )
 }
 
 fun readableMapOf(openingFeeParamsMenu: OpeningFeeParamsMenu): ReadableMap =
@@ -1908,7 +2042,10 @@ fun asPayOnchainRequest(payOnchainRequest: ReadableMap): PayOnchainRequest? {
     }
     val recipientAddress = payOnchainRequest.getString("recipientAddress")!!
     val prepareRes = payOnchainRequest.getMap("prepareRes")?.let { asPrepareOnchainPaymentResponse(it) }!!
-    return PayOnchainRequest(recipientAddress, prepareRes)
+    return PayOnchainRequest(
+        recipientAddress,
+        prepareRes,
+    )
 }
 
 fun readableMapOf(payOnchainRequest: PayOnchainRequest): ReadableMap =
@@ -1939,7 +2076,9 @@ fun asPayOnchainResponse(payOnchainResponse: ReadableMap): PayOnchainResponse? {
         return null
     }
     val reverseSwapInfo = payOnchainResponse.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
-    return PayOnchainResponse(reverseSwapInfo)
+    return PayOnchainResponse(
+        reverseSwapInfo,
+    )
 }
 
 fun readableMapOf(payOnchainResponse: PayOnchainResponse): ReadableMap =
@@ -1984,17 +2123,28 @@ fun asPayment(payment: ReadableMap): Payment? {
     val description = if (hasNonNullKey(payment, "description")) payment.getString("description") else null
     val details = payment.getMap("details")?.let { asPaymentDetails(it) }!!
     val metadata = if (hasNonNullKey(payment, "metadata")) payment.getString("metadata") else null
-    return Payment(id, paymentType, paymentTime, amountMsat, feeMsat, status, error, description, details, metadata)
+    return Payment(
+        id,
+        paymentType,
+        paymentTime,
+        amountMsat,
+        feeMsat,
+        status,
+        error,
+        description,
+        details,
+        metadata,
+    )
 }
 
 fun readableMapOf(payment: Payment): ReadableMap =
     readableMapOf(
         "id" to payment.id,
-        "paymentType" to snakeToLowerCamelCase(payment.paymentType.name),
+        "paymentType" to payment.paymentType.name.lowercase(),
         "paymentTime" to payment.paymentTime,
         "amountMsat" to payment.amountMsat,
         "feeMsat" to payment.feeMsat,
-        "status" to snakeToLowerCamelCase(payment.status.name),
+        "status" to payment.status.name.lowercase(),
         "error" to payment.error,
         "description" to payment.description,
         "details" to readableMapOf(payment.details),
@@ -2027,7 +2177,12 @@ fun asPaymentFailedData(paymentFailedData: ReadableMap): PaymentFailedData? {
     val nodeId = paymentFailedData.getString("nodeId")!!
     val invoice = if (hasNonNullKey(paymentFailedData, "invoice")) paymentFailedData.getMap("invoice")?.let { asLnInvoice(it) } else null
     val label = if (hasNonNullKey(paymentFailedData, "label")) paymentFailedData.getString("label") else null
-    return PaymentFailedData(error, nodeId, invoice, label)
+    return PaymentFailedData(
+        error,
+        nodeId,
+        invoice,
+        label,
+    )
 }
 
 fun readableMapOf(paymentFailedData: PaymentFailedData): ReadableMap =
@@ -2064,13 +2219,17 @@ fun asPrepareOnchainPaymentRequest(prepareOnchainPaymentRequest: ReadableMap): P
     val amountSat = prepareOnchainPaymentRequest.getDouble("amountSat").toULong()
     val amountType = prepareOnchainPaymentRequest.getString("amountType")?.let { asSwapAmountType(it) }!!
     val claimTxFeerate = prepareOnchainPaymentRequest.getInt("claimTxFeerate").toUInt()
-    return PrepareOnchainPaymentRequest(amountSat, amountType, claimTxFeerate)
+    return PrepareOnchainPaymentRequest(
+        amountSat,
+        amountType,
+        claimTxFeerate,
+    )
 }
 
 fun readableMapOf(prepareOnchainPaymentRequest: PrepareOnchainPaymentRequest): ReadableMap =
     readableMapOf(
         "amountSat" to prepareOnchainPaymentRequest.amountSat,
-        "amountType" to snakeToLowerCamelCase(prepareOnchainPaymentRequest.amountType.name),
+        "amountType" to prepareOnchainPaymentRequest.amountType.name.lowercase(),
         "claimTxFeerate" to prepareOnchainPaymentRequest.claimTxFeerate,
     )
 
@@ -2108,7 +2267,15 @@ fun asPrepareOnchainPaymentResponse(prepareOnchainPaymentResponse: ReadableMap):
     val senderAmountSat = prepareOnchainPaymentResponse.getDouble("senderAmountSat").toULong()
     val recipientAmountSat = prepareOnchainPaymentResponse.getDouble("recipientAmountSat").toULong()
     val totalFees = prepareOnchainPaymentResponse.getDouble("totalFees").toULong()
-    return PrepareOnchainPaymentResponse(feesHash, feesPercentage, feesLockup, feesClaim, senderAmountSat, recipientAmountSat, totalFees)
+    return PrepareOnchainPaymentResponse(
+        feesHash,
+        feesPercentage,
+        feesLockup,
+        feesClaim,
+        senderAmountSat,
+        recipientAmountSat,
+        totalFees,
+    )
 }
 
 fun readableMapOf(prepareOnchainPaymentResponse: PrepareOnchainPaymentResponse): ReadableMap =
@@ -2146,7 +2313,10 @@ fun asPrepareRedeemOnchainFundsRequest(prepareRedeemOnchainFundsRequest: Readabl
     }
     val toAddress = prepareRedeemOnchainFundsRequest.getString("toAddress")!!
     val satPerVbyte = prepareRedeemOnchainFundsRequest.getInt("satPerVbyte").toUInt()
-    return PrepareRedeemOnchainFundsRequest(toAddress, satPerVbyte)
+    return PrepareRedeemOnchainFundsRequest(
+        toAddress,
+        satPerVbyte,
+    )
 }
 
 fun readableMapOf(prepareRedeemOnchainFundsRequest: PrepareRedeemOnchainFundsRequest): ReadableMap =
@@ -2179,7 +2349,10 @@ fun asPrepareRedeemOnchainFundsResponse(prepareRedeemOnchainFundsResponse: Reada
     }
     val txWeight = prepareRedeemOnchainFundsResponse.getDouble("txWeight").toULong()
     val txFeeSat = prepareRedeemOnchainFundsResponse.getDouble("txFeeSat").toULong()
-    return PrepareRedeemOnchainFundsResponse(txWeight, txFeeSat)
+    return PrepareRedeemOnchainFundsResponse(
+        txWeight,
+        txFeeSat,
+    )
 }
 
 fun readableMapOf(prepareRedeemOnchainFundsResponse: PrepareRedeemOnchainFundsResponse): ReadableMap =
@@ -2214,8 +2387,11 @@ fun asPrepareRefundRequest(prepareRefundRequest: ReadableMap): PrepareRefundRequ
     val swapAddress = prepareRefundRequest.getString("swapAddress")!!
     val toAddress = prepareRefundRequest.getString("toAddress")!!
     val satPerVbyte = prepareRefundRequest.getInt("satPerVbyte").toUInt()
-    val unilateral = if (hasNonNullKey(prepareRefundRequest, "unilateral")) prepareRefundRequest.getBoolean("unilateral") else null
-    return PrepareRefundRequest(swapAddress, toAddress, satPerVbyte, unilateral)
+    return PrepareRefundRequest(
+        swapAddress,
+        toAddress,
+        satPerVbyte,
+    )
 }
 
 fun readableMapOf(prepareRefundRequest: PrepareRefundRequest): ReadableMap =
@@ -2223,7 +2399,6 @@ fun readableMapOf(prepareRefundRequest: PrepareRefundRequest): ReadableMap =
         "swapAddress" to prepareRefundRequest.swapAddress,
         "toAddress" to prepareRefundRequest.toAddress,
         "satPerVbyte" to prepareRefundRequest.satPerVbyte,
-        "unilateral" to prepareRefundRequest.unilateral,
     )
 
 fun asPrepareRefundRequestList(arr: ReadableArray): List<PrepareRefundRequest> {
@@ -2250,7 +2425,10 @@ fun asPrepareRefundResponse(prepareRefundResponse: ReadableMap): PrepareRefundRe
     }
     val refundTxWeight = prepareRefundResponse.getInt("refundTxWeight").toUInt()
     val refundTxFeeSat = prepareRefundResponse.getDouble("refundTxFeeSat").toULong()
-    return PrepareRefundResponse(refundTxWeight, refundTxFeeSat)
+    return PrepareRefundResponse(
+        refundTxWeight,
+        refundTxFeeSat,
+    )
 }
 
 fun readableMapOf(prepareRefundResponse: PrepareRefundResponse): ReadableMap =
@@ -2283,7 +2461,10 @@ fun asRate(rate: ReadableMap): Rate? {
     }
     val coin = rate.getString("coin")!!
     val value = rate.getDouble("value")
-    return Rate(coin, value)
+    return Rate(
+        coin,
+        value,
+    )
 }
 
 fun readableMapOf(rate: Rate): ReadableMap =
@@ -2323,7 +2504,9 @@ fun asReceiveOnchainRequest(receiveOnchainRequest: ReadableMap): ReceiveOnchainR
         } else {
             null
         }
-    return ReceiveOnchainRequest(openingFeeParams)
+    return ReceiveOnchainRequest(
+        openingFeeParams,
+    )
 }
 
 fun readableMapOf(receiveOnchainRequest: ReceiveOnchainRequest): ReadableMap =
@@ -2387,7 +2570,15 @@ fun asReceivePaymentRequest(receivePaymentRequest: ReadableMap): ReceivePaymentR
         }
     val expiry = if (hasNonNullKey(receivePaymentRequest, "expiry")) receivePaymentRequest.getInt("expiry").toUInt() else null
     val cltv = if (hasNonNullKey(receivePaymentRequest, "cltv")) receivePaymentRequest.getInt("cltv").toUInt() else null
-    return ReceivePaymentRequest(amountMsat, description, preimage, openingFeeParams, useDescriptionHash, expiry, cltv)
+    return ReceivePaymentRequest(
+        amountMsat,
+        description,
+        preimage,
+        openingFeeParams,
+        useDescriptionHash,
+        expiry,
+        cltv,
+    )
 }
 
 fun readableMapOf(receivePaymentRequest: ReceivePaymentRequest): ReadableMap =
@@ -2445,7 +2636,11 @@ fun asReceivePaymentResponse(receivePaymentResponse: ReadableMap): ReceivePaymen
         } else {
             null
         }
-    return ReceivePaymentResponse(lnInvoice, openingFeeParams, openingFeeMsat)
+    return ReceivePaymentResponse(
+        lnInvoice,
+        openingFeeParams,
+        openingFeeMsat,
+    )
 }
 
 fun readableMapOf(receivePaymentResponse: ReceivePaymentResponse): ReadableMap =
@@ -2485,7 +2680,13 @@ fun asRecommendedFees(recommendedFees: ReadableMap): RecommendedFees? {
     val hourFee = recommendedFees.getDouble("hourFee").toULong()
     val economyFee = recommendedFees.getDouble("economyFee").toULong()
     val minimumFee = recommendedFees.getDouble("minimumFee").toULong()
-    return RecommendedFees(fastestFee, halfHourFee, hourFee, economyFee, minimumFee)
+    return RecommendedFees(
+        fastestFee,
+        halfHourFee,
+        hourFee,
+        economyFee,
+        minimumFee,
+    )
 }
 
 fun readableMapOf(recommendedFees: RecommendedFees): ReadableMap =
@@ -2521,7 +2722,10 @@ fun asRedeemOnchainFundsRequest(redeemOnchainFundsRequest: ReadableMap): RedeemO
     }
     val toAddress = redeemOnchainFundsRequest.getString("toAddress")!!
     val satPerVbyte = redeemOnchainFundsRequest.getInt("satPerVbyte").toUInt()
-    return RedeemOnchainFundsRequest(toAddress, satPerVbyte)
+    return RedeemOnchainFundsRequest(
+        toAddress,
+        satPerVbyte,
+    )
 }
 
 fun readableMapOf(redeemOnchainFundsRequest: RedeemOnchainFundsRequest): ReadableMap =
@@ -2552,7 +2756,9 @@ fun asRedeemOnchainFundsResponse(redeemOnchainFundsResponse: ReadableMap): Redee
         return null
     }
     val txid = redeemOnchainFundsResponse.getArray("txid")?.let { asUByteList(it) }!!
-    return RedeemOnchainFundsResponse(txid)
+    return RedeemOnchainFundsResponse(
+        txid,
+    )
 }
 
 fun readableMapOf(redeemOnchainFundsResponse: RedeemOnchainFundsResponse): ReadableMap =
@@ -2586,8 +2792,11 @@ fun asRefundRequest(refundRequest: ReadableMap): RefundRequest? {
     val swapAddress = refundRequest.getString("swapAddress")!!
     val toAddress = refundRequest.getString("toAddress")!!
     val satPerVbyte = refundRequest.getInt("satPerVbyte").toUInt()
-    val unilateral = if (hasNonNullKey(refundRequest, "unilateral")) refundRequest.getBoolean("unilateral") else null
-    return RefundRequest(swapAddress, toAddress, satPerVbyte, unilateral)
+    return RefundRequest(
+        swapAddress,
+        toAddress,
+        satPerVbyte,
+    )
 }
 
 fun readableMapOf(refundRequest: RefundRequest): ReadableMap =
@@ -2595,7 +2804,6 @@ fun readableMapOf(refundRequest: RefundRequest): ReadableMap =
         "swapAddress" to refundRequest.swapAddress,
         "toAddress" to refundRequest.toAddress,
         "satPerVbyte" to refundRequest.satPerVbyte,
-        "unilateral" to refundRequest.unilateral,
     )
 
 fun asRefundRequestList(arr: ReadableArray): List<RefundRequest> {
@@ -2620,7 +2828,9 @@ fun asRefundResponse(refundResponse: ReadableMap): RefundResponse? {
         return null
     }
     val refundTxId = refundResponse.getString("refundTxId")!!
-    return RefundResponse(refundTxId)
+    return RefundResponse(
+        refundTxId,
+    )
 }
 
 fun readableMapOf(refundResponse: RefundResponse): ReadableMap =
@@ -2651,7 +2861,10 @@ fun asReportPaymentFailureDetails(reportPaymentFailureDetails: ReadableMap): Rep
     }
     val paymentHash = reportPaymentFailureDetails.getString("paymentHash")!!
     val comment = if (hasNonNullKey(reportPaymentFailureDetails, "comment")) reportPaymentFailureDetails.getString("comment") else null
-    return ReportPaymentFailureDetails(paymentHash, comment)
+    return ReportPaymentFailureDetails(
+        paymentHash,
+        comment,
+    )
 }
 
 fun readableMapOf(reportPaymentFailureDetails: ReportPaymentFailureDetails): ReadableMap =
@@ -2699,7 +2912,10 @@ fun asReverseSwapFeesRequest(reverseSwapFeesRequest: ReadableMap): ReverseSwapFe
         } else {
             null
         }
-    return ReverseSwapFeesRequest(sendAmountSat, claimTxFeerate)
+    return ReverseSwapFeesRequest(
+        sendAmountSat,
+        claimTxFeerate,
+    )
 }
 
 fun readableMapOf(reverseSwapFeesRequest: ReverseSwapFeesRequest): ReadableMap =
@@ -2738,7 +2954,14 @@ fun asReverseSwapInfo(reverseSwapInfo: ReadableMap): ReverseSwapInfo? {
     val claimTxid = if (hasNonNullKey(reverseSwapInfo, "claimTxid")) reverseSwapInfo.getString("claimTxid") else null
     val onchainAmountSat = reverseSwapInfo.getDouble("onchainAmountSat").toULong()
     val status = reverseSwapInfo.getString("status")?.let { asReverseSwapStatus(it) }!!
-    return ReverseSwapInfo(id, claimPubkey, lockupTxid, claimTxid, onchainAmountSat, status)
+    return ReverseSwapInfo(
+        id,
+        claimPubkey,
+        lockupTxid,
+        claimTxid,
+        onchainAmountSat,
+        status,
+    )
 }
 
 fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap =
@@ -2748,7 +2971,7 @@ fun readableMapOf(reverseSwapInfo: ReverseSwapInfo): ReadableMap =
         "lockupTxid" to reverseSwapInfo.lockupTxid,
         "claimTxid" to reverseSwapInfo.claimTxid,
         "onchainAmountSat" to reverseSwapInfo.onchainAmountSat,
-        "status" to snakeToLowerCamelCase(reverseSwapInfo.status.name),
+        "status" to reverseSwapInfo.status.name.lowercase(),
     )
 
 fun asReverseSwapInfoList(arr: ReadableArray): List<ReverseSwapInfo> {
@@ -2784,7 +3007,15 @@ fun asReverseSwapPairInfo(reverseSwapPairInfo: ReadableMap): ReverseSwapPairInfo
     val feesLockup = reverseSwapPairInfo.getDouble("feesLockup").toULong()
     val feesClaim = reverseSwapPairInfo.getDouble("feesClaim").toULong()
     val totalFees = if (hasNonNullKey(reverseSwapPairInfo, "totalFees")) reverseSwapPairInfo.getDouble("totalFees").toULong() else null
-    return ReverseSwapPairInfo(min, max, feesHash, feesPercentage, feesLockup, feesClaim, totalFees)
+    return ReverseSwapPairInfo(
+        min,
+        max,
+        feesHash,
+        feesPercentage,
+        feesLockup,
+        feesClaim,
+        totalFees,
+    )
 }
 
 fun readableMapOf(reverseSwapPairInfo: ReverseSwapPairInfo): ReadableMap =
@@ -2820,7 +3051,9 @@ fun asRouteHint(routeHint: ReadableMap): RouteHint? {
         return null
     }
     val hops = routeHint.getArray("hops")?.let { asRouteHintHopList(it) }!!
-    return RouteHint(hops)
+    return RouteHint(
+        hops,
+    )
 }
 
 fun readableMapOf(routeHint: RouteHint): ReadableMap =
@@ -2893,6 +3126,82 @@ fun asRouteHintHopList(arr: ReadableArray): List<RouteHintHop> {
     return list
 }
 
+fun asSendOnchainRequest(sendOnchainRequest: ReadableMap): SendOnchainRequest? {
+    if (!validateMandatoryFields(
+            sendOnchainRequest,
+            arrayOf(
+                "amountSat",
+                "onchainRecipientAddress",
+                "pairHash",
+                "satPerVbyte",
+            ),
+        )
+    ) {
+        return null
+    }
+    val amountSat = sendOnchainRequest.getDouble("amountSat").toULong()
+    val onchainRecipientAddress = sendOnchainRequest.getString("onchainRecipientAddress")!!
+    val pairHash = sendOnchainRequest.getString("pairHash")!!
+    val satPerVbyte = sendOnchainRequest.getInt("satPerVbyte").toUInt()
+    return SendOnchainRequest(
+        amountSat,
+        onchainRecipientAddress,
+        pairHash,
+        satPerVbyte,
+    )
+}
+
+fun readableMapOf(sendOnchainRequest: SendOnchainRequest): ReadableMap =
+    readableMapOf(
+        "amountSat" to sendOnchainRequest.amountSat,
+        "onchainRecipientAddress" to sendOnchainRequest.onchainRecipientAddress,
+        "pairHash" to sendOnchainRequest.pairHash,
+        "satPerVbyte" to sendOnchainRequest.satPerVbyte,
+    )
+
+fun asSendOnchainRequestList(arr: ReadableArray): List<SendOnchainRequest> {
+    val list = ArrayList<SendOnchainRequest>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSendOnchainRequest(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
+fun asSendOnchainResponse(sendOnchainResponse: ReadableMap): SendOnchainResponse? {
+    if (!validateMandatoryFields(
+            sendOnchainResponse,
+            arrayOf(
+                "reverseSwapInfo",
+            ),
+        )
+    ) {
+        return null
+    }
+    val reverseSwapInfo = sendOnchainResponse.getMap("reverseSwapInfo")?.let { asReverseSwapInfo(it) }!!
+    return SendOnchainResponse(
+        reverseSwapInfo,
+    )
+}
+
+fun readableMapOf(sendOnchainResponse: SendOnchainResponse): ReadableMap =
+    readableMapOf(
+        "reverseSwapInfo" to readableMapOf(sendOnchainResponse.reverseSwapInfo),
+    )
+
+fun asSendOnchainResponseList(arr: ReadableArray): List<SendOnchainResponse> {
+    val list = ArrayList<SendOnchainResponse>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is ReadableMap -> list.add(asSendOnchainResponse(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     if (!validateMandatoryFields(
             sendPaymentRequest,
@@ -2908,7 +3217,12 @@ fun asSendPaymentRequest(sendPaymentRequest: ReadableMap): SendPaymentRequest? {
     val useTrampoline = sendPaymentRequest.getBoolean("useTrampoline")
     val amountMsat = if (hasNonNullKey(sendPaymentRequest, "amountMsat")) sendPaymentRequest.getDouble("amountMsat").toULong() else null
     val label = if (hasNonNullKey(sendPaymentRequest, "label")) sendPaymentRequest.getString("label") else null
-    return SendPaymentRequest(bolt11, useTrampoline, amountMsat, label)
+    return SendPaymentRequest(
+        bolt11,
+        useTrampoline,
+        amountMsat,
+        label,
+    )
 }
 
 fun readableMapOf(sendPaymentRequest: SendPaymentRequest): ReadableMap =
@@ -2941,7 +3255,9 @@ fun asSendPaymentResponse(sendPaymentResponse: ReadableMap): SendPaymentResponse
         return null
     }
     val payment = sendPaymentResponse.getMap("payment")?.let { asPayment(it) }!!
-    return SendPaymentResponse(payment)
+    return SendPaymentResponse(
+        payment,
+    )
 }
 
 fun readableMapOf(sendPaymentResponse: SendPaymentResponse): ReadableMap =
@@ -2986,7 +3302,12 @@ fun asSendSpontaneousPaymentRequest(sendSpontaneousPaymentRequest: ReadableMap):
             null
         }
     val label = if (hasNonNullKey(sendSpontaneousPaymentRequest, "label")) sendSpontaneousPaymentRequest.getString("label") else null
-    return SendSpontaneousPaymentRequest(nodeId, amountMsat, extraTlvs, label)
+    return SendSpontaneousPaymentRequest(
+        nodeId,
+        amountMsat,
+        extraTlvs,
+        label,
+    )
 }
 
 fun readableMapOf(sendSpontaneousPaymentRequest: SendSpontaneousPaymentRequest): ReadableMap =
@@ -3019,12 +3340,14 @@ fun asServiceHealthCheckResponse(serviceHealthCheckResponse: ReadableMap): Servi
         return null
     }
     val status = serviceHealthCheckResponse.getString("status")?.let { asHealthCheckStatus(it) }!!
-    return ServiceHealthCheckResponse(status)
+    return ServiceHealthCheckResponse(
+        status,
+    )
 }
 
 fun readableMapOf(serviceHealthCheckResponse: ServiceHealthCheckResponse): ReadableMap =
     readableMapOf(
-        "status" to snakeToLowerCamelCase(serviceHealthCheckResponse.status.name),
+        "status" to serviceHealthCheckResponse.status.name.lowercase(),
     )
 
 fun asServiceHealthCheckResponseList(arr: ReadableArray): List<ServiceHealthCheckResponse> {
@@ -3049,7 +3372,9 @@ fun asSignMessageRequest(signMessageRequest: ReadableMap): SignMessageRequest? {
         return null
     }
     val message = signMessageRequest.getString("message")!!
-    return SignMessageRequest(message)
+    return SignMessageRequest(
+        message,
+    )
 }
 
 fun readableMapOf(signMessageRequest: SignMessageRequest): ReadableMap =
@@ -3079,7 +3404,9 @@ fun asSignMessageResponse(signMessageResponse: ReadableMap): SignMessageResponse
         return null
     }
     val signature = signMessageResponse.getString("signature")!!
-    return SignMessageResponse(signature)
+    return SignMessageResponse(
+        signature,
+    )
 }
 
 fun readableMapOf(signMessageResponse: SignMessageResponse): ReadableMap =
@@ -3109,7 +3436,9 @@ fun asStaticBackupRequest(staticBackupRequest: ReadableMap): StaticBackupRequest
         return null
     }
     val workingDir = staticBackupRequest.getString("workingDir")!!
-    return StaticBackupRequest(workingDir)
+    return StaticBackupRequest(
+        workingDir,
+    )
 }
 
 fun readableMapOf(staticBackupRequest: StaticBackupRequest): ReadableMap =
@@ -3146,7 +3475,9 @@ fun asStaticBackupResponse(staticBackupResponse: ReadableMap): StaticBackupRespo
         } else {
             null
         }
-    return StaticBackupResponse(backup)
+    return StaticBackupResponse(
+        backup,
+    )
 }
 
 fun readableMapOf(staticBackupResponse: StaticBackupResponse): ReadableMap =
@@ -3269,7 +3600,7 @@ fun readableMapOf(swapInfo: SwapInfo): ReadableMap =
         "unconfirmedSats" to swapInfo.unconfirmedSats,
         "confirmedSats" to swapInfo.confirmedSats,
         "totalIncomingTxs" to swapInfo.totalIncomingTxs,
-        "status" to snakeToLowerCamelCase(swapInfo.status.name),
+        "status" to swapInfo.status.name.lowercase(),
         "refundTxIds" to readableArrayOf(swapInfo.refundTxIds),
         "unconfirmedTxIds" to readableArrayOf(swapInfo.unconfirmedTxIds),
         "confirmedTxIds" to readableArrayOf(swapInfo.confirmedTxIds),
@@ -3304,7 +3635,12 @@ fun asSymbol(symbol: ReadableMap): Symbol? {
     val template = if (hasNonNullKey(symbol, "template")) symbol.getString("template") else null
     val rtl = if (hasNonNullKey(symbol, "rtl")) symbol.getBoolean("rtl") else null
     val position = if (hasNonNullKey(symbol, "position")) symbol.getInt("position").toUInt() else null
-    return Symbol(grapheme, template, rtl, position)
+    return Symbol(
+        grapheme,
+        template,
+        rtl,
+        position,
+    )
 }
 
 fun readableMapOf(symbol: Symbol): ReadableMap =
@@ -3339,7 +3675,10 @@ fun asTlvEntry(tlvEntry: ReadableMap): TlvEntry? {
     }
     val fieldNumber = tlvEntry.getDouble("fieldNumber").toULong()
     val value = tlvEntry.getArray("value")?.let { asUByteList(it) }!!
-    return TlvEntry(fieldNumber, value)
+    return TlvEntry(
+        fieldNumber,
+        value,
+    )
 }
 
 fun readableMapOf(tlvEntry: TlvEntry): ReadableMap =
@@ -3378,7 +3717,13 @@ fun asUnspentTransactionOutput(unspentTransactionOutput: ReadableMap): UnspentTr
     val amountMillisatoshi = unspentTransactionOutput.getDouble("amountMillisatoshi").toULong()
     val address = unspentTransactionOutput.getString("address")!!
     val reserved = unspentTransactionOutput.getBoolean("reserved")
-    return UnspentTransactionOutput(txid, outnum, amountMillisatoshi, address, reserved)
+    return UnspentTransactionOutput(
+        txid,
+        outnum,
+        amountMillisatoshi,
+        address,
+        reserved,
+    )
 }
 
 fun readableMapOf(unspentTransactionOutput: UnspentTransactionOutput): ReadableMap =
@@ -3416,7 +3761,11 @@ fun asUrlSuccessActionData(urlSuccessActionData: ReadableMap): UrlSuccessActionD
     val description = urlSuccessActionData.getString("description")!!
     val url = urlSuccessActionData.getString("url")!!
     val matchesCallbackDomain = urlSuccessActionData.getBoolean("matchesCallbackDomain")
-    return UrlSuccessActionData(description, url, matchesCallbackDomain)
+    return UrlSuccessActionData(
+        description,
+        url,
+        matchesCallbackDomain,
+    )
 }
 
 fun readableMapOf(urlSuccessActionData: UrlSuccessActionData): ReadableMap =
@@ -3441,12 +3790,12 @@ fun asAesSuccessActionDataResult(aesSuccessActionDataResult: ReadableMap): AesSu
     val type = aesSuccessActionDataResult.getString("type")
 
     if (type == "decrypted") {
-        val data = aesSuccessActionDataResult.getMap("data")?.let { asAesSuccessActionDataDecrypted(it) }!!
-        return AesSuccessActionDataResult.Decrypted(data)
+        return AesSuccessActionDataResult.Decrypted(
+            aesSuccessActionDataResult.getMap("data")?.let { asAesSuccessActionDataDecrypted(it) }!!,
+        )
     }
     if (type == "errorStatus") {
-        val reason = aesSuccessActionDataResult.getString("reason")!!
-        return AesSuccessActionDataResult.ErrorStatus(reason)
+        return AesSuccessActionDataResult.ErrorStatus(aesSuccessActionDataResult.getString("reason")!!)
     }
     return null
 }
@@ -3481,23 +3830,19 @@ fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
     val type = breezEvent.getString("type")
 
     if (type == "newBlock") {
-        val block = breezEvent.getInt("block").toUInt()
-        return BreezEvent.NewBlock(block)
+        return BreezEvent.NewBlock(breezEvent.getInt("block").toUInt())
     }
     if (type == "invoicePaid") {
-        val details = breezEvent.getMap("details")?.let { asInvoicePaidDetails(it) }!!
-        return BreezEvent.InvoicePaid(details)
+        return BreezEvent.InvoicePaid(breezEvent.getMap("details")?.let { asInvoicePaidDetails(it) }!!)
     }
     if (type == "synced") {
         return BreezEvent.Synced
     }
     if (type == "paymentSucceed") {
-        val details = breezEvent.getMap("details")?.let { asPayment(it) }!!
-        return BreezEvent.PaymentSucceed(details)
+        return BreezEvent.PaymentSucceed(breezEvent.getMap("details")?.let { asPayment(it) }!!)
     }
     if (type == "paymentFailed") {
-        val details = breezEvent.getMap("details")?.let { asPaymentFailedData(it) }!!
-        return BreezEvent.PaymentFailed(details)
+        return BreezEvent.PaymentFailed(breezEvent.getMap("details")?.let { asPaymentFailedData(it) }!!)
     }
     if (type == "backupStarted") {
         return BreezEvent.BackupStarted
@@ -3506,16 +3851,13 @@ fun asBreezEvent(breezEvent: ReadableMap): BreezEvent? {
         return BreezEvent.BackupSucceeded
     }
     if (type == "backupFailed") {
-        val details = breezEvent.getMap("details")?.let { asBackupFailedData(it) }!!
-        return BreezEvent.BackupFailed(details)
+        return BreezEvent.BackupFailed(breezEvent.getMap("details")?.let { asBackupFailedData(it) }!!)
     }
     if (type == "reverseSwapUpdated") {
-        val details = breezEvent.getMap("details")?.let { asReverseSwapInfo(it) }!!
-        return BreezEvent.ReverseSwapUpdated(details)
+        return BreezEvent.ReverseSwapUpdated(breezEvent.getMap("details")?.let { asReverseSwapInfo(it) }!!)
     }
     if (type == "swapUpdated") {
-        val details = breezEvent.getMap("details")?.let { asSwapInfo(it) }!!
-        return BreezEvent.SwapUpdated(details)
+        return BreezEvent.SwapUpdated(breezEvent.getMap("details")?.let { asSwapInfo(it) }!!)
     }
     return null
 }
@@ -3575,7 +3917,7 @@ fun asBreezEventList(arr: ReadableArray): List<BreezEvent> {
     return list
 }
 
-fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider = BuyBitcoinProvider.valueOf(camelToUpperSnakeCase(type))
+fun asBuyBitcoinProvider(type: String): BuyBitcoinProvider = BuyBitcoinProvider.valueOf(type.uppercase())
 
 fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
     val list = ArrayList<BuyBitcoinProvider>()
@@ -3588,7 +3930,7 @@ fun asBuyBitcoinProviderList(arr: ReadableArray): List<BuyBitcoinProvider> {
     return list
 }
 
-fun asChannelState(type: String): ChannelState = ChannelState.valueOf(camelToUpperSnakeCase(type))
+fun asChannelState(type: String): ChannelState = ChannelState.valueOf(type.uppercase())
 
 fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
     val list = ArrayList<ChannelState>()
@@ -3601,7 +3943,7 @@ fun asChannelStateList(arr: ReadableArray): List<ChannelState> {
     return list
 }
 
-fun asEnvironmentType(type: String): EnvironmentType = EnvironmentType.valueOf(camelToUpperSnakeCase(type))
+fun asEnvironmentType(type: String): EnvironmentType = EnvironmentType.valueOf(type.uppercase())
 
 fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
     val list = ArrayList<EnvironmentType>()
@@ -3614,7 +3956,7 @@ fun asEnvironmentTypeList(arr: ReadableArray): List<EnvironmentType> {
     return list
 }
 
-fun asFeeratePreset(type: String): FeeratePreset = FeeratePreset.valueOf(camelToUpperSnakeCase(type))
+fun asFeeratePreset(type: String): FeeratePreset = FeeratePreset.valueOf(type.uppercase())
 
 fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
     val list = ArrayList<FeeratePreset>()
@@ -3627,7 +3969,7 @@ fun asFeeratePresetList(arr: ReadableArray): List<FeeratePreset> {
     return list
 }
 
-fun asHealthCheckStatus(type: String): HealthCheckStatus = HealthCheckStatus.valueOf(camelToUpperSnakeCase(type))
+fun asHealthCheckStatus(type: String): HealthCheckStatus = HealthCheckStatus.valueOf(type.uppercase())
 
 fun asHealthCheckStatusList(arr: ReadableArray): List<HealthCheckStatus> {
     val list = ArrayList<HealthCheckStatus>()
@@ -3644,37 +3986,28 @@ fun asInputType(inputType: ReadableMap): InputType? {
     val type = inputType.getString("type")
 
     if (type == "bitcoinAddress") {
-        val address = inputType.getMap("address")?.let { asBitcoinAddressData(it) }!!
-        return InputType.BitcoinAddress(address)
+        return InputType.BitcoinAddress(inputType.getMap("address")?.let { asBitcoinAddressData(it) }!!)
     }
     if (type == "bolt11") {
-        val invoice = inputType.getMap("invoice")?.let { asLnInvoice(it) }!!
-        return InputType.Bolt11(invoice)
+        return InputType.Bolt11(inputType.getMap("invoice")?.let { asLnInvoice(it) }!!)
     }
     if (type == "nodeId") {
-        val nodeId = inputType.getString("nodeId")!!
-        return InputType.NodeId(nodeId)
+        return InputType.NodeId(inputType.getString("nodeId")!!)
     }
     if (type == "url") {
-        val url = inputType.getString("url")!!
-        return InputType.Url(url)
+        return InputType.Url(inputType.getString("url")!!)
     }
     if (type == "lnUrlPay") {
-        val data = inputType.getMap("data")?.let { asLnUrlPayRequestData(it) }!!
-        val bip353Address = if (hasNonNullKey(inputType, "bip353Address")) inputType.getString("bip353Address") else null
-        return InputType.LnUrlPay(data, bip353Address)
+        return InputType.LnUrlPay(inputType.getMap("data")?.let { asLnUrlPayRequestData(it) }!!)
     }
     if (type == "lnUrlWithdraw") {
-        val data = inputType.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!
-        return InputType.LnUrlWithdraw(data)
+        return InputType.LnUrlWithdraw(inputType.getMap("data")?.let { asLnUrlWithdrawRequestData(it) }!!)
     }
     if (type == "lnUrlAuth") {
-        val data = inputType.getMap("data")?.let { asLnUrlAuthRequestData(it) }!!
-        return InputType.LnUrlAuth(data)
+        return InputType.LnUrlAuth(inputType.getMap("data")?.let { asLnUrlAuthRequestData(it) }!!)
     }
     if (type == "lnUrlError") {
-        val data = inputType.getMap("data")?.let { asLnUrlErrorData(it) }!!
-        return InputType.LnUrlError(data)
+        return InputType.LnUrlError(inputType.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3701,7 +4034,6 @@ fun readableMapOf(inputType: InputType): ReadableMap? {
         is InputType.LnUrlPay -> {
             pushToMap(map, "type", "lnUrlPay")
             pushToMap(map, "data", readableMapOf(inputType.data))
-            pushToMap(map, "bip353Address", inputType.bip353Address)
         }
         is InputType.LnUrlWithdraw -> {
             pushToMap(map, "type", "lnUrlWithdraw")
@@ -3730,6 +4062,19 @@ fun asInputTypeList(arr: ReadableArray): List<InputType> {
     return list
 }
 
+fun asLevelFilter(type: String): LevelFilter = LevelFilter.valueOf(type.uppercase())
+
+fun asLevelFilterList(arr: ReadableArray): List<LevelFilter> {
+    val list = ArrayList<LevelFilter>()
+    for (value in arr.toArrayList()) {
+        when (value) {
+            is String -> list.add(asLevelFilter(value)!!)
+            else -> throw SdkException.Generic(errUnexpectedType("${value::class.java.name}"))
+        }
+    }
+    return list
+}
+
 fun asLnUrlCallbackStatus(lnUrlCallbackStatus: ReadableMap): LnUrlCallbackStatus? {
     val type = lnUrlCallbackStatus.getString("type")
 
@@ -3737,8 +4082,7 @@ fun asLnUrlCallbackStatus(lnUrlCallbackStatus: ReadableMap): LnUrlCallbackStatus
         return LnUrlCallbackStatus.Ok
     }
     if (type == "errorStatus") {
-        val data = lnUrlCallbackStatus.getMap("data")?.let { asLnUrlErrorData(it) }!!
-        return LnUrlCallbackStatus.ErrorStatus(data)
+        return LnUrlCallbackStatus.ErrorStatus(lnUrlCallbackStatus.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3772,16 +4116,13 @@ fun asLnUrlPayResult(lnUrlPayResult: ReadableMap): LnUrlPayResult? {
     val type = lnUrlPayResult.getString("type")
 
     if (type == "endpointSuccess") {
-        val data = lnUrlPayResult.getMap("data")?.let { asLnUrlPaySuccessData(it) }!!
-        return LnUrlPayResult.EndpointSuccess(data)
+        return LnUrlPayResult.EndpointSuccess(lnUrlPayResult.getMap("data")?.let { asLnUrlPaySuccessData(it) }!!)
     }
     if (type == "endpointError") {
-        val data = lnUrlPayResult.getMap("data")?.let { asLnUrlErrorData(it) }!!
-        return LnUrlPayResult.EndpointError(data)
+        return LnUrlPayResult.EndpointError(lnUrlPayResult.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     if (type == "payError") {
-        val data = lnUrlPayResult.getMap("data")?.let { asLnUrlPayErrorData(it) }!!
-        return LnUrlPayResult.PayError(data)
+        return LnUrlPayResult.PayError(lnUrlPayResult.getMap("data")?.let { asLnUrlPayErrorData(it) }!!)
     }
     return null
 }
@@ -3820,16 +4161,13 @@ fun asLnUrlWithdrawResult(lnUrlWithdrawResult: ReadableMap): LnUrlWithdrawResult
     val type = lnUrlWithdrawResult.getString("type")
 
     if (type == "ok") {
-        val data = lnUrlWithdrawResult.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!
-        return LnUrlWithdrawResult.Ok(data)
+        return LnUrlWithdrawResult.Ok(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!)
     }
     if (type == "timeout") {
-        val data = lnUrlWithdrawResult.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!
-        return LnUrlWithdrawResult.Timeout(data)
+        return LnUrlWithdrawResult.Timeout(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlWithdrawSuccessData(it) }!!)
     }
     if (type == "errorStatus") {
-        val data = lnUrlWithdrawResult.getMap("data")?.let { asLnUrlErrorData(it) }!!
-        return LnUrlWithdrawResult.ErrorStatus(data)
+        return LnUrlWithdrawResult.ErrorStatus(lnUrlWithdrawResult.getMap("data")?.let { asLnUrlErrorData(it) }!!)
     }
     return null
 }
@@ -3864,7 +4202,7 @@ fun asLnUrlWithdrawResultList(arr: ReadableArray): List<LnUrlWithdrawResult> {
     return list
 }
 
-fun asNetwork(type: String): Network = Network.valueOf(camelToUpperSnakeCase(type))
+fun asNetwork(type: String): Network = Network.valueOf(type.uppercase())
 
 fun asNetworkList(arr: ReadableArray): List<Network> {
     val list = ArrayList<Network>()
@@ -3881,8 +4219,7 @@ fun asNodeConfig(nodeConfig: ReadableMap): NodeConfig? {
     val type = nodeConfig.getString("type")
 
     if (type == "greenlight") {
-        val config = nodeConfig.getMap("config")?.let { asGreenlightNodeConfig(it) }!!
-        return NodeConfig.Greenlight(config)
+        return NodeConfig.Greenlight(nodeConfig.getMap("config")?.let { asGreenlightNodeConfig(it) }!!)
     }
     return null
 }
@@ -3913,8 +4250,7 @@ fun asNodeCredentials(nodeCredentials: ReadableMap): NodeCredentials? {
     val type = nodeCredentials.getString("type")
 
     if (type == "greenlight") {
-        val credentials = nodeCredentials.getMap("credentials")?.let { asGreenlightDeviceCredentials(it) }!!
-        return NodeCredentials.Greenlight(credentials)
+        return NodeCredentials.Greenlight(nodeCredentials.getMap("credentials")?.let { asGreenlightDeviceCredentials(it) }!!)
     }
     return null
 }
@@ -3945,12 +4281,10 @@ fun asPaymentDetails(paymentDetails: ReadableMap): PaymentDetails? {
     val type = paymentDetails.getString("type")
 
     if (type == "ln") {
-        val data = paymentDetails.getMap("data")?.let { asLnPaymentDetails(it) }!!
-        return PaymentDetails.Ln(data)
+        return PaymentDetails.Ln(paymentDetails.getMap("data")?.let { asLnPaymentDetails(it) }!!)
     }
     if (type == "closedChannel") {
-        val data = paymentDetails.getMap("data")?.let { asClosedChannelPaymentDetails(it) }!!
-        return PaymentDetails.ClosedChannel(data)
+        return PaymentDetails.ClosedChannel(paymentDetails.getMap("data")?.let { asClosedChannelPaymentDetails(it) }!!)
     }
     return null
 }
@@ -3981,7 +4315,7 @@ fun asPaymentDetailsList(arr: ReadableArray): List<PaymentDetails> {
     return list
 }
 
-fun asPaymentStatus(type: String): PaymentStatus = PaymentStatus.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentStatus(type: String): PaymentStatus = PaymentStatus.valueOf(type.uppercase())
 
 fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
     val list = ArrayList<PaymentStatus>()
@@ -3994,7 +4328,7 @@ fun asPaymentStatusList(arr: ReadableArray): List<PaymentStatus> {
     return list
 }
 
-fun asPaymentType(type: String): PaymentType = PaymentType.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentType(type: String): PaymentType = PaymentType.valueOf(type.uppercase())
 
 fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
     val list = ArrayList<PaymentType>()
@@ -4007,7 +4341,7 @@ fun asPaymentTypeList(arr: ReadableArray): List<PaymentType> {
     return list
 }
 
-fun asPaymentTypeFilter(type: String): PaymentTypeFilter = PaymentTypeFilter.valueOf(camelToUpperSnakeCase(type))
+fun asPaymentTypeFilter(type: String): PaymentTypeFilter = PaymentTypeFilter.valueOf(type.uppercase())
 
 fun asPaymentTypeFilterList(arr: ReadableArray): List<PaymentTypeFilter> {
     val list = ArrayList<PaymentTypeFilter>()
@@ -4024,8 +4358,7 @@ fun asReportIssueRequest(reportIssueRequest: ReadableMap): ReportIssueRequest? {
     val type = reportIssueRequest.getString("type")
 
     if (type == "paymentFailure") {
-        val data = reportIssueRequest.getMap("data")?.let { asReportPaymentFailureDetails(it) }!!
-        return ReportIssueRequest.PaymentFailure(data)
+        return ReportIssueRequest.PaymentFailure(reportIssueRequest.getMap("data")?.let { asReportPaymentFailureDetails(it) }!!)
     }
     return null
 }
@@ -4052,7 +4385,7 @@ fun asReportIssueRequestList(arr: ReadableArray): List<ReportIssueRequest> {
     return list
 }
 
-fun asReverseSwapStatus(type: String): ReverseSwapStatus = ReverseSwapStatus.valueOf(camelToUpperSnakeCase(type))
+fun asReverseSwapStatus(type: String): ReverseSwapStatus = ReverseSwapStatus.valueOf(type.uppercase())
 
 fun asReverseSwapStatusList(arr: ReadableArray): List<ReverseSwapStatus> {
     val list = ArrayList<ReverseSwapStatus>()
@@ -4069,16 +4402,13 @@ fun asSuccessActionProcessed(successActionProcessed: ReadableMap): SuccessAction
     val type = successActionProcessed.getString("type")
 
     if (type == "aes") {
-        val result = successActionProcessed.getMap("result")?.let { asAesSuccessActionDataResult(it) }!!
-        return SuccessActionProcessed.Aes(result)
+        return SuccessActionProcessed.Aes(successActionProcessed.getMap("result")?.let { asAesSuccessActionDataResult(it) }!!)
     }
     if (type == "message") {
-        val data = successActionProcessed.getMap("data")?.let { asMessageSuccessActionData(it) }!!
-        return SuccessActionProcessed.Message(data)
+        return SuccessActionProcessed.Message(successActionProcessed.getMap("data")?.let { asMessageSuccessActionData(it) }!!)
     }
     if (type == "url") {
-        val data = successActionProcessed.getMap("data")?.let { asUrlSuccessActionData(it) }!!
-        return SuccessActionProcessed.Url(data)
+        return SuccessActionProcessed.Url(successActionProcessed.getMap("data")?.let { asUrlSuccessActionData(it) }!!)
     }
     return null
 }
@@ -4113,7 +4443,7 @@ fun asSuccessActionProcessedList(arr: ReadableArray): List<SuccessActionProcesse
     return list
 }
 
-fun asSwapAmountType(type: String): SwapAmountType = SwapAmountType.valueOf(camelToUpperSnakeCase(type))
+fun asSwapAmountType(type: String): SwapAmountType = SwapAmountType.valueOf(type.uppercase())
 
 fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
     val list = ArrayList<SwapAmountType>()
@@ -4126,7 +4456,7 @@ fun asSwapAmountTypeList(arr: ReadableArray): List<SwapAmountType> {
     return list
 }
 
-fun asSwapStatus(type: String): SwapStatus = SwapStatus.valueOf(camelToUpperSnakeCase(type))
+fun asSwapStatus(type: String): SwapStatus = SwapStatus.valueOf(type.uppercase())
 
 fun asSwapStatusList(arr: ReadableArray): List<SwapStatus> {
     val list = ArrayList<SwapStatus>()
@@ -4176,14 +4506,13 @@ fun pushToArray(
         is MetadataFilter -> array.pushMap(readableMapOf(value))
         is OpeningFeeParams -> array.pushMap(readableMapOf(value))
         is Payment -> array.pushMap(readableMapOf(value))
-        is PaymentTypeFilter -> array.pushString(snakeToLowerCamelCase(value.name))
+        is PaymentTypeFilter -> array.pushString(value.name.lowercase())
         is Rate -> array.pushMap(readableMapOf(value))
         is ReverseSwapInfo -> array.pushMap(readableMapOf(value))
         is RouteHint -> array.pushMap(readableMapOf(value))
         is RouteHintHop -> array.pushMap(readableMapOf(value))
         is String -> array.pushString(value)
         is SwapInfo -> array.pushMap(readableMapOf(value))
-        is SwapStatus -> array.pushString(snakeToLowerCamelCase(value.name))
         is TlvEntry -> array.pushMap(readableMapOf(value))
         is UByte -> array.pushInt(value.toInt())
         is UnspentTransactionOutput -> array.pushMap(readableMapOf(value))
@@ -4203,7 +4532,6 @@ fun pushToMap(
         is Boolean -> map.putBoolean(key, value)
         is Byte -> map.putInt(key, value.toInt())
         is Double -> map.putDouble(key, value)
-        is Float -> map.putDouble(key, value.toDouble())
         is Int -> map.putInt(key, value)
         is Long -> map.putDouble(key, value.toDouble())
         is ReadableArray -> map.putArray(key, value)
@@ -4259,15 +4587,3 @@ fun errMissingMandatoryField(
 fun errUnexpectedType(typeName: String): String = "Unexpected type $typeName"
 
 fun errUnexpectedValue(fieldName: String): String = "Unexpected value for optional field $fieldName"
-
-fun camelToUpperSnakeCase(str: String): String =
-    "(?<=.)[A-Z]"
-        .toRegex()
-        .replace(str) {
-            "_${it.value}"
-        }.uppercase()
-
-fun snakeToLowerCamelCase(str: String): String =
-    "_[a-zA-Z]".toRegex().replace(str.lowercase()) {
-        it.value.replace("_", "").uppercase()
-    }

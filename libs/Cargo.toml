@@ -26,6 +26,7 @@ anyhow = { version = "1.0.79", features = ["backtrace"] }
 async-trait = "0.1.86"
 base64 = "0.13.0"
 bitcoin = "=0.30.2" # Same version as used in gl-client
+env_logger = "0.10"
 hex = "0.4"
 lightning = "=0.0.123" # Same version as used in gl-client
 lightning-invoice = "=0.31.0" # Same version as used in gl-client

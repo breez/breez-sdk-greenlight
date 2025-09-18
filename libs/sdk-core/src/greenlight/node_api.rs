@@ -737,8 +737,20 @@ impl Greenlight {
             self.pull_send_payments(&sync_state.send_pays_index, htlc_list),
         );
 
-        let (receive_payments, list_invoices_index) = receive_payments_res?;
-        let (send_payments, send_pays_index) = send_payments_res?;
+        let (receive_payments, list_invoices_index) = match receive_payments_res {
+            Ok(res) => res,
+            Err(e) => {
+                error!("Failed to pull receive payments: {}", e);
+                return Err(e);
+            }
+        };
+        let (send_payments, send_pays_index) = match send_payments_res {
+            Ok(res) => res,
+            Err(e) => {
+                error!("Failed to pull send payments: {}", e);
+                return Err(e);
+            }
+        };
         let mut new_state = sync_state.clone();
         new_state.list_invoices_index = list_invoices_index;
         new_state.send_pays_index = send_pays_index;
@@ -1182,10 +1194,36 @@ impl NodeAPI for Greenlight {
             balance_future
         );
 
-        let node_info = node_info_res?.into_inner();
-        let funds = funds_res?;
-        let closed_channels = closed_channels_res?.into_inner().closedchannels;
-        let (all_channels, opened_channels, connected_peers, channels_balance) = balance_res?;
+        let node_info = match node_info_res {
+            Ok(res) => res.into_inner(),
+            Err(e) => {
+                error!("Failed to fetch node info: {}", e);
+                return Err(e.into());
+            }
+        };
+        let funds = match funds_res {
+            Ok(res) => res,
+            Err(e) => {
+                error!("Failed to fetch funds: {}", e);
+                return Err(e.into());
+            }
+        };
+        let closed_channels = match closed_channels_res {
+            Ok(res) => res.into_inner().closedchannels,
+            Err(e) => {
+                error!("Failed to fetch closed channels: {}", e);
+                return Err(e.into());
+            }
+        };
+
+        let (all_channels, opened_channels, connected_peers, channels_balance) = match balance_res {
+            Ok(res) => res,
+            Err(e) => {
+                error!("Failed to fetch balance: {}", e);
+                return Err(e);
+            }
+        };
+
         let forgotten_closed_channels: NodeResult<Vec<Channel>> = closed_channels
             .into_iter()
             .filter(|cc| {

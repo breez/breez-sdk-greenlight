@@ -26,7 +26,7 @@ base64 = { workspace = true }
 bitcoin = { workspace = true, features = ["serde", "rand"] }
 chrono = "0.4"
 ecies = { version = "0.2.6", default-features = false, features = ["pure"] }
-env_logger = "0.10"
+env_logger = { workspace = true }
 futures = "0.3.30"
 rand = "0.8"
 tiny-bip39 = "1"
