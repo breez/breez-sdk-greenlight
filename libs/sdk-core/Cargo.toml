@@ -73,3 +73,8 @@ sdk-common = { path = "../sdk-common", features = ["test-utils"] }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
+
+# Pin these versions to fix iOS build issues
+[target.'cfg(target_os = "ios")'.build-dependencies]
+security-framework = "=2.10.0"
+security-framework-sys = "=2.10.0"
