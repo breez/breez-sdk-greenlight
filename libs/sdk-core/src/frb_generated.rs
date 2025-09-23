@@ -2003,10 +2003,12 @@ impl SseDecode for crate::models::BuyBitcoinRequest {
         let mut var_openingFeeParams =
             <Option<crate::models::OpeningFeeParams>>::sse_decode(deserializer);
         let mut var_redirectUrl = <Option<String>>::sse_decode(deserializer);
+        let mut var_fiatCurrencyCode = <Option<String>>::sse_decode(deserializer);
         return crate::models::BuyBitcoinRequest {
             provider: var_provider,
             opening_fee_params: var_openingFeeParams,
             redirect_url: var_redirectUrl,
+            fiat_currency_code: var_fiatCurrencyCode,
         };
     }
 }
@@ -4322,6 +4324,7 @@ impl flutter_rust_bridge::IntoDart for crate::models::BuyBitcoinRequest {
             self.provider.into_into_dart().into_dart(),
             self.opening_fee_params.into_into_dart().into_dart(),
             self.redirect_url.into_into_dart().into_dart(),
+            self.fiat_currency_code.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -6626,6 +6629,7 @@ impl SseEncode for crate::models::BuyBitcoinRequest {
         <crate::models::BuyBitcoinProvider>::sse_encode(self.provider, serializer);
         <Option<crate::models::OpeningFeeParams>>::sse_encode(self.opening_fee_params, serializer);
         <Option<String>>::sse_encode(self.redirect_url, serializer);
+        <Option<String>>::sse_encode(self.fiat_currency_code, serializer);
     }
 }
 
@@ -8854,6 +8858,7 @@ mod io {
                 provider: self.provider.cst_decode(),
                 opening_fee_params: self.opening_fee_params.cst_decode(),
                 redirect_url: self.redirect_url.cst_decode(),
+                fiat_currency_code: self.fiat_currency_code.cst_decode(),
             }
         }
     }
@@ -10205,6 +10210,7 @@ mod io {
                 provider: Default::default(),
                 opening_fee_params: core::ptr::null_mut(),
                 redirect_url: core::ptr::null_mut(),
+                fiat_currency_code: core::ptr::null_mut(),
             }
         }
     }
@@ -12713,6 +12719,7 @@ mod io {
         provider: i32,
         opening_fee_params: *mut wire_cst_opening_fee_params,
         redirect_url: *mut wire_cst_list_prim_u_8_strict,
+        fiat_currency_code: *mut wire_cst_list_prim_u_8_strict,
     }
     #[repr(C)]
     #[derive(Clone, Copy)]

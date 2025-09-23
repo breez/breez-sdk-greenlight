@@ -2808,6 +2808,7 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     wireObj.provider = cst_encode_buy_bitcoin_provider(apiObj.provider);
     wireObj.opening_fee_params = cst_encode_opt_box_autoadd_opening_fee_params(apiObj.openingFeeParams);
     wireObj.redirect_url = cst_encode_opt_String(apiObj.redirectUrl);
+    wireObj.fiat_currency_code = cst_encode_opt_String(apiObj.fiatCurrencyCode);
   }
 
   @protected
@@ -6628,6 +6629,8 @@ final class wire_cst_buy_bitcoin_request extends ffi.Struct {
   external ffi.Pointer<wire_cst_opening_fee_params> opening_fee_params;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> redirect_url;
+
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> fiat_currency_code;
 }
 
 final class wire_cst_check_message_request extends ffi.Struct {

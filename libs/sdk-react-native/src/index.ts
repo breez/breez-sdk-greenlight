@@ -45,6 +45,7 @@ export interface BuyBitcoinRequest {
     provider: BuyBitcoinProvider
     openingFeeParams?: OpeningFeeParams
     redirectUrl?: string
+    fiatCurrencyCode?: string
 }
 
 export interface BuyBitcoinResponse {

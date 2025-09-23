@@ -41,10 +41,19 @@ class BuyBitcoinRequest {
   /// For Moonpay, see <https://dev.moonpay.com/docs/on-ramp-configure-user-journey-params>
   final String? redirectUrl;
 
-  const BuyBitcoinRequest({required this.provider, this.openingFeeParams, this.redirectUrl});
+  /// Fiat currency used for the transaction, defaults to USD
+  final String? fiatCurrencyCode;
+
+  const BuyBitcoinRequest({
+    required this.provider,
+    this.openingFeeParams,
+    this.redirectUrl,
+    this.fiatCurrencyCode,
+  });
 
   @override
-  int get hashCode => provider.hashCode ^ openingFeeParams.hashCode ^ redirectUrl.hashCode;
+  int get hashCode =>
+      provider.hashCode ^ openingFeeParams.hashCode ^ redirectUrl.hashCode ^ fiatCurrencyCode.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -53,7 +62,8 @@ class BuyBitcoinRequest {
           runtimeType == other.runtimeType &&
           provider == other.provider &&
           openingFeeParams == other.openingFeeParams &&
-          redirectUrl == other.redirectUrl;
+          redirectUrl == other.redirectUrl &&
+          fiatCurrencyCode == other.fiatCurrencyCode;
 }
 
 class BuyBitcoinResponse {

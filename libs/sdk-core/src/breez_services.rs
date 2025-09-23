@@ -1446,7 +1446,12 @@ impl BreezServices {
             .await?;
         let url = self
             .buy_bitcoin_api
-            .buy_bitcoin(req.provider, &swap_info, req.redirect_url)
+            .buy_bitcoin(
+                req.provider,
+                &swap_info,
+                req.redirect_url,
+                req.fiat_currency_code,
+            )
             .await?;
 
         Ok(BuyBitcoinResponse {
@@ -3387,6 +3392,7 @@ pub(crate) mod tests {
                 provider: BuyBitcoinProvider::Moonpay,
                 opening_fee_params: None,
                 redirect_url: None,
+                fiat_currency_code: None,
             })
             .await?
             .url;
