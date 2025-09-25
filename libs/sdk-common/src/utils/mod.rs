@@ -17,3 +17,8 @@ pub(crate) fn default_true() -> bool {
 pub use std::rc::Rc as Arc;
 #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 pub use std::sync::Arc;
+
+#[cfg(all(target_family = "wasm", target_os = "unknown"))]
+pub type Weak<T> = std::rc::Weak<T>;
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
+pub type Weak<T> = std::sync::Weak<T>;
