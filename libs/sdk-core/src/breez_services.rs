@@ -1744,7 +1744,7 @@ impl BreezServices {
 
                     match log_message_res {
                         Some(l) => {
-                            let prefix_len = l.find(':').map_or(0, |len| len + 2);
+                            let prefix_len = l.find(':').map_or(0, |len| len);
                             let log_message = l.split_at(prefix_len).1.trim_start();
                             match l.to_ascii_lowercase().as_str() {
                                 s if s.starts_with("broken") => {
