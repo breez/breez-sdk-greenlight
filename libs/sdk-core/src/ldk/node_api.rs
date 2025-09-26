@@ -5,6 +5,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
 use chrono::{DateTime, Utc};
+use hex::ToHex;
 use ldk_node::bitcoin::hashes::sha256::Hash as Sha256;
 use ldk_node::bitcoin::hashes::Hash;
 use ldk_node::bitcoin::secp256k1::PublicKey;
@@ -22,12 +23,13 @@ use tokio_stream::wrappers::errors::BroadcastStreamRecvError::Lagged;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{Stream, StreamExt};
 
+use crate::bitcoin::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::bitcoin::secp256k1::Secp256k1;
-use crate::bitcoin::util::bip32::{ChildNumber, ExtendedPrivKey};
 use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::grpc;
 use crate::ldk::event_handling::start_event_handling;
+use crate::ldk::store_builder::{build_locking_store, build_vss_store};
 use crate::lightning_invoice::RawBolt11Invoice;
 use crate::models::{
     LspAPI, OpeningFeeParams, OpeningFeeParamsMenu, ReceivePaymentRequest, ReceivePaymentResponse,
@@ -50,6 +52,7 @@ pub(crate) struct Ldk {
     node: Arc<Node>,
     incoming_payments_tx: broadcast::Sender<IncomingPayment>,
     preimages: PreimageStore,
+    remote_lock_shutdown_tx: mpsc::Sender<()>,
 }
 
 impl Ldk {
@@ -83,6 +86,23 @@ impl Ldk {
             .map_err(|e| NodeError::Generic(format!("Invalid LSP address: {e}")))?;
         builder.set_liquidity_source_lsps2(lsps2, address, None);
 
+        let store_id = match config.network {
+            Network::Regtest => {
+                // Regtest instance of VSS does not implement authentication,
+                // that is why the hash of the seed is used to avoid collisions.
+                let seed_hash = Sha256::hash(&seed).encode_hex::<String>();
+                format!("{seed_hash}/ldk_node")
+            }
+            _ => "ldk_node".to_string(),
+        };
+        let vss_store = build_vss_store(ldk_config.vss_url.to_string(), store_id);
+
+        // It is not possible to use oneshot here, because `oneshot::Sender::send()`
+        // consumes itself, not allowing to call `closed()` method after.
+        let (remote_lock_shutdown_tx, remote_lock_shutdown_rx) = mpsc::channel(1);
+        let _locking_store =
+            build_locking_store(&config.working_dir, vss_store, remote_lock_shutdown_rx).await?;
+
         // TODO: Use remote/local storage.
         builder.set_storage_dir_path(config.working_dir);
 
@@ -100,6 +120,7 @@ impl Ldk {
             node,
             incoming_payments_tx,
             preimages: PreimageStore::default(),
+            remote_lock_shutdown_tx,
         })
     }
 
@@ -266,12 +287,20 @@ impl NodeAPI for Ldk {
             shutdown,
         )
         .await;
+        info!("Event handling stopped");
 
         debug!("Stopping LDK Node");
         if let Err(e) = self.node.stop() {
             error!("Error on stopping LDK Node: {e}");
         }
         debug!("LDK Node stopped");
+
+        debug!("Stopping remote lock refreshing");
+        let _ = self.remote_lock_shutdown_tx.send(()).await;
+        debug!("Waiting for remote lock refreshing stopped");
+        self.remote_lock_shutdown_tx.closed().await;
+
+        debug!("Exiting Ldk::start()");
     }
 
     async fn start_keep_alive(&self, _shutdown: watch::Receiver<()>) {
