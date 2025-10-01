@@ -1,9 +1,10 @@
 use std::ops::Deref;
-use std::sync::{Arc, Mutex};
 
 use ldk_node::bitcoin::io::ErrorKind;
 use ldk_node::lightning::io;
 use ldk_node::lightning::util::persist::KVStore;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Connection, Error as SqlError, OptionalExtension};
 use tokio::runtime::Handle;
 
@@ -14,8 +15,10 @@ use crate::persist::error::PersistError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("Local error: {0}")]
-    Local(#[from] SqlError),
+    #[error("Local pool error: {0}")]
+    LocalPool(#[from] r2d2::Error),
+    #[error("Local sql error: {0}")]
+    LocalSql(#[from] SqlError),
     #[error("Remote error: {0}")]
     Remote(#[from] RemoteError),
 }
@@ -23,8 +26,11 @@ pub enum Error {
 impl From<Error> for NodeError {
     fn from(err: Error) -> Self {
         match err {
-            Error::Local(e) => {
-                PersistError::Sql(format!("Mirroring store local error: {e}")).into()
+            Error::LocalPool(e) => {
+                PersistError::Sql(format!("Mirroring store local pool error: {e}")).into()
+            }
+            Error::LocalSql(e) => {
+                PersistError::Sql(format!("Mirroring store local sql error: {e}")).into()
             }
             Error::Remote(e) => {
                 NodeError::ServiceConnectivity(format!("Mirroring store remote error: {e}"))
@@ -36,16 +42,17 @@ impl From<Error> for NodeError {
 pub struct MirroringStore<S: Deref<Target = T>, T: VersionedStore + Send + Sync> {
     handle: Handle,
     remote_client: S,
-    conn: Arc<Mutex<Connection>>,
+    pool: Pool<SqliteConnectionManager>,
 }
 
 impl<S: Deref<Target = T>, T: VersionedStore + Send + Sync> MirroringStore<S, T> {
     pub async fn new(
         handle: Handle,
-        conn: Connection,
+        pool: Pool<SqliteConnectionManager>,
         remote: S,
         previous_holder: PreviousHolder,
     ) -> Result<Self, Error> {
+        let conn = &*pool.get()?;
         conn.execute(
             "CREATE TABLE IF NOT EXISTS store (
                 primary_ns TEXT NOT NULL,
@@ -59,28 +66,28 @@ impl<S: Deref<Target = T>, T: VersionedStore + Send + Sync> MirroringStore<S, T>
             [],
         )?;
 
-        let is_dirty = is_dirty(&conn)?;
+        let is_dirty = is_dirty(conn)?;
         match (previous_holder, is_dirty) {
             (PreviousHolder::LocalInstance, false) => {
                 info!("Local store is clean, nothing new on remote. Skipping reconciliation.");
             }
             (PreviousHolder::LocalInstance, true) => {
                 info!("Local store is *dirty*, nothing new on remote. Uploading to remote...");
-                upload(&conn, &*remote).await?;
+                upload(conn, &*remote).await?;
             }
             (PreviousHolder::RemoteInstance, false) => {
                 info!("Local store is clean, something new on remote possible. Downloading from remote...");
-                download(&conn, &*remote).await?;
+                download(conn, &*remote).await?;
             }
             (PreviousHolder::RemoteInstance, true) => {
                 info!("Local store is *dirty*, something new on remote possible. Downloading from remote...");
-                download(&conn, &*remote).await?;
+                download(conn, &*remote).await?;
             }
         };
 
         Ok(Self {
             handle,
-            conn: Arc::new(Mutex::new(conn)),
+            pool,
             remote_client: remote,
         })
     }
@@ -88,7 +95,7 @@ impl<S: Deref<Target = T>, T: VersionedStore + Send + Sync> MirroringStore<S, T>
 
 impl<S: Deref<Target = T>, T: VersionedStore + Send + Sync> KVStore for MirroringStore<S, T> {
     fn read(&self, primary_ns: &str, secondary_ns: &str, key: &str) -> io::Result<Vec<u8>> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.pool.get().map_err(other)?;
         conn.query_row(
             "SELECT value FROM store WHERE primary_ns = ?1 AND secondary_ns = ?2 AND key = ?3",
             params![primary_ns, secondary_ns, key],
@@ -108,7 +115,7 @@ impl<S: Deref<Target = T>, T: VersionedStore + Send + Sync> KVStore for Mirrorin
     ) -> io::Result<()> {
         let full_key = format!("{primary_ns}/{secondary_ns}/{key}");
         debug!("Writing {full_key} {} bytes", value.len());
-        let conn = self.conn.lock().unwrap();
+        let conn = self.pool.get().map_err(other)?;
 
         let local_data: Option<(i64, Vec<u8>)> = conn.query_row(
             "SELECT local_version, value FROM store WHERE primary_ns = ?1 AND secondary_ns = ?2 AND key = ?3",
@@ -162,7 +169,7 @@ impl<S: Deref<Target = T>, T: VersionedStore + Send + Sync> KVStore for Mirrorin
         key: &str,
         _lazy: bool,
     ) -> io::Result<()> {
-        let conn = self.conn.lock().unwrap();
+        let conn = self.pool.get().map_err(other)?;
 
         conn.execute(
             "DELETE FROM store WHERE primary_ns = ?1 AND secondary_ns = ?2 AND key = ?3",
@@ -178,9 +185,9 @@ impl<S: Deref<Target = T>, T: VersionedStore + Send + Sync> KVStore for Mirrorin
     }
 
     fn list(&self, primary_ns: &str, secondary_ns: &str) -> io::Result<Vec<String>> {
-        self.conn
-            .lock()
-            .unwrap()
+        self.pool
+            .get()
+            .map_err(other)?
             .prepare("SELECT key FROM store WHERE primary_ns = ?1 AND secondary_ns = ?2")
             .map_err(other)?
             .query_map(params![primary_ns, secondary_ns], |row| row.get(0))
@@ -259,13 +266,15 @@ mod tests {
     use super::*;
     use crate::ldk::store::mock_versioned_store::MockVersionedStore;
     use crate::ldk::store::time_lock::PreviousHolder;
+    use r2d2_sqlite::SqliteConnectionManager;
     use rusqlite::backup::Backup;
     use rusqlite::Connection;
     use std::time::Duration;
     use tokio::runtime::Handle;
 
-    fn create_in_memory_db() -> Connection {
-        Connection::open_in_memory().unwrap()
+    fn create_in_memory_db() -> Pool<SqliteConnectionManager> {
+        let manager = SqliteConnectionManager::memory();
+        Pool::new(manager).unwrap()
     }
 
     #[tokio::test(flavor = "multi_thread")]
@@ -366,8 +375,11 @@ mod tests {
         {
             // Recovery of a dirty instance with another instance accessing the
             // store in between.
-            let mut dirty_local_db = create_in_memory_db();
-            clone_data(&store.conn.lock().unwrap(), &mut dirty_local_db);
+            let dirty_local_db = create_in_memory_db();
+            clone_data(
+                &*store.pool.get().unwrap(),
+                &mut *dirty_local_db.get().unwrap(),
+            );
 
             let store = MirroringStore::new(
                 Handle::current().clone(),
@@ -384,8 +396,11 @@ mod tests {
         {
             // Recovery of a dirty instance with *no* other instances accessing
             // the store in between.
-            let mut dirty_local_db = create_in_memory_db();
-            clone_data(&store.conn.lock().unwrap(), &mut dirty_local_db);
+            let dirty_local_db = create_in_memory_db();
+            clone_data(
+                &*store.pool.get().unwrap(),
+                &mut *dirty_local_db.get().unwrap(),
+            );
             mock_store.should_fail_put = false;
 
             let store = MirroringStore::new(
