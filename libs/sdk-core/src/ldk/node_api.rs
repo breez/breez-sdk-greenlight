@@ -29,7 +29,7 @@ use crate::breez_services::{OpenChannelParams, Receiver};
 use crate::error::{ReceivePaymentError, SdkError, SdkResult};
 use crate::grpc;
 use crate::ldk::event_handling::start_event_handling;
-use crate::ldk::store_builder::{build_locking_store, build_vss_store};
+use crate::ldk::store_builder::{build_mirroring_store, build_vss_store};
 use crate::lightning_invoice::RawBolt11Invoice;
 use crate::models::{
     LspAPI, OpeningFeeParams, OpeningFeeParamsMenu, ReceivePaymentRequest, ReceivePaymentResponse,
@@ -45,6 +45,7 @@ use crate::{
 };
 
 pub(crate) type PreimageStore = Arc<Mutex<std::collections::HashMap<PaymentHash, PaymentPreimage>>>;
+type KVStore = Arc<dyn ldk_node::lightning::util::persist::KVStore + Sync + Send>;
 
 pub(crate) struct Ldk {
     network: Network,
@@ -100,14 +101,12 @@ impl Ldk {
         // It is not possible to use oneshot here, because `oneshot::Sender::send()`
         // consumes itself, not allowing to call `closed()` method after.
         let (remote_lock_shutdown_tx, remote_lock_shutdown_rx) = mpsc::channel(1);
-        let _locking_store =
-            build_locking_store(&config.working_dir, vss_store, remote_lock_shutdown_rx).await?;
-
-        // TODO: Use remote/local storage.
-        builder.set_storage_dir_path(config.working_dir);
+        let mirroring_store =
+            build_mirroring_store(&config.working_dir, vss_store, remote_lock_shutdown_rx).await?;
+        let kv_store: KVStore = Arc::new(mirroring_store);
 
         let node = builder
-            .build()
+            .build_with_store(kv_store)
             .map_err(|e| NodeError::Generic(format!("Fail to build LDK Node: {e}")))?;
         let node = Arc::new(node);
         debug!("LDK Node was built");

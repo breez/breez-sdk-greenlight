@@ -4,21 +4,23 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+use tokio::runtime::Handle;
 use tokio::sync::mpsc;
 use vss_client::client::VssClient;
 use vss_client::error::VssError;
 use vss_client::util::retry::{ExponentialBackoffRetryPolicy, MaxAttemptsRetryPolicy, RetryPolicy};
 
-use crate::ldk::store::vss_store::VssStore;
+use crate::ldk::store::{PreviousHolder, VssStore};
 use crate::node_api::NodeResult;
 use crate::persist::error::PersistError;
 
 pub(crate) type CustomRetryPolicy = MaxAttemptsRetryPolicy<ExponentialBackoffRetryPolicy<VssError>>;
-
-pub(crate) type LockingStore =
-    crate::ldk::store::locking_store::LockingStore<VssStore<CustomRetryPolicy>>;
+pub(crate) type LockingStore = crate::ldk::store::LockingStore<VssStore<CustomRetryPolicy>>;
+pub(crate) type MirroringStore = crate::ldk::store::MirroringStore<Arc<LockingStore>, LockingStore>;
 
 pub(crate) fn build_vss_store(url: String, store_id: String) -> VssStore<CustomRetryPolicy> {
     let vss_client = VssClient::new(
@@ -28,13 +30,29 @@ pub(crate) fn build_vss_store(url: String, store_id: String) -> VssStore<CustomR
     VssStore::new(vss_client, store_id)
 }
 
-pub(crate) async fn build_locking_store(
+pub(crate) async fn build_mirroring_store(
     working_dir: &str,
     vss_store: VssStore<CustomRetryPolicy>,
     remote_lock_shutdown_rx: mpsc::Receiver<()>,
-) -> NodeResult<Arc<LockingStore>> {
+) -> NodeResult<MirroringStore> {
+    let (locking_store, previous_holder) =
+        build_locking_store(working_dir, vss_store, remote_lock_shutdown_rx).await?;
+
+    let sqlite_file_path = Path::new(working_dir).join("ldk_node_storage.sql");
+    let manager = SqliteConnectionManager::file(sqlite_file_path);
+    let pool = Pool::new(manager).unwrap();
+    MirroringStore::new(Handle::current(), pool, locking_store, previous_holder)
+        .await
+        .map_err(Into::into)
+}
+
+async fn build_locking_store(
+    working_dir: &str,
+    vss_store: VssStore<CustomRetryPolicy>,
+    remote_lock_shutdown_rx: mpsc::Receiver<()>,
+) -> NodeResult<(Arc<LockingStore>, PreviousHolder)> {
     let instance_id = read_or_generate_instance_id(working_dir)?;
-    let (locking_store, _previous_holder) = LockingStore::new(instance_id, vss_store)
+    let (locking_store, previous_holder) = LockingStore::new(instance_id, vss_store)
         .await
         .map_err(|e| PersistError::Generic(format!("Failed to build locking store: {e}")))?;
     let locking_store = Arc::new(locking_store);
@@ -42,7 +60,7 @@ pub(crate) async fn build_locking_store(
         Arc::clone(&locking_store),
         remote_lock_shutdown_rx,
     ));
-    Ok(locking_store)
+    Ok((locking_store, previous_holder))
 }
 
 fn read_or_generate_instance_id(working_dir: &str) -> Result<String, PersistError> {
