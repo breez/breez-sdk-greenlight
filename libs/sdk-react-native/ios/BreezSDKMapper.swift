@@ -388,6 +388,18 @@ enum BreezSDKMapper {
             }
             mempoolspaceUrl = mempoolspaceUrlTmp
         }
+        guard let esploraUrl = config["esploraUrl"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "esploraUrl", typeName: "Config"))
+        }
+        guard let vssUrl = config["vssUrl"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "vssUrl", typeName: "Config"))
+        }
+        guard let rgsUrl = config["rgsUrl"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "rgsUrl", typeName: "Config"))
+        }
+        guard let lsps2Address = config["lsps2Address"] as? String else {
+            throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "lsps2Address", typeName: "Config"))
+        }
         guard let workingDir = config["workingDir"] as? String else {
             throw SdkError.Generic(message: errMissingMandatoryField(fieldName: "workingDir", typeName: "Config"))
         }
@@ -424,7 +436,7 @@ enum BreezSDKMapper {
         }
         let nodeConfig = try asNodeConfig(nodeConfig: nodeConfigTmp)
 
-        return Config(breezserver: breezserver, chainnotifierUrl: chainnotifierUrl, mempoolspaceUrl: mempoolspaceUrl, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent, exemptfeeMsat: exemptfeeMsat, nodeConfig: nodeConfig)
+        return Config(breezserver: breezserver, chainnotifierUrl: chainnotifierUrl, mempoolspaceUrl: mempoolspaceUrl, esploraUrl: esploraUrl, vssUrl: vssUrl, rgsUrl: rgsUrl, lsps2Address: lsps2Address, workingDir: workingDir, network: network, paymentTimeoutSec: paymentTimeoutSec, defaultLspId: defaultLspId, apiKey: apiKey, maxfeePercent: maxfeePercent, exemptfeeMsat: exemptfeeMsat, nodeConfig: nodeConfig)
     }
 
     static func dictionaryOf(config: Config) -> [String: Any?] {
@@ -432,6 +444,10 @@ enum BreezSDKMapper {
             "breezserver": config.breezserver,
             "chainnotifierUrl": config.chainnotifierUrl,
             "mempoolspaceUrl": config.mempoolspaceUrl == nil ? nil : config.mempoolspaceUrl,
+            "esploraUrl": config.esploraUrl,
+            "vssUrl": config.vssUrl,
+            "rgsUrl": config.rgsUrl,
+            "lsps2Address": config.lsps2Address,
             "workingDir": config.workingDir,
             "network": valueOf(network: config.network),
             "paymentTimeoutSec": config.paymentTimeoutSec,

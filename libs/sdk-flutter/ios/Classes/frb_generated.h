@@ -340,6 +340,10 @@ typedef struct wire_cst_config {
   struct wire_cst_list_prim_u_8_strict *breezserver;
   struct wire_cst_list_prim_u_8_strict *chainnotifier_url;
   struct wire_cst_list_prim_u_8_strict *mempoolspace_url;
+  struct wire_cst_list_prim_u_8_strict *esplora_url;
+  struct wire_cst_list_prim_u_8_strict *vss_url;
+  struct wire_cst_list_prim_u_8_strict *rgs_url;
+  struct wire_cst_list_prim_u_8_strict *lsps2_address;
   struct wire_cst_list_prim_u_8_strict *working_dir;
   int32_t network;
   uint32_t payment_timeout_sec;

@@ -73,6 +73,10 @@ export interface Config {
     breezserver: string
     chainnotifierUrl: string
     mempoolspaceUrl?: string
+    esploraUrl: string
+    vssUrl: string
+    rgsUrl: string
+    lsps2Address: string
     workingDir: string
     network: Network
     paymentTimeoutSec: number

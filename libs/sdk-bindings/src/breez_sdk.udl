@@ -148,6 +148,10 @@ dictionary Config {
     string breezserver;
     string chainnotifier_url;
     string? mempoolspace_url;
+    string esplora_url;
+    string vss_url;
+    string rgs_url;
+    string lsps2_address;
     string working_dir;
     Network network;
     u32 payment_timeout_sec;

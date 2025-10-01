@@ -2084,6 +2084,10 @@ impl SseDecode for crate::models::Config {
         let mut var_breezserver = <String>::sse_decode(deserializer);
         let mut var_chainnotifierUrl = <String>::sse_decode(deserializer);
         let mut var_mempoolspaceUrl = <Option<String>>::sse_decode(deserializer);
+        let mut var_esploraUrl = <String>::sse_decode(deserializer);
+        let mut var_vssUrl = <String>::sse_decode(deserializer);
+        let mut var_rgsUrl = <String>::sse_decode(deserializer);
+        let mut var_lsps2Address = <String>::sse_decode(deserializer);
         let mut var_workingDir = <String>::sse_decode(deserializer);
         let mut var_network = <crate::binding::Network>::sse_decode(deserializer);
         let mut var_paymentTimeoutSec = <u32>::sse_decode(deserializer);
@@ -2096,6 +2100,10 @@ impl SseDecode for crate::models::Config {
             breezserver: var_breezserver,
             chainnotifier_url: var_chainnotifierUrl,
             mempoolspace_url: var_mempoolspaceUrl,
+            esplora_url: var_esploraUrl,
+            vss_url: var_vssUrl,
+            rgs_url: var_rgsUrl,
+            lsps2_address: var_lsps2Address,
             working_dir: var_workingDir,
             network: var_network,
             payment_timeout_sec: var_paymentTimeoutSec,
@@ -4447,6 +4455,10 @@ impl flutter_rust_bridge::IntoDart for crate::models::Config {
             self.breezserver.into_into_dart().into_dart(),
             self.chainnotifier_url.into_into_dart().into_dart(),
             self.mempoolspace_url.into_into_dart().into_dart(),
+            self.esplora_url.into_into_dart().into_dart(),
+            self.vss_url.into_into_dart().into_dart(),
+            self.rgs_url.into_into_dart().into_dart(),
+            self.lsps2_address.into_into_dart().into_dart(),
             self.working_dir.into_into_dart().into_dart(),
             self.network.into_into_dart().into_dart(),
             self.payment_timeout_sec.into_into_dart().into_dart(),
@@ -6687,6 +6699,10 @@ impl SseEncode for crate::models::Config {
         <String>::sse_encode(self.breezserver, serializer);
         <String>::sse_encode(self.chainnotifier_url, serializer);
         <Option<String>>::sse_encode(self.mempoolspace_url, serializer);
+        <String>::sse_encode(self.esplora_url, serializer);
+        <String>::sse_encode(self.vss_url, serializer);
+        <String>::sse_encode(self.rgs_url, serializer);
+        <String>::sse_encode(self.lsps2_address, serializer);
         <String>::sse_encode(self.working_dir, serializer);
         <crate::binding::Network>::sse_encode(self.network, serializer);
         <u32>::sse_encode(self.payment_timeout_sec, serializer);
@@ -8904,6 +8920,10 @@ mod io {
                 breezserver: self.breezserver.cst_decode(),
                 chainnotifier_url: self.chainnotifier_url.cst_decode(),
                 mempoolspace_url: self.mempoolspace_url.cst_decode(),
+                esplora_url: self.esplora_url.cst_decode(),
+                vss_url: self.vss_url.cst_decode(),
+                rgs_url: self.rgs_url.cst_decode(),
+                lsps2_address: self.lsps2_address.cst_decode(),
                 working_dir: self.working_dir.cst_decode(),
                 network: self.network.cst_decode(),
                 payment_timeout_sec: self.payment_timeout_sec.cst_decode(),
@@ -10273,6 +10293,10 @@ mod io {
                 breezserver: core::ptr::null_mut(),
                 chainnotifier_url: core::ptr::null_mut(),
                 mempoolspace_url: core::ptr::null_mut(),
+                esplora_url: core::ptr::null_mut(),
+                vss_url: core::ptr::null_mut(),
+                rgs_url: core::ptr::null_mut(),
+                lsps2_address: core::ptr::null_mut(),
                 working_dir: core::ptr::null_mut(),
                 network: Default::default(),
                 payment_timeout_sec: Default::default(),
@@ -12746,6 +12770,10 @@ mod io {
         breezserver: *mut wire_cst_list_prim_u_8_strict,
         chainnotifier_url: *mut wire_cst_list_prim_u_8_strict,
         mempoolspace_url: *mut wire_cst_list_prim_u_8_strict,
+        esplora_url: *mut wire_cst_list_prim_u_8_strict,
+        vss_url: *mut wire_cst_list_prim_u_8_strict,
+        rgs_url: *mut wire_cst_list_prim_u_8_strict,
+        lsps2_address: *mut wire_cst_list_prim_u_8_strict,
         working_dir: *mut wire_cst_list_prim_u_8_strict,
         network: i32,
         payment_timeout_sec: u32,

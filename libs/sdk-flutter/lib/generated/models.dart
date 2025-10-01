@@ -122,6 +122,10 @@ class Config {
   ///
   /// Note that, if specified, the URL has to be in the format: `https://mempool.space/api`
   final String? mempoolspaceUrl;
+  final String esploraUrl;
+  final String vssUrl;
+  final String rgsUrl;
+  final String lsps2Address;
 
   /// Directory in which all SDK files (DB, log) are stored. Defaults to ".", otherwise if it's customized,
   /// the folder should exist before starting the SDK.
@@ -142,6 +146,10 @@ class Config {
     required this.breezserver,
     required this.chainnotifierUrl,
     this.mempoolspaceUrl,
+    required this.esploraUrl,
+    required this.vssUrl,
+    required this.rgsUrl,
+    required this.lsps2Address,
     required this.workingDir,
     required this.network,
     required this.paymentTimeoutSec,
@@ -157,6 +165,10 @@ class Config {
       breezserver.hashCode ^
       chainnotifierUrl.hashCode ^
       mempoolspaceUrl.hashCode ^
+      esploraUrl.hashCode ^
+      vssUrl.hashCode ^
+      rgsUrl.hashCode ^
+      lsps2Address.hashCode ^
       workingDir.hashCode ^
       network.hashCode ^
       paymentTimeoutSec.hashCode ^
@@ -174,6 +186,10 @@ class Config {
           breezserver == other.breezserver &&
           chainnotifierUrl == other.chainnotifierUrl &&
           mempoolspaceUrl == other.mempoolspaceUrl &&
+          esploraUrl == other.esploraUrl &&
+          vssUrl == other.vssUrl &&
+          rgsUrl == other.rgsUrl &&
+          lsps2Address == other.lsps2Address &&
           workingDir == other.workingDir &&
           network == other.network &&
           paymentTimeoutSec == other.paymentTimeoutSec &&

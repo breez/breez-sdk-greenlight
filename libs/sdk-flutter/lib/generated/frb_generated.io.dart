@@ -2853,6 +2853,10 @@ abstract class BreezSdkBindingsApiImplPlatform extends BaseApiImpl<BreezSdkBindi
     wireObj.breezserver = cst_encode_String(apiObj.breezserver);
     wireObj.chainnotifier_url = cst_encode_String(apiObj.chainnotifierUrl);
     wireObj.mempoolspace_url = cst_encode_opt_String(apiObj.mempoolspaceUrl);
+    wireObj.esplora_url = cst_encode_String(apiObj.esploraUrl);
+    wireObj.vss_url = cst_encode_String(apiObj.vssUrl);
+    wireObj.rgs_url = cst_encode_String(apiObj.rgsUrl);
+    wireObj.lsps2_address = cst_encode_String(apiObj.lsps2Address);
     wireObj.working_dir = cst_encode_String(apiObj.workingDir);
     wireObj.network = cst_encode_network(apiObj.network);
     wireObj.payment_timeout_sec = cst_encode_u_32(apiObj.paymentTimeoutSec);
@@ -6675,6 +6679,14 @@ final class wire_cst_config extends ffi.Struct {
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> chainnotifier_url;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> mempoolspace_url;
+
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> esplora_url;
+
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> vss_url;
+
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> rgs_url;
+
+  external ffi.Pointer<wire_cst_list_prim_u_8_strict> lsps2_address;
 
   external ffi.Pointer<wire_cst_list_prim_u_8_strict> working_dir;
 

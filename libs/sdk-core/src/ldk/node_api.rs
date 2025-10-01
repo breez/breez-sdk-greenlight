@@ -32,8 +32,8 @@ use crate::ldk::event_handling::start_event_handling;
 use crate::ldk::store_builder::{build_locking_store, build_vss_store};
 use crate::lightning_invoice::RawBolt11Invoice;
 use crate::models::{
-    LspAPI, OpeningFeeParams, OpeningFeeParamsMenu, ReceivePaymentRequest, ReceivePaymentResponse,
-    INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
+    Config, LspAPI, OpeningFeeParams, OpeningFeeParamsMenu, ReceivePaymentRequest,
+    ReceivePaymentResponse, INVOICE_PAYMENT_FEE_EXPIRY_SECONDS,
 };
 use crate::node_api::{
     CreateInvoiceRequest, FetchBolt11Result, IncomingPayment, NodeAPI, NodeError, NodeResult,
@@ -47,7 +47,7 @@ use crate::{
 pub(crate) type PreimageStore = Arc<Mutex<std::collections::HashMap<PaymentHash, PaymentPreimage>>>;
 
 pub(crate) struct Ldk {
-    network: Network,
+    config: Config,
     seed: [u8; 64],
     node: Arc<Node>,
     incoming_payments_tx: broadcast::Sender<IncomingPayment>,
@@ -57,7 +57,7 @@ pub(crate) struct Ldk {
 
 impl Ldk {
     pub async fn build(
-        config: crate::models::Config,
+        config: Config,
         seed: &[u8],
         _restore_only: Option<bool>,
     ) -> NodeResult<Self> {
@@ -76,13 +76,11 @@ impl Ldk {
         builder.set_log_facade_logger();
         builder.set_network(to_ldk_network(&config.network));
 
-        let ldk_config = crate::ldk::config::Config::regtest();
-        builder.set_chain_source_esplora(ldk_config.esplora_url.to_string(), None);
-        builder.set_gossip_source_rgs(ldk_config.rgs_url.to_string());
+        builder.set_chain_source_esplora(config.esplora_url.clone(), None);
+        builder.set_gossip_source_rgs(config.rgs_url.clone());
 
-        let lsps2 = PublicKey::from_str(ldk_config.lsps2_id)
-            .map_err(|e| NodeError::Generic(format!("Invalid LSP public key: {e}")))?;
-        let address = SocketAddress::from_str(ldk_config.lsps2_address)
+        let lsps2 = get_lsp_id(&config)?;
+        let address = SocketAddress::from_str(&config.lsps2_address)
             .map_err(|e| NodeError::Generic(format!("Invalid LSP address: {e}")))?;
         builder.set_liquidity_source_lsps2(lsps2, address, None);
 
@@ -95,7 +93,7 @@ impl Ldk {
             }
             _ => "ldk_node".to_string(),
         };
-        let vss_store = build_vss_store(ldk_config.vss_url.to_string(), store_id);
+        let vss_store = build_vss_store(config.vss_url.clone(), store_id);
 
         // It is not possible to use oneshot here, because `oneshot::Sender::send()`
         // consumes itself, not allowing to call `closed()` method after.
@@ -104,7 +102,7 @@ impl Ldk {
             build_locking_store(&config.working_dir, vss_store, remote_lock_shutdown_rx).await?;
 
         // TODO: Use remote/local storage.
-        builder.set_storage_dir_path(config.working_dir);
+        builder.set_storage_dir_path(config.working_dir.clone());
 
         let node = builder
             .build()
@@ -115,7 +113,7 @@ impl Ldk {
         let (incoming_payments_tx, _) = broadcast::channel(10);
 
         Ok(Self {
-            network: config.network,
+            config,
             seed,
             node,
             incoming_payments_tx,
@@ -377,7 +375,7 @@ impl NodeAPI for Ldk {
 
     async fn derive_bip32_key(&self, path: Vec<ChildNumber>) -> NodeResult<ExtendedPrivKey> {
         Ok(
-            ExtendedPrivKey::new_master(self.network.into(), &self.seed)?
+            ExtendedPrivKey::new_master(self.config.network.into(), &self.seed)?
                 .derive_priv(&Secp256k1::new(), &path)?,
         )
     }
@@ -416,16 +414,13 @@ impl LspAPI for Ldk {
             max_client_to_self_delay: 10_000,
             promise: "I promise".to_string(),
         };
-        let config = crate::ldk::config::Config::regtest();
-        let pubkey = PublicKey::from_str(config.lsps2_id).map_err(|e| SdkError::Generic {
-            err: format!("Invalid LSP public key: {e}"),
-        })?;
+        let pubkey = get_lsp_id(&self.config)?;
         let lsp = LspInformation {
             id: pubkey.to_string(),
             name: "Breez SDK Regtest LSPS2".to_string(),
             widget_url: "http://widget.example.com".to_string(),
             pubkey: pubkey.to_string(),
-            host: config.lsps2_address.to_string(),
+            host: self.config.lsps2_address.clone(),
             base_fee_msat: 1_000,
             fee_rate: 0.0,
             time_lock_delta: 72,
@@ -566,4 +561,13 @@ fn to_ldk_network(network: &Network) -> ldk_node::bitcoin::network::Network {
         Network::Signet => ldk_node::bitcoin::network::Network::Signet,
         Network::Regtest => ldk_node::bitcoin::network::Network::Regtest,
     }
+}
+
+fn get_lsp_id(config: &Config) -> NodeResult<PublicKey> {
+    config
+        .default_lsp_id
+        .clone()
+        .ok_or(NodeError::generic("Missing LSP public key"))?
+        .parse()
+        .map_err(|e| NodeError::Generic(format!("Invalid LSP public key: {e}")))
 }

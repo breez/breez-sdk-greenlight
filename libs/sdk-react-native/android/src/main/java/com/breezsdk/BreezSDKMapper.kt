@@ -348,6 +348,10 @@ fun asConfig(config: ReadableMap): Config? {
             arrayOf(
                 "breezserver",
                 "chainnotifierUrl",
+                "esploraUrl",
+                "vssUrl",
+                "rgsUrl",
+                "lsps2Address",
                 "workingDir",
                 "network",
                 "paymentTimeoutSec",
@@ -362,6 +366,10 @@ fun asConfig(config: ReadableMap): Config? {
     val breezserver = config.getString("breezserver")!!
     val chainnotifierUrl = config.getString("chainnotifierUrl")!!
     val mempoolspaceUrl = if (hasNonNullKey(config, "mempoolspaceUrl")) config.getString("mempoolspaceUrl") else null
+    val esploraUrl = config.getString("esploraUrl")!!
+    val vssUrl = config.getString("vssUrl")!!
+    val rgsUrl = config.getString("rgsUrl")!!
+    val lsps2Address = config.getString("lsps2Address")!!
     val workingDir = config.getString("workingDir")!!
     val network = config.getString("network")?.let { asNetwork(it) }!!
     val paymentTimeoutSec = config.getInt("paymentTimeoutSec").toUInt()
@@ -374,6 +382,10 @@ fun asConfig(config: ReadableMap): Config? {
         breezserver,
         chainnotifierUrl,
         mempoolspaceUrl,
+        esploraUrl,
+        vssUrl,
+        rgsUrl,
+        lsps2Address,
         workingDir,
         network,
         paymentTimeoutSec,
@@ -390,6 +402,10 @@ fun readableMapOf(config: Config): ReadableMap =
         "breezserver" to config.breezserver,
         "chainnotifierUrl" to config.chainnotifierUrl,
         "mempoolspaceUrl" to config.mempoolspaceUrl,
+        "esploraUrl" to config.esploraUrl,
+        "vssUrl" to config.vssUrl,
+        "rgsUrl" to config.rgsUrl,
+        "lsps2Address" to config.lsps2Address,
         "workingDir" to config.workingDir,
         "network" to snakeToLowerCamelCase(config.network.name),
         "paymentTimeoutSec" to config.paymentTimeoutSec,

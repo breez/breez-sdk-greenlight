@@ -1,5 +1,4 @@
 mod backup_transport;
-mod config;
 mod error;
 mod event_handling;
 mod node_api;
