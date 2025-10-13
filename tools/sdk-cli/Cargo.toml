@@ -1,6 +1,6 @@
 [package]
 name = "breez-sdk-cli"
-version = "0.7.1"
+version = "0.8.4-dev1"
 edition = "2021"
 
 [dependencies]

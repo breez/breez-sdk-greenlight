@@ -872,7 +872,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.7.1"
+version = "0.8.4-dev1"
 dependencies = [
  "aes 0.8.4",
  "anyhow",
@@ -909,7 +909,7 @@ dependencies = [
  "strum_macros",
  "tempfile",
  "thiserror 1.0.69",
- "tiny-bip39 1.0.0",
+ "tiny-bip39",
  "tokio",
  "tokio-stream",
  "tonic 0.11.0",
@@ -919,7 +919,7 @@ dependencies = [
 
 [[package]]
 name = "breez_sdk"
-version = "0.7.1"
+version = "0.8.4-dev1"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
@@ -929,7 +929,7 @@ dependencies = [
  "once_cell",
  "sdk-common",
  "thiserror 1.0.69",
- "tiny-bip39 2.0.0",
+ "tiny-bip39",
  "tokio",
  "tonic 0.11.0",
  "uniffi",
@@ -3520,16 +3520,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pbkdf2"
-version = "0.12.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f8ed6a7761f76e3b9f92dfb0a60a6a6477c61024b775147ff0973a02653abaf2"
-dependencies = [
- "digest 0.10.7",
- "hmac",
-]
-
-[[package]]
 name = "pem"
 version = "0.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4710,7 +4700,7 @@ dependencies = [
 
 [[package]]
 name = "sdk-common"
-version = "0.7.1"
+version = "0.8.4-dev1"
 dependencies = [
  "aes 0.8.4",
  "anyhow",
@@ -4756,7 +4746,7 @@ dependencies = [
 
 [[package]]
 name = "sdk-macros"
-version = "0.7.1"
+version = "0.8.4-dev1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5437,24 +5427,7 @@ dependencies = [
  "anyhow",
  "hmac",
  "once_cell",
- "pbkdf2 0.11.0",
- "rand 0.8.5",
- "rustc-hash 1.1.0",
- "sha2 0.10.9",
- "thiserror 1.0.69",
- "unicode-normalization",
- "wasm-bindgen",
- "zeroize",
-]
-
-[[package]]
-name = "tiny-bip39"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a30fd743a02bf35236f6faf99adb03089bb77e91c998dac2c2ad76bb424f668c"
-dependencies = [
- "once_cell",
- "pbkdf2 0.12.2",
+ "pbkdf2",
  "rand 0.8.5",
  "rustc-hash 1.1.0",
  "sha2 0.10.9",
