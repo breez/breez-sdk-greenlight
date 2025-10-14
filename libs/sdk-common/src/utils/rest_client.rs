@@ -1,13 +1,12 @@
 use crate::error::{ServiceConnectivityError, ServiceConnectivityErrorKind};
 use log::*;
-use maybe_sync::{MaybeSend, MaybeSync};
 use reqwest::Client;
 use std::{collections::HashMap, time::Duration};
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[sdk_macros::async_trait]
-pub trait RestClient: MaybeSend + MaybeSync {
+pub trait RestClient: Send + Sync {
     /// Makes a GET request and logs on DEBUG.
     /// ### Arguments
     /// - `url`: the URL on which GET will be called

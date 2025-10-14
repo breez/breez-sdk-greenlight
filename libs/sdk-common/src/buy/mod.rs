@@ -1,10 +1,9 @@
 use anyhow::Result;
-use maybe_sync::{MaybeSend, MaybeSync};
 
 pub mod moonpay;
 
 #[sdk_macros::async_trait]
-pub trait BuyBitcoinProviderApi: MaybeSend + MaybeSync {
+pub trait BuyBitcoinProviderApi: Send + Sync {
     /// Configure buying Bitcoin and return a URL to continue
     async fn buy_bitcoin(
         &self,

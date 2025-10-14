@@ -185,13 +185,14 @@ pub mod model {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use anyhow::Result;
     use serde_json::json;
 
     use crate::lnurl::tests::rand_string;
     use crate::prelude::*;
     use crate::test_utils::mock_rest_client::{MockResponse, MockRestClient};
-    use crate::utils::Arc;
 
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);
