@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use anyhow::{anyhow, Result};
-use maybe_sync::{MaybeSend, MaybeSync};
 use serde::{Deserialize, Serialize};
 
 use crate::grpc::RatesRequest;
@@ -10,7 +9,7 @@ use crate::with_connection_retry;
 
 /// Trait covering fiat-related functionality
 #[sdk_macros::async_trait]
-pub trait FiatAPI: MaybeSend + MaybeSync {
+pub trait FiatAPI: Send + Sync {
     /// List all supported fiat currencies for which there is a known exchange rate.
     async fn list_fiat_currencies(&self) -> Result<Vec<FiatCurrency>>;
 

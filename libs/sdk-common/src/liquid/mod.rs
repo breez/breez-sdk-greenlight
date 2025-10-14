@@ -3,13 +3,14 @@ pub use bip21::*;
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use anyhow::{anyhow, Result};
     use elements::AssetId;
 
     use crate::input_parser::tests::get_bip21_rounding_test_vectors;
     use crate::prelude::*;
     use crate::test_utils::mock_rest_client::MockRestClient;
-    use crate::utils::Arc;
 
     #[cfg(all(target_family = "wasm", target_os = "unknown"))]
     wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_browser);

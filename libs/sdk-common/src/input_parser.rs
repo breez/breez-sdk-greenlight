@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::ops::Not;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use ::bip21::Uri;
 use anyhow::{anyhow, bail, Context, Result};
@@ -13,7 +14,6 @@ use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
 
 use crate::prelude::*;
-use crate::utils::Arc;
 
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
 const BOLT12_PREFIX: &str = "lno";
