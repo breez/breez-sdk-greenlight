@@ -1,6 +1,6 @@
 name: breez_sdk
 description: Flutter bindings for the Breez SDK - Native
-version: 0.8.4-dev1
+version: 0.8.4-dev2
 homepage: https://breez.technology
 repository: https://github.com/breez/breez-sdk-flutter
 publish_to: 'none'
