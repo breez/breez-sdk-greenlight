@@ -1,8 +1,10 @@
 > ⚠️ **DEPRECATION NOTICE**
 > 
-> This repository (`breez-sdk-greenlight`) is **deprecated** and no longer maintained. It's highly recommend migrating to **Breez SDK – Nodeless**:
-> - [Liquid implementation](https://sdk-doc-liquid.breez.technology/)
-> - [Spark beta](https://breez.technology/spark)
+> This repository (`breez-sdk-greenlight`) is **deprecated** and no longer maintained.
+> 
+> It's highly recommended to migrate to the **Breez SDK – Nodeless**:
+> - [Liquid Implementation](https://sdk-doc-liquid.breez.technology/)
+> - [Spark Implementation](https://sdk-doc-spark.breez.technology/)
 
 # **Breez SDK - Native *(Greenlight Implementation)***
 
