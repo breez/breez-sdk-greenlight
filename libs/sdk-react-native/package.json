@@ -1,6 +1,6 @@
 {
   "name": "@breeztech/react-native-breez-sdk",
-  "version": "0.8.4-dev2",
+  "version": "0.8.4-dev3",
   "description": "React Native Breez SDK",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",

@@ -804,7 +804,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-cli"
-version = "0.8.4-dev2"
+version = "0.8.4-dev3"
 dependencies = [
  "anyhow",
  "breez-sdk-core",
@@ -821,7 +821,7 @@ dependencies = [
 
 [[package]]
 name = "breez-sdk-core"
-version = "0.8.4-dev2"
+version = "0.8.4-dev3"
 dependencies = [
  "aes 0.8.4",
  "anyhow",
@@ -4589,7 +4589,7 @@ dependencies = [
 
 [[package]]
 name = "sdk-common"
-version = "0.8.4-dev2"
+version = "0.8.4-dev3"
 dependencies = [
  "aes 0.8.4",
  "anyhow",
@@ -4631,7 +4631,7 @@ dependencies = [
 
 [[package]]
 name = "sdk-macros"
-version = "0.8.4-dev2"
+version = "0.8.4-dev3"
 dependencies = [
  "proc-macro2",
  "quote",
