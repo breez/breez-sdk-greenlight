@@ -13,6 +13,8 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use LnUrlRequestData::*;
 
+#[cfg(feature = "nwc")]
+use crate::nwc::{parse_nwc_uri, NostrWalletConnectUri};
 use crate::prelude::*;
 
 const USER_BITCOIN_PAYMENT_PREFIX: &str = "user._bitcoin-payment";
@@ -330,6 +332,11 @@ async fn parse_core<C: RestClient + ?Sized>(rest_client: &C, input: &str) -> Res
             }),
             Some(invoice) => Ok(InputType::Bolt11 { invoice }),
         };
+    }
+
+    #[cfg(feature = "nwc")]
+    if let Ok(data) = parse_nwc_uri(input) {
+        return Ok(InputType::NostrWalletConnectUri { data });
     }
 
     #[cfg(feature = "liquid")]
@@ -691,6 +698,11 @@ pub enum InputType {
     /// Error returned by the LNURL endpoint
     LnUrlError {
         data: LnUrlErrorData,
+    },
+
+    #[cfg(feature = "nwc")]
+    NostrWalletConnectUri {
+        data: NostrWalletConnectUri,
     },
 }
 

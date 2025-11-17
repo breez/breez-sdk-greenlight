@@ -10,6 +10,8 @@ pub mod invoice;
 pub mod liquid;
 mod lnurl;
 mod model;
+#[cfg(feature = "nwc")]
+pub mod nwc;
 mod test_utils;
 pub mod tonic_wrap;
 pub mod utils;
@@ -38,6 +40,8 @@ pub mod prelude {
     pub use crate::invoice::*;
     #[cfg(feature = "liquid")]
     pub use crate::liquid::*;
+    #[cfg(feature = "nwc")]
+    pub use crate::nwc::*;
     pub use crate::lnurl::error::*;
     pub use crate::lnurl::model::*;
     pub use crate::lnurl::specs::auth::model::*;

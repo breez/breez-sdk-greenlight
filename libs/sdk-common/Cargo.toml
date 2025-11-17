@@ -17,6 +17,7 @@ lazy_static = "1.5.0"
 lightning = { workspace = true }
 lightning-invoice = { workspace = true }
 log = { workspace = true }
+nostr-sdk = { version = "0.44.1", features = ["nip47"], optional = true }
 percent-encoding = "2.3.1"
 querystring = "1"
 regex = { workspace = true }
@@ -71,5 +72,6 @@ tonic-build = { workspace = true }
 tonic-build = "0.12"
 
 [features]
+nwc = ["dep:nostr-sdk"]
 liquid = ["dep:elements", "dep:lightning-with-bolt12"]
 test-utils = []
