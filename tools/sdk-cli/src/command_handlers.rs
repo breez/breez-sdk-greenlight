@@ -610,6 +610,7 @@ impl CommandHandler {
                         provider: provider.clone(),
                         opening_fee_params: None,
                         redirect_url: None,
+                        fiat_currency_code: None,
                     })
                     .await?;
                 Ok(format!("Here your {provider:?} url: {}", res.url))
