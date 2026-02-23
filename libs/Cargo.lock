@@ -800,7 +800,7 @@ dependencies = [
  "prost 0.11.9",
  "rand 0.8.5",
  "regex",
- "reqwest 0.12.18",
+ "reqwest 0.12.28",
  "ripemd",
  "rusqlite",
  "rusqlite_migration",
@@ -3789,9 +3789,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.18"
+version = "0.12.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e98ff6b0dbbe4d5a37318f433d4fc82babd21631f194d370409ceb2e40b2f0b5"
+checksum = "eddd3ca559203180a307f12d114c268abf583f59b03cb906fd0b3ff8646c1147"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -3805,12 +3805,10 @@ dependencies = [
  "hyper-rustls 0.27.5",
  "hyper-tls",
  "hyper-util",
- "ipnet",
  "js-sys",
  "log",
  "mime",
  "native-tls",
- "once_cell",
  "percent-encoding",
  "pin-project-lite",
  "rustls-pki-types",
@@ -4172,7 +4170,7 @@ dependencies = [
  "prost 0.13.5",
  "querystring",
  "regex",
- "reqwest 0.12.18",
+ "reqwest 0.12.28",
  "sdk-macros",
  "serde",
  "serde_json",
@@ -5177,9 +5175,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.6"
+version = "0.6.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "adc82fd73de2a9722ac5da747f12383d2bfdb93591ee6c58486e0097890f05f2"
+checksum = "d4e6559d53cc268e5031cd8429d05415bc4cb4aefc4aa5d6cc35fbf5b924a1f8"
 dependencies = [
  "bitflags 2.6.0",
  "bytes",
