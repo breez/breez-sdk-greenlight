@@ -2,28 +2,28 @@
 > 
 > This repository (`breez-sdk-greenlight`) is **deprecated** and no longer maintained.
 > 
-> It's highly recommended to migrate to the **Breez SDK – Nodeless**:
-> - [Liquid Implementation](https://sdk-doc-liquid.breez.technology/)
-> - [Spark Implementation](https://sdk-doc-spark.breez.technology/)
+> It's highly recommended to migrate to the:
+> - [Breez SDK - Spark](https://sdk-doc-spark.breez.technology/)
+> - [Breez SDK - Liquid](https://sdk-doc-liquid.breez.technology/)
 
-# **Breez SDK - Native *(Greenlight Implementation)***
+# **Breez SDK - Greenlight**
 
 ## **Overview**
 
-## **What Is the Breez SDK?**
+## **What is the Breez SDK?**
 
 The Breez SDK provides developers with a end-to-end solution for integrating self-custodial Lightning payments into their apps and services. It eliminates the need for third parties, simplifies the complexities of Bitcoin and Lightning, and enables seamless onboarding for billions of users to the future of peer-to-peer payments.
 
 To provide the best experience for their end-users, developers can choose between the following implementations:
 
-- [Breez SDK - Native *(Greenlight Implementation)*](https://sdk-doc.breez.technology/)
-- [Breez SDK - Nodeless *(Liquid Implementation)*](https://sdk-doc-liquid.breez.technology/)
+> - [Breez SDK - Spark](https://sdk-doc-spark.breez.technology/)
+> - [Breez SDK - Liquid](https://sdk-doc-liquid.breez.technology/)
 
 **The Breez SDK is free for developers.** 
 
 Learn more about the Breez SDK — download our one pager [here](https://drive.google.com/file/d/1TDspNJOvrX_lZUxipeBzitPIWXIdSsLy/view?usp=sharing).
 
-## **What Is the Breez SDK - Native *(Greenlight Implementation)*?**
+## **What is the Breez SDK - Greenlight?**
 
 It's a cloud-based Lightning integration that offers a self-custodial, end-to-end solution for integrating Lightning payments, utilizing nodes-on-demand provided by Blockstream’s Greenlight, with built-in Lightning Service Providers (LSP), on-chain interoperability, and third-party fiat on-ramps. Using the SDK you'll able to:
 
@@ -45,9 +45,9 @@ It's a cloud-based Lightning integration that offers a self-custodial, end-to-en
 
 ## Getting Started
 
-Head over to the [Breez SDK - Native *(Greenlight Implementation)* documentation](https://sdk-doc.breez.technology/) to start implementing Lightning into your app.
+Head over to the [Breez SDK - Greenlight) documentation](https://sdk-doc.breez.technology/) to start implementing Lightning into your app.
 
-Note: You'll need an API key to use the *Greenlight* implementation. For more info, email us at contact@breez.technology.
+Note: You'll need an API key to use the Breez SDK - Greenlight. For more info, email us at contact@breez.technology.
 
 ## **API**
 
@@ -61,9 +61,9 @@ API documentation is [here](https://breez.github.io/breez-sdk-greenlight/breez_
 
 Have a question for the team? Join our [Telegram channel](https://t.me/breezsdk) or email us at [contact@breez.technology](mailto:contact@breez.technology) 
 
-## How Does Native *(Greenlight Implementation)* Work?
+## How Does the Breez SDK - Greenlight Work?
 
-The Breez SDK - Native *(Greenlight implementation)* allows end-users to send and receive payments using the Breez SDK through several key components:
+The Breez SDK - Greenlight allows end-users to send and receive payments using the Breez SDK through several key components:
 
 - **Signer**: The app integrating the Breez SDK runs a validating signer that interacts with the end-user node.
 - **Node**: End-user nodes are hosted on Blockstream’s Greenlight cloud infrastructure. The SDK creates a node when an end-user needs to send or receive a payment via the Lightning Network. Each end-user has their own node.
@@ -76,7 +76,7 @@ The Breez SDK - Native *(Greenlight implementation)* allows end-users to send an
 
 The libs folder contains three sub-folders and is a structured as a cargo workspace:
 
-- **sdk-common**: common SDK functionality for [Breez SDK - Native](https://github.com/breez/breez-sdk-greenlight) and [Breez SDK - Nodeless](https://github.com/breez/breez-sdk-liquid).
+- **sdk-common**: common SDK functionality for [Breez SDK - Greenlight](https://github.com/breez/breez-sdk-greenlight) and [Breez SDK - Liquid](https://github.com/breez/breez-sdk-liquid).
 - **sdk-core**: the core SDK rust library.
 - **sdk-bindings**: ffi bindings for Kotlin, Python, Swift, C#, and Go.
 - **sdk-flutter**: a flutter plugin (includes ffi bindings for dart).
