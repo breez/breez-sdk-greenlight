@@ -11,12 +11,11 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        jcenter()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.3'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21"
+        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.10"
     }
 }
 
@@ -43,8 +42,11 @@ android {
         disable 'GradleCompatible'
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
     }
 }
 
@@ -62,19 +64,12 @@ repositories {
             excludeGroup "com.facebook.react"
         }
     }
-    jcenter()
-}
-
-allprojects {
-    repositories {
-        google()
-    }
 }
 
 dependencies {
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.10"
     // Due to an issue with Jitpack (https://github.com/jitpack/jitpack.io/issues/5752)
     // the Android platform versions of JNA (specifically libjnadispatch.so) are missing when downloading the Breez SDK from Jitpack.
     // Thereforew we ignore the version of JNA that comes with the Breez SDK from Jitpack
