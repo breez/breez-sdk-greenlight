@@ -964,10 +964,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@breeztech/react-native-breez-sdk@0.6.2":
-  version "0.6.2"
-  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.6.2.tgz#fe6465e65a35ec15759b93b8ae7c9f0deb5ebdfe"
-  integrity sha512-g9N4z+lnfn3oxUnAFHGsqJy03BeL32Fi6Z6LI4g65GOZGQOkqAjRiOBla+z7Q6lCtJsP1L4kwX3fOObWjf7c/A==
+"@breeztech/react-native-breez-sdk@0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.7.1.tgz#4258c93264928401dec368c30a50dcaac0625c8f"
+  integrity sha512-ugNr9LosxYbR8ioBG4Pq/F/zrbnkfQeB2eyEi0qQiXN3vDY9IHiyTREYIh1Gx3r/XtxhIgzxpG9sNtVmizYc/w==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -2220,9 +2220,9 @@ bn.js@^5.0.0, bn.js@^5.2.1:
   integrity sha512-eXRvHzWyYPBuB4NBy0cmYQjGitUrtqwbvlzP3G6VFnNRbsZQIxQ10PbKKHt8gZ/HW/D/747aDl+QkDqg3KQLMQ==
 
 brace-expansion@^1.1.7:
-  version "1.1.11"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.11.tgz#3c7fcbf529d87226f3d2f52b966ff5271eb441dd"
-  integrity sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==
+  version "1.1.12"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.12.tgz#ab9b454466e5a8cc3a187beaad580412a9c5b843"
+  integrity sha512-9T9UjW3r0UW5c1Q7GTwllptXwhvYmEzFhzMfZ9H7FQWt+uZePjZPjBP/W1ZEyZ1twGWom5/56TF4lPcqjnDHcg==
   dependencies:
     balanced-match "^1.0.0"
     concat-map "0.0.1"
