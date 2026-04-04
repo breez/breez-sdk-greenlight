@@ -964,10 +964,10 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@breeztech/react-native-breez-sdk@0.6.2":
-  version "0.6.2"
-  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.6.2.tgz#fe6465e65a35ec15759b93b8ae7c9f0deb5ebdfe"
-  integrity sha512-g9N4z+lnfn3oxUnAFHGsqJy03BeL32Fi6Z6LI4g65GOZGQOkqAjRiOBla+z7Q6lCtJsP1L4kwX3fOObWjf7c/A==
+"@breeztech/react-native-breez-sdk@0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@breeztech/react-native-breez-sdk/-/react-native-breez-sdk-0.7.1.tgz#4258c93264928401dec368c30a50dcaac0625c8f"
+  integrity sha512-ugNr9LosxYbR8ioBG4Pq/F/zrbnkfQeB2eyEi0qQiXN3vDY9IHiyTREYIh1Gx3r/XtxhIgzxpG9sNtVmizYc/w==
 
 "@cnakazawa/watch@^1.0.3":
   version "1.0.4"
@@ -4960,9 +4960,9 @@ lodash.truncate@^4.4.2:
   integrity sha1-WjUNoLERO4N+z//VgSy+WNbq4ZM=
 
 lodash@^4.17.10, lodash@^4.17.15, lodash@^4.7.0:
-  version "4.17.21"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
-  integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
+  version "4.17.23"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.23.tgz#f113b0378386103be4f6893388c73d0bde7f2c5a"
+  integrity sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==
 
 log-symbols@^4.1.0:
   version "4.1.0"
